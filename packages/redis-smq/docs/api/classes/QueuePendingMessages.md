@@ -4,7 +4,7 @@
 
 ## Implements
 
-- [`IQueueMessages`](../interfaces/IQueueMessages.md)
+- [`IMessageBrowser`](../interfaces/IMessageBrowser.md)
 
 ## Constructors
 
@@ -38,9 +38,9 @@
 
 #### Implementation of
 
-[`IQueueMessages`](../interfaces/IQueueMessages.md).[`countMessages`](../interfaces/IQueueMessages.md#countmessages)
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`countMessages`](../interfaces/IMessageBrowser.md#countmessages)
 
-***
+---
 
 ### getMessages()
 
@@ -62,7 +62,7 @@
 
 ##### cb
 
-`ICallback`\<[`IPaginationPage`](../interfaces/IPaginationPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
+`ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
 
 #### Returns
 
@@ -70,9 +70,9 @@
 
 #### Implementation of
 
-[`IQueueMessages`](../interfaces/IQueueMessages.md).[`getMessages`](../interfaces/IQueueMessages.md#getmessages)
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`getMessages`](../interfaces/IMessageBrowser.md#getmessages)
 
-***
+---
 
 ### purge()
 
@@ -94,4 +94,4 @@
 
 #### Implementation of
 
-[`IQueueMessages`](../interfaces/IQueueMessages.md).[`purge`](../interfaces/IQueueMessages.md#purge)
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`purge`](../interfaces/IMessageBrowser.md#purge)

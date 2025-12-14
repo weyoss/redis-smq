@@ -14,7 +14,7 @@ and management of these messages when the system is configured to audit them.
 
 ## Extends
 
-- `QueueMessagesAbstract`
+- `MessageBrowserAbstract`
 
 ## Constructors
 
@@ -28,7 +28,7 @@ and management of these messages when the system is configured to audit them.
 
 #### Overrides
 
-`QueueMessagesAbstract.constructor`
+`MessageBrowserAbstract.constructor`
 
 ## Methods
 
@@ -58,7 +58,7 @@ Callback returning the count
 
 #### Overrides
 
-`QueueMessagesAbstract.countMessages`
+`MessageBrowserAbstract.countMessages`
 
 ---
 
@@ -90,7 +90,7 @@ Number of items per page
 
 ##### cb
 
-`ICallback`\<[`IPaginationPage`](../interfaces/IPaginationPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
+`ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
 
 Callback returning an IQueueMessagesPage of IMessageTransferable
 
@@ -100,7 +100,7 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 #### Overrides
 
-`QueueMessagesAbstract.getMessages`
+`MessageBrowserAbstract.getMessages`
 
 ---
 
@@ -141,4 +141,4 @@ Otherwise, the first parameter will be null/undefined.
 
 #### Overrides
 
-`QueueMessagesAbstract.purge`
+`MessageBrowserAbstract.purge`

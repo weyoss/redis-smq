@@ -43,6 +43,8 @@
 
 ## Interfaces
 
+- [IBrowserPage](interfaces/IBrowserPage.md)
+- [IBrowserPageInfo](interfaces/IBrowserPageInfo.md)
 - [IConsumerMessageHandlerParams](interfaces/IConsumerMessageHandlerParams.md)
 - [IEventBusConfig](interfaces/IEventBusConfig.md)
 - [IExchangeParams](interfaces/IExchangeParams.md)
@@ -52,14 +54,13 @@
 - [IMessageAuditConfigOptions](interfaces/IMessageAuditConfigOptions.md)
 - [IMessageAuditParsedConfig](interfaces/IMessageAuditParsedConfig.md)
 - [IMessageAuditParsedConfigOptions](interfaces/IMessageAuditParsedConfigOptions.md)
+- [IMessageBrowser](interfaces/IMessageBrowser.md)
 - [IMessageManagerDeleteResponse](interfaces/IMessageManagerDeleteResponse.md)
 - [IMessageParams](interfaces/IMessageParams.md)
 - [IMessageStateTransferable](interfaces/IMessageStateTransferable.md)
 - [IMessageTransferable](interfaces/IMessageTransferable.md)
-- [IPaginationPage](interfaces/IPaginationPage.md)
 - [IQueueConsumerGroupParams](interfaces/IQueueConsumerGroupParams.md)
 - [IQueueGroupConsumersPendingCount](interfaces/IQueueGroupConsumersPendingCount.md)
-- [IQueueMessages](interfaces/IQueueMessages.md)
 - [IQueueMessagesCount](interfaces/IQueueMessagesCount.md)
 - [IQueueParams](interfaces/IQueueParams.md)
 - [IQueueParsedParams](interfaces/IQueueParsedParams.md)
@@ -71,7 +72,6 @@
 
 ## Type Aliases
 
-- [IPaginationPageParams](type-aliases/IPaginationPageParams.md)
 - [TConsumerConsumeMessageEvent](type-aliases/TConsumerConsumeMessageEvent.md)
 - [TConsumerDequeueMessageEvent](type-aliases/TConsumerDequeueMessageEvent.md)
 - [TConsumerEvent](type-aliases/TConsumerEvent.md)
