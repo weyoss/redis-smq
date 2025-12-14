@@ -685,10 +685,6 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
       if (err) return cb(err);
 
       const clientInstance = redisClient.getInstance();
-      if (clientInstance instanceof Error) {
-        return cb(clientInstance);
-      }
-
       const connectionId = this.generateConnectionId();
       const connection: IRedisPooledConnection = {
         client: clientInstance,
