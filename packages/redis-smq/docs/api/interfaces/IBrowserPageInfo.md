@@ -1,8 +1,6 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IPaginationPageParams
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IBrowserPageInfo
 
-# Type Alias: IPaginationPageParams
-
-> **IPaginationPageParams** = `object`
+# Interface: IBrowserPageInfo
 
 ## Properties
 
@@ -10,25 +8,25 @@
 
 > **currentPage**: `number`
 
-***
+---
 
 ### offsetEnd
 
 > **offsetEnd**: `number`
 
-***
+---
 
 ### offsetStart
 
 > **offsetStart**: `number`
 
-***
+---
 
 ### pageSize
 
 > **pageSize**: `number`
 
-***
+---
 
 ### totalPages
 

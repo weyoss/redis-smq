@@ -1,6 +1,6 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessages
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageBrowser
 
-# Interface: IQueueMessages
+# Interface: IMessageBrowser
 
 ## Methods
 
@@ -22,7 +22,7 @@
 
 `void`
 
-***
+---
 
 ### getMessages()
 
@@ -44,13 +44,13 @@
 
 ##### cb
 
-`ICallback`\<[`IPaginationPage`](IPaginationPage.md)\<[`IMessageTransferable`](IMessageTransferable.md)\<`unknown`\>\>\>
+`ICallback`\<[`IBrowserPage`](IBrowserPage.md)\<[`IMessageTransferable`](IMessageTransferable.md)\<`unknown`\>\>\>
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### purge()
 
@@ -64,7 +64,7 @@
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`
 
 #### Returns
 
