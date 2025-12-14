@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import {
   InvalidQueueParametersError,

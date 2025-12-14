@@ -25,7 +25,7 @@ import {
   IMessageTransferable,
 } from '../message/index.js';
 import { IMessageManagerDeleteResponse } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * The MessageManager class provides methods for interacting with Redis-SMQ messages.

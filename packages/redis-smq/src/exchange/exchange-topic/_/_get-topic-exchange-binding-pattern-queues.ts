@@ -12,7 +12,7 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IQueueParams } from '../../../queue-manager/index.js';
 import { _parseExchangeParams } from '../../_/_parse-exchange-params.js';
 import { EExchangeType, IExchangeParams } from '../../types/index.js';

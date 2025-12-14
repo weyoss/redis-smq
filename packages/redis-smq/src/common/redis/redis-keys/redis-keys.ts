@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from '../../index.js';
-import { RedisKeysInvalidKeyError } from '../../errors/index.js';
+import { IQueueParams } from '../../../index.js';
+import { RedisKeysInvalidKeyError } from '../../../errors/index.js';
 
 /**
  * Redis key configuration constants

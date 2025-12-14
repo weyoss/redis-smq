@@ -9,9 +9,9 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
 import { EQueueType } from '../../../src/index.js';
-import { QueueStorageList } from '../../../src/common/queue-messages/queue-storage/queue-storage-list.js';
+import { BrowserStorageList } from '../../../src/common/message-browser/browser-storage/browser-storage-list.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -23,7 +23,7 @@ const { promisifyAll } = bluebird;
 it('QueueStorageList: should return 0 for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const queueMessagesStorageList = promisifyAll(new QueueStorageList());
+  const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
 
   const { keyQueuePending } = redisKeys.getQueueKeys(defaultQueue, null);
   const count = await queueMessagesStorageList.countAsync(keyQueuePending);
@@ -33,7 +33,7 @@ it('QueueStorageList: should return 0 for an empty list', async () => {
 it('should return the correct count after adding items', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const queueMessagesStorageList = promisifyAll(new QueueStorageList());
+  const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
   await produceMessage(defaultQueue);
   const { keyQueuePending } = redisKeys.getQueueKeys(defaultQueue, null);
   const count = await queueMessagesStorageList.countAsync(keyQueuePending);

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { ConfigurationNamespaceError } from '../errors/index.js';
 import { defaultConfig } from './default-config.js';
 

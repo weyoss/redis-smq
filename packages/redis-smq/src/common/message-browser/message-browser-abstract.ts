@@ -8,7 +8,7 @@
  */
 
 import { async, createLogger, ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../redis-keys/redis-keys.js';
+import { redisKeys } from '../redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { _deleteMessage } from '../../message-manager/_/_delete-message.js';
 import { IMessageTransferable } from '../../message/index.js';
@@ -18,14 +18,14 @@ import {
   TQueueExtendedParams,
 } from '../../queue-manager/index.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
-import { QueueStorageAbstract } from './queue-storage/queue-storage-abstract.js';
+import { BrowserStorageAbstract } from './browser-storage/browser-storage-abstract.js';
 import {
-  IPaginationPage,
-  IPaginationPageParams,
-  IQueueMessages,
+  IBrowserPage,
+  IBrowserPageInfo,
+  IMessageBrowser,
 } from './types/index.js';
 import { MessageManager } from '../../message-manager/index.js';
-import { withSharedPoolConnection } from '../redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
@@ -37,9 +37,9 @@ import { withSharedPoolConnection } from '../redis-connection-pool/with-shared-p
  * strategy for the message category they represent.
  *
  * @abstract
- * @implements {IQueueMessages}
+ * @implements {IMessageBrowser}
  */
-export abstract class QueueMessagesAbstract implements IQueueMessages {
+export abstract class MessageBrowserAbstract implements IMessageBrowser {
   /**
    * Message manager for retrieving detailed message information.
    */
@@ -59,7 +59,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
   /**
    * Storage manager for queue messages.
    */
-  protected readonly queueStorage: QueueStorageAbstract;
+  protected readonly storageAbstract: BrowserStorageAbstract;
 
   /**
    * Logger instance for logging operations.
@@ -67,11 +67,11 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
   protected readonly logger;
 
   protected constructor(
-    messagesStorage: QueueStorageAbstract,
+    messagesStorage: BrowserStorageAbstract,
     messageManager: MessageManager,
     redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
   ) {
-    this.queueStorage = messagesStorage;
+    this.storageAbstract = messagesStorage;
     this.messageManager = messageManager;
     this.redisKey = redisKey;
     this.logger = createLogger(
@@ -139,7 +139,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IPaginationPage<IMessageTransferable>>,
+    cb: ICallback<IBrowserPage<IMessageTransferable>>,
   ): void {
     const parsedParams = _parseQueueExtendedParams(queue);
     if (parsedParams instanceof Error) {
@@ -168,7 +168,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
 
           async.withCallback(
             // Get message IDs for the requested page
-            (cb: ICallback<IPaginationPage<string>>) =>
+            (cb: ICallback<IBrowserPage<string>>) =>
               this.getMessagesIds(parsedParams, page, pageSize, cb),
             (pageResult, cb) => {
               // If no messages on this page, return empty result
@@ -245,7 +245,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
           );
           const keyVal = keys[this.redisKey];
 
-          this.queueStorage.count(keyVal, (err, count) => {
+          this.storageAbstract.count(keyVal, (err, count) => {
             if (err) {
               this.logger.error(`Error counting messages: ${err.message}`);
               return cb(err);
@@ -288,7 +288,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
     cursor: number,
     totalItems: number,
     pageSize: number,
-  ): IPaginationPageParams {
+  ): IBrowserPageInfo {
     const totalPages = this.getTotalPages(pageSize, totalItems);
     const currentPage = cursor < 1 || cursor > totalPages ? 1 : cursor;
     const offsetStart = (currentPage - 1) * pageSize;
@@ -308,7 +308,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
     queue: IQueueParsedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IPaginationPage<string>>,
+    cb: ICallback<IBrowserPage<string>>,
   ): void {
     this.logger.debug(
       `Getting message IDs for queue ${queue.queueParams.name}, page ${page}, size ${pageSize}`,
@@ -324,11 +324,11 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
           this.logger.debug(
             `Counting messages for queue ${queue.queueParams.name}`,
           );
-          this.queueStorage.count(keyVal, next);
+          this.storageAbstract.count(keyVal, next);
         },
 
         // Step 2: Fetch messages for the requested page
-        (totalItems: number, next: ICallback<IPaginationPage<string>>) => {
+        (totalItems: number, next: ICallback<IBrowserPage<string>>) => {
           this.logger.debug(
             `Found ${totalItems} total messages for queue ${queue.queueParams.name}`,
           );
@@ -352,7 +352,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
             `Fetching messages for queue ${queue.queueParams.name} from index ${offsetStart} to ${offsetEnd}`,
           );
 
-          this.queueStorage.fetchItems(
+          this.storageAbstract.fetchItems(
             keyVal,
             { page: currentPage, pageSize, offsetStart, offsetEnd },
             (err, items) => {
@@ -410,12 +410,12 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
       async.waterfall(
         [
           // Step 1: Get batch of message IDs
-          (next: ICallback<IPaginationPage<string>>) => {
+          (next: ICallback<IBrowserPage<string>>) => {
             this.getMessagesIds(parsedParams, page, pageSize, next);
           },
 
           // Step 2: Delete the messages and return next page
-          (result: IPaginationPage<string>, next: ICallback<number>) => {
+          (result: IBrowserPage<string>, next: ICallback<number>) => {
             const { items } = result;
 
             // If no items, we're done with this batch

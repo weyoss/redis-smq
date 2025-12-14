@@ -8,7 +8,7 @@
  */
 
 import { Configuration } from '../../config/index.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   InvalidExchangeParametersError,
   RedisKeysInvalidKeyError,

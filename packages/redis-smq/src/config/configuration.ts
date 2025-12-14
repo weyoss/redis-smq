@@ -10,11 +10,11 @@
 import { ICallback } from 'redis-smq-common';
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { ConfigurationNotFoundError } from '../errors/configuration-not-found.error.js';
-import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { parseConfig } from './parse-config.js';
 import { ConfigurationError } from '../errors/index.js';
 import { defaultConfig } from './default-config.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Configuration class for managing and setting up the RedisSMQ message queue.

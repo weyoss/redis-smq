@@ -8,8 +8,8 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { QueueStorageAbstract } from './queue-storage-abstract.js';
-import { withSharedPoolConnection } from '../../redis-connection-pool/with-shared-pool-connection.js';
+import { BrowserStorageAbstract } from './browser-storage-abstract.js';
+import { withSharedPoolConnection } from '../../redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis sets.
@@ -19,7 +19,7 @@ import { withSharedPoolConnection } from '../../redis-connection-pool/with-share
  * Since Redis sets are unordered, pagination is implemented using cursor-based
  * scanning rather than direct indexing.
  */
-export class QueueStorageSet extends QueueStorageAbstract {
+export class BrowserStorageSet extends BrowserStorageAbstract {
   /**
    * Counts the total number of items in a Redis set.
    *

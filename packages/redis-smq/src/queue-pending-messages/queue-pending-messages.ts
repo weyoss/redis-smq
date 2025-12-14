@@ -21,12 +21,12 @@ import {
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../queue-manager/index.js';
-import { IPaginationPage, IQueueMessages } from '../common/index.js';
+import { IBrowserPage, IMessageBrowser } from '../common/index.js';
 import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
-export class QueuePendingMessages implements IQueueMessages {
+export class QueuePendingMessages implements IMessageBrowser {
   protected priorityQueueMessages;
   protected sequentialQueuePendingMessages;
   protected logger;
@@ -55,7 +55,7 @@ export class QueuePendingMessages implements IQueueMessages {
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IPaginationPage<IMessageTransferable>>,
+    cb: ICallback<IBrowserPage<IMessageTransferable>>,
   ): void {
     const parsedParams = _parseQueueExtendedParams(queue);
     if (parsedParams instanceof Error) cb(parsedParams);
@@ -80,7 +80,7 @@ export class QueuePendingMessages implements IQueueMessages {
 
   protected getQueueImplementation(
     queue: IQueueParsedParams,
-    cb: ICallback<IQueueMessages>,
+    cb: ICallback<IMessageBrowser>,
   ): void {
     withSharedPoolConnection(
       (client, cb) =>

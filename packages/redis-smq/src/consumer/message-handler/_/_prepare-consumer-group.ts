@@ -15,8 +15,8 @@ import {
 } from '../../../queue-manager/index.js';
 import { ConsumerGroups } from '../../../consumer-groups/index.js';
 import { ConsumerGroupsNotSupportedError } from '../../../errors/index.js';
-import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { _generateEphemeralConsumerGroupId } from './_generate-ephemeral-consumer-group-id.js';
 
 export function _prepareConsumerGroup(

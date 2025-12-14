@@ -26,7 +26,7 @@ import {
   IQueueProperties,
 } from '../queue-manager/index.js';
 import { Producer } from './producer.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Manages an in-memory cache of consumer groups for PUB/SUB queues.

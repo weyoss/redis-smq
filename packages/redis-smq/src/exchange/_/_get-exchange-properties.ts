@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { ExchangeNotFoundError } from '../../errors/index.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 import { EExchangeProperty, IExchangeProperties } from '../types/index.js';

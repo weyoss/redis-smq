@@ -9,8 +9,8 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
-import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
+import { RedisClient } from '../../../src/common/redis/redis-client/redis-client.js';
+import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
 import {
   EMessagePriority,
   EQueueType,
@@ -20,7 +20,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
+import { BrowserStorageSortedSet } from '../../../src/common/message-browser/browser-storage/browser-storage-sorted-set.js';
 
 import { getProducer } from '../../common/producer.js';
 
@@ -31,7 +31,7 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(),
+    new BrowserStorageSortedSet(),
   );
 
   let ids: string[] = [];

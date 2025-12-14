@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessage } from '../../../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParams } from '../../../queue-manager/index.js';

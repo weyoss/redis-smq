@@ -7,5 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './queue-messages.js';
-export * from './pagination.js';
+export * from './message-browser.js';

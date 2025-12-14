@@ -22,8 +22,8 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../queue-manager/index.js';
-import { QueueMessagesAbstract } from '../common/queue-messages/queue-messages-abstract.js';
-import { QueueStorageSet } from '../common/queue-messages/queue-storage/queue-storage-set.js';
+import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
+import { BrowserStorageSet } from '../common/message-browser/browser-storage/browser-storage-set.js';
 import { QueueAcknowledgedMessages } from '../queue-acknowledged-messages/index.js';
 import { QueueDeadLetteredMessages } from '../queue-dead-lettered-messages/index.js';
 import { SequentialQueuePendingMessages } from '../queue-pending-messages/sequential-queue-pending-messages.js';
@@ -34,14 +34,14 @@ import {
   IQueueMessagesCount,
 } from './types/index.js';
 import { MessageManager } from '../message-manager/index.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * QueueMessages class manages message counting and state reporting across queue types.
  * It orchestrates various message handlers (pending, acknowledged, scheduled, dead-lettered)
  * and leverages a waterfall pattern for processing.
  */
-export class QueueMessages extends QueueMessagesAbstract {
+export class QueueMessages extends MessageBrowserAbstract {
   protected readonly priorityQueueMessages: PriorityQueuePendingMessages;
   protected readonly queuePendingMessages: SequentialQueuePendingMessages;
   protected readonly queueDeadLetteredMessages: QueueDeadLetteredMessages;
@@ -49,7 +49,7 @@ export class QueueMessages extends QueueMessagesAbstract {
   protected readonly queueAcknowledgedMessages: QueueAcknowledgedMessages;
 
   constructor() {
-    super(new QueueStorageSet(), new MessageManager(), 'keyQueueMessages');
+    super(new BrowserStorageSet(), new MessageManager(), 'keyQueueMessages');
     this.priorityQueueMessages = new PriorityQueuePendingMessages();
     this.queuePendingMessages = new SequentialQueuePendingMessages();
     this.queueDeadLetteredMessages = new QueueDeadLetteredMessages();

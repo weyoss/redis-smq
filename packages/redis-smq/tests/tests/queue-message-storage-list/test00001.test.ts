@@ -9,20 +9,20 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
 import { EQueueType } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { QueueStorageList } from '../../../src/common/queue-messages/queue-storage/queue-storage-list.js';
+import { BrowserStorageList } from '../../../src/common/message-browser/browser-storage/browser-storage-list.js';
 
 const { promisifyAll } = bluebird;
 
 it('QueueStorageList: should return empty array for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const queueMessagesStorageList = promisifyAll(new QueueStorageList());
+  const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
   const { keyQueuePending } = redisKeys.getQueueKeys(defaultQueue, null);
   const items = await queueMessagesStorageList.fetchItemsAsync(
     keyQueuePending,

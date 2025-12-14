@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient, PanicError } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { QueueNotFoundError } from '../../errors/index.js';
 import {
   EQueueDeliveryModel,

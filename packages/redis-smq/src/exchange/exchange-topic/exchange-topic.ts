@@ -15,7 +15,7 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withSharedPoolConnection } from '../../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
 import { _saveExchange } from '../_/_save-exchange.js';
 import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
@@ -29,7 +29,7 @@ import { Configuration } from '../../config/index.js';
 import { _getTopicExchangeBindingPatterns } from './_/_get-topic-exchange-binding-patterns.js';
 import { _getTopicExchangeBindingPatternQueues } from './_/_get-topic-exchange-binding-pattern-queues.js';
 import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
 import {
   ExchangeError,

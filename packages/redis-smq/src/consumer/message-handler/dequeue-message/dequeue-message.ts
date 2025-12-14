@@ -17,8 +17,8 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
-import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../../config/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
@@ -33,8 +33,8 @@ import {
   QueueNotFoundError,
 } from '../../../errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
-import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
 
 const IPAddresses = (() => {

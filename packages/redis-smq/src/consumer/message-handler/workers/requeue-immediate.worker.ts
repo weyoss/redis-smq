@@ -8,8 +8,8 @@
  */
 
 import { async, ICallback, PanicError } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessages } from '../../../message-manager/_/_get-message.js';
 import {
   EMessageProperty,
@@ -19,7 +19,7 @@ import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
-import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 export class RequeueImmediateWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {

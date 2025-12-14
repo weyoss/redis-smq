@@ -17,8 +17,8 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TProducerEvent } from '../common/index.js';
-import { RedisConnectionPool } from '../common/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
 import { Configuration } from '../config/index.js';
 import {
   MessageExchangeRequiredError,

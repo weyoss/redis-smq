@@ -11,7 +11,7 @@ import {
   InvalidQueueParametersError,
   RedisKeysError,
 } from '../../errors/index.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   IQueueParams,
   IQueueParsedParams,
