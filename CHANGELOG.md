@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.5-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.5-next.0...v9.0.5-next.1) (2025-12-14)
+
+### 🚀 Chore
+
+- update copyright email address in LICENSE ([e5ea234](https://github.com/weyoss/redis-smq/commit/e5ea2345e380140c136b436257ea2c6b81b97281))
+
+### 📝 Documentation
+
+- **redis-smq-common:** improve formatting ([d2e2015](https://github.com/weyoss/redis-smq/commit/d2e2015257d2b45c9c46183b8daaf87314c688f8))
+- **redis-smq:** update API reference for MessageBrowser ([01fece9](https://github.com/weyoss/redis-smq/commit/01fece9d5dda90be00d255e87d6f2f377325dcdf))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** adopt IBrowserPage type from redis-smq ([2383261](https://github.com/weyoss/redis-smq/commit/2383261fa95581bd103d563c2042e5304a97f416))
+- **redis-smq:** introduce MessageBrowser for message listing logic ([44fccf0](https://github.com/weyoss/redis-smq/commit/44fccf01d2f4d2b551eb4c8264504fa820e44fca))
+- **redis-smq:** remove invalid 'instanceof' check ([3105b6b](https://github.com/weyoss/redis-smq/commit/3105b6b33dd90e0979aeab8b9a5d4d5718467d2b))
+
 ## [9.0.5-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.4...v9.0.5-next.0) (2025-12-04)
 
 ### 🐛 Bug Fixes
