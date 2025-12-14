@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { IMessageTransferable, IPaginationPage } from 'redis-smq';
+import { IMessageTransferable, IBrowserPage } from 'redis-smq';
 import { TErrors } from '../../../errors/errors.js';
 
 export type GetQueuePendingMessagesControllerResponseDTO =
-  | readonly [200, IPaginationPage<IMessageTransferable>]
+  | readonly [200, IBrowserPage<IMessageTransferable>]
   | TErrors['InvalidQueueParametersError']
   | TErrors['QueueNotFoundError']
   | TErrors['ConsumerGroupsNotSupportedError']
