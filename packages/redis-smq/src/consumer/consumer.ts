@@ -299,7 +299,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
     this.logger.debug('Setting up consumer heartbeat');
-    this.heartbeat = new ConsumerHeartbeat(this);
+    this.heartbeat = new ConsumerHeartbeat(this.consumerContext);
     this.heartbeat.on('consumerHeartbeat.error', (err) => {
       this.logger.error(`Heartbeat error: ${err.message}`);
       this.handleError(err);

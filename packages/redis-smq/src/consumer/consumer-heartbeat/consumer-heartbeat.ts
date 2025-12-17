@@ -10,7 +10,6 @@
 import * as os from 'os';
 import {
   CallbackEmptyReplyError,
-  createLogger,
   ICallback,
   ILogger,
   IRedisClient,
@@ -20,10 +19,10 @@ import {
 import { TConsumerHeartbeatEvent } from '../../common/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { Consumer } from '../consumer.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { IConsumerHeartbeat } from './types/index.js';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { IConsumerContext } from '../types/consumer-context.js';
 
 /**
  * ConsumerHeartbeat
@@ -37,9 +36,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   protected static readonly baseBeatIntervalMs = 1000; // nominal cadence
   protected static readonly maxBackoffMs = 10_000; // cap for error backoff
 
+  protected readonly consumerContext: IConsumerContext;
   protected timer: Timer;
   protected keyConsumerHeartbeat: string;
-  protected consumer: Consumer;
   protected logger: ILogger;
 
   // Instance-local CPU usage trackers to avoid cross-talk between instances/tests
@@ -49,20 +48,14 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   // Backoff state for resilient rescheduling
   private currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
 
-  constructor(consumer: Consumer) {
+  constructor(consumerContext: IConsumerContext) {
     super();
-    this.consumer = consumer;
+    this.consumerContext = consumerContext;
 
     const config = Configuration.getConfig();
 
-    this.logger = createLogger(
-      config.logger,
-      this.constructor.name.toLowerCase(),
-    );
-
-    this.logger.debug(
-      `Initializing ConsumerHeartbeat for consumer ${consumer.getId()}`,
-    );
+    this.logger = this.consumerContext.logger;
+    this.logger.debug(`Initializing ConsumerHeartbeat...`);
 
     if (config.eventBus.enabled) {
       this.logger.debug('Event bus enabled, setting up event bus publisher');
@@ -74,7 +67,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     }
 
     const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(
-      consumer.getId(),
+      this.consumerContext.consumerId,
     );
     this.keyConsumerHeartbeat = keyConsumerHeartbeat;
     this.logger.debug(`Consumer heartbeat key: ${this.keyConsumerHeartbeat}`);
@@ -85,9 +78,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       this.emit('consumerHeartbeat.error', err);
     });
 
-    this.logger.info(
-      `ConsumerHeartbeat initialized for consumer ${consumer.getId()}`,
-    );
+    this.logger.info(`ConsumerHeartbeat initialized`);
   }
 
   static isConsumerAlive(
@@ -160,9 +151,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   }
 
   protected getPayload(): IConsumerHeartbeat {
-    this.logger.debug('Generating heartbeat payload');
+    // this.logger.debug('Generating heartbeat payload');
     const timestamp = Date.now();
-    const payload: IConsumerHeartbeat = {
+    return {
       timestamp,
       data: {
         ram: {
@@ -173,10 +164,6 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         cpu: this.getCpuUsage(),
       },
     };
-    this.logger.debug(
-      `Heartbeat payload generated with timestamp ${timestamp}`,
-    );
-    return payload;
   }
 
   /**
@@ -191,7 +178,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       return;
     }
     const delay = this.currentDelayMs;
-    this.logger.debug(`Scheduling next heartbeat in ${delay}ms`);
+    // this.logger.debug(`Scheduling next heartbeat in ${delay}ms`);
     const scheduled = this.timer.setTimeout(() => this.beat(), delay);
     if (!scheduled) {
       // Timer already armed; reset and try once more
@@ -212,18 +199,18 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       return;
     }
 
-    this.logger.debug('Starting heartbeat cycle');
+    //this.logger.debug('Starting heartbeat cycle');
     withSharedPoolConnection(
       (redisClient, cb: ICallback) => {
         const heartbeatPayload = this.getPayload();
-        const consumerId = this.consumer.getId();
+        const consumerId = this.consumerContext.consumerId;
         // Use the exact payload timestamp for the event
         const timestamp = heartbeatPayload.timestamp;
         const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
 
-        this.logger.debug(
-          `Setting heartbeat in Redis with TTL ${ConsumerHeartbeat.heartbeatTTL}ms`,
-        );
+        // this.logger.debug(
+        //   `Setting heartbeat in Redis with TTL ${ConsumerHeartbeat.heartbeatTTL}ms`,
+        // );
         redisClient.set(
           this.keyConsumerHeartbeat,
           heartbeatPayloadStr,
@@ -235,9 +222,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
           },
           (err) => {
             if (err) return cb(err);
-            this.logger.debug(
-              `Heartbeat successfully set in Redis for consumer ${consumerId}`,
-            );
+            // this.logger.debug(
+            //   `Heartbeat successfully set in Redis for consumer ${consumerId}`,
+            // );
             // Success: reset backoff to base
             this.currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
 
