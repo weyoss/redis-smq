@@ -24,7 +24,11 @@ it('QueueStorageSet: should return 0 for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageSet = promisifyAll(new BrowserStorageSet());
-  const { keyQueueMessages } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueueMessages } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
   const count = await queueMessagesStorageSet.countAsync(keyQueueMessages);
   expect(count).toBe(0);
 });
@@ -34,7 +38,11 @@ it('should return the correct count after adding items', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageSet = promisifyAll(new BrowserStorageSet());
   await produceMessage(defaultQueue);
-  const { keyQueueMessages } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueueMessages } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
   const count = await queueMessagesStorageSet.countAsync(keyQueueMessages);
   expect(count).toBe(1);
 });

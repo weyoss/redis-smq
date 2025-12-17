@@ -83,7 +83,11 @@ export function _getQueueProperties(
   queueParams: IQueueParams,
   cb: ICallback<IQueueProperties>,
 ): void {
-  const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
+  const { keyQueueProperties } = redisKeys.getQueueKeys(
+    queueParams.ns,
+    queueParams.name,
+    null,
+  );
   redisClient.hgetall(keyQueueProperties, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !Object.keys(reply).length) cb(new QueueNotFoundError());

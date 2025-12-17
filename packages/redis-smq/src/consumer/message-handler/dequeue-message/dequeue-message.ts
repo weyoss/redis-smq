@@ -103,7 +103,11 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       keyQueuePending,
       keyQueuePriorityPending,
       keyQueueConsumers,
-    } = redisKeys.getQueueKeys(this.queue.queueParams, this.queue.groupId);
+    } = redisKeys.getQueueKeys(
+      this.queue.queueParams.ns,
+      this.queue.queueParams.name,
+      this.queue.groupId,
+    );
 
     this.keyQueuePriorityPending = keyQueuePriorityPending;
     this.keyQueuePending = keyQueuePending;

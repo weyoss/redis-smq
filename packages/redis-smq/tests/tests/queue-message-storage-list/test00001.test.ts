@@ -23,7 +23,11 @@ it('QueueStorageList: should return empty array for an empty list', async () => 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
-  const { keyQueuePending } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueuePending } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
   const items = await queueMessagesStorageList.fetchItemsAsync(
     keyQueuePending,
     {

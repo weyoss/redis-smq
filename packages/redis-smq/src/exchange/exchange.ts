@@ -214,7 +214,8 @@ export class Exchange {
       return cb(queueParams);
     }
     const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
-      queueParams,
+      queueParams.ns,
+      queueParams.name,
       null,
     );
     withSharedPoolConnection((client, done) => {

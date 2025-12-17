@@ -433,7 +433,7 @@ export class ExchangeDirect {
     }
 
     const { keyQueueProperties, keyQueueExchangeBindings } =
-      redisKeys.getQueueKeys(queueParams, null);
+      redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
     const { keyExchange, keyExchangeRoutingKeys } =
       redisKeys.getExchangeDirectKeys(exchangeParams.ns, exchangeParams.name);
     const { keyRoutingKeyQueues } = redisKeys.getExchangeDirectRoutingKeyKeys(
@@ -680,7 +680,8 @@ export class ExchangeDirect {
     }
 
     const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
-      queueParams,
+      queueParams.ns,
+      queueParams.name,
       null,
     );
     const { keyExchange, keyExchangeRoutingKeys } =

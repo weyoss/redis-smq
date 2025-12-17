@@ -34,7 +34,11 @@ export const processingQueue = {
     queue: IQueueParams,
     cb: ICallback<Record<string, string>>,
   ): void {
-    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(queue, null);
+    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(
+      queue.ns,
+      queue.name,
+      null,
+    );
     redisClient.hgetall(keyQueueProcessingQueues, cb);
   },
 };

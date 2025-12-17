@@ -101,7 +101,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
     const { keyQueueProperties } = redisKeys.getQueueKeys(
-      this.queue.queueParams,
+      this.queue.queueParams.ns,
+      this.queue.queueParams.name,
       this.queue.groupId,
     );
 
@@ -255,7 +256,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) return cb(redisClient);
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
-      this.queue.queueParams,
+      this.queue.queueParams.ns,
+      this.queue.queueParams.name,
       this.queue.groupId,
     );
     this.workerResourceGroup = new WorkerResourceGroup(

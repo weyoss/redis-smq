@@ -70,7 +70,7 @@ export class QueueRateLimit {
           _parseQueueParamsAndValidate(client, queue, cb),
         (queueParams, cb) => {
           const { keyQueueProperties, keyQueueRateLimitCounter } =
-            redisKeys.getQueueKeys(queueParams, null);
+            redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
           this.logger.debug(
             `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
           );
@@ -154,7 +154,8 @@ export class QueueRateLimit {
         );
 
         const { keyQueueProperties } = redisKeys.getQueueKeys(
-          queueParams,
+          queueParams.ns,
+          queueParams.name,
           null,
         );
         this.logger.debug(
@@ -265,7 +266,8 @@ export class QueueRateLimit {
           _parseQueueParamsAndValidate(client, queue, cb),
         (queueParams, cb) => {
           const { keyQueueProperties } = redisKeys.getQueueKeys(
-            queueParams,
+            queueParams.ns,
+            queueParams.name,
             null,
           );
           this.logger.debug(

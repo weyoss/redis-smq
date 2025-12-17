@@ -48,7 +48,8 @@ export class RequeueDelayedWorker extends WorkerAbstract {
 
     withSharedPoolConnection((redisClient, cb) => {
       const { keyQueueDelayed } = redisKeys.getQueueKeys(
-        this.queueParsedParams.queueParams,
+        this.queueParsedParams.queueParams.ns,
+        this.queueParsedParams.queueParams.name,
         this.queueParsedParams.groupId,
       );
 
@@ -118,7 +119,8 @@ export class RequeueDelayedWorker extends WorkerAbstract {
         keyQueueDL,
         keyQueueConsumerGroups,
       } = redisKeys.getQueueKeys(
-        this.queueParsedParams.queueParams,
+        this.queueParsedParams.queueParams.ns,
+        this.queueParsedParams.queueParams.name,
         this.queueParsedParams.groupId,
       );
 
@@ -149,9 +151,11 @@ export class RequeueDelayedWorker extends WorkerAbstract {
         const messageId = msg.getId();
         const consumerGroupId = msg.getConsumerGroupId();
         const { keyMessage } = redisKeys.getMessageKeys(messageId);
+        const destinationQueue = msg.getDestinationQueue();
         const { keyQueuePending, keyQueuePriorityPending } =
           redisKeys.getQueueKeys(
-            msg.getDestinationQueue(),
+            destinationQueue.ns,
+            destinationQueue.name,
             msg.getConsumerGroupId(),
           );
         keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);

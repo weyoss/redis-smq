@@ -73,7 +73,7 @@ export function _deleteQueue(
     keyQueueScheduled,
     keyQueueMessages,
     keyQueueConsumerGroups,
-  } = redisKeys.getQueueKeys(queueParams, null);
+  } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
   const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
   const { keyQueues } = redisKeys.getMainKeys();
   const keys: string[] = [
@@ -134,7 +134,11 @@ export function _deleteQueue(
                       groups ?? [],
                       (groupId, _, cb) => {
                         const { keyQueuePriorityPending, keyQueuePending } =
-                          redisKeys.getQueueKeys(queueParams, groupId);
+                          redisKeys.getQueueKeys(
+                            queueParams.ns,
+                            queueParams.name,
+                            groupId,
+                          );
                         keys.push(keyQueuePending, keyQueuePriorityPending);
                         cb();
                       },

@@ -23,7 +23,11 @@ it('QueueStorageSet: should return empty array for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageSet = promisifyAll(new BrowserStorageSet());
-  const { keyQueueMessages } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueueMessages } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
   const items =
     await queueMessagesStorageSet.fetchAllItemsAsync(keyQueueMessages);
   expect(items.length).toBe(0);
