@@ -29,7 +29,8 @@ it('QueueStorageSortedSet: should return 0 for an empty list', async () => {
   );
 
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
-    defaultQueue,
+    defaultQueue.ns,
+    defaultQueue.name,
     null,
   );
   const count = await queueMessagesStorageSortedSet.countAsync(
@@ -46,7 +47,8 @@ it('should return the correct count after adding items', async () => {
   );
   await produceMessageWithPriority(defaultQueue);
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
-    defaultQueue,
+    defaultQueue.ns,
+    defaultQueue.name,
     null,
   );
   const count = await queueMessagesStorageSortedSet.countAsync(

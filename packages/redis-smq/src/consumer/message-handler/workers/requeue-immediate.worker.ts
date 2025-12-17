@@ -46,7 +46,8 @@ export class RequeueImmediateWorker extends WorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     withSharedPoolConnection((redisClient, cb) => {
       const { keyQueueRequeued } = redisKeys.getQueueKeys(
-        this.queueParsedParams.queueParams,
+        this.queueParsedParams.queueParams.ns,
+        this.queueParsedParams.queueParams.name,
         this.queueParsedParams.groupId,
       );
       // Fetch up to 100 messages at a time
@@ -87,7 +88,8 @@ export class RequeueImmediateWorker extends WorkerAbstract {
       keyQueueDL,
       keyQueueConsumerGroups,
     } = redisKeys.getQueueKeys(
-      this.queueParsedParams.queueParams,
+      this.queueParsedParams.queueParams.ns,
+      this.queueParsedParams.queueParams.name,
       this.queueParsedParams.groupId,
     );
 
@@ -125,8 +127,13 @@ export class RequeueImmediateWorker extends WorkerAbstract {
       const priority = msg.producibleMessage.getPriority();
       const retryDelay = msg.producibleMessage.getRetryDelay();
       const delayedTimestamp = retryDelay ? timestamp + retryDelay : 0;
+      const destinationQueue = msg.getDestinationQueue();
       const { keyQueuePending, keyQueuePriorityPending } =
-        redisKeys.getQueueKeys(msg.getDestinationQueue(), consumerGroupId);
+        redisKeys.getQueueKeys(
+          destinationQueue.ns,
+          destinationQueue.name,
+          consumerGroupId,
+        );
       const { keyMessage } = redisKeys.getMessageKeys(messageId);
       keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
       argv.push(

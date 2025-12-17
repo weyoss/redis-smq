@@ -16,6 +16,10 @@ export function _getConsumerGroups(
   queue: IQueueParams,
   cb: ICallback<string[]>,
 ): void {
-  const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(queue, null);
+  const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(
+    queue.ns,
+    queue.name,
+    null,
+  );
   redisClient.smembers(keyQueueConsumerGroups, cb);
 }

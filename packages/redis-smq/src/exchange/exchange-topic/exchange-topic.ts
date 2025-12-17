@@ -331,7 +331,7 @@ export class ExchangeTopic {
     }
 
     const { keyQueueProperties, keyQueueExchangeBindings } =
-      redisKeys.getQueueKeys(queueParams, null);
+      redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
     const { keyExchange, keyExchangeBindingPatterns } =
       redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
     const { keyBindingPatternQueues } =
@@ -505,7 +505,8 @@ export class ExchangeTopic {
     }
 
     const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
-      queueParams,
+      queueParams.ns,
+      queueParams.name,
       null,
     );
     const { keyExchange, keyExchangeBindingPatterns } =

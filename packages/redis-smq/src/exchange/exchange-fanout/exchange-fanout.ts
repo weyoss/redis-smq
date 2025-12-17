@@ -363,7 +363,7 @@ export class ExchangeFanout {
     }
 
     const { keyQueueProperties, keyQueueExchangeBindings } =
-      redisKeys.getQueueKeys(queueParams, null);
+      redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
     const { keyExchange, keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
       exchangeParams.ns,
       exchangeParams.name,
@@ -553,7 +553,7 @@ export class ExchangeFanout {
     }
 
     const { keyQueueProperties, keyQueueExchangeBindings } =
-      redisKeys.getQueueKeys(queueParams, null);
+      redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
     const { keyExchange, keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
       exchangeParams.ns,
       exchangeParams.name,

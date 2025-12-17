@@ -37,7 +37,7 @@ export function _deleteConsumerGroup(
           keyQueuePending,
           keyQueuePriorityPending,
           keyQueueProperties,
-        } = redisKeys.getQueueKeys(queue, groupId);
+        } = redisKeys.getQueueKeys(queue.ns, queue.name, groupId);
         redisClient.runScript(
           ELuaScriptName.DELETE_CONSUMER_GROUP,
           [

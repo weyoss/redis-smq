@@ -35,7 +35,11 @@ it('QueueStorageList: should fetch all items for a large list (chunking test)', 
     ids.unshift(id);
   }
 
-  const { keyQueuePending } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueuePending } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
   const items =
     await queueMessagesStorageList.fetchAllItemsAsync(keyQueuePending);
   expect(items).toEqual(ids);

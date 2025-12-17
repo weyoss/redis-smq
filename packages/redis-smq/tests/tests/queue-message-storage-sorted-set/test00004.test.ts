@@ -53,7 +53,8 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
 
   const pageSize = 30;
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
-    defaultQueue,
+    defaultQueue.ns,
+    defaultQueue.name,
     null,
   );
   for (let i = 0; i < 17; i++) {

@@ -47,7 +47,11 @@ export function _saveConsumerGroup(
             else cb();
           }),
         (_, cb: ICallback<number>) => {
-          const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(queue, gid);
+          const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(
+            queue.ns,
+            queue.name,
+            gid,
+          );
           redisClient.sadd(keyQueueConsumerGroups, gid, (err, reply) => {
             if (err) cb(err);
             else {

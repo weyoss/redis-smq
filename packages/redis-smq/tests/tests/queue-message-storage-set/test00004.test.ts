@@ -35,7 +35,11 @@ it('QueueStorageSet: should fetch items with correct pagination', async () => {
     ids.unshift(id);
   }
 
-  const { keyQueueMessages } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueueMessages } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
 
   const allPages = new Set<string>();
   for (let i = 0; i < 17; i++) {

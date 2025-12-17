@@ -71,7 +71,11 @@ export function _requeueMessage(
       keyQueueMessages,
       keyQueueScheduled,
       keyQueueConsumerGroups,
-    } = redisKeys.getQueueKeys(destinationQueue, consumerGroupId);
+    } = redisKeys.getQueueKeys(
+      destinationQueue.ns,
+      destinationQueue.name,
+      consumerGroupId,
+    );
 
     // Build KEYS array for the Lua script
     const keys: string[] = [

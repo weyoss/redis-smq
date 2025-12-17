@@ -23,7 +23,11 @@ export function _getQueueConsumers(
   queue: IQueueParams,
   cb: ICallback<Record<string, TQueueConsumer>>,
 ): void {
-  const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
+  const { keyQueueConsumers } = redisKeys.getQueueKeys(
+    queue.ns,
+    queue.name,
+    null,
+  );
   client.hgetall(keyQueueConsumers, (err, reply) => {
     if (err) return cb(err);
     const consumers = reply ?? {};

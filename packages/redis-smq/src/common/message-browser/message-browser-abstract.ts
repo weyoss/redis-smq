@@ -240,7 +240,8 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
           }
 
           const keys = redisKeys.getQueueKeys(
-            parsedParams.queueParams,
+            parsedParams.queueParams.ns,
+            parsedParams.queueParams.name,
             parsedParams.groupId,
           );
           const keyVal = keys[this.redisKey];
@@ -314,7 +315,11 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
       `Getting message IDs for queue ${queue.queueParams.name}, page ${page}, size ${pageSize}`,
     );
 
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+    const keys = redisKeys.getQueueKeys(
+      queue.queueParams.ns,
+      queue.queueParams.name,
+      queue.groupId,
+    );
     const keyVal = keys[this.redisKey];
 
     async.waterfall(

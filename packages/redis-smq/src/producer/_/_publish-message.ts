@@ -55,7 +55,11 @@ export function _publishMessage(
     `Enqueuing message ${messageId} to queue ${queueName}${consumerGroupId ? ` for consumer group ${consumerGroupId}` : ''}`,
   );
 
-  const keys = redisKeys.getQueueKeys(destinationQueue, consumerGroupId);
+  const keys = redisKeys.getQueueKeys(
+    destinationQueue.ns,
+    destinationQueue.name,
+    consumerGroupId,
+  );
   const { keyMessage } = redisKeys.getMessageKeys(messageId);
   const messagePriority = message.producibleMessage.getPriority();
 

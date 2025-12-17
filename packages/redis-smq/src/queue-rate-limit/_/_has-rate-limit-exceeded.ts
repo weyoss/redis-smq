@@ -19,7 +19,11 @@ export function _hasRateLimitExceeded(
   cb: ICallback<boolean>,
 ): void {
   const { limit, interval } = rateLimit;
-  const { keyQueueRateLimitCounter } = redisKeys.getQueueKeys(queue, null);
+  const { keyQueueRateLimitCounter } = redisKeys.getQueueKeys(
+    queue.ns,
+    queue.name,
+    null,
+  );
   redisClient.runScript(
     ELuaScriptName.CHECK_QUEUE_RATE_LIMIT,
     [keyQueueRateLimitCounter],

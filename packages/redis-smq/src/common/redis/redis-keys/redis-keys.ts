@@ -202,11 +202,12 @@ export const redisKeys = {
   /**
    * Get keys for a specific queue
    *
-   * @param queueParams - Queue parameters
+   * @param ns - Queue namespace
+   * @param queueName - Queue name
    * @param consumerGroupId - Optional consumer group ID
    * @returns Queue-specific keys
    */
-  getQueueKeys(queueParams: IQueueParams, consumerGroupId: string | null) {
+  getQueueKeys(ns: string, queueName: string, consumerGroupId: string | null) {
     const queueKeys = {
       keyQueueDL: ERedisKey.QUEUE_DL,
       keyQueueProcessingQueues: ERedisKey.QUEUE_PROCESSING_QUEUES,
@@ -229,15 +230,15 @@ export const redisKeys = {
       keyQueuePriorityPending: ERedisKey.QUEUE_PRIORITY_PENDING,
     };
 
-    const payload = [queueParams.name];
+    const payload = [queueName];
     const pendingPayload = [
       ...payload,
       ...(consumerGroupId ? [consumerGroupId] : []),
     ];
 
     return {
-      ...makeNamespacedKeys(queueKeys, queueParams.ns, ...payload),
-      ...makeNamespacedKeys(pendingKeys, queueParams.ns, ...pendingPayload),
+      ...makeNamespacedKeys(queueKeys, ns, ...payload),
+      ...makeNamespacedKeys(pendingKeys, ns, ...pendingPayload),
     };
   },
 

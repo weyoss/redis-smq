@@ -95,7 +95,11 @@ export class QueueManager {
     this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
     withSharedPoolConnection((client, done) => {
-      const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
+      const { keyQueueProperties } = redisKeys.getQueueKeys(
+        queueParams.ns,
+        queueParams.name,
+        null,
+      );
       const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
       const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
 

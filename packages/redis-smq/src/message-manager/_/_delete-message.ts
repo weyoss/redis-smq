@@ -116,7 +116,7 @@ export function _deleteMessage(
                 keyQueueDL,
                 keyQueueDelayed,
                 keyQueueRequeued,
-              } = redisKeys.getQueueKeys(queue, consumerGroupId);
+              } = redisKeys.getQueueKeys(queue.ns, queue.name, consumerGroupId);
 
               const staticKeys = [
                 keyQueueProperties,

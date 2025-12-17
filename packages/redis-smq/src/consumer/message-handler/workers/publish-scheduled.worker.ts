@@ -50,7 +50,8 @@ export class PublishScheduledWorker extends WorkerAbstract {
 
     withSharedPoolConnection((redisClient, cb) => {
       const { keyQueueScheduled } = redisKeys.getQueueKeys(
-        this.queueParsedParams.queueParams,
+        this.queueParsedParams.queueParams.ns,
+        this.queueParsedParams.queueParams.name,
         this.queueParsedParams.groupId,
       );
 
@@ -126,7 +127,8 @@ export class PublishScheduledWorker extends WorkerAbstract {
         keyQueueDL,
         keyQueueConsumerGroups,
       } = redisKeys.getQueueKeys(
-        this.queueParsedParams.queueParams,
+        this.queueParsedParams.queueParams.ns,
+        this.queueParsedParams.queueParams.name,
         this.queueParsedParams.groupId,
       );
 

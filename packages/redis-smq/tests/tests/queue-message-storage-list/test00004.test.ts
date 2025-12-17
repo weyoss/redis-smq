@@ -36,7 +36,11 @@ it('QueueStorageList: should fetch items with correct pagination', async () => {
   }
 
   const pageSize = 30;
-  const { keyQueuePending } = redisKeys.getQueueKeys(defaultQueue, null);
+  const { keyQueuePending } = redisKeys.getQueueKeys(
+    defaultQueue.ns,
+    defaultQueue.name,
+    null,
+  );
   for (let i = 0; i < 17; i++) {
     const offsetStart = i * pageSize;
     const offsetEnd = offsetStart + pageSize - 1;

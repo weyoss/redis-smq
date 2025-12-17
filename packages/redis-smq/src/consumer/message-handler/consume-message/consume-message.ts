@@ -92,7 +92,8 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       this.consumerId,
     );
     const { keyQueueProperties, keyQueueAcknowledged } = redisKeys.getQueueKeys(
-      this.queue.queueParams,
+      this.queue.queueParams.ns,
+      this.queue.queueParams.name,
       this.queue.groupId,
     );
     this.keyQueueProperties = keyQueueProperties;

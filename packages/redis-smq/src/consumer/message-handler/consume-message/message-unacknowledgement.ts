@@ -48,7 +48,7 @@ const UNACK_STATIC_KEYS = (queue: IQueueParams): string[] => {
     keyQueueProcessingQueues,
     keyQueueConsumers,
     keyQueueProperties,
-  } = redisKeys.getQueueKeys(queue, null);
+  } = redisKeys.getQueueKeys(queue.ns, queue.name, null);
   return [
     keyQueueRequeued,
     keyQueueDL,

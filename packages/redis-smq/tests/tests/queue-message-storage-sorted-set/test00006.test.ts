@@ -46,7 +46,8 @@ it('QueueStorageSortedSet: should fetch all items for a small list', async () =>
   }
 
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
-    defaultQueue,
+    defaultQueue.ns,
+    defaultQueue.name,
     null,
   );
   const items = await queueMessagesStorageSortedSet.fetchAllItemsAsync(
