@@ -194,47 +194,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     }
   };
 
-  protected registerSystemEvents = (): void => {
-    if (!this.dequeueMessage || !this.consumeMessage)
-      throw new PanicError('Message components are not initialized.');
-    this.dequeueMessage.on(
-      'consumer.dequeueMessage.messageReceived',
-      this.onMessageReceived,
-    );
-    this.dequeueMessage.on(
-      'consumer.dequeueMessage.nextMessage',
-      this.onMessageNext,
-    );
-    this.consumeMessage.on(
-      'consumer.consumeMessage.messageUnacknowledged',
-      this.onMessageUnacknowledged,
-    );
-    this.consumeMessage.on(
-      'consumer.consumeMessage.messageAcknowledged',
-      this.onMessageAcknowledged,
-    );
-  };
-
-  protected unregisterSystemEvents = (): void => {
-    if (!this.dequeueMessage || !this.consumeMessage) return;
-    this.dequeueMessage.removeListener(
-      'consumer.dequeueMessage.messageReceived',
-      this.onMessageReceived,
-    );
-    this.dequeueMessage.removeListener(
-      'consumer.dequeueMessage.nextMessage',
-      this.onMessageNext,
-    );
-    this.consumeMessage.removeListener(
-      'consumer.consumeMessage.messageUnacknowledged',
-      this.onMessageUnacknowledged,
-    );
-    this.consumeMessage.removeListener(
-      'consumer.consumeMessage.messageAcknowledged',
-      this.onMessageAcknowledged,
-    );
-  };
-
   protected override getLogger(): ILogger {
     return this.logger;
   }
@@ -332,16 +291,30 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           this.messageHandler,
         );
         this.consumeMessage.on('consumer.consumeMessage.error', this.onError);
-
+        this.consumeMessage.on(
+          'consumer.consumeMessage.messageUnacknowledged',
+          this.onMessageUnacknowledged,
+        );
+        this.consumeMessage.on(
+          'consumer.consumeMessage.messageAcknowledged',
+          this.onMessageAcknowledged,
+        );
+        this.consumeMessage.run((err) => cb(err));
+      },
+      (cb: ICallback) => {
         this.dequeueMessage = this.createDequeueMessageInstance();
         this.dequeueMessage.on('consumer.dequeueMessage.error', this.onError);
-
-        this.registerSystemEvents();
-        cb();
+        this.dequeueMessage.on(
+          'consumer.dequeueMessage.messageReceived',
+          this.onMessageReceived,
+        );
+        this.dequeueMessage.on(
+          'consumer.dequeueMessage.nextMessage',
+          this.onMessageNext,
+        );
+        this.dequeueMessage.run((err) => cb(err));
       },
       this.setUpConsumerWorkers,
-      (cb: ICallback) => this.consumeMessage?.run((err) => cb(err)),
-      (cb: ICallback) => this.dequeueMessage?.run((err) => cb(err)),
       (cb: ICallback) => {
         if (this.autoDequeue) {
           this.dequeue();
@@ -374,17 +347,44 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       },
       this.shutDownConsumerWorkers,
       (cb: ICallback) => {
-        this.unregisterSystemEvents();
-        this.dequeueMessage?.shutdown(() => {
-          this.dequeueMessage = null;
-          cb();
-        });
+        if (this.dequeueMessage) {
+          this.dequeueMessage.shutdown(() => {
+            this.dequeueMessage?.removeListener(
+              'consumer.dequeueMessage.error',
+              this.onError,
+            );
+            this.dequeueMessage?.removeListener(
+              'consumer.dequeueMessage.messageReceived',
+              this.onMessageReceived,
+            );
+            this.dequeueMessage?.removeListener(
+              'consumer.dequeueMessage.nextMessage',
+              this.onMessageNext,
+            );
+            this.dequeueMessage = null;
+            cb();
+          });
+        } else cb();
       },
       (cb: ICallback) => {
-        this.consumeMessage?.shutdown(() => {
-          this.consumeMessage = null;
-          cb();
-        });
+        if (this.consumeMessage) {
+          this.consumeMessage.shutdown(() => {
+            this.consumeMessage?.removeListener(
+              'consumer.consumeMessage.error',
+              this.onError,
+            );
+            this.consumeMessage?.removeListener(
+              'consumer.consumeMessage.messageUnacknowledged',
+              this.onMessageUnacknowledged,
+            );
+            this.consumeMessage?.removeListener(
+              'consumer.consumeMessage.messageAcknowledged',
+              this.onMessageAcknowledged,
+            );
+            this.consumeMessage = null;
+            cb();
+          });
+        } else cb();
       },
       (cb: ICallback) => {
         if (this.redisClient) {
