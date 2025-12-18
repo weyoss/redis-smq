@@ -36,7 +36,10 @@ export function workerBootstrap(
       shutdown(cb: ICallback) {
         if (worker)
           async.series(
-            [(cb) => worker?.shutdown(cb), (cb) => RedisSMQ.shutdown(cb)],
+            [
+              (cb) => worker?.shutdown(cb) || cb(),
+              (cb) => RedisSMQ.shutdown(cb),
+            ],
             () => {
               worker = null;
               cb();
