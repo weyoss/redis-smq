@@ -264,8 +264,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     this.logger.info('ConsumerHeartbeat going up');
     return super.goingUp().concat([
       (cb: ICallback) => {
-        this.logger.debug('Setting up initial heartbeat');
-
+        // this.logger.debug('Setting up initial heartbeat');
         const cleanUp = () => {
           this.logger.debug('Cleaning up heartbeat listeners');
           this.removeListener('consumerHeartbeat.heartbeat', onHeartbeat);
@@ -290,7 +289,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         // Reset backoff at start
         this.currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
 
-        this.logger.debug('Initiating first heartbeat');
+        // this.logger.debug('Initiating first heartbeat');
         this.beat();
       },
     ]);
