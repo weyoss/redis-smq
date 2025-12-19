@@ -17,11 +17,15 @@ import {
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import { ConsumerSetMismatchError } from '../../../src/errors/index.js';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
-  const consumer = getConsumer();
+
+  // Consuming defaultQueue
+  const consumerA = getConsumer();
+  await consumerA.runAsync();
 
   // queueInstance.delete() calls processingQueue.getQueueProcessingQueues() after validation is passed.
   // Within getQueueProcessingQueues() method, we can take more time than usual to return a response, to allow the
@@ -42,10 +46,10 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   const q = await getQueueManager();
 
-  const { WatchedKeysChangedError } = await import('redis-smq-common');
+  const consumerB = getConsumer();
   await expect(
-    Promise.all([q.deleteAsync(getDefaultQueue()), consumer.runAsync()]),
-  ).rejects.toThrow(WatchedKeysChangedError);
+    Promise.all([q.deleteAsync(getDefaultQueue()), consumerB.runAsync()]),
+  ).rejects.toThrow(ConsumerSetMismatchError);
 
   // restore
   processingQueue.getQueueProcessingQueues = originalMethod;

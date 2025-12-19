@@ -21,6 +21,7 @@ import { IQueueParams } from '../queue-manager/index.js';
 import {
   InvalidNamespaceError,
   NamespaceNotFoundError,
+  QueueNotFoundError,
 } from '../errors/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
@@ -212,9 +213,6 @@ export class NamespaceManager {
               queueCount: queues.length,
             });
 
-            const multi = client.multi();
-            multi.srem(keyNamespaces, ns);
-
             async.eachOf(
               queues,
               (queueParams, _, done) => {
@@ -222,13 +220,14 @@ export class NamespaceManager {
                   namespace: ns,
                   queue: queueParams.name,
                 });
-                _deleteQueue(client, queueParams, multi, (err) => {
+                _deleteQueue(client, queueParams, (err) => {
                   if (err) {
                     this.logger.error('Failed to delete queue', {
                       namespace: ns,
                       queue: queueParams.name,
                       error: err,
                     });
+                    if (err instanceof QueueNotFoundError) return done();
                   }
                   done(err);
                 });
@@ -241,19 +240,12 @@ export class NamespaceManager {
                   });
                   return cb(err);
                 }
-
-                this.logger.debug('Executing namespace deletion transaction', {
-                  namespace: ns,
-                });
-                multi.exec((err) => {
+                client.srem(keyNamespaces, ns, (err) => {
                   if (err) {
-                    this.logger.error(
-                      'Failed to execute namespace deletion transaction',
-                      {
-                        namespace: ns,
-                        error: err,
-                      },
-                    );
+                    this.logger.error('Failed to delete namespace', {
+                      namespace: ns,
+                      error: err,
+                    });
                     return cb(err);
                   }
                   this.logger.debug('Successfully deleted namespace', {
