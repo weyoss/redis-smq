@@ -2,7 +2,7 @@
   "name": "redis-smq",
   "version": "9.0.5",
   "description": "A high-performance, reliable, and scalable message queue for Node.js.",
-  "author": "Weyoss <weyoss@protonmail.com>",
+  "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
   "keywords": [
     "redis",
