@@ -1,3 +1,11 @@
+--
+-- Copyright (c)
+-- Weyoss <weyoss@outlook.com>
+-- https://github.com/weyoss
+--
+-- This source code is licensed under the MIT license found in the LICENSE file
+-- in the root directory of this source tree.
+--
 -- Description:
 -- Initializes a consumer for a given queue. This script performs the following actions atomically:
 -- 1. Verifies that the target queue exists.

@@ -1,3 +1,11 @@
+--
+-- Copyright (c)
+-- Weyoss <weyoss@outlook.com>
+-- https://github.com/weyoss
+--
+-- This source code is licensed under the MIT license found in the LICENSE file
+-- in the root directory of this source tree.
+--
 -- Description:
 -- Atomically checks and decrements a rate-limit counter.
 -- This script is safe from race conditions and correctly implements the rate limit logic.

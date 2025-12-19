@@ -1,3 +1,11 @@
+--
+-- Copyright (c)
+-- Weyoss <weyoss@outlook.com>
+-- https://github.com/weyoss
+--
+-- This source code is licensed under the MIT license found in the LICENSE file
+-- in the root directory of this source tree.
+--
 -- Description:
 -- Atomically deletes a consumer group and its associated pending queues,
 -- but only if its primary pending queue is empty.

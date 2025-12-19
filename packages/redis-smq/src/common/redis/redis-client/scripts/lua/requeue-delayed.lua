@@ -1,3 +1,12 @@
+--
+-- Copyright (c)
+-- Weyoss <weyoss@outlook.com>
+-- https://github.com/weyoss
+--
+-- This source code is licensed under the MIT license found in the LICENSE file
+-- in the root directory of this source tree.
+--
+-- Description:
 -- Re-queues messages from the delayed sorted set to the pending queue.
 -- This script is designed for batch processing to improve performance. It moves messages
 -- that are due for a retry back into the active processing queue.
