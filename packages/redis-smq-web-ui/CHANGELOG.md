@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.6-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.5...v9.0.6-next.0) (2025-12-19)
+
+### 🚀 Chore
+
+- fix outdated email address in different files ([ef0ec13](https://github.com/weyoss/redis-smq/commit/ef0ec13b7ea93de572b0913031bddf682dceb502))
+- update copyright info ([09c04af](https://github.com/weyoss/redis-smq/commit/09c04af231725845f05e1a781d3211e87ded0b91))
+- update READMEs after merging 'master' into 'next' ([7a7b35a](https://github.com/weyoss/redis-smq/commit/7a7b35a1a8171d70a2309bbb82b39ca5283b0499))
+
 ## [9.0.5](https://github.com/weyoss/redis-smq/compare/v9.0.5-next.1...v9.0.5) (2025-12-15)
 
 ### 🚀 Chore
