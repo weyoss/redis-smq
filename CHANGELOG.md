@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.6-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.5...v9.0.6-next.0) (2025-12-19)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** fix consumer hangout during startup ([f8d35a5](https://github.com/weyoss/redis-smq/commit/f8d35a57822d026332e88bd5730f387c2e38c76d))
+
+### 🚀 Chore
+
+- fix outdated email address in different files ([ef0ec13](https://github.com/weyoss/redis-smq/commit/ef0ec13b7ea93de572b0913031bddf682dceb502))
+- update copyright info ([09c04af](https://github.com/weyoss/redis-smq/commit/09c04af231725845f05e1a781d3211e87ded0b91))
+- update READMEs after merging 'master' into 'next' ([7a7b35a](https://github.com/weyoss/redis-smq/commit/7a7b35a1a8171d70a2309bbb82b39ca5283b0499))
+
+### 📝 Documentation
+
+- **redis-smq:** add ConsumerSetMismatchError error class ([9a0d0b0](https://github.com/weyoss/redis-smq/commit/9a0d0b0299ec57f0612c89b8354233bc5cd3a705))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** include ConsumerSetMismatchError in error list map ([d486f3c](https://github.com/weyoss/redis-smq/commit/d486f3c2834dd580841027ef5c0cf75672661a11))
+- **redis-smq:** do not pollute log with redundant debug info ([b9c669b](https://github.com/weyoss/redis-smq/commit/b9c669b555ac3950332901a0dd3775433200210a))
+- **redis-smq:** make use of consumer context ([501e212](https://github.com/weyoss/redis-smq/commit/501e21296f03f81e12046093d66a031721aff3f1))
+- **redis-smq:** migrate the queue deletion logic to LUA ([8bd67f1](https://github.com/weyoss/redis-smq/commit/8bd67f18a4c38965b684c2fcc1301a419ef606aa))
+- **redis-smq:** update getQueueKeys() to accept ns and name as args ([7d36f29](https://github.com/weyoss/redis-smq/commit/7d36f2918d90018b0f4845fd59e2773de41cd0e3))
+
+### ✅ Tests
+
+- **redis-smq-common:** test async.series() error handling ([487b343](https://github.com/weyoss/redis-smq/commit/487b343aa8dd99f1b3f5aff9296f1071e40716e8))
+- **redis-smq:** cover edge cases in queue deletion errors ([7e2684b](https://github.com/weyoss/redis-smq/commit/7e2684b8928529427371cf203388c77624153aee))
+- **redis-smq:** simplify namespace deleting test case ([7483a98](https://github.com/weyoss/redis-smq/commit/7483a989b9137a2f0f32dd5c782327ddbf4378b3))
+
 ## [9.0.5](https://github.com/weyoss/redis-smq/compare/v9.0.5-next.1...v9.0.5) (2025-12-15)
 
 ### 🚀 Chore
