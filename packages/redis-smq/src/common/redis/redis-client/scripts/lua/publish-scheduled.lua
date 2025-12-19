@@ -1,3 +1,11 @@
+--
+-- Copyright (c)
+-- Weyoss <weyoss@outlook.com>
+-- https://github.com/weyoss
+--
+-- This source code is licensed under the MIT license found in the LICENSE file
+-- in the root directory of this source tree.
+--
 -- Description:
 -- Publishes due scheduled messages for a SINGLE queue. This script handles two cases:
 -- 1. Simple scheduled message: The message is moved to the pending queue. If the target consumer group is gone, it is moved to the dead-letter queue.

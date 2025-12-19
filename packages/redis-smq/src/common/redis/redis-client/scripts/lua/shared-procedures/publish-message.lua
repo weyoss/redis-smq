@@ -1,3 +1,11 @@
+--
+-- Copyright (c)
+-- Weyoss <weyoss@outlook.com>
+-- https://github.com/weyoss
+--
+-- This source code is licensed under the MIT license found in the LICENSE file
+-- in the root directory of this source tree.
+--
 -- This is a library file and is not meant to be executed directly.
 -- It should be prepended to other Lua scripts before they are loaded into Redis.
 
