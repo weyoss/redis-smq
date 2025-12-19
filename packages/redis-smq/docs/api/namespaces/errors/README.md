@@ -15,6 +15,7 @@
 - [ConsumerGroupRequiredError](classes/ConsumerGroupRequiredError.md)
 - [ConsumerGroupsError](classes/ConsumerGroupsError.md)
 - [ConsumerGroupsNotSupportedError](classes/ConsumerGroupsNotSupportedError.md)
+- [ConsumerSetMismatchError](classes/ConsumerSetMismatchError.md)
 - [DeadLetteredMessageAuditNotEnabledError](classes/DeadLetteredMessageAuditNotEnabledError.md)
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanoutError](classes/ExchangeFanoutError.md)
