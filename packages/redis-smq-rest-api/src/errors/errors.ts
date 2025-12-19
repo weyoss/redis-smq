@@ -35,6 +35,7 @@ export const errors = {
   ConsumerGroupRequiredError: [400, 'ConsumerGroupRequiredError'],
   ConsumerGroupsError: [500, 'ConsumerGroupsError'],
   ConsumerGroupsNotSupportedError: [501, 'ConsumerGroupsNotSupportedError'],
+  ConsumerSetMismatchError: [500, 'ConsumerSetMismatchError'],
   DeadLetteredMessageAuditNotEnabledError: [
     500,
     'DeadLetteredMessageAuditNotEnabledError',
