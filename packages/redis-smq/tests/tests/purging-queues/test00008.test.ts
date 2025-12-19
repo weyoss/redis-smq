@@ -62,16 +62,16 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     QueueNotEmptyError,
   );
 
-  await qm.purgeAsync(queueB);
-  await c1.runAsync();
-  await c2.runAsync();
-
-  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
-    QueueManagerActiveConsumersError,
+  // At this point, the queueA should be deleted
+  await expect(qm.countMessagesByStatusAsync(queueA)).rejects.toThrow(
+    QueueNotFoundError,
   );
 
-  await c1.shutdownAsync();
+  // Getting rid of QueueNotEmptyError
+  await qm.purgeAsync(queueB);
 
+  // Expecting QueueManagerActiveConsumersError
+  await c2.runAsync();
   await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
     QueueManagerActiveConsumersError,
   );
@@ -87,10 +87,10 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     QueueNotFoundError,
   );
 
-  const m5 = await namespaceManager.getNamespacesAsync();
-  expect(m5).toEqual([]);
-
   await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
     NamespaceNotFoundError,
   );
+
+  const m5 = await namespaceManager.getNamespacesAsync();
+  expect(m5).toEqual([]);
 });

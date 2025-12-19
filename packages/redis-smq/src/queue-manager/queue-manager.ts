@@ -7,12 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import {
-  CallbackEmptyReplyError,
-  createLogger,
-  EventBusRedis,
-  ICallback,
-} from 'redis-smq-common';
+import { createLogger, EventBusRedis, ICallback } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
@@ -245,49 +240,28 @@ export class QueueManager {
 
     withSharedPoolConnection((client, cb) => {
       this.logger.debug(`Executing delete queue operation for ${queueName}`);
-      _deleteQueue(client, queueParams, undefined, (err, multi) => {
+      _deleteQueue(client, queueParams, (err) => {
         if (err) {
           this.logger.error(
-            `Error preparing delete operation for queue ${queueName}: ${err.message}`,
+            `Error deleting queue ${queueName}: ${err.message}`,
             err,
           );
           return cb(err);
         }
-        if (!multi) {
-          const error = new CallbackEmptyReplyError();
-          this.logger.error(
-            `Multi command is empty for deleting queue ${queueName}`,
-            error,
-          );
-          return cb(error);
-        }
-
         this.logger.debug(
-          `Executing multi command to delete queue ${queueName}`,
+          `Queue ${queueName} deleted from Redis, emitting queue.queueDeleted event`,
         );
-        multi.exec((err) => {
+        this.ensureEventBusIsRunning((err) => {
           if (err) {
-            this.logger.error(
-              `Error executing multi command for deleting queue ${queueName}: ${err.message}`,
-              err,
-            );
+            this.logger.error(err);
             return cb(err);
           }
           this.logger.debug(
-            `Queue ${queueName} deleted from Redis, emitting queue.queueDeleted event`,
+            `Emitting queue.queueDeleted event for ${queueName}`,
           );
-          this.ensureEventBusIsRunning((err) => {
-            if (err) {
-              this.logger.error(err);
-              return cb(err);
-            }
-            this.logger.debug(
-              `Emitting queue.queueDeleted event for ${queueName}`,
-            );
-            this.eventBus.emit('queue.queueDeleted', queueParams);
-            this.logger.info(`Queue ${queueName} successfully deleted`);
-            cb();
-          });
+          this.eventBus.emit('queue.queueDeleted', queueParams);
+          this.logger.info(`Queue ${queueName} successfully deleted`);
+          cb();
         });
       });
     }, cb);

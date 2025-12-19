@@ -209,25 +209,25 @@ export const redisKeys = {
    */
   getQueueKeys(ns: string, queueName: string, consumerGroupId: string | null) {
     const queueKeys = {
-      keyQueueDL: ERedisKey.QUEUE_DL,
-      keyQueueProcessingQueues: ERedisKey.QUEUE_PROCESSING_QUEUES,
-      keyQueueAcknowledged: ERedisKey.QUEUE_ACKNOWLEDGED,
-      keyQueueScheduled: ERedisKey.QUEUE_SCHEDULED,
-      keyQueueRequeued: ERedisKey.QUEUE_REQUEUED,
-      keyQueueDelayed: ERedisKey.QUEUE_DELAYED,
-      keyQueueConsumers: ERedisKey.QUEUE_CONSUMERS,
-      keyQueueRateLimitCounter: ERedisKey.QUEUE_RATE_LIMIT_COUNTER,
-      keyQueueProperties: ERedisKey.QUEUE_PROPERTIES,
-      keyQueueMessages: ERedisKey.QUEUE_MESSAGES,
-      keyQueueMessageIds: ERedisKey.QUEUE_MESSAGE_IDS,
-      keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS,
-      keyQueueWorkersLock: ERedisKey.QUEUE_WORKERS_LOCK,
-      keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS,
+      keyQueueDL: ERedisKey.QUEUE_DL, // LIST
+      keyQueueProcessingQueues: ERedisKey.QUEUE_PROCESSING_QUEUES, // HASH
+      keyQueueAcknowledged: ERedisKey.QUEUE_ACKNOWLEDGED, // LIST
+      keyQueueScheduled: ERedisKey.QUEUE_SCHEDULED, // SORTED SET
+      keyQueueRequeued: ERedisKey.QUEUE_REQUEUED, // LIST
+      keyQueueDelayed: ERedisKey.QUEUE_DELAYED, // SORTED SET
+      keyQueueConsumers: ERedisKey.QUEUE_CONSUMERS, // HASH
+      keyQueueRateLimitCounter: ERedisKey.QUEUE_RATE_LIMIT_COUNTER, // STRING
+      keyQueueProperties: ERedisKey.QUEUE_PROPERTIES, // HASH
+      keyQueueMessages: ERedisKey.QUEUE_MESSAGES, // SET
+      keyQueueMessageIds: ERedisKey.QUEUE_MESSAGE_IDS, // NOT USED
+      keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS, // SET
+      keyQueueWorkersLock: ERedisKey.QUEUE_WORKERS_LOCK, // STRING
+      keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS, // SET
     };
 
     const pendingKeys = {
-      keyQueuePending: ERedisKey.QUEUE_PENDING,
-      keyQueuePriorityPending: ERedisKey.QUEUE_PRIORITY_PENDING,
+      keyQueuePending: ERedisKey.QUEUE_PENDING, // LIST
+      keyQueuePriorityPending: ERedisKey.QUEUE_PRIORITY_PENDING, // SORTED SET
     };
 
     const payload = [queueName];

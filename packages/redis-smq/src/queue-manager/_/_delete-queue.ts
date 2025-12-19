@@ -7,180 +7,176 @@
  * in the root directory of this source tree.
  */
 
-import {
-  async,
-  ICallback,
-  IRedisClient,
-  IRedisTransaction,
-} from 'redis-smq-common';
+import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
-import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
 import {
+  ConsumerSetMismatchError,
   QueueHasBoundExchangesError,
   QueueManagerActiveConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
 } from '../../errors/index.js';
-import { Exchange } from '../../exchange/index.js';
-import { EQueueDeliveryModel, IQueueParams } from '../types/index.js';
+import { EQueueProperty, IQueueParams } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
-import { _getQueueProperties } from './_get-queue-properties.js';
 import { processingQueue } from '../../consumer/message-handler/consume-message/processing-queue.js';
-
-function checkOnlineConsumers(
-  redisClient: IRedisClient,
-  queue: IQueueParams,
-  cb: ICallback<void>,
-): void {
-  _getQueueConsumerIds(redisClient, queue, (err, consumerIds) => {
-    if (err) cb(err);
-    else if (!consumerIds || !consumerIds.length) cb();
-    else {
-      ConsumerHeartbeat.isConsumerListAlive(
-        redisClient,
-        consumerIds,
-        (err, aliveMap) => {
-          if (err) cb(err);
-          else {
-            const online = aliveMap
-              ? Object.values(aliveMap).some((i) => i)
-              : false;
-            if (online) cb(new QueueManagerActiveConsumersError());
-            else cb();
-          }
-        },
-      );
-    }
-  });
-}
+import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
 
 export function _deleteQueue(
   redisClient: IRedisClient,
   queueParams: IQueueParams,
-  multi: IRedisTransaction | undefined,
-  cb: ICallback<IRedisTransaction>,
+  cb: ICallback<void>,
 ): void {
-  const {
-    keyQueuePending,
-    keyQueueDL,
-    keyQueueProcessingQueues,
-    keyQueuePriorityPending,
-    keyQueueAcknowledged,
-    keyQueueConsumers,
-    keyQueueRateLimitCounter,
-    keyQueueProperties,
-    keyQueueScheduled,
-    keyQueueMessages,
-    keyQueueConsumerGroups,
-  } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-  const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
-  const { keyQueues } = redisKeys.getMainKeys();
-  const keys: string[] = [
-    keyQueuePending,
-    keyQueueDL,
-    keyQueueProcessingQueues,
-    keyQueuePriorityPending,
-    keyQueueAcknowledged,
-    keyQueueConsumers,
-    keyQueueRateLimitCounter,
-    keyQueueProperties,
-    keyQueueScheduled,
-    keyQueueMessages,
-    keyQueueConsumerGroups,
-  ];
-  let pubSubDelivery = false;
-  redisClient.watch(
+  let consumerIds: string[] = [];
+  let consumerGroups: string[] = [];
+  let processingQueues: string[] = [];
+
+  async.series(
     [
-      keyQueueConsumers,
-      keyQueueProcessingQueues,
-      keyQueueProperties,
-      keyQueueConsumerGroups,
-    ],
-    (err) => {
-      if (err) cb(err);
-      else {
-        const processingQueues: string[] = [];
-        async.series(
-          [
-            (cb: ICallback<void>): void =>
-              _getQueueProperties(redisClient, queueParams, (err, reply) => {
-                if (err) cb(err);
-                else if (!reply) cb(new QueueNotFoundError());
-                else {
-                  const messagesCount = reply.messagesCount;
-                  if (messagesCount) cb(new QueueNotEmptyError());
-                  else {
-                    pubSubDelivery =
-                      reply.deliveryModel === EQueueDeliveryModel.PUB_SUB;
-                    cb();
-                  }
-                }
-              }),
-            (cb: ICallback) => {
-              const exchange = new Exchange();
-              exchange.getQueueBoundExchanges(queueParams, (err, reply) => {
-                if (err) return cb(err);
-                if (reply?.length) return cb(new QueueHasBoundExchangesError());
-                cb();
-              });
-            },
-            (cb: ICallback<void>) => {
-              if (pubSubDelivery) {
-                _getConsumerGroups(redisClient, queueParams, (err, groups) => {
-                  if (err) cb(err);
-                  else {
-                    async.eachOf(
-                      groups ?? [],
-                      (groupId, _, cb) => {
-                        const { keyQueuePriorityPending, keyQueuePending } =
-                          redisKeys.getQueueKeys(
-                            queueParams.ns,
-                            queueParams.name,
-                            groupId,
-                          );
-                        keys.push(keyQueuePending, keyQueuePriorityPending);
-                        cb();
-                      },
-                      cb,
-                    );
-                  }
-                });
-              } else cb();
-            },
-            (cb: ICallback<void>): void => {
-              checkOnlineConsumers(redisClient, queueParams, cb);
-            },
-            (cb: ICallback<void>) => {
-              processingQueue.getQueueProcessingQueues(
-                redisClient,
-                queueParams,
-                (err, reply) => {
-                  if (err) cb(err);
-                  else {
-                    processingQueues.push(...Object.keys(reply ?? {}));
-                    cb();
-                  }
-                },
-              );
-            },
-          ],
-          (err) => {
-            if (err) redisClient.unwatch(() => cb(err));
+      // Step 1: Get consumer IDs for the queue.
+      (cb: ICallback<void>) => {
+        _getQueueConsumerIds(redisClient, queueParams, (err, reply) => {
+          if (err) cb(err);
+          else {
+            consumerIds = reply ?? [];
+            cb();
+          }
+        });
+      },
+
+      // Step 2: Get consumer groups for the queue.
+      (cb: ICallback<void>) => {
+        _getConsumerGroups(redisClient, queueParams, (err, reply) => {
+          if (err) cb(err);
+          else {
+            consumerGroups = reply ?? [];
+            cb();
+          }
+        });
+      },
+
+      // Step 3: Get processing queues.
+      (cb: ICallback<void>) => {
+        processingQueue.getQueueProcessingQueues(
+          redisClient,
+          queueParams,
+          (err, reply) => {
+            if (err) cb(err);
             else {
-              const tx = multi || redisClient.multi();
-              const str = JSON.stringify(queueParams);
-              tx.srem(keyQueues, str);
-              tx.srem(keyNamespaceQueues, str);
-              if (processingQueues.length) {
-                keys.push(...processingQueues);
-              }
-              tx.del(keys);
-              cb(null, tx);
+              processingQueues = Object.keys(reply ?? {});
+              cb();
             }
           },
         );
-      }
+      },
+    ],
+    (err) => {
+      if (err) return cb(err);
+
+      // All dynamic keys have been discovered. Now, generate all keys for the script.
+
+      const { keyQueues } = redisKeys.getMainKeys();
+      const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
+      const {
+        keyQueueProperties,
+        keyQueuePending,
+        keyQueueDL,
+        keyQueueProcessingQueues,
+        keyQueuePriorityPending,
+        keyQueueAcknowledged,
+        keyQueueConsumers,
+        keyQueueRateLimitCounter,
+        keyQueueScheduled,
+        keyQueueDelayed,
+        keyQueueRequeued,
+        keyQueueMessages,
+        keyQueueMessageIds,
+        keyQueueConsumerGroups,
+        keyQueueWorkersLock,
+        keyQueueExchangeBindings,
+      } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
+
+      // Keys for consumer heartbeats
+      const heartbeatKeys = consumerIds.map(
+        (id) => redisKeys.getConsumerKeys(id).keyConsumerHeartbeat,
+      );
+
+      // Keys for consumer group queues
+      const consumerGroupKeys = consumerGroups.flatMap((groupId) => {
+        const { keyQueuePriorityPending, keyQueuePending } =
+          redisKeys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
+        return [keyQueuePending, keyQueuePriorityPending];
+      });
+
+      // A set is used to ensure all keys are unique before passing them to the script.
+      const keysToDelete = new Set([
+        keyQueueProperties,
+        keyQueuePending,
+        keyQueueDL,
+        keyQueueProcessingQueues,
+        keyQueuePriorityPending,
+        keyQueueAcknowledged,
+        keyQueueConsumers,
+        keyQueueRateLimitCounter,
+        keyQueueScheduled,
+        keyQueueDelayed,
+        keyQueueRequeued,
+        keyQueueMessages,
+        keyQueueMessageIds,
+        keyQueueConsumerGroups,
+        keyQueueWorkersLock,
+        keyQueueExchangeBindings,
+        ...consumerGroupKeys,
+        ...processingQueues,
+      ]);
+
+      const scriptKeys = [
+        // Fixed position keys for script logic
+        keyQueues, // KEYS[1]
+        keyNamespaceQueues, // KEYS[2]
+        keyQueueProperties, // KEYS[3]
+        keyQueueExchangeBindings, // KEYS[4]
+        keyQueueConsumers, // KEYS[5]
+
+        // Dynamic keys for checks
+        ...heartbeatKeys,
+
+        // All other keys to be deleted (excluding those already in fixed positions)
+        ...Array.from(keysToDelete).filter(
+          (k) =>
+            k !== keyQueueProperties &&
+            k !== keyQueueExchangeBindings &&
+            k !== keyQueueConsumers,
+        ),
+      ];
+
+      const queueParamsStr = JSON.stringify(queueParams);
+      const scriptArgs = [
+        queueParamsStr,
+        EQueueProperty.MESSAGES_COUNT,
+        String(heartbeatKeys.length),
+        ...consumerIds,
+      ];
+
+      redisClient.runScript(
+        ELuaScriptName.DELETE_QUEUE,
+        scriptKeys,
+        scriptArgs,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            if (reply === 'QUEUE_NOT_FOUND') cb(new QueueNotFoundError());
+            else if (reply === 'QUEUE_NOT_EMPTY') cb(new QueueNotEmptyError());
+            else if (reply === 'QUEUE_HAS_ACTIVE_CONSUMERS')
+              cb(new QueueManagerActiveConsumersError());
+            else if (reply === 'QUEUE_HAS_BOUND_EXCHANGE')
+              cb(new QueueHasBoundExchangesError());
+            else if (reply === 'CONSUMER_SET_MISMATCH')
+              cb(new ConsumerSetMismatchError());
+            else cb();
+          }
+        },
+      );
     },
   );
 }

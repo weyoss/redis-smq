@@ -70,3 +70,4 @@ export * from './queue-already-bound.js';
 export * from './routing-key-required.error.js';
 export * from './acknowledged-message-audit-not-enabled.error.js';
 export * from './dead-lettered-message-audit-not-enabled.error.js';
+export * from './consumer-set-mismatch.error.js';
