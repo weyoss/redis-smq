@@ -12,6 +12,7 @@ import {
   CallbackEmptyReplyError,
   createLogger,
   ICallback,
+  PanicError,
 } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
@@ -75,20 +76,31 @@ export class QueueRateLimit {
             `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
           );
 
-          const multi = client.multi();
-          multi.hdel(keyQueueProperties, String(EQueueProperty.RATE_LIMIT));
-          multi.del(keyQueueRateLimitCounter);
-
-          multi.exec((err) => {
-            if (err) {
-              this.logger.error(`Failed to clear rate limit: ${err.message}`);
-              return cb(err);
-            }
-            this.logger.info(
-              `Successfully cleared rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
-            );
-            cb();
-          });
+          client.runScript(
+            ELuaScriptName.CLEAR_QUEUE_RATE_LIMIT,
+            [keyQueueProperties, keyQueueRateLimitCounter],
+            [String(EQueueProperty.RATE_LIMIT)],
+            (err, reply) => {
+              if (err) {
+                this.logger.error(`Failed to clear rate limit: ${err.message}`);
+                return cb(err);
+              }
+              if (!['OK', 'QUEUE_NOT_FOUND'].includes(String(reply))) {
+                this.logger.error(
+                  `Failed to clear rate limit. Got unknown reply: ${reply}`,
+                );
+                return cb(new PanicError('UNKNOWN_REPLY'));
+              }
+              if (reply === 'QUEUE_NOT_FOUND') {
+                this.logger.error(`Failed to clear rate limit: ${reply}`);
+                return cb(new QueueNotFoundError());
+              }
+              this.logger.info(
+                `Successfully cleared rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
+              );
+              cb();
+            },
+          );
         },
         cb,
       );
