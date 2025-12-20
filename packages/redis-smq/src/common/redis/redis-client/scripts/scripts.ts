@@ -26,6 +26,7 @@ export enum ELuaScriptName {
   DELETE_CONSUMER_GROUP = 'DELETE_CONSUMER_GROUP',
   SET_QUEUE_RATE_LIMIT = 'SET_QUEUE_RATE_LIMIT',
   DELETE_QUEUE = 'DELETE_QUEUE',
+  CLEAR_QUEUE_RATE_LIMIT = 'CLEAR_QUEUE_RATE_LIMIT',
 }
 
 const dirname = env.getCurrentDir();
@@ -82,4 +83,8 @@ export const scriptFileMap: Record<ELuaScriptName, string | string[]> = {
     './lua/set-queue-rate-limit.lua',
   ),
   [ELuaScriptName.DELETE_QUEUE]: resolve(dirname, './lua/delete-queue.lua'),
+  [ELuaScriptName.CLEAR_QUEUE_RATE_LIMIT]: resolve(
+    dirname,
+    './lua/clear-queue-rate-limit.lua',
+  ),
 };
