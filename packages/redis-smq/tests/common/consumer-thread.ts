@@ -8,7 +8,6 @@
  */
 
 import {
-  Configuration,
   Consumer,
   IRedisSMQParsedConfig,
   Producer,
@@ -21,36 +20,33 @@ process.on('message', function (payload: unknown) {
   const config: IRedisSMQParsedConfig = JSON.parse(String(payload));
   RedisSMQ.initializeWithConfig(config, (err) => {
     if (err) throw err;
-    Configuration.getInstance().save(config, (err) => {
+    const defaultQueue = getDefaultQueue();
+    const producer = new Producer();
+    producer.run((err) => {
       if (err) throw err;
-      const defaultQueue = getDefaultQueue();
-      const producer = new Producer();
-      producer.run((err) => {
-        if (err) throw err;
-        producer.produce(
-          new ProducibleMessage()
-            .setQueue(defaultQueue)
-            .setBody(123)
-            .setRetryDelay(0),
-          (err) => {
-            if (err) throw err;
-          },
-        );
-      });
-
-      const consumer = new Consumer();
-      consumer.consume(
-        defaultQueue,
-        () => void 0, // not acknowledging
+      producer.produce(
+        new ProducibleMessage()
+          .setQueue(defaultQueue)
+          .setBody(123)
+          .setRetryDelay(0),
         (err) => {
           if (err) throw err;
         },
       );
-      consumer.run(() => void 0);
-
-      setTimeout(() => {
-        process.exit(0);
-      }, 10000);
     });
+
+    const consumer = new Consumer();
+    consumer.consume(
+      defaultQueue,
+      () => void 0, // not acknowledging
+      (err) => {
+        if (err) throw err;
+      },
+    );
+    consumer.run(() => void 0);
+
+    setTimeout(() => {
+      process.exit(0);
+    }, 10000);
   });
 });
