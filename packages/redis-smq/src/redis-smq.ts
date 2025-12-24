@@ -7,7 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, IRedisConfig } from 'redis-smq-common';
+import {
+  async,
+  ICallback,
+  IRedisConfig,
+  PanicError,
+  PowerSwitch,
+} from 'redis-smq-common';
 import { Configuration, IRedisSMQConfig } from './config/index.js';
 import {
   ExchangeDirect,
@@ -31,9 +37,10 @@ import { EventBus } from './event-bus/index.js';
 import { parseRedisConfig } from './config/parse-redis-config.js';
 import { RedisConnectionPool } from './common/redis/redis-connection-pool/redis-connection-pool.js';
 
-function isDisposable(disposable: object): disposable is Disposable {
+function isDisposable(disposable: unknown): disposable is Disposable {
   return (
-    disposable &&
+    !!disposable &&
+    typeof disposable === 'object' &&
     'shutdown' in disposable &&
     typeof disposable.shutdown === 'function'
   );
@@ -46,10 +53,142 @@ function isDisposable(disposable: object): disposable is Disposable {
  * Must be initialized with Redis configuration before use.
  */
 export class RedisSMQ {
-  private static initialized = false;
+  private static state = new PowerSwitch();
+
+  // Coalescing waiters for init/shutdown
+  private static initWaiters: ICallback[] = [];
+  private static shutdownWaiters: ICallback[] = [];
 
   // Registry of components created via RedisSMQ factory methods
   private static readonly components = new Set<Disposable>();
+
+  private static initInternal(
+    resolveConfig: () => {
+      redisConfig: IRedisConfig;
+      redisSMQConfig?: IRedisSMQConfig;
+    },
+    cb: ICallback,
+  ): void {
+    if (this.state.isUp()) {
+      return cb();
+    }
+
+    if (this.state.isGoingUp()) {
+      RedisSMQ.initWaiters.push(cb);
+      return;
+    }
+
+    if (this.state.isGoingDown()) {
+      return cb(new PanicError('RedisSMQ is shutting down'));
+    }
+
+    try {
+      const { redisSMQConfig, redisConfig } = resolveConfig();
+      RedisSMQ.state.goingUp();
+      if (redisSMQConfig) {
+        RedisSMQ.bootstrap(redisConfig, redisSMQConfig, (err) =>
+          RedisSMQ.finishInitialization(err, cb),
+        );
+      } else {
+        RedisSMQ.bootstrap(redisConfig, (err) =>
+          RedisSMQ.finishInitialization(err, cb),
+        );
+      }
+    } catch (e: unknown) {
+      const err = e instanceof Error ? e : new PanicError(String(e));
+      return cb(err);
+    }
+  }
+
+  private static finishInitialization(
+    err: Error | null | undefined,
+    cb: ICallback,
+  ) {
+    if (err) RedisSMQ.state.rollback();
+    else RedisSMQ.state.commit();
+    const waiters = RedisSMQ.initWaiters.splice(0);
+    cb(err);
+    waiters.forEach((w) => w(err));
+  }
+
+  // Track a created component that exposes a shutdown(cb) API
+  private static trackComponent<T extends object>(instance: T): T {
+    if (isDisposable(instance)) RedisSMQ.components.add(instance);
+    return instance;
+  }
+
+  // Shutdown all tracked components
+  private static shutdownComponents(cb: ICallback): void {
+    const toShutdown = Array.from(RedisSMQ.components);
+    if (toShutdown.length === 0) return cb();
+
+    let pending = toShutdown.length;
+    let firstErr: Error | null = null;
+
+    toShutdown.forEach((comp) => {
+      try {
+        comp.shutdown((err) => {
+          if (err && !firstErr) firstErr = err;
+          RedisSMQ.components.delete(comp);
+          if (--pending === 0) cb(firstErr || null);
+        });
+      } catch (e) {
+        if (!firstErr && e instanceof Error) firstErr = e;
+        RedisSMQ.components.delete(comp);
+        if (--pending === 0) cb(firstErr || null);
+      }
+    });
+  }
+
+  private static bootstrap(redisConfig: IRedisConfig, cb: ICallback): void;
+
+  private static bootstrap(
+    redisConfig: IRedisConfig,
+    redisSMQConfig: IRedisSMQConfig,
+    cb: ICallback,
+  ): void;
+
+  private static bootstrap(
+    redisConfig: IRedisConfig,
+    redisSMQConfig: IRedisSMQConfig | ICallback,
+    cb?: ICallback,
+  ): void {
+    const callback = cb ?? redisSMQConfig;
+    if (typeof callback !== 'function')
+      throw new PanicError('Invalid arguments: callback is required');
+
+    async.series(
+      [
+        (cb: ICallback) =>
+          RedisConnectionPool.initialize(redisConfig, {}, (err) => cb(err)),
+        (cb: ICallback) => {
+          if (typeof redisSMQConfig === 'function')
+            return Configuration.initialize(cb);
+          Configuration.initializeWithConfig(redisSMQConfig, cb);
+        },
+        (cb: ICallback) => {
+          const config = Configuration.getConfig();
+          if (config.eventBus.enabled) {
+            return EventBus.getInstance().run((err) => cb(err));
+          }
+          cb();
+        },
+      ],
+      (err) => callback(err),
+    );
+  }
+
+  /**
+   * Ensures RedisSMQ is initialized before use.
+   * @throws Error if not initialized
+   */
+  private static ensureInitialized(): void {
+    if (!RedisSMQ.state.isRunning()) {
+      throw new PanicError(
+        'RedisSMQ is not initialized. Call RedisSMQ.initialize() first.',
+      );
+    }
+  }
 
   /**
    * Initializes RedisSMQ with Redis connection settings.
@@ -94,11 +233,7 @@ export class RedisSMQ {
    * ```
    */
   static initialize(redisConfig: IRedisConfig, cb: ICallback): void {
-    RedisSMQ.bootstrap(
-      redisConfig,
-      (cb: ICallback) => Configuration.initialize((err) => cb(err)),
-      cb,
-    );
+    RedisSMQ.initInternal(() => ({ redisConfig }), cb);
   }
 
   /**
@@ -141,11 +276,11 @@ export class RedisSMQ {
     redisSMQConfig: IRedisSMQConfig,
     cb: ICallback,
   ): void {
-    const redisConfig = parseRedisConfig(redisSMQConfig.redis);
-    RedisSMQ.bootstrap(
-      redisConfig,
-      (cb: ICallback) =>
-        Configuration.initializeWithConfig(redisSMQConfig, (err) => cb(err)),
+    RedisSMQ.initInternal(
+      () => ({
+        redisConfig: parseRedisConfig(redisSMQConfig.redis),
+        redisSMQConfig: redisSMQConfig,
+      }),
       cb,
     );
   }
@@ -520,16 +655,18 @@ export class RedisSMQ {
    * @returns True if initialized, false otherwise
    */
   static isInitialized(): boolean {
-    return RedisSMQ.initialized;
+    return RedisSMQ.state.isRunning();
   }
 
   /**
    * Resets RedisSMQ initialization state.
    * Useful for testing or reconfiguration.
    */
-  static reset(): void {
-    // For tests or reconfiguration scenarios, perform a full shutdown
-    RedisSMQ.shutdown(() => void 0);
+  static reset(cb: ICallback = () => void 0): void {
+    if (RedisSMQ.state.isDown() && RedisSMQ.components.size === 0) {
+      return cb();
+    }
+    RedisSMQ.shutdown(cb);
   }
 
   /**
@@ -547,32 +684,59 @@ export class RedisSMQ {
    * @param cb - Callback invoked when shutdown completes
    */
   static shutdown(cb: ICallback): void {
+    // Idempotent: coalesce concurrent shutdown calls
+    if (RedisSMQ.state.isGoingDown()) {
+      RedisSMQ.shutdownWaiters.push(cb);
+      return;
+    }
+
+    if (RedisSMQ.state.isGoingUp()) {
+      // Keep behavior explicit: do not wait, fail fast to match Configuration approach
+      return cb(new PanicError('Cannot shutdown while initializing'));
+    }
+
+    if (RedisSMQ.state.isDown() && RedisSMQ.components.size === 0) {
+      return cb();
+    }
+
+    RedisSMQ.state.goingDown();
     const errors: Error[] = [];
 
-    // 1) Shutdown all managed components to release pool connections
-    RedisSMQ.shutdownComponents((compErr) => {
-      if (compErr) errors.push(compErr);
+    async.series(
+      [
+        (cb) =>
+          RedisSMQ.shutdownComponents((err) => {
+            if (err) errors.push(err);
+            cb();
+          }),
+        (cb) =>
+          RedisConnectionPool.shutdown((err) => {
+            if (err) errors.push(err);
+            cb();
+          }),
+        (cb) =>
+          Configuration.shutdown((err) => {
+            if (err) errors.push(err);
+            cb();
+          }),
+        (cb) =>
+          EventBus.shutdown((err) => {
+            if (err) errors.push(err);
+            cb();
+          }),
+      ],
+      () => {
+        // 5) Reset state and clear registry; notify waiters
+        RedisSMQ.state.commit();
+        RedisSMQ.initWaiters.splice(0);
+        const waiters = RedisSMQ.shutdownWaiters.splice(0);
+        RedisSMQ.components.clear();
 
-      // 2) Shutdown the connection pool
-      RedisConnectionPool.shutdown((poolErr) => {
-        if (poolErr) errors.push(poolErr);
-
-        // 3) Shutdown configuration client
-        Configuration.shutdown((cfgErr) => {
-          if (cfgErr) errors.push(cfgErr);
-
-          // 4) Shutdown the event bus
-          EventBus.shutdown((eventBusErr) => {
-            if (eventBusErr) errors.push(eventBusErr);
-
-            // 5) Reset initialized flag
-            RedisSMQ.initialized = false;
-
-            cb(errors[0] || null);
-          });
-        });
-      });
-    });
+        const firstErr = errors[0] || null;
+        cb(firstErr);
+        waiters.forEach((w) => w(firstErr));
+      },
+    );
   }
 
   /**
@@ -630,7 +794,7 @@ export class RedisSMQ {
     enableMultiplexingOrCb: boolean | ICallback<boolean>,
     cb?: ICallback<boolean>,
   ): Consumer {
-    let enableMultiplexing: boolean = false;
+    let enableMultiplexing = false;
     let callback: ICallback<boolean> = () => void 0;
 
     if (typeof enableMultiplexingOrCb === 'function') {
@@ -641,77 +805,12 @@ export class RedisSMQ {
     ) {
       enableMultiplexing = enableMultiplexingOrCb;
       callback = cb;
-    } else throw new Error('Invalid arguments');
+    } else {
+      throw new PanicError('Invalid arguments');
+    }
 
     const consumer = RedisSMQ.createConsumer(enableMultiplexing);
     consumer.run(callback);
     return consumer;
-  }
-
-  // Track a created component that exposes a shutdown(cb) API
-  private static trackComponent<T extends object>(instance: T): T {
-    if (isDisposable(instance)) RedisSMQ.components.add(instance);
-    return instance;
-  }
-
-  // Shutdown all tracked components
-  private static shutdownComponents(cb: ICallback): void {
-    const toShutdown = Array.from(RedisSMQ.components);
-    if (toShutdown.length === 0) return cb();
-
-    let pending = toShutdown.length;
-    let firstErr: Error | null = null;
-
-    toShutdown.forEach((comp) => {
-      try {
-        comp.shutdown((err) => {
-          if (err && !firstErr) firstErr = err;
-          RedisSMQ.components.delete(comp);
-          if (--pending === 0) cb(firstErr || null);
-        });
-      } catch (e) {
-        if (!firstErr && e instanceof Error) firstErr = e;
-        RedisSMQ.components.delete(comp);
-        if (--pending === 0) cb(firstErr || null);
-      }
-    });
-  }
-
-  private static bootstrap(
-    redisConfig: IRedisConfig,
-    configurationInit: (cb: ICallback) => void,
-    cb: ICallback,
-  ): void {
-    async.series(
-      [
-        (cb: ICallback) =>
-          RedisConnectionPool.initialize(redisConfig, {}, (err) => cb(err)),
-        (cb: ICallback) => configurationInit(cb),
-        (cb: ICallback) => {
-          const config = Configuration.getConfig();
-          if (config.eventBus.enabled) {
-            return EventBus.getInstance().run((err) => cb(err));
-          }
-          cb();
-        },
-      ],
-      (err) => {
-        if (err) return cb(err);
-        RedisSMQ.initialized = true;
-        cb();
-      },
-    );
-  }
-
-  /**
-   * Ensures RedisSMQ is initialized before use.
-   * @throws Error if not initialized
-   */
-  private static ensureInitialized(): void {
-    if (!RedisSMQ.initialized) {
-      throw new Error(
-        'RedisSMQ is not initialized. Call RedisSMQ.initialize() first.',
-      );
-    }
   }
 }
