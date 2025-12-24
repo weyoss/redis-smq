@@ -10,11 +10,18 @@
 import bluebird from 'bluebird';
 import { ProducibleMessage, RedisSMQ } from '../../src/index.js';
 import { config } from './config.js';
-import { getRedisInstance } from './redis.js';
+import { RedisClient } from '../../src/common/redis/redis-client/redis-client.js';
 
 const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 export async function startUp(): Promise<void> {
+  const redisClient = bluebird.promisifyAll(new RedisClient(config.redis));
+  const instance = bluebird.promisifyAll(
+    await redisClient.getSetInstanceAsync(),
+  );
+  await instance.flushallAsync();
+  await instance.shutdownAsync();
+
   await RedisSMQAsync.initializeWithConfigAsync(config);
 
   ProducibleMessage.setDefaultConsumeOptions({
@@ -23,6 +30,4 @@ export async function startUp(): Promise<void> {
     retryDelay: 0,
     consumeTimeout: 0,
   });
-  const redisClient = await getRedisInstance();
-  await redisClient.flushallAsync();
 }
