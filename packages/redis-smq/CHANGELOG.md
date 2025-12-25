@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.6-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.0...v9.0.6-next.1) (2025-12-25)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** resolve config persistence issue in test environment ([0ce29e8](https://github.com/weyoss/redis-smq/commit/0ce29e8e888d599a3268b8a599720528448e333e))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** convert Configuration class to an enum-driven state machine ([50b53d4](https://github.com/weyoss/redis-smq/commit/50b53d4d97bec42fe4ed736bee32cfb4660720fd))
+- **redis-smq:** convert RedisSMQ class to an enum-driven state machine ([4ac8268](https://github.com/weyoss/redis-smq/commit/4ac82681d9f6bbfad0444de656c27683e75c0349))
+- **redis-smq:** migrate queue rate limit setup to Lua ([eef5903](https://github.com/weyoss/redis-smq/commit/eef590347a13c8f33bcbdac77551758d05009c67))
+
 ## [9.0.6-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.5...v9.0.6-next.0) (2025-12-19)
 
 ### 🐛 Bug Fixes
