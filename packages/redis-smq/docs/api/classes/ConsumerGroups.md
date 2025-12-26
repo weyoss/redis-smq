@@ -50,7 +50,7 @@ Callback function to handle the result or error.
 
 `void`
 
-***
+---
 
 ### getConsumerGroups()
 
@@ -78,7 +78,7 @@ Callback function to handle the result or error.
 
 `void`
 
-***
+---
 
 ### saveConsumerGroup()
 
@@ -107,28 +107,6 @@ The ID of the consumer group to save.
 `ICallback`\<`number`\>
 
 Callback function to handle the result or error.
-
-#### Returns
-
-`void`
-
-***
-
-### shutdown()
-
-> **shutdown**(`cb`): `void`
-
-Shutdown
-
-Shuts down the consumer groups manager and cleans up resources.
-
-#### Parameters
-
-##### cb
-
-`ICallback`\<`void`\>
-
-Callback function to handle the result of the shutdown operation.
 
 #### Returns
 
