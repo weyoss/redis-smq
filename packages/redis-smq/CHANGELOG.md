@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.6-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.1...v9.0.6-next.2) (2025-12-26)
+
+### 📝 Documentation
+
+- **redis-smq:** update class refs ([369621c](https://github.com/weyoss/redis-smq/commit/369621cbc5a5e78b6af4f8d3ed58f8623dc7dbac))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** introduce InternalEventBus for system communication ([ff0a0e9](https://github.com/weyoss/redis-smq/commit/ff0a0e96bbcb4c29677d07edb83cc5168a4c81de))
+
 ## [9.0.6-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.0...v9.0.6-next.1) (2025-12-25)
 
 ### 🐛 Bug Fixes
