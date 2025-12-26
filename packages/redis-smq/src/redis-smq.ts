@@ -36,6 +36,8 @@ import { Disposable } from './common/types/disposable.js';
 import { EventBus } from './event-bus/index.js';
 import { parseRedisConfig } from './config/parse-redis-config.js';
 import { RedisConnectionPool } from './common/redis/redis-connection-pool/redis-connection-pool.js';
+import { InternalEventBus } from './event-bus/internal-event-bus.js';
+import { EventMultiplexer } from './event-bus/event-multiplexer.js';
 
 function isDisposable(disposable: unknown): disposable is Disposable {
   return (
@@ -166,6 +168,7 @@ export class RedisSMQ {
             return Configuration.initialize(cb);
           Configuration.initializeWithConfig(redisSMQConfig, cb);
         },
+        (cb) => InternalEventBus.getInstance().run((err) => cb(err)),
         (cb: ICallback) => {
           const config = Configuration.getConfig();
           if (config.eventBus.enabled) {
@@ -721,6 +724,16 @@ export class RedisSMQ {
           }),
         (cb) =>
           EventBus.shutdown((err) => {
+            if (err) errors.push(err);
+            cb();
+          }),
+        (cb) =>
+          InternalEventBus.shutdown((err) => {
+            if (err) errors.push(err);
+            cb();
+          }),
+        (cb) =>
+          EventMultiplexer.shutdown((err) => {
             if (err) errors.push(err);
             cb();
           }),

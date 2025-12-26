@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { createLogger, EventBusRedis, ICallback } from 'redis-smq-common';
+import { createLogger, ICallback } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
@@ -18,7 +18,7 @@ import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';
 import { _parseQueueParams } from './_/_parse-queue-params.js';
 import { _queueExists } from './_/_queue-exists.js';
-import { QueueAlreadyExistsError, QueueManagerError } from '../errors/index.js';
+import { QueueAlreadyExistsError } from '../errors/index.js';
 import {
   EQueueDeliveryModel,
   EQueueProperty,
@@ -28,7 +28,7 @@ import {
   TQueueConsumer,
 } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { TRedisSMQEvent } from '../common/index.js';
+import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
 
 /**
  * The QueueManager class represents an interface that interacts with Redis for storing
@@ -37,21 +37,11 @@ import { TRedisSMQEvent } from '../common/index.js';
  * properties of queues, and manage shutdown operations.
  */
 export class QueueManager {
-  protected eventBus;
   protected logger;
 
   constructor() {
     const config = Configuration.getConfig();
     this.logger = createLogger(config.logger, this.constructor.name);
-    this.logger.debug('Initializing Queue instance');
-
-    // Exclusive EventBus instance is needed for broadcasting queue creation/deletion events independently on
-    // user configuration
-    this.eventBus = new EventBusRedis<TRedisSMQEvent>(config);
-    this.eventBus.on('error', (err) => {
-      this.logger.error(`EventBus error: ${err.message}`, err);
-    });
-    this.logger.debug('EventBus initialized');
   }
 
   /**
@@ -156,21 +146,18 @@ export class QueueManager {
             delayedMessagesCount: 0,
             requeuedMessagesCount: 0,
           };
-
-          this.ensureEventBusIsRunning((err) => {
-            if (err) {
-              this.logger.error(err);
-              return done(err);
-            }
-            this.logger.debug(
-              `Emitting queue.queueCreated event for ${queueName}`,
-            );
-            this.eventBus.emit('queue.queueCreated', queueParams, properties);
-            this.logger.info(
-              `Queue ${queueName} successfully created with type=${queueType}, deliveryModel=${deliveryModel}`,
-            );
-            done(null, { queue: queueParams, properties });
-          });
+          this.logger.debug(
+            `Emitting queue.queueCreated event for ${queueName}`,
+          );
+          EventMultiplexer.publish(
+            'queue.queueCreated',
+            queueParams,
+            properties,
+          );
+          this.logger.info(
+            `Queue ${queueName} successfully created with type=${queueType}, deliveryModel=${deliveryModel}`,
+          );
+          done(null, { queue: queueParams, properties });
         },
       );
     }, cb);
@@ -251,18 +238,9 @@ export class QueueManager {
         this.logger.debug(
           `Queue ${queueName} deleted from Redis, emitting queue.queueDeleted event`,
         );
-        this.ensureEventBusIsRunning((err) => {
-          if (err) {
-            this.logger.error(err);
-            return cb(err);
-          }
-          this.logger.debug(
-            `Emitting queue.queueDeleted event for ${queueName}`,
-          );
-          this.eventBus.emit('queue.queueDeleted', queueParams);
-          this.logger.info(`Queue ${queueName} successfully deleted`);
-          cb();
-        });
+        EventMultiplexer.publish('queue.queueDeleted', queueParams);
+        this.logger.info(`Queue ${queueName} successfully deleted`);
+        cb();
       });
     }, cb);
   }
@@ -411,33 +389,5 @@ export class QueueManager {
       (client, cb) => _getQueueConsumerIds(client, queueParams, cb),
       cb,
     );
-  }
-
-  /**
-   * Cleans up resources by shutting down the Redis client and event bus.
-   *
-   * @param {ICallback<void>} cb - Callback function to handle completion of the shutdown process.
-   */
-  shutdown = (cb: ICallback): void => {
-    this.logger.info('Shutting down QueueManager instance');
-    this.logger.debug('Shutting down EventBus');
-    this.eventBus.shutdown((err) => {
-      if (err) {
-        this.logger.error(`Error shutting down EventBus: ${err.message}`, err);
-      } else {
-        this.logger.debug('EventBus shutdown successful');
-        this.logger.info('Queue instance shutdown completed successfully');
-      }
-      cb(err);
-    });
-  };
-
-  protected ensureEventBusIsRunning(cb: ICallback) {
-    if (this.eventBus.isRunning()) return cb();
-    this.eventBus.run((err, reply) => {
-      if (err) return cb(err);
-      if (!reply) return cb(new QueueManagerError('EventBus is not running'));
-      cb();
-    });
   }
 }

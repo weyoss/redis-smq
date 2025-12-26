@@ -12,7 +12,7 @@ import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
-import { eventBusPublisher } from './event-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import {
   IConsumerMessageHandlerParams,
   TConsumerMessageHandler,
@@ -38,9 +38,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     super();
     this.consumerContext = consumerContext;
     this.logger = this.consumerContext.logger;
-    if (this.consumerContext.config.eventBus.enabled) {
-      eventBusPublisher(this);
-    }
+    eventPublisher(this);
     this.supervisorTimer = new Timer();
     this.supervisorTimer.on('error', (err) => this.handleError(err));
     this.logger.info(`MessageHandlerRunner with ID: ${this.id} initialized.`);

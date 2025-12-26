@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { async, EventBus, ICallback, IRedisClient } from 'redis-smq-common';
-import { TRedisSMQEvent } from '../../common/index.js';
+import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
@@ -21,10 +20,10 @@ import {
   ConsumerGroupsError,
   QueueNotFoundError,
 } from '../../errors/index.js';
+import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,
-  eventBus: EventBus<TRedisSMQEvent>,
   queue: IQueueParams,
   groupId: string,
   cb: ICallback,
@@ -58,7 +57,11 @@ export function _deleteConsumerGroup(
                 cb(new ConsumerGroupsError());
               }
             } else {
-              eventBus.emit('queue.consumerGroupDeleted', queue, groupId);
+              EventMultiplexer.publish(
+                'queue.consumerGroupDeleted',
+                queue,
+                groupId,
+              );
               cb();
             }
           },

@@ -18,7 +18,7 @@ import {
 import { ConsumerHeartbeat } from './consumer-heartbeat/consumer-heartbeat.js';
 import { MessageHandlerRunner } from './message-handler-runner/message-handler-runner.js';
 import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multiplexed-message-handler-runner.js';
-import { eventBusPublisher } from './event-bus-publisher/event-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
 
@@ -66,15 +66,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Initializing consumer${enableMultiplexing ? ' with multiplexing enabled' : ''}`,
     );
 
-    if (config.eventBus.enabled) {
-      this.logger.debug(
-        'Event bus is enabled, initializing eventBusPublisher...',
-      );
-      eventBusPublisher(this);
-      this.logger.debug('Event bus publisher configured');
-    } else {
-      this.logger.debug('Event bus is disabled');
-    }
+    this.logger.debug('Initializing eventPublisher...');
+    eventPublisher(this);
 
     this.logger.debug(
       `Creating ${enableMultiplexing ? 'multiplexed' : 'standard'} message handler runner`,

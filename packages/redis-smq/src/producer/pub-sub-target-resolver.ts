@@ -10,7 +10,6 @@
 import {
   async,
   createLogger,
-  EventBusRedis,
   ICallback,
   ILogger,
   Runnable,
@@ -27,6 +26,7 @@ import {
 } from '../queue-manager/index.js';
 import { Producer } from './producer.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { InternalEventBus } from '../event-bus/internal-event-bus.js';
 
 /**
  * Manages an in-memory cache of consumer groups for PUB/SUB queues.
@@ -44,7 +44,7 @@ import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/
 export class PubSubTargetResolver extends Runnable<
   Pick<TRedisClientEvent, 'error'>
 > {
-  protected eventBus;
+  protected internalEventBus;
   protected producerId;
   protected logger;
   /**
@@ -63,16 +63,7 @@ export class PubSubTargetResolver extends Runnable<
       Configuration.getConfig().logger,
       this.constructor.name,
     );
-    const config = Configuration.getConfig();
-
-    // An exclusive EventBus instance is used to track consumer group and queue
-    // events, ensuring that this resolver remains synchronized regardless of the
-    // main application's event bus configuration.
-    this.eventBus = new EventBusRedis(config);
-    this.eventBus.on('error', (err) => {
-      if (this.isRunning())
-        this.logger.error(`EventBus error: ${err.message}`, err);
-    });
+    this.internalEventBus = InternalEventBus.getInstance();
     this.logger.debug(
       `PubSubTargetResolver instance created for producer ${this.producerId}`,
     );
@@ -121,20 +112,14 @@ export class PubSubTargetResolver extends Runnable<
     this.logger.debug('PubSubTargetResolver is going up...');
     return super
       .goingUp()
-      .concat([
-        (cb: ICallback) => this.eventBus.run((err) => cb(err)),
-        this.subscribeToEvents,
-        this.loadAndCacheInitialTargets,
-      ]);
+      .concat([this.subscribeToEvents, this.loadAndCacheInitialTargets]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('PubSubTargetResolver is going down...');
-    return [
-      this.unsubscribeFromEvents,
-      this.clearCache,
-      (cb: ICallback) => this.eventBus.shutdown(cb),
-    ].concat(super.goingDown());
+    return [this.unsubscribeFromEvents, this.clearCache].concat(
+      super.goingDown(),
+    );
   }
 
   /**
@@ -218,10 +203,16 @@ export class PubSubTargetResolver extends Runnable<
    */
   protected subscribeToEvents = (cb: ICallback<void>): void => {
     this.logger.debug('Subscribing to queue and consumer group events...');
-    this.eventBus.on('queue.queueCreated', this.onQueueCreated);
-    this.eventBus.on('queue.queueDeleted', this.onQueueDeleted);
-    this.eventBus.on('queue.consumerGroupCreated', this.onConsumerGroupCreated);
-    this.eventBus.on('queue.consumerGroupDeleted', this.onConsumerGroupDeleted);
+    this.internalEventBus.on('queue.queueCreated', this.onQueueCreated);
+    this.internalEventBus.on('queue.queueDeleted', this.onQueueDeleted);
+    this.internalEventBus.on(
+      'queue.consumerGroupCreated',
+      this.onConsumerGroupCreated,
+    );
+    this.internalEventBus.on(
+      'queue.consumerGroupDeleted',
+      this.onConsumerGroupDeleted,
+    );
     this.logger.info('Successfully subscribed to events.');
     cb();
   };
@@ -231,13 +222,19 @@ export class PubSubTargetResolver extends Runnable<
    */
   protected unsubscribeFromEvents = (cb: ICallback): void => {
     this.logger.debug('Unsubscribing from events...');
-    this.eventBus.removeListener('queue.queueCreated', this.onQueueCreated);
-    this.eventBus.removeListener('queue.queueDeleted', this.onQueueDeleted);
-    this.eventBus.removeListener(
+    this.internalEventBus.removeListener(
+      'queue.queueCreated',
+      this.onQueueCreated,
+    );
+    this.internalEventBus.removeListener(
+      'queue.queueDeleted',
+      this.onQueueDeleted,
+    );
+    this.internalEventBus.removeListener(
       'queue.consumerGroupCreated',
       this.onConsumerGroupCreated,
     );
-    this.eventBus.removeListener(
+    this.internalEventBus.removeListener(
       'queue.consumerGroupDeleted',
       this.onConsumerGroupDeleted,
     );

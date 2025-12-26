@@ -39,6 +39,4 @@ test('NamespaceManager', async () => {
   await expect(namespace.getNamespaceQueuesAsync('testing')).rejects.toThrow(
     NamespaceNotFoundError,
   );
-
-  await queue.shutdownAsync();
 });

@@ -97,6 +97,4 @@ test('Health check: case 3', async () => {
   expect(consumerUpMock).toHaveBeenCalledTimes(6);
   expect(consumerGoingDownMock).toHaveBeenCalledTimes(6);
   expect(consumerDownMock).toHaveBeenCalledTimes(6);
-
-  await queue.shutdownAsync();
 });

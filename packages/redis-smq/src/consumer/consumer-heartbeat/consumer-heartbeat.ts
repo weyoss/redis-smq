@@ -18,8 +18,7 @@ import {
 } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../common/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { Configuration } from '../../config/index.js';
-import { eventBusPublisher } from './event-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import { IConsumerHeartbeat } from './types/index.js';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { IConsumerContext } from '../types/consumer-context.js';
@@ -52,19 +51,11 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     super();
     this.consumerContext = consumerContext;
 
-    const config = Configuration.getConfig();
-
     this.logger = this.consumerContext.logger;
     this.logger.debug(`Initializing ConsumerHeartbeat...`);
 
-    if (config.eventBus.enabled) {
-      this.logger.debug('Event bus enabled, setting up event bus publisher');
-      eventBusPublisher(this);
-    } else {
-      this.logger.debug(
-        'Event bus is not enabled, skipping event bus publisher setup',
-      );
-    }
+    this.logger.debug('Inittializing eventPublisher...');
+    eventPublisher(this);
 
     const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(
       this.consumerContext.consumerId,

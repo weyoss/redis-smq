@@ -10,11 +10,9 @@
 import {
   async,
   CallbackEmptyReplyError,
-  EventBus,
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { TRedisSMQEvent } from '../../common/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
 import {
@@ -25,10 +23,10 @@ import {
   ConsumerGroupsNotSupportedError,
   InvalidConsumerGroupIdError,
 } from '../../errors/index.js';
+import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,
-  eventBus: EventBus<TRedisSMQEvent>,
   queue: IQueueParams,
   groupId: string,
   cb: ICallback<number>,
@@ -56,7 +54,11 @@ export function _saveConsumerGroup(
             if (err) cb(err);
             else {
               if (reply)
-                eventBus.emit('queue.consumerGroupCreated', queue, groupId);
+                EventMultiplexer.publish(
+                  'queue.consumerGroupCreated',
+                  queue,
+                  groupId,
+                );
               cb(null, reply);
             }
           });
