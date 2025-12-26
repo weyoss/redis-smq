@@ -39,7 +39,7 @@ import { ProducibleMessage } from '../message/index.js';
 import { MessageEnvelope } from '../message/message-envelope.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import { _publishMessage } from './_/_publish-message.js';
-import { eventBusPublisher } from './event-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import { PubSubTargetResolver } from './pub-sub-target-resolver.js';
 
 /**
@@ -85,13 +85,8 @@ export class Producer extends Runnable<TProducerEvent> {
     this.topicExchange = new ExchangeTopic();
     this.fanoutExchange = new ExchangeFanout();
 
-    // If the event bus is enabled, set up the publisher to emit producer events.
-    if (Configuration.getConfig().eventBus.enabled) {
-      this.logger.debug('Event bus is enabled. Initializing event publisher.');
-      eventBusPublisher(this);
-    } else {
-      this.logger.debug('Event bus is disabled. Skipping event publisher.');
-    }
+    this.logger.debug('Initializing eventPublisher...');
+    eventPublisher(this);
   }
 
   /**

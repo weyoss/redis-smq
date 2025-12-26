@@ -32,7 +32,7 @@ import {
   MessageHandlerError,
   QueueNotFoundError,
 } from '../../../errors/index.js';
-import { eventBusPublisher } from './event-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
@@ -86,9 +86,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     this.blockUntilMessageReceived = blockUntilMessageReceived;
     this.autoCloseRedisConnection = autoCloseRedisConnection;
 
-    if (this.config.eventBus.enabled) {
-      eventBusPublisher(this);
-    }
+    eventPublisher(this);
 
     const { keyConsumerQueues } = redisKeys.getConsumerKeys(
       this.consumerContext.consumerId,

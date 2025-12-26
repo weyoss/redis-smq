@@ -7,12 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import {
-  createLogger,
-  EventBusRedis,
-  ICallback,
-  ILogger,
-} from 'redis-smq-common';
+import { createLogger, ICallback, ILogger } from 'redis-smq-common';
 import { Configuration } from '../config/index.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { IQueueParams } from '../queue-manager/index.js';
@@ -20,7 +15,6 @@ import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
 import { _getConsumerGroups } from './_/_get-consumer-groups.js';
 import { _saveConsumerGroup } from './_/_save-consumer-group.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { TRedisSMQEvent } from '../common/index.js';
 
 /**
  * The `ConsumerGroups` class is responsible for managing consumer groups within RedisSMQ.
@@ -28,7 +22,6 @@ import { TRedisSMQEvent } from '../common/index.js';
  * The class uses Redis as a backend and employs an event bus for managing events related to consumer groups.
  */
 export class ConsumerGroups {
-  protected eventBus;
   protected logger: ILogger;
 
   constructor() {
@@ -37,16 +30,6 @@ export class ConsumerGroups {
       config.logger,
       this.constructor.name.toLowerCase(),
     );
-    this.logger.info('Initializing ConsumerGroups manager');
-
-    // Set up the event bus and error handling
-    // Exclusive EventBus instance is needed for broadcasting consumer group creation/deletion events independently on
-    // user configuration
-    this.eventBus = new EventBusRedis<TRedisSMQEvent>(config);
-    this.eventBus.on('error', (err) => {
-      this.logger.error(`EventBus error: ${err.message}`, err);
-    });
-    this.logger.debug('EventBus initialized');
   }
 
   /**
@@ -80,28 +63,19 @@ export class ConsumerGroups {
     );
 
     withSharedPoolConnection((client, cb) => {
-      this.ensureEventBusIsRunning((err) => {
-        if (err) return cb(err);
-        this.logger.debug('EventBus instance obtained successfully');
-        _saveConsumerGroup(
-          client,
-          this.eventBus,
-          queueParams,
-          groupId,
-          (err, result) => {
-            if (err) {
-              this.logger.error(
-                `Failed to save consumer group '${groupId}': ${err.message}`,
-              );
-              return cb(err);
-            }
+      this.logger.debug('EventBus instance obtained successfully');
+      _saveConsumerGroup(client, queueParams, groupId, (err, result) => {
+        if (err) {
+          this.logger.error(
+            `Failed to save consumer group '${groupId}': ${err.message}`,
+          );
+          return cb(err);
+        }
 
-            this.logger.info(
-              `Consumer group '${groupId}' ${result === 1 ? 'created' : 'already exists'} for queue: ${queueParams.name}`,
-            );
-            cb(null, result);
-          },
+        this.logger.info(
+          `Consumer group '${groupId}' ${result === 1 ? 'created' : 'already exists'} for queue: ${queueParams.name}`,
         );
+        cb(null, result);
       });
     }, cb);
   }
@@ -137,29 +111,17 @@ export class ConsumerGroups {
     );
 
     withSharedPoolConnection((client, cb) => {
-      this.ensureEventBusIsRunning((err) => {
-        if (err) return cb(err);
-        this.logger.debug(
-          `Executing delete operation for consumer group '${groupId}'`,
+      _deleteConsumerGroup(client, queueParams, groupId, (err) => {
+        if (err) {
+          this.logger.error(
+            `Failed to delete consumer group '${groupId}': ${err.message}`,
+          );
+          return cb(err);
+        }
+        this.logger.info(
+          `Consumer group '${groupId}' successfully deleted from queue: ${queueParams.name}`,
         );
-        _deleteConsumerGroup(
-          client,
-          this.eventBus,
-          queueParams,
-          groupId,
-          (err) => {
-            if (err) {
-              this.logger.error(
-                `Failed to delete consumer group '${groupId}': ${err.message}`,
-              );
-              return cb(err);
-            }
-            this.logger.info(
-              `Consumer group '${groupId}' successfully deleted from queue: ${queueParams.name}`,
-            );
-            cb();
-          },
-        );
+        cb();
       });
     }, cb);
   }
@@ -209,33 +171,5 @@ export class ConsumerGroups {
         cb(null, groups);
       });
     }, cb);
-  }
-
-  /**
-   * Shutdown
-   *
-   * Shuts down the consumer groups manager and cleans up resources.
-   *
-   * @param {ICallback<void>} cb - Callback function to handle the result of the shutdown operation.
-   */
-  shutdown = (cb: ICallback<void>): void => {
-    this.logger.info('Shutting down ConsumerGroups manager');
-    this.logger.debug('Shutting down EventBus');
-    this.eventBus.shutdown((err) => {
-      if (err) {
-        this.logger.warn(
-          `Error during EventBus shutdown (continuing): ${err.message}`,
-        );
-      } else {
-        this.logger.debug('EventBus shutdown successful');
-      }
-      this.logger.info('ConsumerGroups manager shutdown complete');
-      cb();
-    });
-  };
-
-  protected ensureEventBusIsRunning(cb: ICallback) {
-    if (this.eventBus.isRunning()) return cb();
-    this.eventBus.run((err) => cb(err));
   }
 }

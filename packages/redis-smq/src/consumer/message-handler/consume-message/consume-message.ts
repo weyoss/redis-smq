@@ -44,7 +44,7 @@ import {
   MessageHandlerFilenameExtensionError,
 } from '../../../errors/index.js';
 import { MessageUnacknowledgement } from './message-unacknowledgement.js';
-import { eventBusPublisher } from './event-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from '../types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
@@ -104,14 +104,8 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       `Queue processing key: ${this.keyQueueProcessing}, acknowledged key: ${this.keyQueueAcknowledged}`,
     );
 
-    if (this.config.eventBus.enabled) {
-      this.logger.debug('Event bus enabled, setting up event bus publisher');
-      eventBusPublisher(this);
-    } else {
-      this.logger.debug(
-        'Event bus not enabled, skipping event bus publisher setup',
-      );
-    }
+    this.logger.debug('Initializing eventPublisher...');
+    eventPublisher(this);
 
     this.logger.info(
       `ConsumeMessage initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,

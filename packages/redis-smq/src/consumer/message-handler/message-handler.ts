@@ -84,9 +84,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.timer = new Timer();
     this.timer.on('error', (err) => this.handleError(err));
 
-    if (this.config.eventBus.enabled) {
-      evenBusPublisher(this);
-    }
+    evenBusPublisher(this);
   }
 
   processMessage(messageId: string): void {

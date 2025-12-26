@@ -12,40 +12,42 @@ import { TRedisSMQEvent } from '../common/index.js';
 import { EventBusRedis, ICallback } from 'redis-smq-common';
 
 /**
- * The EventBus class provides a singleton interface for accessing a
- * distributed (Redis-based) event bus.
+ * The InternalEventBus class provides a singleton interface for accessing a
+ * distributed (Redis-based) event bus that is used exclusively for internal
+ * communication between redis-smq components.
  *
- * This allows components to communicate via events regardless of the deployment
- * topology. For example, a queue pause event can be broadcast to all consumers,
- * whether they are in the same process or distributed across multiple nodes.
+ * It is isolated from the public EventBus by using a channel prefix.
  */
-export class EventBus {
+export class InternalEventBus {
   private static instance: EventBusRedis<TRedisSMQEvent> | null = null;
 
   protected constructor() {}
 
   /**
-   * Returns the singleton instance of the event bus.
+   * Returns the singleton instance of the internal event bus.
    */
   static getInstance() {
-    if (!EventBus.instance) {
+    if (!InternalEventBus.instance) {
       const config = Configuration.getConfig();
-      EventBus.instance = new EventBusRedis<TRedisSMQEvent>(config, 'user');
+      InternalEventBus.instance = new EventBusRedis<TRedisSMQEvent>(
+        config,
+        'system',
+      );
     }
-    return EventBus.instance;
+    return InternalEventBus.instance;
   }
 
   /**
-   * Shuts down the event bus instance and releases its resources.
+   * Shuts down the internal event bus instance and releases its resources.
    * After shutdown, the instance is reset, and a new one will be created
    * on the next call to `getInstance()`.
    *
    * @param {ICallback<void>} cb - A callback to be invoked once shutdown is complete.
    */
-  static shutdown(cb: ICallback) {
-    if (EventBus.instance)
-      return EventBus.instance.shutdown(() => {
-        EventBus.instance = null;
+  static shutdown(cb: ICallback<void>): void {
+    if (InternalEventBus.instance)
+      return InternalEventBus.instance.shutdown(() => {
+        InternalEventBus.instance = null;
         cb();
       });
     cb();
