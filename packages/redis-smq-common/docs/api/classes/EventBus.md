@@ -2,10 +2,7 @@
 
 # Class: EventBus\<Events\>
 
-EventBus
-- Keeps listener management simple: delegate to base EventEmitter without extra guards
-- Only validates running state when emitting non-error events
-- Ensures listeners are cleared on shutdown
+EventBus with optional namespace support.
 
 ## Extends
 
@@ -19,19 +16,23 @@ EventBus
 
 ### Events
 
-`Events` *extends* [`TEventBusEvent`](../type-aliases/TEventBusEvent.md)
+`Events` _extends_ [`TEventBusEvent`](../type-aliases/TEventBusEvent.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new EventBus**\<`Events`\>(`config`): `EventBus`\<`Events`\>
+> **new EventBus**\<`Events`\>(`config`, `namespace`): `EventBus`\<`Events`\>
 
 #### Parameters
 
 ##### config
 
 [`IEventBusConfig`](../interfaces/IEventBusConfig.md) = `{}`
+
+##### namespace
+
+`string` = `''`
 
 #### Returns
 
@@ -48,14 +49,16 @@ EventBus
 > **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
 Emit an event.
-- 'error' events are always emitted locally.
+
+- 'error' events are always emitted unprefixed.
+- Non-error events are namespaced if a namespace is configured.
 - Non-error events require the bus to be running; otherwise an error is emitted and false is returned.
 
 #### Type Parameters
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -75,7 +78,7 @@ Emit an event.
 
 [`Runnable`](Runnable.md).[`emit`](Runnable.md#emit)
 
-***
+---
 
 ### getId()
 
@@ -93,7 +96,7 @@ Retrieves the unique identifier of the Runnable instance.
 
 [`Runnable`](Runnable.md).[`getId`](Runnable.md#getid)
 
-***
+---
 
 ### isDown()
 
@@ -111,7 +114,7 @@ Checks if the Runnable instance is currently down.
 
 [`Runnable`](Runnable.md).[`isDown`](Runnable.md#isdown)
 
-***
+---
 
 ### isGoingDown()
 
@@ -129,7 +132,7 @@ Checks if the Runnable instance is currently going down.
 
 [`Runnable`](Runnable.md).[`isGoingDown`](Runnable.md#isgoingdown)
 
-***
+---
 
 ### isGoingUp()
 
@@ -147,7 +150,7 @@ Checks if the Runnable instance is currently going up.
 
 [`Runnable`](Runnable.md).[`isGoingUp`](Runnable.md#isgoingup)
 
-***
+---
 
 ### isRunning()
 
@@ -165,7 +168,7 @@ Checks if the Runnable instance is currently running or going up.
 
 [`Runnable`](Runnable.md).[`isRunning`](Runnable.md#isrunning)
 
-***
+---
 
 ### isUp()
 
@@ -183,17 +186,22 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
 
-***
+---
 
 ### on()
 
 > **on**\<`E`\>(`event`, `listener`): `this`
 
+Add a listener for an event.
+
+- 'error' listeners are registered unprefixed.
+- Non-error listeners are registered with namespace if configured.
+
 #### Type Parameters
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -209,21 +217,26 @@ Checks if the Runnable instance is currently up.
 
 `this`
 
-#### Inherited from
+#### Overrides
 
 [`Runnable`](Runnable.md).[`on`](Runnable.md#on)
 
-***
+---
 
 ### once()
 
 > **once**\<`E`\>(`event`, `listener`): `this`
 
+Add a one-time listener for an event.
+
+- 'error' listeners are registered unprefixed.
+- Non-error listeners are registered with namespace if configured.
+
 #### Type Parameters
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -239,37 +252,39 @@ Checks if the Runnable instance is currently up.
 
 `this`
 
-#### Inherited from
+#### Overrides
 
 [`Runnable`](Runnable.md).[`once`](Runnable.md#once)
 
-***
+---
 
 ### removeAllListeners()
 
 > **removeAllListeners**\<`E`\>(`event?`): `this`
 
+Remove all listeners for an event or all events.
+
 #### Type Parameters
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
 ##### event?
 
-`Extract`\<`E`, `string`\>
+`E`
 
 #### Returns
 
 `this`
 
-#### Inherited from
+#### Overrides
 
 [`Runnable`](Runnable.md).[`removeAllListeners`](Runnable.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -279,7 +294,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -295,11 +310,11 @@ Checks if the Runnable instance is currently up.
 
 `this`
 
-#### Inherited from
+#### Overrides
 
 [`Runnable`](Runnable.md).[`removeListener`](Runnable.md#removelistener)
 
-***
+---
 
 ### run()
 
@@ -317,10 +332,10 @@ If the Runnable instance is already running or going up, the method will return 
 [`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
 
 A callback function that will be called after the execution process is completed.
-            If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
-            If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
-            If the Runnable instance was not running, the callback will be called with `true`.
-            If the Runnable instance was already running, the callback will be called with `false`.
+If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
+If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
+If the Runnable instance was not running, the callback will be called with `true`.
+If the Runnable instance was already running, the callback will be called with `false`.
 
 #### Returns
 
@@ -330,7 +345,7 @@ A callback function that will be called after the execution process is completed
 
 [`Runnable`](Runnable.md).[`run`](Runnable.md#run)
 
-***
+---
 
 ### shutdown()
 
@@ -340,6 +355,7 @@ Performs a graceful shutdown of the Runnable instance.
 
 The shutdown process involves executing the `goingDown` tasks, which are responsible for cleaning up resources.
 The shutdown behavior depends on the current state of the Runnable instance:
+
 - If the Runnable is running (`isRunning()`) and going up (`isGoingUp()`), the shutdown process will rollback the going up state.
 - If the Runnable is running (`isRunning()`) and up (`isUp()`), the shutdown process will mark the Runnable as going down.
 - After executing the `goingDown` tasks, the Runnable will call the `down` method to finalize the shutdown process.
@@ -351,8 +367,8 @@ The shutdown behavior depends on the current state of the Runnable instance:
 [`ICallback`](../interfaces/ICallback.md)\<`void`\>
 
 A callback function that will be called after the shutdown process is completed.
-            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
-            If the shutdown process is successful, the callback will be called with no arguments.
+If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 
