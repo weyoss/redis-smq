@@ -53,7 +53,7 @@ consumer.run((err) => {
 });
 ```
 
-***
+---
 
 ### createConsumerGroups()
 
@@ -81,7 +81,7 @@ consumerGroups.saveConsumerGroup('my-queue', 'group1', (err, result) => {
 });
 ```
 
-***
+---
 
 ### createDirectExchange()
 
@@ -108,24 +108,31 @@ If RedisSMQ is not initialized
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
-RedisSMQ.initialize({
-  client: ERedisConfigClient.IOREDIS,
-  options: { host: 'localhost', port: 6379 }
-}, (err) => {
-  if (err) return console.error('Init failed:', err);
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
 
-  const directExchange = RedisSMQ.createDirectExchange();
-  directExchange.bindQueue('order-queue', {
-    exchange: 'orders',
-    routingKey: 'order.created'
-  }, (bindErr) => {
-    if (bindErr) return console.error('Failed to bind queue:', bindErr);
-    console.log('Queue bound to direct exchange');
-  });
-});
+    const directExchange = RedisSMQ.createDirectExchange();
+    directExchange.bindQueue(
+      'order-queue',
+      {
+        exchange: 'orders',
+        routingKey: 'order.created',
+      },
+      (bindErr) => {
+        if (bindErr) return console.error('Failed to bind queue:', bindErr);
+        console.log('Queue bound to direct exchange');
+      },
+    );
+  },
+);
 ```
 
-***
+---
 
 ### createFanoutExchange()
 
@@ -152,21 +159,24 @@ If RedisSMQ is not initialized
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
-RedisSMQ.initialize({
-  client: ERedisConfigClient.IOREDIS,
-  options: { host: 'localhost', port: 6379 }
-}, (err) => {
-  if (err) return console.error('Init failed:', err);
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
 
-  const fanoutExchange = RedisSMQ.createFanoutExchange();
-  fanoutExchange.saveExchange('notifications', (saveErr) => {
-    if (saveErr) return console.error('Failed to save exchange:', saveErr);
-    console.log('Fanout exchange saved');
-  });
-});
+    const fanoutExchange = RedisSMQ.createFanoutExchange();
+    fanoutExchange.saveExchange('notifications', (saveErr) => {
+      if (saveErr) return console.error('Failed to save exchange:', saveErr);
+      console.log('Fanout exchange saved');
+    });
+  },
+);
 ```
 
-***
+---
 
 ### createMessageManager()
 
@@ -194,7 +204,7 @@ messageManager.getMessageById('message-id', (err, message) => {
 });
 ```
 
-***
+---
 
 ### createNamespaceManager()
 
@@ -222,7 +232,7 @@ namespaceManager.getNamespaces((err, namespaces) => {
 });
 ```
 
-***
+---
 
 ### createProducer()
 
@@ -250,7 +260,7 @@ producer.run((err) => {
 });
 ```
 
-***
+---
 
 ### createQueueAcknowledgedMessages()
 
@@ -278,7 +288,7 @@ acknowledgedMessages.countMessages('my-queue', (err, count) => {
 });
 ```
 
-***
+---
 
 ### createQueueDeadLetteredMessages()
 
@@ -306,7 +316,7 @@ deadLetteredMessages.countMessages('my-queue', (err, count) => {
 });
 ```
 
-***
+---
 
 ### createQueueManager()
 
@@ -337,11 +347,11 @@ queueManager.save(
   (err, result) => {
     if (err) return console.error('Failed to create queue:', err);
     console.log('Queue created:', result);
-  }
+  },
 );
 ```
 
-***
+---
 
 ### createQueueMessages()
 
@@ -369,7 +379,7 @@ queueMessages.countMessagesByStatus('my-queue', (err, count) => {
 });
 ```
 
-***
+---
 
 ### createQueuePendingMessages()
 
@@ -397,7 +407,7 @@ pendingMessages.countMessages('my-queue', (err, count) => {
 });
 ```
 
-***
+---
 
 ### createQueueRateLimit()
 
@@ -425,7 +435,7 @@ queueRateLimit.set('my-queue', { interval: 1000, limit: 10 }, (err) => {
 });
 ```
 
-***
+---
 
 ### createQueueScheduledMessages()
 
@@ -453,7 +463,7 @@ scheduledMessages.countMessages('my-queue', (err, count) => {
 });
 ```
 
-***
+---
 
 ### createTopicExchange()
 
@@ -480,24 +490,31 @@ If RedisSMQ is not initialized
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
-RedisSMQ.initialize({
-  client: ERedisConfigClient.IOREDIS,
-  options: { host: 'localhost', port: 6379 }
-}, (err) => {
-  if (err) return console.error('Init failed:', err);
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
 
-  const topicExchange = RedisSMQ.createTopicExchange();
-  topicExchange.bindQueue('user-queue', {
-    exchange: 'user-events',
-    routingKey: 'user.*.created'
-  }, (bindErr) => {
-    if (bindErr) return console.error('Failed to bind queue:', bindErr);
-    console.log('Queue bound to topic exchange');
-  });
-});
+    const topicExchange = RedisSMQ.createTopicExchange();
+    topicExchange.bindQueue(
+      'user-queue',
+      {
+        exchange: 'user-events',
+        routingKey: 'user.*.created',
+      },
+      (bindErr) => {
+        if (bindErr) return console.error('Failed to bind queue:', bindErr);
+        console.log('Queue bound to topic exchange');
+      },
+    );
+  },
+);
 ```
 
-***
+---
 
 ### getConfigurationInstance()
 
@@ -515,7 +532,7 @@ The current Configuration instance
 
 Error if RedisSMQ is not initialized
 
-***
+---
 
 ### initialize()
 
@@ -548,37 +565,40 @@ Callback function called when initialization completes
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
-RedisSMQ.initialize({
-  client: ERedisConfigClient.IOREDIS,
-  options: {
-    host: 'localhost',
-    port: 6379,
-    db: 0
-  }
-}, (err) => {
-  if (err) {
-    console.error('Failed to initialize RedisSMQ:', err);
-    return;
-  }
-  console.log('RedisSMQ initialized successfully');
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: 'localhost',
+      port: 6379,
+      db: 0,
+    },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize RedisSMQ:', err);
+      return;
+    }
+    console.log('RedisSMQ initialized successfully');
 
-  // Now you can create producers and consumers without Redis config!
-  const producer = RedisSMQ.createProducer();
-  const consumer = RedisSMQ.createConsumer();
+    // Now you can create producers and consumers without Redis config!
+    const producer = RedisSMQ.createProducer();
+    const consumer = RedisSMQ.createConsumer();
 
-  producer.run((e) => {
-    if (e) return console.error('Producer failed to start:', e);
-    console.log('Producer ready');
-  });
+    producer.run((e) => {
+      if (e) return console.error('Producer failed to start:', e);
+      console.log('Producer ready');
+    });
 
-  consumer.run((e) => {
-    if (e) return console.error('Consumer failed to start:', e);
-    console.log('Consumer ready');
-  });
-});
+    consumer.run((e) => {
+      if (e) return console.error('Consumer failed to start:', e);
+      console.log('Consumer ready');
+    });
+  },
+);
 ```
 
-***
+---
 
 ### initializeWithConfig()
 
@@ -612,30 +632,33 @@ Callback function called when initialization completes
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
-RedisSMQ.initializeWithConfig({
-  namespace: 'my-custom-app',
-  redis: {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: 'localhost',
-      port: 6379,
-      db: 0
+RedisSMQ.initializeWithConfig(
+  {
+    namespace: 'my-custom-app',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: {
+        host: 'localhost',
+        port: 6379,
+        db: 0,
+      },
+    },
+    logger: {
+      enabled: true,
+    },
+    eventBus: { enabled: true },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize RedisSMQ:', err);
+    } else {
+      console.log('RedisSMQ initialized with custom configuration');
     }
   },
-  logger: {
-    enabled: true
-  },
-  eventBus: { enabled: true }
-}, (err) => {
-  if (err) {
-    console.error('Failed to initialize RedisSMQ:', err);
-  } else {
-    console.log('RedisSMQ initialized with custom configuration');
-  }
-});
+);
 ```
 
-***
+---
 
 ### isInitialized()
 
@@ -649,20 +672,26 @@ Checks if RedisSMQ has been initialized.
 
 True if initialized, false otherwise
 
-***
+---
 
 ### reset()
 
-> `static` **reset**(): `void`
+> `static` **reset**(`cb`): `void`
 
 Resets RedisSMQ initialization state.
 Useful for testing or reconfiguration.
+
+#### Parameters
+
+##### cb
+
+`ICallback` = `...`
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### shutdown()
 
@@ -671,6 +700,7 @@ Useful for testing or reconfiguration.
 Shuts down RedisSMQ and closes shared resources.
 
 This convenience method:
+
 - Gracefully shuts down the Redis connection pool
 - Closes the configuration Redis client
 - Resets RedisSMQ initialization state
@@ -691,7 +721,7 @@ Callback invoked when shutdown completes
 
 `void`
 
-***
+---
 
 ### startConsumer()
 
@@ -726,13 +756,18 @@ The created Consumer instance
 ```typescript
 const consumer = RedisSMQ.startConsumer(false, (err) => {
   if (err) return console.error('Failed to start consumer:', err);
-  consumer.consume('my-queue', (message, done) => {
-    // handle message ...
-    done();
-  }, (consumeErr) => {
-    if (consumeErr) return console.error('Failed to start consumption:', consumeErr);
-    console.log('Consumer is consuming messages');
-  });
+  consumer.consume(
+    'my-queue',
+    (message, done) => {
+      // handle message ...
+      done();
+    },
+    (consumeErr) => {
+      if (consumeErr)
+        return console.error('Failed to start consumption:', consumeErr);
+      console.log('Consumer is consuming messages');
+    },
+  );
 });
 ```
 
@@ -761,17 +796,22 @@ The created Consumer instance
 ```typescript
 const consumer = RedisSMQ.startConsumer(false, (err) => {
   if (err) return console.error('Failed to start consumer:', err);
-  consumer.consume('my-queue', (message, done) => {
-    // handle message ...
-    done();
-  }, (consumeErr) => {
-    if (consumeErr) return console.error('Failed to start consumption:', consumeErr);
-    console.log('Consumer is consuming messages');
-  });
+  consumer.consume(
+    'my-queue',
+    (message, done) => {
+      // handle message ...
+      done();
+    },
+    (consumeErr) => {
+      if (consumeErr)
+        return console.error('Failed to start consumption:', consumeErr);
+      console.log('Consumer is consuming messages');
+    },
+  );
 });
 ```
 
-***
+---
 
 ### startProducer()
 
