@@ -22,8 +22,8 @@ export class EventBusRedis<
   // Track active Redis subscriptions to avoid duplicate SUBSCRIBE/UNSUBSCRIBE
   private readonly subscribedEvents = new Set<string>();
 
-  constructor(config: IEventBusRedisConfig) {
-    super(config);
+  constructor(config: IEventBusRedisConfig, namespace = '') {
+    super(config, namespace);
     this.pubClient = new RedisClientFactory(config.redis);
     this.pubClient.on('error', (err) => this.handleError(err));
     this.subClient = new RedisClientFactory(config.redis);
@@ -42,22 +42,25 @@ export class EventBusRedis<
       this.eventEmitter.emit('error', new EventBusNotConnectedError());
       return false;
     }
+    const namespacedEvent = this.toNamespacedEvent(String(event));
     this.pubClient
       .getInstance()
-      .publish(String(event), JSON.stringify(args), () => void 0);
+      .publish(namespacedEvent, JSON.stringify(args), () => void 0);
     return true;
   }
 
   // Always register listeners locally; subscription is managed separately and idempotently.
   override on<E extends keyof Events>(event: E, listener: Events[E]): this {
     super.on(event, listener);
-    this.ensureSubscribed(String(event));
+    const namespacedEvent = this.toNamespacedEvent(String(event));
+    this.ensureSubscribed(namespacedEvent);
     return this;
   }
 
   override once<E extends keyof Events>(event: E, listener: Events[E]): this {
     super.once(event, listener);
-    this.ensureSubscribed(String(event));
+    const namespacedEvent = this.toNamespacedEvent(String(event));
+    this.ensureSubscribed(namespacedEvent);
     return this;
   }
 
@@ -71,7 +74,8 @@ export class EventBusRedis<
       event !== 'error' &&
       this.eventEmitter.listenerCount(String(event)) === 0
     ) {
-      this.ensureUnsubscribed(String(event));
+      const namespacedEvent = this.toNamespacedEvent(String(event));
+      this.ensureUnsubscribed(namespacedEvent);
     }
     return this;
   }
@@ -81,7 +85,8 @@ export class EventBusRedis<
   ): this {
     super.removeAllListeners(event);
     if (event && event !== 'error') {
-      this.ensureUnsubscribed(String(event));
+      const namespacedEvent = this.toNamespacedEvent(String(event));
+      this.ensureUnsubscribed(namespacedEvent);
     } else if (!event) {
       this.ensureUnsubscribed(); // Unsubscribe from all
     }
