@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.6-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.1...v9.0.6-next.2) (2025-12-26)
+
+### 📝 Documentation
+
+- **redis-smq-common:** update class EventBus/EventBusRedis refs ([67726ab](https://github.com/weyoss/redis-smq/commit/67726ab6d4026548177861c9af8b73aebd8bbda4))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add namespace support to EventBus classes ([da4124d](https://github.com/weyoss/redis-smq/commit/da4124df63065dac73d950d298b9ddfa672c29ad))
+
+### ✅ Tests
+
+- **redis-smq-common:** add test for EventBus custom namespace usage ([54cd0b6](https://github.com/weyoss/redis-smq/commit/54cd0b6a653d1d743599b23ebf1a49e2f82e57a6))
+
 ## [9.0.6-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.0...v9.0.6-next.1) (2025-12-25)
 
 **Note:** Version bump only for package redis-smq-common
