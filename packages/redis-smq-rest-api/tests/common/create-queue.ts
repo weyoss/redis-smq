@@ -23,7 +23,5 @@ export async function createQueue(
   deliveryModel: EQueueDeliveryModel = EQueueDeliveryModel.POINT_TO_POINT,
 ) {
   const queueInstance = promisifyAll(new QueueManager());
-  const r = await queueInstance.saveAsync(queue, queueType, deliveryModel);
-  await queueInstance.shutdownAsync();
-  return r;
+  return queueInstance.saveAsync(queue, queueType, deliveryModel);
 }

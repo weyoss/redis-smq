@@ -18,5 +18,4 @@ export async function deleteConsumerGroup(
 ) {
   const c = promisifyAll(new ConsumerGroups());
   await c.deleteConsumerGroupAsync(queue, consumerGroup);
-  await c.shutdownAsync();
 }

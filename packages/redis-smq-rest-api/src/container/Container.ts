@@ -56,9 +56,7 @@ export class Container {
     const instance = this.getInstance();
     instance.register({
       // RedisSMQ classes
-      queueManager: asClass(QueueManager)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
+      queueManager: asClass(QueueManager).singleton(),
       queueMessages: asClass(QueueMessages).singleton(),
       queuePendingMessages: asClass(QueuePendingMessages).singleton(),
       queueAcknowledgedMessages: asClass(QueueAcknowledgedMessages).singleton(),
@@ -71,9 +69,7 @@ export class Container {
       exchangeTopic: asClass(ExchangeTopic).singleton(),
       exchangeDirect: asClass(ExchangeDirect).singleton(),
       exchange: asClass(Exchange).singleton(),
-      consumerGroups: asClass(ConsumerGroups)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
+      consumerGroups: asClass(ConsumerGroups).singleton(),
       producer: asClass(Producer)
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
