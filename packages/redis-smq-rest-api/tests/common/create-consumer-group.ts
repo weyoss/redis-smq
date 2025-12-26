@@ -18,5 +18,4 @@ export async function createConsumerGroup(
 ) {
   const c = promisifyAll(new ConsumerGroups());
   await c.saveConsumerGroupAsync(queue, consumerGroup);
-  await c.shutdownAsync();
 }
