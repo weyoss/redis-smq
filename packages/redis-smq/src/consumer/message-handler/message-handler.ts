@@ -38,7 +38,7 @@ import {
 } from '../../queue-manager/index.js';
 import { ConsumeMessage } from './consume-message/consume-message.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
-import { evenBusPublisher } from './even-bus-publisher.js';
+import { eventPublisher } from './event-publisher.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
@@ -84,7 +84,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.timer = new Timer();
     this.timer.on('error', (err) => this.handleError(err));
 
-    evenBusPublisher(this);
+    eventPublisher(this);
   }
 
   processMessage(messageId: string): void {
