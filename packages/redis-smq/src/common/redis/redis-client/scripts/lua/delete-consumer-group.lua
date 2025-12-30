@@ -18,11 +18,14 @@
 -- ARGV:
 --   ARGV[1]: EQueuePropertyQueueType (the name of the queue type field)
 --   ARGV[2]: EQueueTypePriority (the value for a priority queue)
---   ARGV[3]: groupId (the ID of the consumer group to delete)
+--   ARGV[3]: EQueuePropertyDeliveryModel (the name of the delivery model field)
+--   ARGV[4]: EQueueDeliveryModelPubSub (the value for the pub/sub delivery model)
+--   ARGV[5]: groupId (the ID of the consumer group to delete)
 --
 -- Returns:
 --   - 'OK' on successful deletion.
 --   - 'QUEUE_NOT_FOUND' if the main queue does not exist.
+--   - 'CONSUMER_GROUPS_NOT_SUPPORTED' if the queue is not a PUB/SUB queue.
 --   - 'CONSUMER_GROUP_NOT_EMPTY' if the consumer group's pending queue still contains messages.
 
 -- Static Keys
@@ -34,12 +37,23 @@ local keyQueueProperties = KEYS[4]
 -- Arguments
 local EQueuePropertyQueueType = ARGV[1]
 local EQueueTypePriority = ARGV[2]
-local groupId = ARGV[3]
+local EQueuePropertyDeliveryModel = ARGV[3]
+local EQueueDeliveryModelPubSub = ARGV[4]
+local groupId = ARGV[5]
 
--- Get queue type once and validate it exists
-local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
+-- Get queue properties
+local props = redis.call("HMGET", keyQueueProperties, EQueuePropertyQueueType, EQueuePropertyDeliveryModel)
+local queueType = props[1]
+local queueDeliveryModel = props[2]
+
+-- Validate queue existence
 if queueType == false then
     return 'QUEUE_NOT_FOUND'
+end
+
+-- Validate delivery model
+if queueDeliveryModel ~= EQueueDeliveryModelPubSub then
+    return 'CONSUMER_GROUPS_NOT_SUPPORTED'
 end
 
 -- Check if the pending queue is empty using the appropriate command

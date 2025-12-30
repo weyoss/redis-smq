@@ -11,16 +11,18 @@ import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
+  EQueueDeliveryModel,
   EQueueProperty,
   EQueueType,
   IQueueParams,
 } from '../../queue-manager/index.js';
 import {
   ConsumerGroupNotEmptyError,
-  ConsumerGroupsError,
+  ConsumerGroupsNotSupportedError,
   QueueNotFoundError,
 } from '../../errors/index.js';
 import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
+import { UnexpectedScriptReplyError } from '../../errors/index.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,
@@ -45,16 +47,24 @@ export function _deleteConsumerGroup(
             keyQueuePriorityPending,
             keyQueueProperties,
           ],
-          [EQueueProperty.QUEUE_TYPE, EQueueType.PRIORITY_QUEUE, groupId],
+          [
+            EQueueProperty.QUEUE_TYPE,
+            EQueueType.PRIORITY_QUEUE,
+            EQueueProperty.DELIVERY_MODEL,
+            EQueueDeliveryModel.PUB_SUB,
+            groupId,
+          ],
           (err, reply) => {
             if (err) cb(err);
             else if (reply !== 'OK') {
               if (reply === 'QUEUE_NOT_FOUND') {
                 cb(new QueueNotFoundError());
+              } else if (reply === 'CONSUMER_GROUPS_NOT_SUPPORTED') {
+                cb(new ConsumerGroupsNotSupportedError());
               } else if (reply === 'CONSUMER_GROUP_NOT_EMPTY') {
                 cb(new ConsumerGroupNotEmptyError());
               } else {
-                cb(new ConsumerGroupsError());
+                cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
               }
             } else {
               EventMultiplexer.publish(
