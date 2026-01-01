@@ -16,7 +16,6 @@ import {
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _deleteQueue } from '../queue-manager/_/_delete-queue.js';
-import { _getQueues } from '../queue-manager/_/_get-queues.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import {
   InvalidNamespaceError,
@@ -24,6 +23,7 @@ import {
   QueueNotFoundError,
 } from '../errors/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { _getNamespaceQueues } from './_/_get-namespace-queues.js';
 
 /**
  * NamespaceManager class for managing message queue namespaces in Redis.
@@ -198,9 +198,9 @@ export class NamespaceManager {
           this.logger.debug('Getting all queues for deletion', {
             namespace: ns,
           });
-          _getQueues(client, (err, reply) => {
+          _getNamespaceQueues(client, ns, (err, reply) => {
             if (err) {
-              this.logger.error('Failed to get queues for deletion', {
+              this.logger.error('Failed to get namespace queues for deletion', {
                 namespace: ns,
                 error: err.message,
               });
@@ -208,7 +208,7 @@ export class NamespaceManager {
             }
 
             const queues = reply ?? [];
-            this.logger.debug('Preparing to delete namespace and queues', {
+            this.logger.debug('Preparing to delete namespace and its queues', {
               namespace: ns,
               queueCount: queues.length,
             });
