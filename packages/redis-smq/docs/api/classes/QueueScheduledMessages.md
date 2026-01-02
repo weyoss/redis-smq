@@ -46,6 +46,22 @@ Callback returning the count
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
 #### Inherited from
 
 `MessageBrowserAbstract.countMessages`
@@ -88,6 +104,22 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
 #### Inherited from
 
 `MessageBrowserAbstract.getMessages`
@@ -128,6 +160,22 @@ Otherwise, the first parameter will be null/undefined.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
 
 #### Inherited from
 

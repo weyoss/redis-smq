@@ -155,7 +155,11 @@ The current parsed configuration
 
 #### Throws
 
-When the configuration has not been initialized
+OperationNotAllowedError When the configuration has not been initialized
+
+#### Throws
+
+PanicError
 
 #### Example
 
@@ -180,7 +184,11 @@ The Configuration instance
 
 #### Throws
 
-When the configuration has not been initialized
+OperationNotAllowedError When the configuration has not been initialized
+
+#### Throws
+
+PanicError
 
 #### Example
 
@@ -216,10 +224,6 @@ Callback function called when initialization completes
 #### Returns
 
 `void`
-
-#### Throws
-
-When the configuration is already initialized
 
 #### Example
 
@@ -264,10 +268,6 @@ Callback function called when initialization completes
 #### Returns
 
 `void`
-
-#### Throws
-
-When the configuration is already initialized
 
 #### Example
 

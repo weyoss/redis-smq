@@ -4,19 +4,19 @@
 
 ## Extends
 
-- [`ProducerError`](ProducerError.md)
+- `RedisSMQError`
 
 ## Constructors
 
 ### Constructor
 
-> **new InvalidSchedulingParametersError**(`message?`): `InvalidSchedulingParametersError`
+> **new InvalidSchedulingParametersError**(...`args`): `InvalidSchedulingParametersError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
@@ -24,7 +24,7 @@
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`constructor`](ProducerError.md#constructor)
+`RedisSMQError.constructor`
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`cause`](ProducerError.md#cause)
+`RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`message`](ProducerError.md#message)
+`RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`stack`](ProducerError.md#stack)
+`RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`stackTraceLimit`](ProducerError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -90,9 +90,71 @@ not capture any frames.
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`name`](ProducerError.md#name)
+[`ExchangeTypeMismatchError`](ExchangeTypeMismatchError.md).[`name`](ExchangeTypeMismatchError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +220,9 @@ a();
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`captureStackTrace`](ProducerError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -180,9 +242,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`isError`](ProducerError.md#iserror)
+`RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +270,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`prepareStackTrace`](ProducerError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`

@@ -1,34 +1,33 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / RedisKeysError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / RequeueMessageScriptError
 
-# Class: RedisKeysError
+# Class: RequeueMessageScriptError
+
+Indicates that the 'requeue' Lua script returned an error string,
+signaling a failure within the script itself.
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`RedisKeysInvalidKeyError`](RedisKeysInvalidKeyError.md)
+- `RedisSMQError`\<\{ `scriptReply`: `string`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new RedisKeysError**(`message?`): `RedisKeysError`
+> **new RequeueMessageScriptError**(...`args`): `RequeueMessageScriptError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `scriptReply`: `string`; \}\>\]
 
 #### Returns
 
-`RedisKeysError`
+`RequeueMessageScriptError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+`RedisSMQError<{ scriptReply: string; }>.constructor`
 
 ## Properties
 
@@ -40,7 +39,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -50,7 +49,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -60,7 +59,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -96,7 +95,69 @@ not capture any frames.
 
 `RedisSMQError.name`
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `scriptReply`: `string`; \} \| `null`
+
+#### Returns
+
+\{ `scriptReply`: `string`; \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -109,7 +170,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -164,7 +225,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -186,7 +247,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

@@ -36,14 +36,14 @@ The ID of the message to delete.
 `ICallback`\<[`IMessageManagerDeleteResponse`](../interfaces/IMessageManagerDeleteResponse.md)\>
 
 A callback function that will be called with the result.
-            If an error occurs, the first parameter will be an Error object.
-            Otherwise, the second parameter will contain the deletion response.
+If an error occurs, the first parameter will be an Error object.
+Otherwise, the second parameter will contain the deletion response.
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### deleteMessagesByIds()
 
@@ -64,14 +64,14 @@ Array of message IDs to delete
 `ICallback`\<[`IMessageManagerDeleteResponse`](../interfaces/IMessageManagerDeleteResponse.md)\>
 
 Callback function that will be called with the deletion result
-            If an error occurs, the first parameter will be an Error object
-            Otherwise, the second parameter will contain the deletion response
+If an error occurs, the first parameter will be an Error object
+Otherwise, the second parameter will contain the deletion response
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### getMessageById()
 
@@ -92,14 +92,18 @@ The ID of the message to retrieve.
 `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>
 
 A callback function that will be called with the result.
-             If an error occurs, the first parameter will be an Error object.
-             Otherwise, the second parameter will be the message object.
+If an error occurs, the first parameter will be an Error object.
+Otherwise, the second parameter will be the message object.
 
 #### Returns
 
 `void`
 
-***
+#### Throws
+
+MessageNotFoundError
+
+---
 
 ### getMessagesByIds()
 
@@ -120,14 +124,18 @@ An array of IDs of the messages to retrieve.
 `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>[]\>
 
 A callback function that will be called with the result.
-             If an error occurs, the first parameter will be an Error object.
-             Otherwise, the second parameter will be an array of message objects.
+If an error occurs, the first parameter will be an Error object.
+Otherwise, the second parameter will be an array of message objects.
 
 #### Returns
 
 `void`
 
-***
+#### Throws
+
+MessageNotFoundError
+
+---
 
 ### getMessageState()
 
@@ -148,14 +156,18 @@ The ID of the message to retrieve the state for.
 `ICallback`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\>
 
 A callback function that will be called with the result.
-             If an error occurs, the first parameter will be an Error object.
-             Otherwise, the second parameter will be the state of the message.
+If an error occurs, the first parameter will be an Error object.
+Otherwise, the second parameter will be the state of the message.
 
 #### Returns
 
 `void`
 
-***
+#### Throws
+
+MessageNotFoundError
+
+---
 
 ### getMessageStatus()
 
@@ -176,14 +188,18 @@ The ID of the message to retrieve the status for.
 `ICallback`\<[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)\>
 
 A callback function that will be called with the result.
-             If an error occurs, the first parameter will be an Error object.
-             Otherwise, the second parameter will be the status of the message.
+If an error occurs, the first parameter will be an Error object.
+Otherwise, the second parameter will be the status of the message.
 
 #### Returns
 
 `void`
 
-***
+#### Throws
+
+MessageNotFoundError
+
+---
 
 ### requeueMessageById()
 
@@ -206,9 +222,25 @@ The ID of the message to requeue.
 `ICallback`\<`string`\>
 
 A callback function that will be called with the result.
-             If an error occurs, the first parameter will be an Error object.
-             On success, the second parameter will be the ID of the new message.
+If an error occurs, the first parameter will be an Error object.
+On success, the second parameter will be the ID of the new message.
 
 #### Returns
 
 `void`
+
+#### Throws
+
+MessageNotFoundError
+
+#### Throws
+
+MessageNotRequeuableError
+
+#### Throws
+
+RequeueMessageScriptError
+
+#### Throws
+
+UnexpectedScriptReplyError

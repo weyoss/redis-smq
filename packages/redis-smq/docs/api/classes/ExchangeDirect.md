@@ -10,6 +10,7 @@ bound to that exact routing key. This provides precise message routing control
 and is ideal for point-to-point messaging patterns.
 
 Key Features:
+
 - Exact routing key matching for precise message delivery
 - Multiple queues can be bound to the same routing key
 - Atomic binding and unbinding operations with Redis transactions
@@ -19,6 +20,7 @@ Key Features:
 - Comprehensive validation and error handling
 
 Routing Behavior:
+
 - Messages are routed only to queues with matching routing keys
 - If no queues match the routing key, the message is not delivered
 - Multiple queues can share the same routing key for load distribution
@@ -30,13 +32,18 @@ Routing Behavior:
 const directExchange = new ExchangeDirect();
 
 // Bind queues to specific routing keys
-directExchange.bindQueue('user-notifications', 'user-events', 'user.created', (err) => {
-  if (err) {
-    console.error('Failed to bind queue:', err);
-    return;
-  }
-  console.log('Queue bound to routing key successfully');
-});
+directExchange.bindQueue(
+  'user-notifications',
+  'user-events',
+  'user.created',
+  (err) => {
+    if (err) {
+      console.error('Failed to bind queue:', err);
+      return;
+    }
+    console.log('Queue bound to routing key successfully');
+  },
+);
 
 // Find queues matching a routing key
 directExchange.matchQueues('user-events', 'user.created', (err, queues) => {
@@ -48,9 +55,14 @@ directExchange.matchQueues('user-events', 'user.created', (err, queues) => {
 });
 
 // Unbind queue from routing key
-directExchange.unbindQueue('user-notifications', 'user-events', 'user.created', (err) => {
-  if (!err) console.log('Queue unbound successfully');
-});
+directExchange.unbindQueue(
+  'user-notifications',
+  'user-events',
+  'user.created',
+  (err) => {
+    if (!err) console.log('Queue unbound successfully');
+  },
+);
 ```
 
 ## Constructors
@@ -84,14 +96,14 @@ multiple times will succeed without error.
 ##### queue
 
 The queue to bind. Can be a string (queue name) or an object
-              with name and namespace properties.
+with name and namespace properties.
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ##### exchange
 
 The exchange to bind to. Can be a string (exchange name) or
-                 an object with name and namespace properties.
+an object with name and namespace properties.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -100,7 +112,7 @@ The exchange to bind to. Can be a string (exchange name) or
 `string`
 
 The routing key for message routing. Must be a valid Redis key
-                   format (alphanumeric characters, hyphens, underscores, dots).
+format (alphanumeric characters, hyphens, underscores, dots).
 
 ##### cb
 
@@ -114,32 +126,35 @@ Callback function called when the binding operation completes
 
 #### Throws
 
-When queue parameters are invalid
+InvalidQueueParametersError
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When the routing key format is invalid
+InvalidDirectExchangeParametersError
 
 #### Throws
 
-When the specified queue does not exist
+QueueNotFoundError
 
 #### Throws
 
-When namespace mismatch occurs
+ExchangeNotFoundError
 
 #### Throws
 
-When exchange type is invalid
-                       or concurrent modifications are detected
+NamespaceMismatchError
 
 #### Throws
 
-When Redis operations fail
+ExchangeTypeMismatchError
+
+#### Throws
+
+ExchangeQueuePolicyMismatchError
 
 #### Example
 
@@ -147,22 +162,27 @@ When Redis operations fail
 const directExchange = new ExchangeDirect();
 
 // Bind a queue to handle order creation events
-directExchange.bindQueue('order-processor', 'order-events', 'order.created', (err) => {
-  if (err) {
-    if (err instanceof QueueNotFoundError) {
-      console.error('Queue order-processor does not exist');
-    } else if (err instanceof InvalidDirectExchangeParametersError) {
-      console.error('Invalid routing key format');
-    } else if (err instanceof ExchangeError) {
-      console.error('Exchange error:', err.message);
-    } else {
-      console.error('Binding failed:', err);
+directExchange.bindQueue(
+  'order-processor',
+  'order-events',
+  'order.created',
+  (err) => {
+    if (err) {
+      if (err instanceof QueueNotFoundError) {
+        console.error('Queue order-processor does not exist');
+      } else if (err instanceof InvalidDirectExchangeParametersError) {
+        console.error('Invalid routing key format');
+      } else if (err instanceof ExchangeError) {
+        console.error('Exchange error:', err.message);
+      } else {
+        console.error('Binding failed:', err);
+      }
+      return;
     }
-    return;
-  }
 
-  console.log('Queue bound to routing key successfully');
-});
+    console.log('Queue bound to routing key successfully');
+  },
+);
 
 // Bind with explicit namespaces
 directExchange.bindQueue(
@@ -173,31 +193,41 @@ directExchange.bindQueue(
     if (!err) {
       console.log('Production email service bound successfully');
     }
-  }
+  },
 );
 
 // Bind multiple queues to the same routing key for load balancing
 const queues = ['worker-1', 'worker-2', 'worker-3'];
 queues.forEach((queueName, index) => {
-  directExchange.bindQueue(queueName, 'task-exchange', 'task.process', (err) => {
-    if (!err) {
-      console.log(`Worker ${index + 1} bound to task processing`);
-    }
-  });
+  directExchange.bindQueue(
+    queueName,
+    'task-exchange',
+    'task.process',
+    (err) => {
+      if (!err) {
+        console.log(`Worker ${index + 1} bound to task processing`);
+      }
+    },
+  );
 });
 
 // Bind different routing keys to the same queue for multiple event types
 const eventTypes = ['user.created', 'user.updated', 'user.deleted'];
-eventTypes.forEach(eventType => {
-  directExchange.bindQueue('user-audit-log', 'user-events', eventType, (err) => {
-    if (!err) {
-      console.log(`Audit log bound to ${eventType} events`);
-    }
-  });
+eventTypes.forEach((eventType) => {
+  directExchange.bindQueue(
+    'user-audit-log',
+    'user-events',
+    eventType,
+    (err) => {
+      if (!err) {
+        console.log(`Audit log bound to ${eventType} events`);
+      }
+    },
+  );
 });
 ```
 
-***
+---
 
 ### create()
 
@@ -221,7 +251,7 @@ eventTypes.forEach(eventType => {
 
 `void`
 
-***
+---
 
 ### delete()
 
@@ -238,7 +268,7 @@ and prevents orphaned data structures in Redis.
 ##### exchange
 
 The exchange identifier. Can be a string (exchange name) or
-                 an object with name and namespace properties.
+an object with name and namespace properties.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -254,20 +284,19 @@ Callback function called when the deletion completes
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When the exchange is not found, is not a direct exchange,
-                       or concurrent modifications are detected
+ExchangeHasBoundQueuesError
 
 #### Throws
 
-When the exchange still has bound queues
+ExchangeNotFoundError
 
 #### Throws
 
-When Redis operations fail
+ExchangeTypeMismatchError
 
 #### Example
 
@@ -293,14 +322,11 @@ directExchange.delete('old-order-events', (err) => {
 });
 
 // Delete exchange with specific namespace
-directExchange.delete(
-  { name: 'temp-exchange', ns: 'testing' },
-  (err) => {
-    if (!err) {
-      console.log('Testing exchange deleted');
-    }
+directExchange.delete({ name: 'temp-exchange', ns: 'testing' }, (err) => {
+  if (!err) {
+    console.log('Testing exchange deleted');
   }
-);
+});
 
 // Safe deletion workflow: unbind all queues first
 async function safeDeleteExchange(exchangeName) {
@@ -311,12 +337,17 @@ async function safeDeleteExchange(exchangeName) {
   for (const routingKey of routingKeys) {
     directExchange.matchQueues(exchangeName, routingKey, (err, queues) => {
       if (!err && queues.length > 0) {
-        queues.forEach(queue => {
-          directExchange.unbindQueue(queue, exchangeName, routingKey, (unbindErr) => {
-            if (unbindErr) {
-              console.error(`Failed to unbind ${queue.name}:`, unbindErr);
-            }
-          });
+        queues.forEach((queue) => {
+          directExchange.unbindQueue(
+            queue,
+            exchangeName,
+            routingKey,
+            (unbindErr) => {
+              if (unbindErr) {
+                console.error(`Failed to unbind ${queue.name}:`, unbindErr);
+              }
+            },
+          );
         });
       }
     });
@@ -343,7 +374,7 @@ process.on('SIGTERM', () => {
 });
 ```
 
-***
+---
 
 ### getRoutingKeyQueues()
 
@@ -356,7 +387,7 @@ Retrieves all queues bound to a specific routing key for a direct exchange.
 ##### exchange
 
 Exchange identifier. Either the exchange name as a string
-                  or an object with explicit namespace and name: { ns, name }.
+or an object with explicit namespace and name: { ns, name }.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -378,15 +409,11 @@ Node.js-style callback invoked with the list of queues bound under the routing k
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError When exchange parameters are invalid
 
 #### Throws
 
-When the routing key format is invalid
-
-#### Throws
-
-When Redis operations fail
+InvalidDirectExchangeParametersError When the routing key format is invalid
 
 #### Example
 
@@ -403,7 +430,7 @@ getRoutingKeyQueues({ ns: 'prod', name: 'orders' }, 'updated', (err, queues) => 
 });
 ```
 
-***
+---
 
 ### getRoutingKeys()
 
@@ -416,7 +443,7 @@ Retrieve all routing keys currently bound to a direct exchange.
 ##### exchange
 
 Exchange identifier. Either the exchange name as a string
-                 or an object with explicit namespace and name: { ns, name }.
+or an object with explicit namespace and name: { ns, name }.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -432,11 +459,7 @@ Node.js-style callback invoked with the list of routing keys bound to the exchan
 
 #### Throws
 
-When exchange parameters are invalid
-
-#### Throws
-
-When Redis operations fail
+InvalidExchangeParametersError
 
 #### Example
 
@@ -454,7 +477,7 @@ getRoutingKeys({ ns: 'prod', name: 'orders' }, (err, keys) => {
 });
 ```
 
-***
+---
 
 ### matchQueues()
 
@@ -472,8 +495,8 @@ understanding message routing behavior.
 ##### exchange
 
 The exchange identifier. Can be a string (exchange name) or
-                 an object with name and namespace properties. If namespace is
-                 not specified, the default namespace from configuration is used.
+an object with name and namespace properties. If namespace is
+not specified, the default namespace from configuration is used.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -482,7 +505,7 @@ The exchange identifier. Can be a string (exchange name) or
 `string`
 
 The routing key to match against. Must be a valid Redis key
-                   format (alphanumeric characters, hyphens, underscores, dots).
+format (alphanumeric characters, hyphens, underscores, dots).
 
 ##### cb
 
@@ -496,23 +519,19 @@ Callback function called with the list of matching queues or an error
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When the routing key format is invalid
+InvalidDirectExchangeParametersError
 
 #### Throws
 
-When the exchange is not found or is not a direct exchange
+ExchangeNotFoundError
 
 #### Throws
 
-When Redis returns an unexpected empty response
-
-#### Throws
-
-When Redis operations fail
+ExchangeTypeMismatchError
 
 #### Example
 
@@ -533,7 +552,7 @@ directExchange.matchQueues('order-events', 'order.created', (err, queues) => {
   }
 
   console.log(`Found ${queues.length} queues for routing key 'order.created':`);
-  queues.forEach(queue => {
+  queues.forEach((queue) => {
     console.log(`- Queue: ${queue.name} (namespace: ${queue.ns})`);
   });
 });
@@ -546,7 +565,7 @@ directExchange.matchQueues(
     if (!err) {
       console.log('Production queues for user.login:', queues);
     }
-  }
+  },
 );
 
 // Handle case with no matching queues
@@ -561,7 +580,7 @@ directExchange.matchQueues('notifications', 'sms.send', (err, queues) => {
 });
 ```
 
-***
+---
 
 ### unbindQueue()
 
@@ -579,14 +598,14 @@ bound to the same routing key will continue to receive messages.
 ##### queue
 
 The queue to unbind. Can be a string (queue name) or an object
-              with name and namespace properties.
+with name and namespace properties.
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ##### exchange
 
 The exchange to unbind from. Can be a string (exchange name) or
-                 an object with name and namespace properties.
+an object with name and namespace properties.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -595,7 +614,7 @@ The exchange to unbind from. Can be a string (exchange name) or
 `string`
 
 The routing key to unbind from. Must match the exact routing key
-                   used during binding.
+used during binding.
 
 ##### cb
 
@@ -609,32 +628,31 @@ Callback function called when the unbinding operation completes
 
 #### Throws
 
-When queue parameters are invalid
+InvalidQueueParametersError
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When the routing key format is invalid
+InvalidDirectExchangeParametersError
 
 #### Throws
 
-When namespace mismatch occurs
+NamespaceMismatchError
 
 #### Throws
 
-When exchange type is invalid
-                       exchange is not found, or concurrent modifications are detected
+ExchangeNotFoundError
 
 #### Throws
 
-When the queue is not currently bound to the routing key
+ExchangeTypeMismatchError
 
 #### Throws
 
-When Redis operations fail
+QueueNotBoundError
 
 #### Example
 
@@ -642,22 +660,27 @@ When Redis operations fail
 const directExchange = new ExchangeDirect();
 
 // Unbind a queue from a specific routing key
-directExchange.unbindQueue('order-processor', 'order-events', 'order.created', (err) => {
-  if (err) {
-    if (err instanceof QueueNotBoundError) {
-      console.error('Queue is not bound to this routing key');
-    } else if (err instanceof InvalidDirectExchangeParametersError) {
-      console.error('Invalid routing key format');
-    } else if (err instanceof ExchangeError) {
-      console.error('Exchange error:', err.message);
-    } else {
-      console.error('Unbinding failed:', err);
+directExchange.unbindQueue(
+  'order-processor',
+  'order-events',
+  'order.created',
+  (err) => {
+    if (err) {
+      if (err instanceof QueueNotBoundError) {
+        console.error('Queue is not bound to this routing key');
+      } else if (err instanceof InvalidDirectExchangeParametersError) {
+        console.error('Invalid routing key format');
+      } else if (err instanceof ExchangeError) {
+        console.error('Exchange error:', err.message);
+      } else {
+        console.error('Unbinding failed:', err);
+      }
+      return;
     }
-    return;
-  }
 
-  console.log('Queue unbound from routing key successfully');
-});
+    console.log('Queue unbound from routing key successfully');
+  },
+);
 
 // Unbind with explicit namespaces
 directExchange.unbindQueue(
@@ -668,38 +691,53 @@ directExchange.unbindQueue(
     if (!err) {
       console.log('Production email service unbound successfully');
     }
-  }
+  },
 );
 
 // Unbind multiple queues from the same routing key
 const queues = ['worker-1', 'worker-2', 'worker-3'];
 queues.forEach((queueName, index) => {
-  directExchange.unbindQueue(queueName, 'task-exchange', 'task.process', (err) => {
-    if (!err) {
-      console.log(`Worker ${index + 1} unbound from task processing`);
-    }
-  });
+  directExchange.unbindQueue(
+    queueName,
+    'task-exchange',
+    'task.process',
+    (err) => {
+      if (!err) {
+        console.log(`Worker ${index + 1} unbound from task processing`);
+      }
+    },
+  );
 });
 
 // Unbind a queue from multiple routing keys
 const eventTypes = ['user.created', 'user.updated', 'user.deleted'];
-eventTypes.forEach(eventType => {
-  directExchange.unbindQueue('user-audit-log', 'user-events', eventType, (err) => {
-    if (!err) {
-      console.log(`Audit log unbound from ${eventType} events`);
-    }
-  });
+eventTypes.forEach((eventType) => {
+  directExchange.unbindQueue(
+    'user-audit-log',
+    'user-events',
+    eventType,
+    (err) => {
+      if (!err) {
+        console.log(`Audit log unbound from ${eventType} events`);
+      }
+    },
+  );
 });
 
 // Handle graceful service shutdown
 function shutdownService() {
-  directExchange.unbindQueue('my-service', 'app-events', 'service.task', (err) => {
-    if (err) {
-      console.error('Failed to unbind during shutdown:', err);
-    } else {
-      console.log('Service unbound, safe to shutdown');
-      process.exit(0);
-    }
-  });
+  directExchange.unbindQueue(
+    'my-service',
+    'app-events',
+    'service.task',
+    (err) => {
+      if (err) {
+        console.error('Failed to unbind during shutdown:', err);
+      } else {
+        console.log('Service unbound, safe to shutdown');
+        process.exit(0);
+      }
+    },
+  );
 }
 ```

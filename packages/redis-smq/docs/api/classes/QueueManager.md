@@ -43,6 +43,34 @@ Callback function to handle success or error.
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+QueueNotEmptyError
+
+#### Throws
+
+QueueManagerActiveConsumersError
+
+#### Throws
+
+QueueHasBoundExchangesError
+
+#### Throws
+
+ConsumerSetMismatchError
+
+#### Throws
+
+UnexpectedScriptReplyError
+
 ---
 
 ### exists()
@@ -68,6 +96,10 @@ Callback function to return a boolean indicating the existence of the queue.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
 
 ---
 
@@ -100,6 +132,14 @@ A callback function that receives either an error or an array of consumer IDs.
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
 ---
 
 ### getConsumers()
@@ -131,6 +171,14 @@ A callback function that receives either an error or a record of consumers.
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
 ---
 
 ### getProperties()
@@ -156,6 +204,14 @@ Callback function to return the queue properties or an error.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
 
 ---
 
@@ -220,3 +276,15 @@ Callback function to handle success or error.
 
 - /packages/redis-smq/docs/api/enumerations/EQueueType.md
 - /packages/redis-smq/docs/api/enumerations/EQueueDeliveryModel.md
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueAlreadyExistsError
+
+#### Throws
+
+UnexpectedScriptReplyError

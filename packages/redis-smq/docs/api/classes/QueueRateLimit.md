@@ -44,7 +44,15 @@ A callback function which receives an error or undefined when the operation is c
 
 `void`
 
-***
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
+---
 
 ### get()
 
@@ -71,7 +79,15 @@ It receives either the current rate limit parameters or null if not set.
 
 `void`
 
-***
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
+---
 
 ### hasExceeded()
 
@@ -103,7 +119,15 @@ A callback function which receives a boolean value indicating whether the rate l
 
 `void`
 
-***
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
+---
 
 ### set()
 
@@ -138,3 +162,23 @@ A callback function called when the rate limit is set successfully. No arguments
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+InvalidRateLimitValueError
+
+#### Throws
+
+InvalidRateLimitIntervalError
+
+#### Throws
+
+UnexpectedScriptReplyError
+
+#### Throws
+
+QueueNotFoundError

@@ -4,19 +4,19 @@
 
 ## Extends
 
-- [`QueueManagerError`](QueueManagerError.md)
+- `RedisSMQError`
 
 ## Constructors
 
 ### Constructor
 
-> **new QueueHasBoundExchangesError**(`message?`): `QueueHasBoundExchangesError`
+> **new QueueHasBoundExchangesError**(...`args`): `QueueHasBoundExchangesError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
@@ -24,7 +24,7 @@
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`constructor`](QueueManagerError.md#constructor)
+`RedisSMQError.constructor`
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`cause`](QueueManagerError.md#cause)
+`RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`message`](QueueManagerError.md#message)
+`RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`stack`](QueueManagerError.md#stack)
+`RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`stackTraceLimit`](QueueManagerError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -90,9 +90,79 @@ not capture any frames.
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`name`](QueueManagerError.md#name)
+[`ExchangeTypeMismatchError`](ExchangeTypeMismatchError.md).[`name`](ExchangeTypeMismatchError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.Queue.HasBoundExchanges'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Queue has one or more bound exchanges and cannot be deleted.'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +175,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +228,9 @@ a();
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`captureStackTrace`](QueueManagerError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -180,9 +250,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`isError`](QueueManagerError.md#iserror)
+`RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +278,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`QueueManagerError`](QueueManagerError.md).[`prepareStackTrace`](QueueManagerError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`

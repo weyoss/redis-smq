@@ -1,36 +1,32 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / MessageHandlerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidCronExpressionError
 
-# Class: MessageHandlerError
+# Class: InvalidCronExpressionError
+
+Indicates that a provided CRON expression is invalid and could not be parsed.
 
 ## Extends
 
-- [`ConsumerError`](ConsumerError.md)
-
-## Extended by
-
-- [`MessageHandlerFilenameExtensionError`](MessageHandlerFilenameExtensionError.md)
-- [`MessageHandlerFileError`](MessageHandlerFileError.md)
-- [`ConsumerGroupNotFoundError`](ConsumerGroupNotFoundError.md)
+- `RedisSMQError`\<\{ `expression`: `string`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new MessageHandlerError**(`message?`): `MessageHandlerError`
+> **new InvalidCronExpressionError**(...`args`): `InvalidCronExpressionError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `expression`: `string`; \}\>\]
 
 #### Returns
 
-`MessageHandlerError`
+`InvalidCronExpressionError`
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`constructor`](ConsumerError.md#constructor)
+`RedisSMQError<{ expression: string; }>.constructor`
 
 ## Properties
 
@@ -40,9 +36,9 @@
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`cause`](ConsumerError.md#cause)
+`RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -50,9 +46,9 @@
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`message`](ConsumerError.md#message)
+`RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -60,9 +56,9 @@
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`stack`](ConsumerError.md#stack)
+`RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -80,7 +76,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`stackTraceLimit`](ConsumerError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -96,9 +92,71 @@ not capture any frames.
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`name`](ConsumerError.md#name)
+`RedisSMQError.name`
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `expression`: `string`; \} \| `null`
+
+#### Returns
+
+\{ `expression`: `string`; \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -111,7 +169,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -164,9 +222,9 @@ a();
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`captureStackTrace`](ConsumerError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -186,9 +244,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`isError`](ConsumerError.md#iserror)
+`RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -214,4 +272,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ConsumerError`](ConsumerError.md).[`prepareStackTrace`](ConsumerError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`

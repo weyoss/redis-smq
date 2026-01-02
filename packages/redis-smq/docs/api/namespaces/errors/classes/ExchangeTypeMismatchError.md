@@ -1,37 +1,33 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / MessageError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ExchangeTypeMismatchError
 
-# Class: MessageError
+# Class: ExchangeTypeMismatchError
+
+Indicates that an operation was attempted on an exchange but the provided
+exchange type does not match the existing exchange's type.
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`MessageNotRequeuableError`](MessageNotRequeuableError.md)
-- [`MessageDestinationQueueAlreadySetError`](MessageDestinationQueueAlreadySetError.md)
-- [`MessageDestinationQueueRequiredError`](MessageDestinationQueueRequiredError.md)
-- [`MessagePropertyError`](MessagePropertyError.md)
+- `RedisSMQError`\<\{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new MessageError**(`message?`): `MessageError`
+> **new ExchangeTypeMismatchError**(...`args`): `ExchangeTypeMismatchError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \}\>\]
 
 #### Returns
 
-`MessageError`
+`ExchangeTypeMismatchError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+`RedisSMQError<{ expected: EExchangeType; actual: EExchangeType; }>.constructor`
 
 ## Properties
 
@@ -43,7 +39,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -53,7 +49,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -63,7 +59,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -99,7 +95,69 @@ not capture any frames.
 
 `RedisSMQError.name`
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \} \| `null`
+
+#### Returns
+
+\{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -112,7 +170,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -167,7 +225,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -189,7 +247,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

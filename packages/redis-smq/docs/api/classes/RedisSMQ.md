@@ -100,7 +100,7 @@ A new direct exchange instance
 
 #### Throws
 
-If RedisSMQ is not initialized
+Error If RedisSMQ is not initialized
 
 #### Example
 
@@ -151,7 +151,7 @@ A new fanout exchange instance
 
 #### Throws
 
-If RedisSMQ is not initialized
+Error If RedisSMQ is not initialized
 
 #### Example
 
@@ -482,7 +482,7 @@ A new topic exchange instance
 
 #### Throws
 
-If RedisSMQ is not initialized
+Error If RedisSMQ is not initialized
 
 #### Example
 

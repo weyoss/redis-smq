@@ -1,35 +1,33 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / NamespaceManagerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ExchangeQueuePolicyMismatchError
 
-# Class: NamespaceManagerError
+# Class: ExchangeQueuePolicyMismatchError
+
+Indicates that a queue could not be bound to an exchange because the queue's
+type is incompatible with the exchange's queue policy.
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`NamespaceNotFoundError`](NamespaceNotFoundError.md)
-- [`InvalidNamespaceError`](InvalidNamespaceError.md)
+- `RedisSMQError`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new NamespaceManagerError**(`message?`): `NamespaceManagerError`
+> **new ExchangeQueuePolicyMismatchError**(...`args`): `ExchangeQueuePolicyMismatchError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \}\>\]
 
 #### Returns
 
-`NamespaceManagerError`
+`ExchangeQueuePolicyMismatchError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+`RedisSMQError<{ exchangeType: EExchangeType; queuePolicy: EExchangeQueuePolicy; expected: string; actual: string; }>.constructor`
 
 ## Properties
 
@@ -41,7 +39,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -51,7 +49,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -61,7 +59,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -97,7 +95,69 @@ not capture any frames.
 
 `RedisSMQError.name`
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \} \| `null`
+
+#### Returns
+
+\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -110,7 +170,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -165,7 +225,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -187,7 +247,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

@@ -36,7 +36,7 @@ and management of these messages when the system is configured to audit them.
 
 > **countMessages**(`queue`, `cb`): `void`
 
-Counts the total number of messages in the queue.
+Counts the total number of audited acknowledged messages.
 
 #### Parameters
 
@@ -56,6 +56,26 @@ Callback returning the count
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+AcknowledgedMessageAuditNotEnabledError
+
 #### Overrides
 
 `MessageBrowserAbstract.countMessages`
@@ -66,7 +86,7 @@ Callback returning the count
 
 > **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
-Retrieves detailed messages for a specific page.
+Retrieves audited acknowledged messages.
 
 #### Parameters
 
@@ -98,6 +118,26 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+AcknowledgedMessageAuditNotEnabledError
+
 #### Overrides
 
 `MessageBrowserAbstract.getMessages`
@@ -108,15 +148,7 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 > **purge**(`queue`, `cb`): `void`
 
-Purges all messages from the specified queue.
-
-Different message types can be purged using specific classes:
-
-- [QueueMessages](QueueMessages.md) - Delete all queue messages
-- QueueAcknowledgedMessages - Delete acknowledged messages (if configured to be stored)
-- [QueueDeadLetteredMessages](QueueDeadLetteredMessages.md) - Delete dead-lettered messages (if configured to be stored)
-- [QueueScheduledMessages](QueueScheduledMessages.md) - Delete scheduled messages
-- [QueuePendingMessages](QueuePendingMessages.md) - Delete pending messages
+Purges all audited acknowledged messages.
 
 #### Parameters
 
@@ -138,6 +170,26 @@ Otherwise, the first parameter will be null/undefined.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+AcknowledgedMessageAuditNotEnabledError
 
 #### Overrides
 

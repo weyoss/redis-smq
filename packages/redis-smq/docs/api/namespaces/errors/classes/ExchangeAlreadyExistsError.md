@@ -1,31 +1,26 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConsumerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ExchangeAlreadyExistsError
 
-# Class: ConsumerError
+# Class: ExchangeAlreadyExistsError
 
 ## Extends
 
 - `RedisSMQError`
 
-## Extended by
-
-- [`MessageHandlerAlreadyExistsError`](MessageHandlerAlreadyExistsError.md)
-- [`MessageHandlerError`](MessageHandlerError.md)
-
 ## Constructors
 
 ### Constructor
 
-> **new ConsumerError**(`message?`): `ConsumerError`
+> **new ExchangeAlreadyExistsError**(...`args`): `ExchangeAlreadyExistsError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
-`ConsumerError`
+`ExchangeAlreadyExistsError`
 
 #### Inherited from
 
@@ -41,7 +36,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -51,7 +46,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -61,7 +56,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -97,7 +92,69 @@ not capture any frames.
 
 `RedisSMQError.name`
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -110,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -165,7 +222,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -187,7 +244,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

@@ -8,6 +8,7 @@ A fanout exchange routes messages to all queues that are bound to it, ignoring r
 This is useful for broadcasting messages to multiple consumers or implementing pub/sub patterns.
 
 Features:
+
 - Message broadcasting to all bound queues
 - Atomic queue binding and unbinding operations
 - Concurrent modification detection using Redis WATCH
@@ -65,14 +66,14 @@ exchanges, all bound queues receive copies of every message, regardless of routi
 ##### queue
 
 The queue to bind. Can be a string (queue name) or an object
-              with name and namespace properties.
+with name and namespace properties.
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ##### exchange
 
 The exchange to bind to. Can be a string (exchange name) or
-                 an object with name and namespace properties.
+an object with name and namespace properties.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -88,28 +89,31 @@ Callback function called when the binding operation completes
 
 #### Throws
 
-When queue parameters are invalid
+InvalidQueueParametersError
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When the specified queue does not exist
+QueueNotFoundError
 
 #### Throws
 
-When namespace mismatch occurs
+ExchangeNotFoundError
 
 #### Throws
 
-When exchange type is invalid
-                       or concurrent modifications are detected
+NamespaceMismatchError
 
 #### Throws
 
-When Redis operations fail
+ExchangeTypeMismatchError
+
+#### Throws
+
+ExchangeQueuePolicyMismatchError
 
 #### Example
 
@@ -140,19 +144,19 @@ fanoutExchange.bindQueue(
     if (!err) {
       console.log('Production queue bound successfully');
     }
-  }
+  },
 );
 
 // Multiple queues can be bound to the same fanout exchange
 const queues = ['email-queue', 'sms-queue', 'push-queue'];
-queues.forEach(queueName => {
+queues.forEach((queueName) => {
   fanoutExchange.bindQueue(queueName, 'notification-fanout', (err) => {
     if (!err) console.log(`${queueName} bound to fanout exchange`);
   });
 });
 ```
 
-***
+---
 
 ### create()
 
@@ -176,7 +180,7 @@ queues.forEach(queueName => {
 
 `void`
 
-***
+---
 
 ### delete()
 
@@ -189,7 +193,7 @@ Deletes a fanout exchange from the system.
 ##### exchange
 
 The exchange identifier. Can be a string (exchange name) or
-                 an object with name and namespace properties.
+an object with name and namespace properties.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -205,19 +209,19 @@ Callback function called when the deletion completes
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When the exchange is not found or type mismatch occurs
+ExchangeHasBoundQueuesError
 
 #### Throws
 
-When the exchange still has bound queues
+ExchangeNotFoundError
 
 #### Throws
 
-When Redis operations fail or concurrent modifications are detected
+ExchangeTypeMismatchError
 
 #### Example
 
@@ -242,15 +246,12 @@ fanoutExchange.delete('old-broadcast-exchange', (err) => {
 });
 
 // Delete exchange with specific namespace
-fanoutExchange.delete(
-  { name: 'temp-exchange', ns: 'testing' },
-  (err) => {
-    if (!err) console.log('Testing exchange deleted');
-  }
-);
+fanoutExchange.delete({ name: 'temp-exchange', ns: 'testing' }, (err) => {
+  if (!err) console.log('Testing exchange deleted');
+});
 ```
 
-***
+---
 
 ### matchQueues()
 
@@ -267,8 +268,8 @@ of routing keys, making this method useful for understanding message distributio
 ##### exchange
 
 The exchange identifier. Can be a string (exchange name) or
-                 an object with name and namespace properties. If namespace is
-                 not specified, the default namespace from configuration is used.
+an object with name and namespace properties. If namespace is
+not specified, the default namespace from configuration is used.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -284,11 +285,7 @@ Callback function called with the list of bound queues or an error
 
 #### Throws
 
-When exchange parameters are invalid
-
-#### Throws
-
-When Redis operations fail
+InvalidExchangeParametersError
 
 #### Example
 
@@ -303,7 +300,7 @@ fanoutExchange.matchQueues('broadcast-exchange', (err, queues) => {
   }
 
   console.log(`Found ${queues.length} bound queues:`);
-  queues.forEach(queue => {
+  queues.forEach((queue) => {
     console.log(`- Queue: ${queue.name} (namespace: ${queue.ns})`);
   });
 });
@@ -315,11 +312,11 @@ fanoutExchange.matchQueues(
     if (!err) {
       console.log('Production queues:', queues);
     }
-  }
+  },
 );
 ```
 
-***
+---
 
 ### unbindQueue()
 
@@ -338,14 +335,14 @@ Note: This operation does not delete the exchange or queue, only removes their b
 ##### queue
 
 The queue to unbind. Can be a string (queue name) or an object
-              with name and namespace properties.
+with name and namespace properties.
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ##### exchange
 
 The exchange to unbind from. Can be a string (exchange name) or
-                 an object with name and namespace properties.
+an object with name and namespace properties.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
@@ -361,24 +358,27 @@ Callback function called when the unbinding operation completes
 
 #### Throws
 
-When queue parameters are invalid
+InvalidQueueParametersError
 
 #### Throws
 
-When exchange parameters are invalid
+InvalidExchangeParametersError
 
 #### Throws
 
-When namespace mismatch occurs
+NamespaceMismatchError
 
 #### Throws
 
-When exchange type is invalid,
-                       exchange is not found or concurrent modifications are detected
+ExchangeNotFoundError
 
 #### Throws
 
-When Redis operations fail
+ExchangeTypeMismatchError
+
+#### Throws
+
+QueueNotBoundError
 
 #### Example
 
@@ -407,12 +407,12 @@ fanoutExchange.unbindQueue(
     if (!err) {
       console.log('Production queue unbound successfully');
     }
-  }
+  },
 );
 
 // Unbind multiple queues from the same exchange
 const queuesToUnbind = ['temp-queue-1', 'temp-queue-2'];
-queuesToUnbind.forEach(queueName => {
+queuesToUnbind.forEach((queueName) => {
   fanoutExchange.unbindQueue(queueName, 'broadcast-exchange', (err) => {
     if (!err) console.log(`${queueName} unbound from exchange`);
   });

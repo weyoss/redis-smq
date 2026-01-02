@@ -42,7 +42,39 @@ Callback function to handle the result.
 
 `void`
 
-***
+#### Throws
+
+InvalidNamespaceError
+
+#### Throws
+
+NamespaceNotFoundError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+QueueNotEmptyError
+
+#### Throws
+
+QueueManagerActiveConsumersError
+
+#### Throws
+
+QueueHasBoundExchangesError
+
+#### Throws
+
+ConsumerSetMismatchError
+
+#### Throws
+
+UnexpectedScriptReplyError
+
+---
 
 ### getNamespaceQueues()
 
@@ -68,7 +100,15 @@ Callback function to handle the result.
 
 `void`
 
-***
+#### Throws
+
+InvalidNamespaceError
+
+#### Throws
+
+NamespaceNotFoundError
+
+---
 
 ### getNamespaces()
 

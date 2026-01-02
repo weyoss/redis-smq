@@ -1,34 +1,30 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ExchangeFanoutError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidRateLimitValueError
 
-# Class: ExchangeFanoutError
+# Class: InvalidRateLimitValueError
 
 ## Extends
 
-- [`ExchangeError`](ExchangeError.md)
-
-## Extended by
-
-- [`QueueDeliveryModelMismatchError`](QueueDeliveryModelMismatchError.md)
+- `RedisSMQError`
 
 ## Constructors
 
 ### Constructor
 
-> **new ExchangeFanoutError**(`message?`): `ExchangeFanoutError`
+> **new InvalidRateLimitValueError**(...`args`): `InvalidRateLimitValueError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
-`ExchangeFanoutError`
+`InvalidRateLimitValueError`
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`constructor`](ExchangeError.md#constructor)
+`RedisSMQError.constructor`
 
 ## Properties
 
@@ -38,9 +34,9 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`cause`](ExchangeError.md#cause)
+`RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -48,9 +44,9 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`message`](ExchangeError.md#message)
+`RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -58,9 +54,9 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`stack`](ExchangeError.md#stack)
+`RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -78,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`stackTraceLimit`](ExchangeError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -94,9 +90,71 @@ not capture any frames.
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`name`](ExchangeError.md#name)
+[`ExchangeTypeMismatchError`](ExchangeTypeMismatchError.md).[`name`](ExchangeTypeMismatchError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -109,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -162,9 +220,9 @@ a();
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`captureStackTrace`](ExchangeError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -184,9 +242,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`isError`](ExchangeError.md#iserror)
+`RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -212,4 +270,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`prepareStackTrace`](ExchangeError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`
