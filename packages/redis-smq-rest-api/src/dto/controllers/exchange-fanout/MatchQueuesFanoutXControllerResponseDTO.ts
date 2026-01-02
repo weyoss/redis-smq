@@ -12,4 +12,4 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type MatchQueuesFanoutXControllerResponseDTO =
   | readonly [200, IQueueParams[]]
-  | TErrors['InvalidFanoutExchangeParametersError'];
+  | TErrors['InvalidExchangeParametersError'];

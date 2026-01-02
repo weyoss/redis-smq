@@ -8,9 +8,7 @@
  */
 
 import KoaRouter from '@koa/router';
-import { RedisSMQError } from 'redis-smq-common';
 import { Container } from '../../container/Container.js';
-import { getErrorResponseParams } from '../../errors/getErrorResponseParams.js';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
@@ -101,31 +99,18 @@ async function registerRouteWithValidation(
     routePath,
     ValidateRequestMiddleware(requestValidators),
     async (ctx, next) => {
-      try {
-        const [statusCode, responseData] = await controllerHandler(ctx, next);
-        const responseBody = responseData ?? null;
-        ctx.status = statusCode;
-        ctx.body =
-          responseBody === null && statusCode === 204
-            ? null
-            : { data: responseBody };
-        ctx.state.responseSchemaKey = 'OK';
-      } catch (error: unknown) {
-        if (error instanceof RedisSMQError) {
-          const [errorCode, errorMessage] = getErrorResponseParams(error);
-          ctx.state.responseSchemaKey = errorMessage;
-          ctx.status = errorCode;
-          ctx.body = {
-            error: {
-              code: errorCode,
-              message: errorMessage,
-              details: {},
-            },
-          };
-        } else throw error;
-      }
+      const [statusCode, responseData] = await controllerHandler(ctx, next);
+      const responseBody = responseData ?? null;
+      ctx.status = statusCode;
+      ctx.body =
+        responseBody === null && statusCode === 204
+          ? null
+          : { data: responseBody };
+      ctx.state.responseSchemaKey = 'OK';
       return next();
     },
+    // At this stage, we are validating ONLY successful responses (responseSchemaKey = 'OK')
+    // If an error occurs during request processing, it gets caught by the errorHandlerMiddleware
     ValidateResponseMiddleware(responseValidators),
   );
 }

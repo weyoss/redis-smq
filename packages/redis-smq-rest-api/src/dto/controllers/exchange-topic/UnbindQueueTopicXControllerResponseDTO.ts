@@ -12,6 +12,9 @@ import { TErrors } from '../../../errors/errors.js';
 export type UnbindQueueTopicXControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['InvalidDirectExchangeParametersError']
-  | TErrors['QueueNotFoundError']
+  | TErrors['InvalidExchangeParametersError']
+  | TErrors['InvalidTopicBindingPatternError']
+  | TErrors['NamespaceMismatchError']
+  | TErrors['ExchangeNotFoundError']
+  | TErrors['ExchangeTypeMismatchError']
   | TErrors['QueueNotBoundError'];

@@ -13,4 +13,7 @@ import { TErrors } from '../../../errors/errors.js';
 export type GetQueueAcknowledgedMessagesControllerResponseDTO =
   | readonly [200, IBrowserPage<IMessageTransferable>]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueNotFoundError'];
+  | TErrors['ConsumerGroupRequiredError']
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['AcknowledgedMessageAuditNotEnabledError'];

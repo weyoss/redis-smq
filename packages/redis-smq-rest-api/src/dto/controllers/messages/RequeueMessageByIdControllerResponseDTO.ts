@@ -12,4 +12,6 @@ import { TErrors } from '../../../errors/errors.js';
 export type RequeueMessageByIdControllerResponseDTO =
   | readonly [204, null]
   | TErrors['MessageNotFoundError']
-  | TErrors['MessageNotRequeuableError'];
+  | TErrors['MessageNotRequeuableError']
+  | TErrors['RequeueMessageScriptError']
+  | TErrors['UnexpectedScriptReplyError'];

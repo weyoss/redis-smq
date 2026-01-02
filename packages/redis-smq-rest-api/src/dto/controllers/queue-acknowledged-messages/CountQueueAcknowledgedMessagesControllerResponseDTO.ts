@@ -12,4 +12,7 @@ import { TErrors } from '../../../errors/errors.js';
 export type CountQueueAcknowledgedMessagesControllerResponseDTO =
   | readonly [200, number]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueNotBoundError'];
+  | TErrors['ConsumerGroupRequiredError']
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['AcknowledgedMessageAuditNotEnabledError'];

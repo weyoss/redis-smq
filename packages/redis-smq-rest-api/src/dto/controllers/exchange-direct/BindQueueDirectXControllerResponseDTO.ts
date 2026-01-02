@@ -12,6 +12,10 @@ import { TErrors } from '../../../errors/errors.js';
 export type BindQueueDirectXControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
+  | TErrors['InvalidExchangeParametersError']
   | TErrors['InvalidDirectExchangeParametersError']
   | TErrors['QueueNotFoundError']
-  | TErrors['QueueDeliveryModelMismatchError'];
+  | TErrors['ExchangeNotFoundError']
+  | TErrors['NamespaceMismatchError']
+  | TErrors['ExchangeTypeMismatchError']
+  | TErrors['ExchangeQueuePolicyMismatchError'];

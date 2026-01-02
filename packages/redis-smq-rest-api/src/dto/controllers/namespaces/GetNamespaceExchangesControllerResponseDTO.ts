@@ -12,5 +12,4 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type GetNamespaceExchangesControllerResponseDTO =
   | readonly [200, IExchangeParsedParams[]]
-  | TErrors['InvalidNamespaceError']
-  | TErrors['NamespaceNotFoundError'];
+  | TErrors['InvalidNamespaceError'];

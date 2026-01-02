@@ -12,4 +12,7 @@ import { TErrors } from '../../../errors/errors.js';
 export type PurgeQueueAcknowledgedMessagesControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueNotFoundError'];
+  | TErrors['ConsumerGroupRequiredError']
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['AcknowledgedMessageAuditNotEnabledError'];

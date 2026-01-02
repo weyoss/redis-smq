@@ -19,4 +19,5 @@ export type CreateQueueControllerResponseDTO =
       },
     ]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueAlreadyExistsError'];
+  | TErrors['QueueAlreadyExistsError']
+  | TErrors['UnexpectedScriptReplyError'];

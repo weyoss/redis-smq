@@ -13,4 +13,9 @@ export type DeleteNamespaceControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidNamespaceError']
   | TErrors['NamespaceNotFoundError']
-  | TErrors['QueueManagerActiveConsumersError'];
+  | TErrors['QueueNotFoundError']
+  | TErrors['QueueNotEmptyError']
+  | TErrors['QueueManagerActiveConsumersError']
+  | TErrors['QueueHasBoundExchangesError']
+  | TErrors['ConsumerSetMismatchError']
+  | TErrors['UnexpectedScriptReplyError'];

@@ -12,4 +12,6 @@ import { TErrors } from '../../../errors/errors.js';
 export type CountConsumerGroupPendingMessagesControllerResponseDTO =
   | readonly [200, number]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['ConsumerGroupsNotSupportedError'];
+  | TErrors['ConsumerGroupRequiredError']
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['QueueNotFoundError'];

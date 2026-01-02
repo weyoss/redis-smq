@@ -12,4 +12,4 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type GetBindingPatternQueuesTopicXControllerResponseDTO =
   | readonly [200, IQueueParams[]]
-  | TErrors['InvalidTopicExchangeParamsError'];
+  | TErrors['InvalidExchangeParametersError'];

@@ -12,6 +12,9 @@ import { TErrors } from '../../../errors/errors.js';
 export type UnbindQueueDirectXControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
+  | TErrors['InvalidExchangeParametersError']
   | TErrors['InvalidDirectExchangeParametersError']
-  | TErrors['QueueNotFoundError']
+  | TErrors['NamespaceMismatchError']
+  | TErrors['ExchangeNotFoundError']
+  | TErrors['ExchangeTypeMismatchError']
   | TErrors['QueueNotBoundError'];
