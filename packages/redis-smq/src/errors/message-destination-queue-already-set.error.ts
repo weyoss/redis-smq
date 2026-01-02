@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageDestinationQueueAlreadySetError extends MessageError {}
+export class MessageDestinationQueueAlreadySetError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.DestinationQueueAlreadySet',
+      defaultMessage: 'Message destination queue is already set.',
+    };
+  }
+}

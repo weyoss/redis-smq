@@ -7,6 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeFanoutError } from './exchange-fanout.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class QueueDeliveryModelMismatchError extends ExchangeFanoutError {}
+export class QueueDeliveryModelMismatchError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Queue.DeliveryModelMismatch',
+      defaultMessage:
+        'Queue delivery model does not match the exchange fanout delivery model.',
+    };
+  }
+}

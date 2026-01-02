@@ -46,6 +46,8 @@ export class MessageManager {
    * @param cb - A callback function that will be called with the result.
    *              If an error occurs, the first parameter will be an Error object.
    *              Otherwise, the second parameter will be the status of the message.
+   *
+   * @throws MessageNotFoundError
    */
   getMessageStatus(
     messageId: string,
@@ -78,6 +80,8 @@ export class MessageManager {
    * @param cb - A callback function that will be called with the result.
    *              If an error occurs, the first parameter will be an Error object.
    *              Otherwise, the second parameter will be the state of the message.
+   *
+   * @throws MessageNotFoundError
    */
   getMessageState(
     messageId: string,
@@ -109,6 +113,8 @@ export class MessageManager {
    * @param cb - A callback function that will be called with the result.
    *              If an error occurs, the first parameter will be an Error object.
    *              Otherwise, the second parameter will be an array of message objects.
+   *
+   * @throws MessageNotFoundError
    */
   getMessagesByIds(
     messageIds: string[],
@@ -145,6 +151,8 @@ export class MessageManager {
    * @param cb - A callback function that will be called with the result.
    *              If an error occurs, the first parameter will be an Error object.
    *              Otherwise, the second parameter will be the message object.
+   *
+   * @throws MessageNotFoundError
    */
   getMessageById(messageId: string, cb: ICallback<IMessageTransferable>): void {
     this.logger.debug('Getting message by ID', { messageId });
@@ -242,6 +250,11 @@ export class MessageManager {
    * @param cb - A callback function that will be called with the result.
    *              If an error occurs, the first parameter will be an Error object.
    *              On success, the second parameter will be the ID of the new message.
+   *
+   * @throws MessageNotFoundError
+   * @throws MessageNotRequeuableError
+   * @throws RequeueMessageScriptError
+   * @throws UnexpectedScriptReplyError
    */
   requeueMessageById(messageId: string, cb: ICallback<string>): void {
     this.logger.debug('Requeuing message by ID', { messageId });

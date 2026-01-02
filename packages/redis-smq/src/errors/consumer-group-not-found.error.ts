@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageHandlerError } from './message-handler.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class ConsumerGroupNotFoundError extends MessageHandlerError {}
+export class ConsumerGroupNotFoundError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.ConsumerGroup.NotFound',
+      defaultMessage: 'Consumer group not found.',
+    };
+  }
+}

@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageAlreadyExistsError extends ProducerError {}
+export class MessageAlreadyExistsError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.AlreadyExists',
+      defaultMessage: 'A message with the same ID already exists.',
+    };
+  }
+}

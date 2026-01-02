@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigurationError } from './configuration.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class ConfigurationNamespaceError extends ConfigurationError {}
+export class ConfigurationNamespaceError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Configuration.Namespace',
+      defaultMessage: 'Invalid namespace configuration.',
+    };
+  }
+}

@@ -7,14 +7,22 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, PowerSwitch } from 'redis-smq-common';
+import {
+  ICallback,
+  OperationNotAllowedError,
+  PanicError,
+  PowerSwitch,
+} from 'redis-smq-common';
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { ConfigurationNotFoundError } from '../errors/configuration-not-found.error.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { parseConfig } from './parse-config.js';
-import { ConfigurationError } from '../errors/index.js';
 import { defaultConfig } from './default-config.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import {
+  ConfigurationUpdateError,
+  InvalidConfigurationError,
+} from '../errors/index.js';
 
 /**
  * Configuration class for managing and setting up the RedisSMQ message queue.
@@ -82,7 +90,11 @@ export class Configuration {
 
   private static validateInitializationState(cb: ICallback): boolean {
     if (Configuration.state.isUp()) {
-      cb(new ConfigurationError('Configuration already initialized'));
+      cb(
+        new OperationNotAllowedError({
+          message: 'Configuration already initialized',
+        }),
+      );
       return false;
     }
 
@@ -93,9 +105,9 @@ export class Configuration {
 
     if (Configuration.state.isGoingDown()) {
       cb(
-        new ConfigurationError(
-          'Configuration is shutting down. Cannot initialize.',
-        ),
+        new OperationNotAllowedError({
+          message: 'Configuration is shutting down. Cannot initialize.',
+        }),
       );
       return false;
     }
@@ -139,7 +151,8 @@ export class Configuration {
    * Gets the already-initialized singleton instance of Configuration.
    *
    * @returns The Configuration instance
-   * @throws {ConfigurationError} When the configuration has not been initialized
+   * @throws OperationNotAllowedError When the configuration has not been initialized
+   * @throws PanicError
    *
    * @example
    * ```typescript
@@ -153,27 +166,28 @@ export class Configuration {
    */
   static getInstance(): Configuration {
     if (Configuration.state.isDown()) {
-      throw new ConfigurationError(
-        'Configuration not initialized. Call initialize() first.',
-      );
+      throw new OperationNotAllowedError({
+        message: 'Configuration not initialized. Call initialize() first.',
+      });
     }
 
     if (Configuration.state.isGoingUp()) {
-      throw new ConfigurationError(
-        'Configuration is currently initializing. Please wait for initialization to complete.',
-      );
+      throw new OperationNotAllowedError({
+        message:
+          'Configuration is currently initializing. Please wait for initialization to complete.',
+      });
     }
 
     if (Configuration.state.isGoingDown()) {
-      throw new ConfigurationError(
-        'Configuration is shutting down. Cannot access instance.',
-      );
+      throw new OperationNotAllowedError({
+        message: 'Configuration is shutting down. Cannot access instance.',
+      });
     }
 
     if (!Configuration.instance) {
-      throw new ConfigurationError(
-        'Configuration instance is null despite being initialized',
-      );
+      throw new PanicError({
+        message: 'Configuration instance is null despite being initialized',
+      });
     }
 
     return Configuration.instance;
@@ -186,7 +200,8 @@ export class Configuration {
    * Equivalent to Configuration.getInstance().getConfig().
    *
    * @returns The current parsed configuration
-   * @throws {ConfigurationError} When the configuration has not been initialized
+   * @throws OperationNotAllowedError When the configuration has not been initialized
+   * @throws PanicError
    *
    * @example
    * ```typescript
@@ -206,8 +221,6 @@ export class Configuration {
    * configuration is always persisted and available for subsequent application starts.
    *
    * @param cb - Callback function called when initialization completes
-   *
-   * @throws {ConfigurationError} When the configuration is already initialized
    *
    * @example
    * ```typescript
@@ -248,7 +261,6 @@ export class Configuration {
    * @param config - Configuration object to initialize with
    * @param cb - Callback function called when initialization completes
    *
-   * @throws {ConfigurationError} When the configuration is already initialized
    *
    * @example
    * ```typescript
@@ -278,7 +290,7 @@ export class Configuration {
         const error =
           parseErr instanceof Error
             ? parseErr
-            : new ConfigurationError(String(parseErr));
+            : new InvalidConfigurationError();
         cb(error);
       }
     }, cb);
@@ -315,12 +327,18 @@ export class Configuration {
 
     if (Configuration.state.isGoingDown()) {
       return cb(
-        new ConfigurationError('Configuration is already shutting down'),
+        new OperationNotAllowedError({
+          message: 'Configuration is already shutting down',
+        }),
       );
     }
 
     if (Configuration.state.isGoingUp()) {
-      return cb(new ConfigurationError('Cannot shutdown while initializing'));
+      return cb(
+        new OperationNotAllowedError({
+          message: 'Cannot shutdown while initializing',
+        }),
+      );
     }
 
     Configuration.state.goingDown();
@@ -360,7 +378,7 @@ export class Configuration {
       try {
         fn(releaseAndNext);
       } catch (e) {
-        const err = e instanceof Error ? e : new ConfigurationError(String(e));
+        const err = e instanceof Error ? e : new ConfigurationUpdateError();
         releaseAndNext(err);
       }
     };
@@ -504,10 +522,7 @@ export class Configuration {
         const updatedConfig = this.mergeConfig(this.config, updates);
         this.config = parseConfig(updatedConfig);
       } catch (e: unknown) {
-        const err =
-          e instanceof Error
-            ? e
-            : new ConfigurationError(`Invalid configuration: ${String(e)}`);
+        const err = e instanceof Error ? e : new InvalidConfigurationError();
         return done(err);
       }
 

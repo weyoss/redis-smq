@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class RoutingKeyRequiredError extends ProducerError {}
+export class RoutingKeyRequiredError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Producer.RoutingKeyRequired',
+      defaultMessage: 'A routing key is required for this exchange type.',
+    };
+  }
+}

@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class InvalidDirectExchangeParametersError extends ExchangeError {}
+export class InvalidDirectExchangeParametersError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Exchange.InvalidDirectExchangeParameters',
+      defaultMessage: 'Invalid direct exchange parameters.',
+    };
+  }
+}

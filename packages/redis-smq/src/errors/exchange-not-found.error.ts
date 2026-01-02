@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class ExchangeNotFoundError extends ExchangeError {}
+export class ExchangeNotFoundError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Exchange.NotFound',
+      defaultMessage: 'Exchange not found.',
+    };
+  }
+}

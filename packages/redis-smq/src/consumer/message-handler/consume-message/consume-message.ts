@@ -139,7 +139,8 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   }
 
   protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    if (!this.redisClient)
+      return new PanicError({ message: 'A RedisClient instance is required.' });
     return this.redisClient;
   }
 
@@ -215,15 +216,15 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         if (reply === 0) {
           // This case should never happen
           return this.handleError(
-            new PanicError(
-              `Message ${messageId} could not be acknowledged. It was not found in the processing queue.`,
-            ),
+            new PanicError({
+              message: `Message ${messageId} could not be acknowledged. It was not found in the processing queue.`,
+            }),
           );
         }
         this.handleError(
-          new PanicError(
-            `Unexpected reply from ACKNOWLEDGE_MESSAGE script: ${reply}`,
-          ),
+          new PanicError({
+            message: `Unexpected reply from ACKNOWLEDGE_MESSAGE script: ${reply}`,
+          }),
         );
       },
     );

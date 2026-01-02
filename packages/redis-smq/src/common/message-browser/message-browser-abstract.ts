@@ -95,6 +95,11 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    * @param cb - Callback function that will be invoked when the operation completes.
    *             If an error occurs, the first parameter will contain the Error object.
    *             Otherwise, the first parameter will be null/undefined.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
    */
   purge(queue: TQueueExtendedParams, cb: ICallback): void {
     const parsedParams = _parseQueueExtendedParams(queue);
@@ -134,6 +139,11 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    * @param page - Page number
    * @param pageSize - Number of items per page
    * @param cb - Callback returning an IQueueMessagesPage of IMessageTransferable
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
    */
   getMessages(
     queue: TQueueExtendedParams,
@@ -212,6 +222,11 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    *
    * @param queue - Extended queue parameters
    * @param cb - Callback returning the count
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
    */
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
     const parsedParams = _parseQueueExtendedParams(queue);

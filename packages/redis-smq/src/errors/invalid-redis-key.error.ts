@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from 'redis-smq-common';
 
-export class ConsumerError extends RedisSMQError {}
+export class InvalidRedisKeyError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisKeys.InvalidKey',
+      defaultMessage: 'Invalid Redis key.',
+    };
+  }
+}

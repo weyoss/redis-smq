@@ -10,6 +10,8 @@
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { IQueueParams, TQueueConsumer } from '../types/index.js';
+import { _queueExists } from './_queue-exists.js';
+import { QueueNotFoundError } from '../../errors/index.js';
 
 /**
  * Retrieves all consumers associated with a specific queue.
@@ -23,22 +25,38 @@ export function _getQueueConsumers(
   queue: IQueueParams,
   cb: ICallback<Record<string, TQueueConsumer>>,
 ): void {
-  const { keyQueueConsumers } = redisKeys.getQueueKeys(
-    queue.ns,
-    queue.name,
-    null,
-  );
-  client.hgetall(keyQueueConsumers, (err, reply) => {
-    if (err) return cb(err);
-    const consumers = reply ?? {};
-    const data: Record<string | number, TQueueConsumer> = {};
-    async.eachIn(
-      consumers,
-      (item, key, done) => {
-        data[key] = JSON.parse(item);
-        done();
+  const data: Record<string | number, TQueueConsumer> = {};
+  async.series(
+    [
+      (cb) =>
+        _queueExists(client, queue, (err, reply) => {
+          if (err) return cb(err);
+          if (!reply) return cb(new QueueNotFoundError());
+          cb();
+        }),
+      (cb) => {
+        const { keyQueueConsumers } = redisKeys.getQueueKeys(
+          queue.ns,
+          queue.name,
+          null,
+        );
+        client.hgetall(keyQueueConsumers, (err, reply) => {
+          if (err) return cb(err);
+          const consumers = reply ?? {};
+          async.eachIn(
+            consumers,
+            (item, key, done) => {
+              data[key] = JSON.parse(item);
+              done();
+            },
+            cb,
+          );
+        });
       },
-      () => cb(null, data),
-    );
-  });
+    ],
+    (err) => {
+      if (err) return cb(err);
+      cb(null, data);
+    },
+  );
 }

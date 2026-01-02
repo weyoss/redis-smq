@@ -23,7 +23,6 @@ import { Configuration } from '../config/index.js';
 import {
   MessageExchangeRequiredError,
   NoMatchedQueuesForMessageExchangeError,
-  ProducerError,
   ProducerNotRunningError,
   QueueHasNoConsumerGroupsError,
   RoutingKeyRequiredError,
@@ -117,6 +116,19 @@ export class Producer extends Runnable<TProducerEvent> {
    *               - `MessageExchangeRequiredError`: Message has neither queue nor exchange.
    *               - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues.
    *               - Other errors from queue or exchange operations.
+   *
+   * @throws ProducerNotRunningError
+   * @throws MessageExchangeRequiredError
+   * @throws RoutingKeyRequiredError
+   * @throws NoMatchedQueuesForMessageExchangeError
+   * @throws QueueHasNoConsumerGroupsError
+   * @throws QueueNotFoundError
+   * @throws ConsumerGroupNotFoundError
+   * @throws MessagePriorityRequiredError
+   * @throws MessageAlreadyExistsError
+   * @throws PriorityQueuingNotEnabledError
+   * @throws InvalidQueueTypeError
+   * @throws UnexpectedScriptReplyError
    *
    * @example
    * ```typescript
@@ -227,12 +239,12 @@ export class Producer extends Runnable<TProducerEvent> {
    * Retrieves the active Redis client used for publishing messages.
    *
    * @returns The active Redis client.
-   * @throws {ProducerError} If the Redis client is not available, indicating
+   * @throws PanicError If the Redis client is not available, indicating
    *         the producer is not properly initialized or has been shut down.
    */
   protected getRedisClient(): IRedisClient {
     if (!this.redisClient)
-      throw new ProducerError('Redis client is not available.');
+      throw new PanicError({ message: 'A RedisClient instance is required.' });
     return this.redisClient;
   }
 
@@ -367,12 +379,14 @@ export class Producer extends Runnable<TProducerEvent> {
    * groups for PUB/SUB queues during message production.
    *
    * @returns The `PubSubTargetResolver` instance.
-   * @throws {PanicError} If the resolver is not initialized, indicating a critical
+   * @throws PanicError If the resolver is not initialized, indicating a critical
    *         internal error. This should never occur if the producer is running correctly.
    */
   protected getPubSubTargetResolver(): PubSubTargetResolver {
     if (!this.pubSubTargetResolver) {
-      throw new PanicError('Expected PubSubTargetResolver to be running.');
+      throw new PanicError({
+        message: 'Expected PubSubTargetResolver to be running.',
+      });
     }
     return this.pubSubTargetResolver;
   }
@@ -572,6 +586,6 @@ export class Producer extends Runnable<TProducerEvent> {
     if (exchange.type === EExchangeType.FANOUT) {
       return this.fanoutExchange.matchQueues(exchange, cb);
     }
-    cb(new ProducerError(`Unsupported exchange type.`));
+    cb(new PanicError({ message: 'Unsupported exchange type.' }));
   }
 }

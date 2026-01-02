@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class QueueAlreadyBound extends ExchangeError {}
+export class QueueAlreadyBound extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Queue.AlreadyBound',
+      defaultMessage: 'Queue is already bound to the exchange.',
+    };
+  }
+}

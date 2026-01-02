@@ -14,7 +14,10 @@ import {
 } from 'redis-smq-common';
 import { IQueueParams } from '../queue-manager/index.js';
 import { IExchangeParsedParams } from './types/index.js';
-import { ExchangeError, RedisKeysInvalidKeyError } from '../errors/index.js';
+import {
+  InvalidNamespaceError,
+  InvalidRedisKeyError,
+} from '../errors/index.js';
 import { Configuration } from '../config/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
@@ -113,8 +116,7 @@ export class Exchange {
    * @param ns - The namespace to query. Must be a valid Redis key identifier.
    * @param cb - Callback invoked with an array of exchange parameters for the namespace or an error.
    *
-   * @throws ExchangeError via callback if the namespace parameter is invalid.
-   * @throws CallbackEmptyReplyError via callback on unexpected empty Redis reply.
+   * @throws InvalidNamespaceError
    *
    * @example
    * ```typescript
@@ -136,9 +138,9 @@ export class Exchange {
     cb: ICallback<IExchangeParsedParams[]>,
   ): void {
     const namespace = redisKeys.validateRedisKey(ns);
-    if (namespace instanceof RedisKeysInvalidKeyError) {
+    if (namespace instanceof InvalidRedisKeyError) {
       this.logger.error('getNamespaceExchanges: invalid namespace');
-      return cb(new ExchangeError('Invalid namespace'));
+      return cb(new InvalidNamespaceError());
     }
     const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(namespace);
     withSharedPoolConnection((client, done) => {
@@ -177,8 +179,7 @@ export class Exchange {
    * @param queue - Queue name (string) or complete queue parameters (IQueueParams).
    * @param cb - Callback invoked with an array of exchange parameters the queue is bound to or an error.
    *
-   * @throws Error via callback if the queue parameters are invalid.
-   * @throws CallbackEmptyReplyError via callback on unexpected empty Redis reply.
+   * @throws InvalidQueueParametersError
    *
    * @example
    * ```typescript

@@ -7,14 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import {
-  EExchangeProperty,
-  EExchangeType,
-  IExchangeParsedParams,
-} from '../types/index.js';
+import { EExchangeProperty, IExchangeParsedParams } from '../types/index.js';
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { ExchangeError, ExchangeNotFoundError } from '../../errors/index.js';
+import {
+  ExchangeNotFoundError,
+  ExchangeTypeMismatchError,
+} from '../../errors/index.js';
 
 export function _validateExchange(
   client: IRedisClient,
@@ -29,12 +28,12 @@ export function _validateExchange(
       if (required) return cb(new ExchangeNotFoundError());
       return cb();
     }
-    const existingType = Number(exchange.type);
+    const existingType = Number(reply);
     if (existingType !== exchange.type) {
       return cb(
-        new ExchangeError(
-          `Exchange type mismatch: not a ${EExchangeType[existingType]} exchange`,
-        ),
+        new ExchangeTypeMismatchError({
+          metadata: { expected: exchange.type, actual: existingType },
+        }),
       );
     }
     cb();

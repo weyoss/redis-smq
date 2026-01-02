@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessagePriorityRequiredError extends ProducerError {}
+export class MessagePriorityRequiredError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.PriorityRequired',
+      defaultMessage: 'Message priority is required.',
+    };
+  }
+}

@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerGroupsError } from './consumer-groups.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class ConsumerGroupsNotSupportedError extends ConsumerGroupsError {}
+export class ConsumerGroupsNotSupportedError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.ConsumerGroup.NotSupported',
+      defaultMessage: 'Consumer groups are not supported for this queue.',
+    };
+  }
+}

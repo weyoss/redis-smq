@@ -21,6 +21,7 @@ import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { UnexpectedScriptReplyError } from '../../../errors/unexpected-script-reply.error.js';
 
 export class PublishScheduledWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {
@@ -301,15 +302,15 @@ export class PublishScheduledWorker extends WorkerAbstract {
                   `Script execution returned an error: ${reply}`,
                 );
                 return cb(
-                  new PanicError(
-                    `PUBLISH_SCHEDULED_MESSAGE script failed: ${reply}`,
-                  ),
+                  new PanicError({
+                    message: `PUBLISH_SCHEDULED_MESSAGE script failed: ${reply}`,
+                  }),
                 );
               }
               this.logger.error(
                 `Script execution returned unexpected response: ${reply}`,
               );
-              cb(new PanicError(`Unexpected reply: ${reply}`));
+              cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
             },
           );
         },

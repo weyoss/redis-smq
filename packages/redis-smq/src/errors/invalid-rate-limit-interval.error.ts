@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { QueueRateLimitError } from './queue-rate-limit.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class InvalidRateLimitIntervalError extends QueueRateLimitError {}
+export class InvalidRateLimitIntervalError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.RateLimit.InvalidRateLimitInterval',
+      defaultMessage: 'Invalid rate limit interval.',
+    };
+  }
+}

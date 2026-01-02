@@ -9,10 +9,7 @@
 
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import {
-  InvalidQueueParametersError,
-  RedisKeysError,
-} from '../../errors/index.js';
+import { InvalidQueueParametersError } from '../../errors/index.js';
 import { IQueueParams } from '../types/index.js';
 
 export function _parseQueueParams(
@@ -21,11 +18,11 @@ export function _parseQueueParams(
   const queueParams: { name: string; ns?: string } =
     typeof queue === 'string' ? { name: queue } : queue;
   const name = redisKeys.validateRedisKey(queueParams.name);
-  if (name instanceof RedisKeysError) return new InvalidQueueParametersError();
+  if (name instanceof Error) return new InvalidQueueParametersError();
   const ns = queueParams.ns
     ? redisKeys.validateNamespace(queueParams.ns)
     : Configuration.getConfig().namespace;
-  if (ns instanceof RedisKeysError) return new InvalidQueueParametersError();
+  if (ns instanceof Error) return new InvalidQueueParametersError();
   return {
     name,
     ns,

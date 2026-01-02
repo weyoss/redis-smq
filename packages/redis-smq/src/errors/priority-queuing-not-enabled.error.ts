@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class PriorityQueuingNotEnabledError extends ProducerError {}
+export class PriorityQueuingNotEnabledError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Producer.PriorityQueuingNotEnabled',
+      defaultMessage: 'Priority queuing is not enabled for this queue.',
+    };
+  }
+}

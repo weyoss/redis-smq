@@ -12,7 +12,6 @@ import {
   CallbackEmptyReplyError,
   createLogger,
   ICallback,
-  PanicError,
 } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
@@ -26,11 +25,13 @@ import {
 } from '../queue-manager/index.js';
 import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
 import {
-  InvalidRateLimitError,
+  InvalidRateLimitValueError,
   InvalidRateLimitIntervalError,
   QueueNotFoundError,
+  UnexpectedScriptReplyError,
 } from '../errors/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 
 /**
  * The QueueRateLimit class provides functionality to manage rate limiting for
@@ -58,51 +59,49 @@ export class QueueRateLimit {
    *
    * @param queue - The name of the queue or an IQueueParams object representing the queue.
    * @param cb - A callback function which receives an error or undefined when the operation is complete.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   clear(queue: string | IQueueParams, cb: ICallback<void>): void {
     const queueName =
       typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
     this.logger.debug(`Clearing rate limit for queue: ${queueName}`);
 
+    const queueParams = _parseQueueParams(queue);
+    if (queueParams instanceof Error) return cb(queueParams);
+
     withSharedPoolConnection((client, cb) => {
       this.logger.debug(`Validating queue parameters for: ${queueName}`);
-      async.withCallback(
-        (cb: ICallback<IQueueParams>) =>
-          _parseQueueParamsAndValidate(client, queue, cb),
-        (queueParams, cb) => {
-          const { keyQueueProperties, keyQueueRateLimitCounter } =
-            redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-          this.logger.debug(
-            `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
+      const { keyQueueProperties, keyQueueRateLimitCounter } =
+        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      this.logger.debug(
+        `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
+      );
+      client.runScript(
+        ELuaScriptName.CLEAR_QUEUE_RATE_LIMIT,
+        [keyQueueProperties, keyQueueRateLimitCounter],
+        [String(EQueueProperty.RATE_LIMIT)],
+        (err, reply) => {
+          if (err) {
+            this.logger.error(`Failed to clear rate limit: ${err.message}`);
+            return cb(err);
+          }
+          if (!['OK', 'QUEUE_NOT_FOUND'].includes(String(reply))) {
+            this.logger.error(
+              `Failed to clear rate limit. Got unknown reply: ${reply}`,
+            );
+            return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
+          }
+          if (reply === 'QUEUE_NOT_FOUND') {
+            this.logger.error(`Failed to clear rate limit: ${reply}`);
+            return cb(new QueueNotFoundError());
+          }
+          this.logger.info(
+            `Successfully cleared rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
           );
-
-          client.runScript(
-            ELuaScriptName.CLEAR_QUEUE_RATE_LIMIT,
-            [keyQueueProperties, keyQueueRateLimitCounter],
-            [String(EQueueProperty.RATE_LIMIT)],
-            (err, reply) => {
-              if (err) {
-                this.logger.error(`Failed to clear rate limit: ${err.message}`);
-                return cb(err);
-              }
-              if (!['OK', 'QUEUE_NOT_FOUND'].includes(String(reply))) {
-                this.logger.error(
-                  `Failed to clear rate limit. Got unknown reply: ${reply}`,
-                );
-                return cb(new PanicError('UNKNOWN_REPLY'));
-              }
-              if (reply === 'QUEUE_NOT_FOUND') {
-                this.logger.error(`Failed to clear rate limit: ${reply}`);
-                return cb(new QueueNotFoundError());
-              }
-              this.logger.info(
-                `Successfully cleared rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
-              );
-              cb();
-            },
-          );
+          cb();
         },
-        cb,
       );
     }, cb);
   }
@@ -117,6 +116,12 @@ export class QueueRateLimit {
    * @param queue - The name of the queue or an IQueueParams object. This is the queue for which you want to set a rate limit.
    * @param rateLimit - An IQueueRateLimit object specifying the rate limit configuration (limit and interval).
    * @param cb - A callback function called when the rate limit is set successfully. No arguments are passed.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws InvalidRateLimitValueError
+   * @throws InvalidRateLimitIntervalError
+   * @throws UnexpectedScriptReplyError
+   * @throws QueueNotFoundError
    */
   set(
     queue: string | IQueueParams,
@@ -131,72 +136,59 @@ export class QueueRateLimit {
 
     withSharedPoolConnection((client, cb) => {
       this.logger.debug(`Validating queue parameters for: ${queueName}`);
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) {
-          this.logger.error(
-            `Failed to validate queue parameters: ${err.message}`,
-          );
-          return cb(err);
-        }
-        if (!queueParams) {
-          this.logger.error(
-            'Queue parameters validation returned empty result',
-          );
-          return cb(new CallbackEmptyReplyError());
-        }
+      const queueParams = _parseQueueParams(queue);
+      if (queueParams instanceof Error) return cb(queueParams);
 
-        // validating rateLimit params from a javascript client
-        const limit = Number(rateLimit.limit);
-        if (isNaN(limit) || limit <= 0) {
-          this.logger.error(`Invalid rate limit value: ${rateLimit.limit}`);
-          return cb(new InvalidRateLimitError());
-        }
+      // validating rateLimit params from a javascript client
+      const limit = Number(rateLimit.limit);
+      if (isNaN(limit) || limit <= 0) {
+        this.logger.error(`Invalid rate limit value: ${rateLimit.limit}`);
+        return cb(new InvalidRateLimitValueError());
+      }
 
-        const interval = Number(rateLimit.interval);
-        if (isNaN(interval) || interval < 1000) {
-          this.logger.error(
-            `Invalid rate limit interval: ${rateLimit.interval}`,
-          );
-          return cb(new InvalidRateLimitIntervalError());
-        }
+      const interval = Number(rateLimit.interval);
+      if (isNaN(interval) || interval < 1000) {
+        this.logger.error(`Invalid rate limit interval: ${rateLimit.interval}`);
+        return cb(new InvalidRateLimitIntervalError());
+      }
 
-        const validatedRateLimit: IQueueRateLimit = { interval, limit };
-        this.logger.debug(
-          `Validated rate limit: ${limit} messages per ${interval}ms for queue: ${queueParams.name}@${queueParams.ns}`,
-        );
+      const validatedRateLimit: IQueueRateLimit = { interval, limit };
+      this.logger.debug(
+        `Validated rate limit: ${limit} messages per ${interval}ms for queue: ${queueParams.name}@${queueParams.ns}`,
+      );
 
-        const { keyQueueProperties } = redisKeys.getQueueKeys(
-          queueParams.ns,
-          queueParams.name,
-          null,
-        );
-        this.logger.debug(
-          `Setting rate limit using key: ${keyQueueProperties}`,
-        );
+      const { keyQueueProperties } = redisKeys.getQueueKeys(
+        queueParams.ns,
+        queueParams.name,
+        null,
+      );
+      this.logger.debug(`Setting rate limit using key: ${keyQueueProperties}`);
 
-        client.runScript(
-          ELuaScriptName.SET_QUEUE_RATE_LIMIT,
-          [keyQueueProperties],
-          [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
-          (err, reply) => {
-            if (err) {
-              this.logger.error(`Failed to set rate limit: ${err.message}`);
-              return cb(err);
-            }
-            if (reply !== 'OK') {
-              this.logger.error(
-                `Queue not found when setting rate limit: ${queueParams.name}@${queueParams.ns}`,
-              );
-              return cb(new QueueNotFoundError());
-            }
-
-            this.logger.info(
-              `Successfully set rate limit for queue: ${queueParams.name}@${queueParams.ns}, limit: ${limit}, interval: ${interval}ms`,
+      client.runScript(
+        ELuaScriptName.SET_QUEUE_RATE_LIMIT,
+        [keyQueueProperties],
+        [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
+        (err, reply) => {
+          if (err) {
+            this.logger.error(`Failed to set rate limit: ${err.message}`);
+            return cb(err);
+          }
+          if (!['OK', 'QUEUE_NOT_FOUND'].includes(String(reply))) {
+            this.logger.error(
+              `Failed to set rate limit. Got unknown reply: ${reply}`,
             );
-            cb();
-          },
-        );
-      });
+            return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
+          }
+          if (reply === 'QUEUE_NOT_FOUND') {
+            this.logger.error(`Failed to set rate limit: ${reply}`);
+            return cb(new QueueNotFoundError());
+          }
+          this.logger.info(
+            `Successfully set rate limit for queue: ${queueParams.name}@${queueParams.ns}, limit: ${limit}, interval: ${interval}ms`,
+          );
+          cb();
+        },
+      );
     }, cb);
   }
 
@@ -206,6 +198,9 @@ export class QueueRateLimit {
    * @param queue - The name of the queue or an IQueueParams object containing the queue configuration.
    * @param rateLimit - An IQueueRateLimit object defining the rate limit parameters.
    * @param cb - A callback function which receives a boolean value indicating whether the rate limit has been exceeded.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   hasExceeded(
     queue: string | IQueueParams,
@@ -263,6 +258,9 @@ export class QueueRateLimit {
    * @param queue - The name of the queue or an IQueueParams object containing the queue configuration.
    * @param cb - A callback function that is called once the rate limit has been fetched.
    * It receives either the current rate limit parameters or null if not set.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   get(
     queue: string | IQueueParams,

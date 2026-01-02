@@ -10,7 +10,7 @@
 import bluebird from 'bluebird';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  ExchangeError,
+  InvalidTopicBindingPatternError,
   NamespaceMismatchError,
 } from '../../../src/errors/index.js';
 import {
@@ -266,7 +266,7 @@ describe('ExchangeTopic', () => {
     // double dot should be invalid
     await expect(
       topicExchange.bindQueueAsync(queueA, ex, 'order..created'),
-    ).rejects.toThrow(ExchangeError);
+    ).rejects.toThrow(InvalidTopicBindingPatternError);
   });
 
   //
@@ -281,7 +281,7 @@ describe('ExchangeTopic', () => {
         // eslint-disable-next-line no-await-in-loop
         await expect(
           topicExchange.bindQueueAsync(queueA, ex, p),
-        ).rejects.toThrow(ExchangeError);
+        ).rejects.toThrow(InvalidTopicBindingPatternError);
       }
     });
 
@@ -293,7 +293,7 @@ describe('ExchangeTopic', () => {
         // eslint-disable-next-line no-await-in-loop
         await expect(
           topicExchange.bindQueueAsync(queueA, ex, p),
-        ).rejects.toThrow(ExchangeError);
+        ).rejects.toThrow(InvalidTopicBindingPatternError);
       }
     });
 
@@ -317,7 +317,7 @@ describe('ExchangeTopic', () => {
         // eslint-disable-next-line no-await-in-loop
         await expect(
           topicExchange.bindQueueAsync(queueA, ex, p),
-        ).rejects.toThrow(ExchangeError);
+        ).rejects.toThrow(InvalidTopicBindingPatternError);
       }
     });
 
@@ -366,7 +366,7 @@ describe('ExchangeTopic', () => {
         // eslint-disable-next-line no-await-in-loop
         await expect(
           topicExchange.unbindQueueAsync(queueA, ex, p),
-        ).rejects.toThrow(ExchangeError);
+        ).rejects.toThrow(InvalidTopicBindingPatternError);
       }
 
       // Ensure original valid binding still works (no side-effects from failed unbinds)

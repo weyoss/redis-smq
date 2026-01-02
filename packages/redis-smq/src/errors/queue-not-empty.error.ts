@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { QueueManagerError } from './queue-manager.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class QueueNotEmptyError extends QueueManagerError {}
+export class QueueNotEmptyError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Queue.NotEmpty',
+      defaultMessage: 'Queue is not empty.',
+    };
+  }
+}

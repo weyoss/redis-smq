@@ -37,6 +37,11 @@ export class ConsumerGroups {
    *
    * Saves a consumer group to a specific queue.
    *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
+   * @throws InvalidConsumerGroupIdError
+   * @throws ConsumerGroupsNotSupportedError
+   *
    * @param {string | IQueueParams} queue - The queue to which the consumer group belongs.
    * @param {string} groupId - The ID of the consumer group to save.
    * @param {ICallback<number>} cb - Callback function to handle the result or error.
@@ -85,6 +90,12 @@ export class ConsumerGroups {
    *
    * Deletes a consumer group from a specific queue.
    *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
+   * @throws ConsumerGroupNotEmptyError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws UnexpectedScriptReplyError
+   *
    * @param {string | IQueueParams} queue - The queue from which to delete the consumer group.
    * @param {string} groupId - The ID of the consumer group to delete.
    * @param {ICallback<void>} cb - Callback function to handle the result or error.
@@ -130,6 +141,8 @@ export class ConsumerGroups {
    * Get Consumer Groups
    *
    * Retrieves a list of consumer group IDs associated with a specific queue.
+   *
+   * @throws InvalidQueueParametersError
    *
    * @param {string | IQueueParams} queue - The queue from which to retrieve consumer groups.
    * @param {ICallback<string[]>} cb - Callback function to handle the result or error.

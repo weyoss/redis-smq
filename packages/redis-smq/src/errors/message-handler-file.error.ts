@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageHandlerError } from './message-handler.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageHandlerFileError extends MessageHandlerError {}
+export class MessageHandlerFileError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.MessageHandler.FileError',
+      defaultMessage: 'Message handler file error.',
+    };
+  }
+}

@@ -156,7 +156,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   }
 
   protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    if (!this.redisClient)
+      return new PanicError({ message: 'A RedisClient instance is required.' });
     return this.redisClient;
   }
 

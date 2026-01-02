@@ -76,6 +76,9 @@ export class NamespaceManager {
    *
    * @param {string} namespace - The namespace to retrieve queues for.
    * @param {ICallback<IQueueParams[]>} cb - Callback function to handle the result.
+   *
+   * @throws InvalidNamespaceError
+   * @throws NamespaceNotFoundError
    */
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void {
     this.logger.debug('Getting queues for namespace', { namespace });
@@ -152,6 +155,15 @@ export class NamespaceManager {
    *
    * @param {string} namespace - The namespace to delete.
    * @param {ICallback<void>} cb - Callback function to handle the result.
+   *
+   * @throws InvalidNamespaceError
+   * @throws NamespaceNotFoundError
+   * @throws QueueNotFoundError
+   * @throws QueueNotEmptyError
+   * @throws QueueManagerActiveConsumersError
+   * @throws QueueHasBoundExchangesError
+   * @throws ConsumerSetMismatchError
+   * @throws UnexpectedScriptReplyError
    */
   delete(namespace: string, cb: ICallback<void>): void {
     this.logger.debug('Deleting namespace', { namespace });

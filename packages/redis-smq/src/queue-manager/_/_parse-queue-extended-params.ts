@@ -7,10 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import {
-  InvalidQueueParametersError,
-  RedisKeysError,
-} from '../../errors/index.js';
+import { InvalidQueueParametersError } from '../../errors/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   IQueueParams,
@@ -18,6 +15,7 @@ import {
   TQueueExtendedParams,
 } from '../types/index.js';
 import { _parseQueueParams } from './_parse-queue-params.js';
+import { RedisSMQError } from 'redis-smq-common';
 
 function isQueueParams(args: unknown): args is IQueueParams {
   return (
@@ -49,7 +47,7 @@ export function _parseQueueExtendedParams(
   }
   const queueParams = _parseQueueParams(args.queue);
   if (queueParams instanceof Error) return queueParams;
-  let groupId: string | RedisKeysError | null = null;
+  let groupId: string | RedisSMQError | null = null;
   if (args.groupId) {
     groupId = redisKeys.validateRedisKey(args.groupId);
     if (groupId instanceof Error) return new InvalidQueueParametersError();

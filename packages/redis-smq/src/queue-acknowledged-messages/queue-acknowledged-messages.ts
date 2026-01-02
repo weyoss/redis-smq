@@ -37,6 +37,20 @@ export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
     this.logger.debug('QueueAcknowledgedMessages initialized');
   }
 
+  /**
+   * Retrieves audited acknowledged messages.
+   *
+   * @param queue - Extended queue parameters
+   * @param page - Page number
+   * @param pageSize - Number of items per page
+   * @param cb - Callback returning an IQueueMessagesPage of IMessageTransferable
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws AcknowledgedMessageAuditNotEnabledError
+   */
   override getMessages(
     queue: TQueueExtendedParams,
     page: number,
@@ -49,6 +63,21 @@ export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
     super.getMessages(queue, page, pageSize, cb);
   }
 
+  /**
+   * Purges all audited acknowledged messages.
+   *
+   * @param queue - The queue to purge. Can be a string, queue parameters object,
+   *                or queue consumer group parameters.
+   * @param cb - Callback function that will be invoked when the operation completes.
+   *             If an error occurs, the first parameter will contain the Error object.
+   *             Otherwise, the first parameter will be null/undefined.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws AcknowledgedMessageAuditNotEnabledError
+   */
   override purge(queue: TQueueExtendedParams, cb: ICallback) {
     const cfg = Configuration.getConfig();
     if (!cfg.messageAudit.acknowledgedMessages.enabled)
@@ -56,6 +85,18 @@ export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
     super.purge(queue, cb);
   }
 
+  /**
+   * Counts the total number of audited acknowledged messages.
+   *
+   * @param queue - Extended queue parameters
+   * @param cb - Callback returning the count
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws AcknowledgedMessageAuditNotEnabledError
+   */
   override countMessages(queue: TQueueExtendedParams, cb: ICallback<number>) {
     const cfg = Configuration.getConfig();
     if (!cfg.messageAudit.acknowledgedMessages.enabled)

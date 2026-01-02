@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageNotRequeuableError extends MessageError {}
+export class MessageNotRequeuableError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.NotRequeuable',
+      defaultMessage: 'Message is not requeueable.',
+    };
+  }
+}

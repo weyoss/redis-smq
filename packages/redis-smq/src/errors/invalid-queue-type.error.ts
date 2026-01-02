@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from 'redis-smq-common';
 
-export class MessageManagerError extends RedisSMQError {}
+export class InvalidQueueTypeError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Queue.InvalidType',
+      defaultMessage: 'Invalid queue type.',
+    };
+  }
+}

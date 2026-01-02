@@ -26,8 +26,9 @@ import {
   TMessageUnacknowledgementAction,
   TMessageUnacknowledgementStatus,
 } from './types/index.js';
-import { MessageHandlerError } from '../../../errors/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { ScriptResultMismatchError } from '../../../errors/index.js';
+import { UnexpectedScriptReplyError } from '../../../errors/unexpected-script-reply.error.js';
 
 type TScriptArgs = {
   keys: string[];
@@ -377,16 +378,18 @@ export class MessageUnacknowledgement {
         if (err) return cb(err);
         const processedCount = Number(reply);
         if (isNaN(processedCount)) {
-          return cb(
-            new MessageHandlerError(`Unexpected reply type received: ${reply}`),
-          );
+          return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
         }
         const expectedCount = messages.length;
         if (processedCount !== expectedCount) {
           return cb(
-            new MessageHandlerError(
-              `Script reported processing ${processedCount} entries, but expected ${expectedCount}`,
-            ),
+            new ScriptResultMismatchError({
+              message: `Script reported processing ${processedCount} entries, but expected ${expectedCount}`,
+              metadata: {
+                expected: expectedCount,
+                actual: processedCount,
+              },
+            }),
           );
         }
         const status: TMessageUnacknowledgementStatus = Object.fromEntries(

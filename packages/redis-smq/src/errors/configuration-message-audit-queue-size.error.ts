@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigurationError } from './configuration.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class ConfigurationMessageAuditQueueSizeError extends ConfigurationError {}
+export class ConfigurationMessageAuditQueueSizeError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Configuration.MessageAuditQueueSize',
+      defaultMessage: `Message audit 'queue size' parameter is invalid. Expected a positive integer.`,
+    };
+  }
+}

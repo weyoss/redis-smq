@@ -8,7 +8,6 @@
  */
 
 import { CronExpressionParser } from 'cron-parser';
-import { MessageError, MessagePropertyError } from '../errors/index.js';
 import { _parseExchangeParams } from '../exchange/_/_parse-exchange-params.js';
 import {
   EExchangeType,
@@ -18,6 +17,11 @@ import {
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import { EMessagePriority, TMessageConsumeOptions } from './types/index.js';
+import {
+  ExchangeRequiredError,
+  InvalidCronExpressionError,
+  MessagePropertyInvalidValueError,
+} from '../errors/index.js';
 
 /**
  * The ProducibleMessage class is a core component of the Redis Simple Message Queue (RedisSMQ) library, designed to
@@ -194,7 +198,7 @@ export class ProducibleMessage {
    * @param {number} [consumeOptions.retryThreshold] - Default retry threshold value
    * @param {number} [consumeOptions.retryDelay] - Default retry delay value in milliseconds
    * @param {number} [consumeOptions.consumeTimeout] - Default consumption timeout value in milliseconds
-   * @throws {MessagePropertyError} When any provided value is invalid
+   * @throws MessagePropertyInvalidValueError When any provided value is invalid
    *
    * @example
    * ```typescript
@@ -246,12 +250,17 @@ export class ProducibleMessage {
    * @protected
    * @param {number} delay - The retry delay value in milliseconds
    * @returns {number} The validated retry delay value
-   * @throws {MessagePropertyError} When the delay is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the delay is not a valid non-negative number
    */
   protected static validateRetryDelay(delay: number): number {
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'retryDelay',
+          value: value,
+        },
+      });
     }
     return value;
   }
@@ -263,12 +272,17 @@ export class ProducibleMessage {
    * @protected
    * @param {unknown} ttl - The TTL value to validate
    * @returns {number} The validated TTL value
-   * @throws {MessagePropertyError} When the TTL is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the TTL is not a valid non-negative number
    */
   protected static validateTTL(ttl: unknown): number {
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'ttl',
+          value: value,
+        },
+      });
     }
     return value;
   }
@@ -280,12 +294,17 @@ export class ProducibleMessage {
    * @protected
    * @param {unknown} timeout - The timeout value to validate
    * @returns {number} The validated consume timeout value
-   * @throws {MessagePropertyError} When the timeout is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the timeout is not a valid non-negative number
    */
   protected static validateConsumeTimeout(timeout: unknown): number {
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'consumeTimeout',
+          value: value,
+        },
+      });
     }
     return value;
   }
@@ -297,12 +316,17 @@ export class ProducibleMessage {
    * @protected
    * @param {unknown} threshold - The retry threshold value to validate
    * @returns {number} The validated retry threshold value
-   * @throws {MessagePropertyError} When the threshold is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the threshold is not a valid non-negative number
    */
   protected static validateRetryThreshold(threshold: unknown): number {
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'retryThreshold',
+          value: value,
+        },
+      });
     }
     return value;
   }
@@ -330,7 +354,7 @@ export class ProducibleMessage {
    *
    * @param {number} period - The repeat period in milliseconds (must be non-negative)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the period is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the period is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -346,7 +370,12 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(period);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'scheduledRepeatPeriod',
+          value: value,
+        },
+      });
     }
     this.scheduledRepeatPeriod = value;
     return this;
@@ -357,7 +386,7 @@ export class ProducibleMessage {
    *
    * @param {number} delay - The delay in milliseconds (must be non-negative)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the delay is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the delay is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -373,7 +402,12 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'scheduledDelay',
+          value: value,
+        },
+      });
     }
     this.scheduledDelay = value;
     return this;
@@ -403,7 +437,7 @@ export class ProducibleMessage {
    *
    * @param {string} cron - Valid CRON expression (e.g., '0 0 10 * * *' for daily at 10 AM)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {Error} When the CRON expression is invalid
+   * @throws Error When the CRON expression is invalid
    *
    * @example
    * ```typescript
@@ -418,8 +452,15 @@ export class ProducibleMessage {
    * @see {@link setScheduledRepeatPeriod}
    */
   setScheduledCRON(cron: string): ProducibleMessage {
-    // it throws an exception for an invalid value
-    CronExpressionParser.parse(cron);
+    try {
+      CronExpressionParser.parse(cron);
+    } catch {
+      throw new InvalidCronExpressionError({
+        metadata: {
+          expression: cron,
+        },
+      });
+    }
     this.scheduledCron = cron;
     return this;
   }
@@ -429,7 +470,7 @@ export class ProducibleMessage {
    *
    * @param {number} repeat - Number of repetitions (must be non-negative)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the repeat value is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the repeat value is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -445,7 +486,12 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(repeat);
     if (isNaN(value) || value < 0) {
-      throw new MessagePropertyError();
+      throw new MessagePropertyInvalidValueError({
+        metadata: {
+          property: 'scheduledRepeat',
+          value: value,
+        },
+      });
     }
     this.scheduledRepeat = value;
     return this;
@@ -484,7 +530,7 @@ export class ProducibleMessage {
    *
    * @param {number} ttl - TTL in milliseconds (0 means no expiration)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the TTL is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the TTL is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -508,7 +554,7 @@ export class ProducibleMessage {
    *
    * @param {number} timeout - Timeout in milliseconds (0 means no timeout)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the timeout is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the timeout is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -531,7 +577,7 @@ export class ProducibleMessage {
    *
    * @param {number} threshold - Maximum retry attempts (0 means no retries)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the threshold is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the threshold is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -556,7 +602,7 @@ export class ProducibleMessage {
    *
    * @param {number} delay - Delay in milliseconds (0 means no delay)
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessagePropertyError} When the delay is not a valid non-negative number
+   * @throws MessagePropertyInvalidValueError When the delay is not a valid non-negative number
    *
    * @example
    * ```typescript
@@ -672,7 +718,7 @@ export class ProducibleMessage {
    *
    * @param {string | IExchangeParams} exchange - Exchange name or parameters
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {Error} When exchange parameters are invalid
+   * @throws Error When exchange parameters are invalid
    *
    * @example
    * ```typescript
@@ -695,7 +741,7 @@ export class ProducibleMessage {
    *
    * @param {string | IExchangeParams} exchange - Exchange name or parameters
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {Error} When exchange parameters are invalid
+   * @throws Error When exchange parameters are invalid
    *
    * @example
    * ```typescript
@@ -720,7 +766,7 @@ export class ProducibleMessage {
    *
    * @param {string | IExchangeParams} exchange - Exchange name or parameters
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {Error} When exchange parameters are invalid
+   * @throws Error When exchange parameters are invalid
    *
    * @example
    * ```typescript
@@ -743,7 +789,7 @@ export class ProducibleMessage {
    *
    * @param {string} routingKey - The routing key for message routing
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {MessageError} When no exchange has been set
+   * @throws MessageError When no exchange has been set
    *
    * @example
    * ```typescript
@@ -757,10 +803,7 @@ export class ProducibleMessage {
    * @see {@link setDirectExchange}
    */
   setExchangeRoutingKey(routingKey: string): ProducibleMessage {
-    if (!this.exchange)
-      throw new MessageError(
-        'An exchange is required. Use setDirectExchange/setTopicExchange/setFanoutExchange to set an exchange.',
-      );
+    if (!this.exchange) throw new ExchangeRequiredError();
     this.exchangeRoutingKey = routingKey;
     return this;
   }
@@ -792,7 +835,7 @@ export class ProducibleMessage {
    *
    * @param {string | IQueueParams} queue - Queue name or parameters
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {Error} When queue parameters are invalid
+   * @throws Error When queue parameters are invalid
    *
    * @example
    * ```typescript
@@ -1011,7 +1054,7 @@ export class ProducibleMessage {
    * @param {string | IExchangeParams} exchange - Exchange name or parameters
    * @param {EExchangeType} type - Exchange type
    * @returns {ProducibleMessage} This instance for method chaining
-   * @throws {Error} When exchange parameters are invalid
+   * @throws Error When exchange parameters are invalid
    */
   protected setExchange(
     exchange: string | IExchangeParams,

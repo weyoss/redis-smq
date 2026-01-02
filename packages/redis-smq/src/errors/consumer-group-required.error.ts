@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerGroupsError } from './consumer-groups.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class ConsumerGroupRequiredError extends ConsumerGroupsError {}
+export class ConsumerGroupRequiredError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.ConsumerGroup.Required',
+      defaultMessage: 'Consumer group is required.',
+    };
+  }
+}

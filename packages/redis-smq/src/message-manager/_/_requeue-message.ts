@@ -15,13 +15,18 @@ import {
 import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
-import { MessageError, MessageNotRequeuableError } from '../../errors/index.js';
+import {
+  MessageNotFoundError,
+  MessageNotRequeuableError,
+  RequeueMessageScriptError,
+} from '../../errors/index.js';
 import { _fromMessage } from './_from-message.js';
 import { _getMessage } from './_get-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
+import { UnexpectedScriptReplyError } from '../../errors/unexpected-script-reply.error.js';
 
 export function _requeueMessage(
   redisClient: IRedisClient,
@@ -155,21 +160,23 @@ export function _requeueMessage(
         // The script returns 0 if the original message or consumer group does not exist.
         if (reply === 0) {
           return cb(
-            new MessageError(
-              `Could not requeue message ID ${messageId}. Message or consumer group not found.`,
-            ),
+            new MessageNotFoundError({
+              message: `Could not requeue message ID ${messageId}. Message or consumer group not found.`,
+            }),
           );
         }
 
         if (typeof reply === 'string') {
           return cb(
-            new MessageError(
-              `Failed to requeue message. Got error from LUA script: ${reply}`,
-            ),
+            new RequeueMessageScriptError({
+              metadata: {
+                scriptReply: reply,
+              },
+            }),
           );
         }
 
-        cb(new MessageError(`Expected 1 or an error string, got ${reply}`));
+        cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
       },
     );
   });

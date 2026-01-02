@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class InvalidTopicExchangeParamsError extends ExchangeError {}
+export class InvalidTopicExchangeParamsError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Exchange.InvalidTopicExchangeParameters',
+      defaultMessage: 'Invalid topic exchange parameters.',
+    };
+  }
+}

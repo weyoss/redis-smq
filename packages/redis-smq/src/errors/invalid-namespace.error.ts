@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { NamespaceManagerError } from './namespace-manager.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class InvalidNamespaceError extends NamespaceManagerError {}
+export class InvalidNamespaceError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Namespace.InvalidNamespace',
+      defaultMessage: 'Invalid namespace.',
+    };
+  }
+}

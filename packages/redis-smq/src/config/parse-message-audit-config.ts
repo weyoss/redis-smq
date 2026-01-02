@@ -27,20 +27,9 @@ import {
  * configuration validation, default value assignment, and error reporting.
  */
 
-function validateNumericValue(
-  value: unknown,
-  ErrorCtor: new (m: string) => Error,
-): number {
+function validateNumericValue(value: unknown): number | false {
   const numericValue = Number(value);
-
-  if (isNaN(numericValue)) {
-    throw new ErrorCtor(`Value must be a valid number, got: ${value}`);
-  }
-
-  if (numericValue < 0) {
-    throw new ErrorCtor(`Value must be >= 0, got: ${numericValue}`);
-  }
-
+  if (isNaN(numericValue) || numericValue < 0) return false;
   return numericValue;
 }
 
@@ -77,12 +66,12 @@ function getMessageAuditParams(
   }
   const queueSize = validateNumericValue(
     params.queueSize ?? defaultParams.queueSize,
-    ConfigurationMessageAuditQueueSizeError,
   );
-  const expire = validateNumericValue(
-    params.expire ?? defaultParams.expire,
-    ConfigurationMessageAuditExpireError,
-  );
+  if (queueSize === false) throw new ConfigurationMessageAuditQueueSizeError();
+
+  const expire = validateNumericValue(params.expire ?? defaultParams.expire);
+  if (expire === false) throw new ConfigurationMessageAuditExpireError();
+
   return {
     enabled: true,
     queueSize,
@@ -100,8 +89,8 @@ function getMessageAuditParams(
  * @param config - The messages configuration object containing storage settings
  * @returns Parsed and validated storage configuration for all message types
  *
- * @throws {ConfigurationMessageAuditQueueSizeError} When any queueSize is invalid
- * @throws {ConfigurationMessageAuditExpireError} When any expire value is invalid
+ * @throws ConfigurationMessageAuditQueueSizeError When any queueSize is invalid
+ * @throws ConfigurationMessageAuditExpireError When any expire value is invalid
  *
  * @example
  * ```typescript
