@@ -9,8 +9,8 @@
 
 import { expect, test } from 'vitest';
 import {
-  InvalidRateLimitValueError,
   InvalidRateLimitIntervalError,
+  InvalidRateLimitValueError,
   QueueNotFoundError,
 } from '../../../src/errors/index.js';
 import {

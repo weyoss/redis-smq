@@ -20,9 +20,9 @@ import {
   ConsumerGroupNotEmptyError,
   ConsumerGroupsNotSupportedError,
   QueueNotFoundError,
+  UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
-import { UnexpectedScriptReplyError } from '../../errors/index.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,

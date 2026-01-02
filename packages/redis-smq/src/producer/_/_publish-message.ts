@@ -18,13 +18,13 @@ import { MessageEnvelope } from '../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import {
   ConsumerGroupNotFoundError,
+  InvalidQueueTypeError,
   MessageAlreadyExistsError,
   MessagePriorityRequiredError,
   PriorityQueuingNotEnabledError,
   QueueNotFoundError,
-  InvalidQueueTypeError,
+  UnexpectedScriptReplyError,
 } from '../../errors/index.js';
-import { UnexpectedScriptReplyError } from '../../errors/index.js';
 
 /**
  * Enqueues/schedules a message onto the specified queue in Redis.

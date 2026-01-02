@@ -13,7 +13,7 @@ import {
   ILoggerConfig,
   IRedisConfig,
 } from 'redis-smq-common';
-import { IMessageAuditParsedConfig, IMessageAuditConfig } from '../../index.js';
+import { IMessageAuditConfig, IMessageAuditParsedConfig } from '../../index.js';
 
 export interface IEventBusConfig {
   enabled?: boolean;

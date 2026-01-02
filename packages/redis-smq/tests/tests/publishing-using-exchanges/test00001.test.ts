@@ -13,13 +13,13 @@ import { NoMatchedQueuesForMessageExchangeError } from '../../../src/errors/inde
 import {
   EQueueType,
   ExchangeDirect,
-  ExchangeTopic,
   ExchangeFanout,
+  ExchangeTopic,
   IExchangeParams,
   IQueueParams,
+  Producer,
   ProducibleMessage,
   RedisSMQ,
-  Producer,
 } from '../../../src/index.js';
 import { consumeOnce } from '../../common/consume-once.js';
 import { createQueue } from '../../common/message-producing-consuming.js';
