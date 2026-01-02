@@ -10,6 +10,7 @@
 import {
   async,
   ICallback,
+  InvalidArgumentsError,
   IRedisConfig,
   PanicError,
   PowerSwitch,
@@ -81,7 +82,7 @@ export class RedisSMQ {
     }
 
     if (this.state.isGoingDown()) {
-      return cb(new PanicError('RedisSMQ is shutting down'));
+      return cb(new PanicError({ message: 'RedisSMQ is shutting down' }));
     }
 
     try {
@@ -97,7 +98,12 @@ export class RedisSMQ {
         );
       }
     } catch (e: unknown) {
-      const err = e instanceof Error ? e : new PanicError(String(e));
+      const err =
+        e instanceof Error
+          ? e
+          : new PanicError({
+              message: String(e),
+            });
       return cb(err);
     }
   }
@@ -157,7 +163,9 @@ export class RedisSMQ {
   ): void {
     const callback = cb ?? redisSMQConfig;
     if (typeof callback !== 'function')
-      throw new PanicError('Invalid arguments: callback is required');
+      throw new InvalidArgumentsError({
+        message: 'Invalid arguments: a callback function is required',
+      });
 
     async.series(
       [
@@ -187,9 +195,10 @@ export class RedisSMQ {
    */
   private static ensureInitialized(): void {
     if (!RedisSMQ.state.isRunning()) {
-      throw new PanicError(
-        'RedisSMQ is not initialized. Call RedisSMQ.initialize() first.',
-      );
+      throw new PanicError({
+        message:
+          'RedisSMQ is not initialized. Call RedisSMQ.initialize() first.',
+      });
     }
   }
 
@@ -543,7 +552,7 @@ export class RedisSMQ {
    * This is useful for broadcasting messages to multiple consumers.
    *
    * @returns {ExchangeFanout} A new fanout exchange instance
-   * @throws {Error} If RedisSMQ is not initialized
+   * @throws Error If RedisSMQ is not initialized
    *
    * @example
    * ```typescript
@@ -576,7 +585,7 @@ export class RedisSMQ {
    * between the routing key and the binding pattern.
    *
    * @returns {ExchangeTopic} A new topic exchange instance
-   * @throws {Error} If RedisSMQ is not initialized
+   * @throws Error If RedisSMQ is not initialized
    *
    * @example
    * ```typescript
@@ -612,7 +621,7 @@ export class RedisSMQ {
    * Messages are delivered to queues whose binding key exactly matches the routing key.
    *
    * @returns {ExchangeDirect} A new direct exchange instance
-   * @throws {Error} If RedisSMQ is not initialized
+   * @throws Error If RedisSMQ is not initialized
    *
    * @example
    * ```typescript
@@ -695,7 +704,9 @@ export class RedisSMQ {
 
     if (RedisSMQ.state.isGoingUp()) {
       // Keep behavior explicit: do not wait, fail fast to match Configuration approach
-      return cb(new PanicError('Cannot shutdown while initializing'));
+      return cb(
+        new PanicError({ message: 'Cannot shutdown while initializing' }),
+      );
     }
 
     if (RedisSMQ.state.isDown() && RedisSMQ.components.size === 0) {
@@ -819,7 +830,7 @@ export class RedisSMQ {
       enableMultiplexing = enableMultiplexingOrCb;
       callback = cb;
     } else {
-      throw new PanicError('Invalid arguments');
+      throw new InvalidArgumentsError();
     }
 
     const consumer = RedisSMQ.createConsumer(enableMultiplexing);

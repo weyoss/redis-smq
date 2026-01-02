@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerError } from './consumer.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageHandlerAlreadyExistsError extends ConsumerError {}
+export class MessageHandlerAlreadyExistsError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.MessageHandler.AlreadyExists',
+      defaultMessage: 'A message handler for this queue already exists.',
+    };
+  }
+}

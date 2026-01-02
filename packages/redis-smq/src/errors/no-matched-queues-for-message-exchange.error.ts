@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class NoMatchedQueuesForMessageExchangeError extends ProducerError {}
+export class NoMatchedQueuesForMessageExchangeError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Producer.NoMatchedQueuesForExchange',
+      defaultMessage: 'No queues were matched for the message exchange.',
+    };
+  }
+}

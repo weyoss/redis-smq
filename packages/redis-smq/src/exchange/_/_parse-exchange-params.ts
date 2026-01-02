@@ -11,7 +11,7 @@ import { Configuration } from '../../config/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   InvalidExchangeParametersError,
-  RedisKeysInvalidKeyError,
+  InvalidRedisKeyError,
 } from '../../errors/index.js';
 import {
   EExchangeType,
@@ -42,7 +42,7 @@ export function _getExchangeParams(
   const ns = redisKeys.validateRedisKey(exchangeParams.ns);
   if (ns instanceof Error) return new InvalidExchangeParametersError();
   const name = redisKeys.validateRedisKey(exchangeParams.name);
-  if (name instanceof RedisKeysInvalidKeyError)
+  if (name instanceof InvalidRedisKeyError)
     return new InvalidExchangeParametersError();
   return {
     ns,

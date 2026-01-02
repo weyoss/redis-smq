@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, PanicError } from 'redis-smq-common';
+import { async, ICallback } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessages } from '../../../message-manager/_/_get-message.js';
@@ -20,6 +20,7 @@ import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { UnexpectedScriptReplyError } from '../../../errors/index.js';
 
 export class RequeueImmediateWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {
@@ -171,11 +172,7 @@ export class RequeueImmediateWorker extends WorkerAbstract {
             return cb();
           }
           // Catch script-level errors and report them.
-          cb(
-            new PanicError(
-              `Expected a numeric reply, but got ${String(reply)}`,
-            ),
-          );
+          cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
         },
       );
     }, cb);

@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class DeadLetteredMessageAuditNotEnabledError extends RedisSMQError {}
+export class DeadLetteredMessageAuditNotEnabledError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.DeadLetteredMessageAuditNotEnabled',
+      defaultMessage: 'Dead-lettered message audit is not enabled.',
+    };
+  }
+}

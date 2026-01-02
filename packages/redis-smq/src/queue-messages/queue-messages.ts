@@ -62,6 +62,9 @@ export class QueueMessages extends MessageBrowserAbstract {
    * Count messages broken down by status: pending, acknowledged, scheduled, and dead-lettered.
    * @param queue - Queue string name or parameters.
    * @param cb - Callback function returning the IQueueMessagesCount.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   countMessagesByStatus(
     queue: string | IQueueParams,

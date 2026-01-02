@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class ProducerNotRunningError extends ProducerError {}
+export class ProducerNotRunningError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Producer.NotRunning',
+      defaultMessage: 'Producer is not running.',
+    };
+  }
+}

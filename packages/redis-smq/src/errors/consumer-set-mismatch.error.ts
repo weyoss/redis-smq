@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class ConsumerSetMismatchError extends RedisSMQError {}
+export class ConsumerSetMismatchError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Consumer.SetMismatch',
+      defaultMessage: 'Consumer set mismatch.',
+    };
+  }
+}

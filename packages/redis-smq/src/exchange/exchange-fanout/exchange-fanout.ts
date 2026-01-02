@@ -98,8 +98,7 @@ export class ExchangeFanout {
    *                  not specified, the default namespace from configuration is used.
    * @param cb - Callback function called with the list of bound queues or an error
    *
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
@@ -162,10 +161,10 @@ export class ExchangeFanout {
    *                  an object with name and namespace properties.
    * @param cb - Callback function called when the deletion completes
    *
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {ExchangeError} When the exchange is not found or type mismatch occurs
-   * @throws {ExchangeHasBoundQueuesError} When the exchange still has bound queues
-   * @throws {Error} When Redis operations fail or concurrent modifications are detected
+   * @throws InvalidExchangeParametersError
+   * @throws ExchangeHasBoundQueuesError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
    *
    * @example
    * ```typescript
@@ -299,13 +298,13 @@ export class ExchangeFanout {
    *                  an object with name and namespace properties.
    * @param cb - Callback function called when the binding operation completes
    *
-   * @throws {InvalidQueueParametersError} When queue parameters are invalid
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {QueueNotFoundError} When the specified queue does not exist
-   * @throws {NamespaceMismatchError} When namespace mismatch occurs
-   * @throws {ExchangeError} When exchange type is invalid
-   *                        or concurrent modifications are detected
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidQueueParametersError
+   * @throws InvalidExchangeParametersError
+   * @throws QueueNotFoundError
+   * @throws ExchangeNotFoundError
+   * @throws NamespaceMismatchError
+   * @throws ExchangeTypeMismatchError
+   * @throws ExchangeQueuePolicyMismatchError
    *
    * @example
    * ```typescript
@@ -491,12 +490,12 @@ export class ExchangeFanout {
    *                  an object with name and namespace properties.
    * @param cb - Callback function called when the unbinding operation completes
    *
-   * @throws {InvalidQueueParametersError} When queue parameters are invalid
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {NamespaceMismatchError} When namespace mismatch occurs
-   * @throws {ExchangeError} When exchange type is invalid,
-   *                        exchange is not found or concurrent modifications are detected
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidQueueParametersError
+   * @throws InvalidExchangeParametersError
+   * @throws NamespaceMismatchError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
+   * @throws QueueNotBoundError
    *
    * @example
    * ```typescript

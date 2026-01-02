@@ -9,12 +9,16 @@
 
 import { expect, test } from 'vitest';
 import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
-import { RedisKeysError } from '../../../src/errors/index.js';
+import { InvalidRedisKeyError } from '../../../src/errors/index.js';
 
 test('redisKeys', async () => {
-  expect(redisKeys.validateNamespace('global')).toBeInstanceOf(RedisKeysError);
-  expect(redisKeys.validateRedisKey('')).toBeInstanceOf(RedisKeysError);
-  expect(redisKeys.validateRedisKey(null)).toBeInstanceOf(RedisKeysError);
-  expect(redisKeys.validateRedisKey(undefined)).toBeInstanceOf(RedisKeysError);
+  expect(redisKeys.validateNamespace('global')).toBeInstanceOf(
+    InvalidRedisKeyError,
+  );
+  expect(redisKeys.validateRedisKey('')).toBeInstanceOf(InvalidRedisKeyError);
+  expect(redisKeys.validateRedisKey(null)).toBeInstanceOf(InvalidRedisKeyError);
+  expect(redisKeys.validateRedisKey(undefined)).toBeInstanceOf(
+    InvalidRedisKeyError,
+  );
   expect(redisKeys.getKeySegmentSeparator()).toBe(':');
 });

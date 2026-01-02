@@ -26,13 +26,16 @@ function number(value: unknown, required?: false): number | null;
 function number(value: unknown, required?: boolean): number | null;
 function number(value: unknown, required = false): number | null {
   if (value === null || value === undefined || value === '') {
-    if (required) throw new PanicError(`Expected a required number value.`);
+    if (required)
+      throw new PanicError({ message: `Expected a required number value.` });
     return null;
   }
   const num = Number(value);
   if (isNaN(num)) {
     if (required)
-      throw new PanicError(`Expected a numeric value, but got '${value}'.`);
+      throw new PanicError({
+        message: `Expected a numeric value, but got '${value}'.`,
+      });
     return null;
   }
   return num;
@@ -49,7 +52,8 @@ function boolean(value: unknown, required?: false): boolean | null;
 function boolean(value: unknown, required?: boolean): boolean | null;
 function boolean(value: unknown, required = false): boolean | null {
   if (value === null || value === undefined || value === '') {
-    if (required) throw new PanicError(`Expected a required boolean value.`);
+    if (required)
+      throw new PanicError({ message: `Expected a required boolean value.` });
     return null;
   }
   return Boolean(Number(value));
@@ -66,7 +70,8 @@ function string(value: unknown, required?: false): string | null;
 function string(value: unknown, required?: boolean): string | null;
 function string(value: unknown, required = false): string | null {
   if (value === null || value === undefined || value === '') {
-    if (required) throw new PanicError(`Expected a required string value.`);
+    if (required)
+      throw new PanicError({ message: `Expected a required string value.` });
     return null;
   }
   return String(value);

@@ -8,7 +8,7 @@
  */
 
 import { IQueueParams } from '../../../index.js';
-import { RedisKeysInvalidKeyError } from '../../../errors/index.js';
+import { InvalidRedisKeyError } from '../../../errors/index.js';
 
 /**
  * Redis key configuration constants
@@ -318,15 +318,15 @@ export const redisKeys = {
    * @param ns - Namespace to validate
    * @returns Validated namespace or error
    */
-  validateNamespace(ns: string): string | RedisKeysInvalidKeyError {
+  validateNamespace(ns: string): string | InvalidRedisKeyError {
     const validated = this.validateRedisKey(ns);
 
-    if (validated instanceof RedisKeysInvalidKeyError) {
+    if (validated instanceof InvalidRedisKeyError) {
       return validated;
     }
 
     if (validated === REDIS_KEY_CONFIG.GLOBAL_NAMESPACE) {
-      return new RedisKeysInvalidKeyError();
+      return new InvalidRedisKeyError();
     }
 
     return validated;
@@ -340,9 +340,9 @@ export const redisKeys = {
    */
   validateRedisKey(
     key: string | null | undefined,
-  ): string | RedisKeysInvalidKeyError {
+  ): string | InvalidRedisKeyError {
     if (!key || !key.length) {
-      return new RedisKeysInvalidKeyError();
+      return new InvalidRedisKeyError();
     }
 
     const lowerCase = key.toLowerCase();
@@ -353,7 +353,7 @@ export const redisKeys = {
     );
 
     if (filtered.length) {
-      return new RedisKeysInvalidKeyError();
+      return new InvalidRedisKeyError();
     }
 
     return lowerCase;

@@ -28,14 +28,12 @@ import {
   IQueueRateLimit,
   TQueueConsumer,
 } from '../../../index.js';
-import {
-  MessageHandlerError,
-  QueueNotFoundError,
-} from '../../../errors/index.js';
+import { QueueNotFoundError } from '../../../errors/index.js';
 import { eventPublisher } from './event-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
+import { UnexpectedScriptReplyError } from '../../../errors/unexpected-script-reply.error.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -179,7 +177,8 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   }
 
   protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    if (!this.redisClient)
+      return new PanicError({ message: 'A RedisClient instance is required.' });
     return this.redisClient;
   }
 
@@ -248,11 +247,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
             if (reply === 'QUEUE_NOT_FOUND')
               return cb(new QueueNotFoundError());
             if (reply === 'OK') return cb();
-            cb(
-              new MessageHandlerError(
-                `Received unexpected reply message: ${reply}`,
-              ),
-            );
+            cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
           },
         );
       },

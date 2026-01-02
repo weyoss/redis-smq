@@ -72,7 +72,9 @@ function parseProperties(
         properties.requeuedMessagesCount = Number(value);
         break;
       default:
-        return new PanicError(`Unsupported queue property type [${key}]`);
+        return new PanicError({
+          message: `Unsupported queue property type [${key}]`,
+        });
     }
   }
   return properties;

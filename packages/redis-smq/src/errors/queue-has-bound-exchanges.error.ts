@@ -7,6 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { QueueManagerError } from './queue-manager.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class QueueHasBoundExchangesError extends QueueManagerError {}
+export class QueueHasBoundExchangesError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Queue.HasBoundExchanges',
+      defaultMessage:
+        'Queue has one or more bound exchanges and cannot be deleted.',
+    };
+  }
+}

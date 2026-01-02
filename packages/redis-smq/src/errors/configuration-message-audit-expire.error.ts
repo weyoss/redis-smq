@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigurationError } from './configuration.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class ConfigurationMessageAuditExpireError extends ConfigurationError {}
+export class ConfigurationMessageAuditExpireError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Configuration.MessageAuditExpire',
+      defaultMessage: `Message audit 'expire' parameter is invalid. Expected a positive integer.`,
+    };
+  }
+}

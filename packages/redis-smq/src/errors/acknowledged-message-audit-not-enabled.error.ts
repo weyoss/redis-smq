@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class AcknowledgedMessageAuditNotEnabledError extends RedisSMQError {}
+export class AcknowledgedMessageAuditNotEnabledError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.AcknowledgedMessageAuditNotEnabled',
+      defaultMessage: 'Message acknowledgment audit is not enabled.',
+    };
+  }
+}

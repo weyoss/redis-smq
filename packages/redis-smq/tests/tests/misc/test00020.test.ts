@@ -13,31 +13,31 @@ import {
   EMessagePriority,
   ProducibleMessage,
 } from '../../../src/index.js';
-import { MessagePropertyError } from '../../../src/errors/index.js';
+import { MessagePropertyInvalidValueError } from '../../../src/errors/index.js';
 
 test('ProducibleMessage', async () => {
   const msg = new ProducibleMessage();
   expect(() => {
     msg.setScheduledRepeatPeriod(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
   expect(() => {
     msg.setScheduledDelay(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
   expect(() => {
     msg.setScheduledRepeat(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
   expect(() => {
     msg.setTTL(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
   expect(() => {
     msg.setConsumeTimeout(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
   expect(() => {
     msg.setRetryThreshold(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
   expect(() => {
     msg.setRetryDelay(-1);
-  }).toThrow(MessagePropertyError);
+  }).toThrow(MessagePropertyInvalidValueError);
 
   msg.setPriority(EMessagePriority.HIGHEST);
   expect(msg.getPriority()).toBe(EMessagePriority.HIGHEST);

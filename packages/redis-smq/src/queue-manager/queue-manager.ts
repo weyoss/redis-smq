@@ -18,7 +18,10 @@ import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';
 import { _parseQueueParams } from './_/_parse-queue-params.js';
 import { _queueExists } from './_/_queue-exists.js';
-import { QueueAlreadyExistsError } from '../errors/index.js';
+import {
+  QueueAlreadyExistsError,
+  UnexpectedScriptReplyError,
+} from '../errors/index.js';
 import {
   EQueueDeliveryModel,
   EQueueProperty,
@@ -54,6 +57,10 @@ export class QueueManager {
    * @param queueType - The type of the queue, defined by EQueueType.
    * @param deliveryModel - The model for message delivery, defined by EQueueDeliveryModel.
    * @param cb - Callback function to handle success or error.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueAlreadyExistsError
+   * @throws UnexpectedScriptReplyError
    */
   save(
     queue: string | IQueueParams,
@@ -124,7 +131,16 @@ export class QueueManager {
         args,
         (err, reply) => {
           if (err) return done(err);
-          if (reply !== 'OK') {
+          if (!['OK', 'QUEUE_EXISTS'].includes(String(reply))) {
+            this.logger.error(
+              'CREATE_QUEUE script returned an unexpected reply: ',
+              reply,
+            );
+            return done(
+              new UnexpectedScriptReplyError({ metadata: { reply } }),
+            );
+          }
+          if (reply === 'QUEUE_EXISTS') {
             const error = new QueueAlreadyExistsError();
             this.logger.error(`Queue ${queueName} already exists`, error);
             return done(error);
@@ -168,6 +184,8 @@ export class QueueManager {
    *
    * @param queue - The name or parameters for the queue.
    * @param cb - Callback function to return a boolean indicating the existence of the queue.
+   *
+   * @throws InvalidQueueParametersError
    */
   exists(queue: string | IQueueParams, cb: ICallback<boolean>): void {
     const queueDesc =
@@ -207,6 +225,14 @@ export class QueueManager {
    *
    * @param queue - The name or parameters for the queue to be deleted.
    * @param cb - Callback function to handle success or error.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
+   * @throws QueueNotEmptyError
+   * @throws QueueManagerActiveConsumersError
+   * @throws QueueHasBoundExchangesError
+   * @throws ConsumerSetMismatchError
+   * @throws UnexpectedScriptReplyError
    */
   delete(queue: string | IQueueParams, cb: ICallback): void {
     const queueDesc =
@@ -250,6 +276,9 @@ export class QueueManager {
    *
    * @param queue - The name or parameters for the queue.
    * @param cb - Callback function to return the queue properties or an error.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   getProperties(
     queue: string | IQueueParams,
@@ -330,6 +359,9 @@ export class QueueManager {
    *
    * @param queue - A string representing the queue name or an IQueueParams object with queue details.
    * @param cb - A callback function that receives either an error or a record of consumers.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   getConsumers(
     queue: string | IQueueParams,
@@ -367,6 +399,9 @@ export class QueueManager {
    *
    * @param queue - A string representing the queue name or an IQueueParams object with queue details.
    * @param cb - A callback function that receives either an error or an array of consumer IDs.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    */
   getConsumerIds(queue: string | IQueueParams, cb: ICallback<string[]>): void {
     const queueDesc =

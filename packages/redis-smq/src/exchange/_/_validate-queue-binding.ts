@@ -8,7 +8,10 @@
  */
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
-import { ExchangeError, ExchangeNotFoundError } from '../../errors/index.js';
+import {
+  ExchangeNotFoundError,
+  ExchangeTypeMismatchError,
+} from '../../errors/index.js';
 import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
 import {
   EQueueType,
@@ -22,6 +25,7 @@ import {
   IExchangeProperties,
 } from '../types/index.js';
 import { _getExchangeProperties } from './_get-exchange-properties.js';
+import { ExchangeQueuePolicyMismatchError } from '../../errors/index.js';
 
 export function _validateQueueBinding(
   client: IRedisClient,
@@ -47,9 +51,12 @@ export function _validateQueueBinding(
           // Validate existing exchange type (if present) is exchangeParams.type; refuse otherwise
           if (exchangeProperties.type !== exchangeParams.type) {
             return cb(
-              new ExchangeError(
-                `Exchange type mismatch: not a ${EExchangeType[exchangeProperties.type]} exchange`,
-              ),
+              new ExchangeTypeMismatchError({
+                metadata: {
+                  expected: exchangeParams.type,
+                  actual: exchangeProperties.type,
+                },
+              }),
             );
           }
 
@@ -71,9 +78,19 @@ export function _validateQueueBinding(
             const actual = EQueueType[queueType];
 
             return cb(
-              new ExchangeError(
-                `Queue policy mismatch for ${EExchangeType[exchangeProperties.type]} exchange: expected ${expected} queue, but got ${actual}`,
-              ),
+              new ExchangeQueuePolicyMismatchError({
+                message: `Queue policy mismatch for ${
+                  EExchangeType[exchangeProperties.type]
+                } exchange: expected ${expected} queue, but got ${
+                  EQueueType[queueType]
+                }.`,
+                metadata: {
+                  exchangeType: exchangeProperties.type,
+                  queuePolicy: exchangeProperties.queuePolicy,
+                  expected: expected,
+                  actual: actual,
+                },
+              }),
             );
           }
         }

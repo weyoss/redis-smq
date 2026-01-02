@@ -15,12 +15,12 @@ import {
   withWatchTransaction,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { ExchangeError } from '../../errors/index.js';
 import {
   EExchangeProperty,
   EExchangeQueuePolicy,
   IExchangeParsedParams,
 } from '../types/index.js';
+import { ExchangeAlreadyExistsError } from '../../errors/exchange-already-exists.error.js';
 
 export function _saveExchange(
   client: IRedisClient,
@@ -53,8 +53,7 @@ export function _saveExchange(
               String(EExchangeProperty.TYPE),
               (err, reply) => {
                 if (err) return cb1(err);
-                if (reply)
-                  return cb1(new ExchangeError(`Exchange already exists`));
+                if (reply) return cb1(new ExchangeAlreadyExistsError());
                 cb1();
               },
             ),

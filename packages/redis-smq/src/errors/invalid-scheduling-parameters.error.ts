@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class InvalidSchedulingParametersError extends ProducerError {}
+export class InvalidSchedulingParametersError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.InvalidSchedulingParameters',
+      defaultMessage: 'Invalid scheduling parameters.',
+    };
+  }
+}

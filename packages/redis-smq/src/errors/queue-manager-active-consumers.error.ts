@@ -7,6 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { QueueManagerError } from './queue-manager.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class QueueManagerActiveConsumersError extends QueueManagerError {}
+export class QueueManagerActiveConsumersError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Queue.ActiveConsumers',
+      defaultMessage:
+        'The queue has active consumers and cannot be deleted. Before deleting a queue, make sure all its consumers are offline.',
+    };
+  }
+}

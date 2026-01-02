@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from 'redis-smq-common';
 
-export class NamespaceMismatchError extends RedisSMQError {}
+export class NamespaceMismatchError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Namespace.Mismatch',
+      defaultMessage: `The provided namespace does not match the resource's namespace.`,
+    };
+  }
+}

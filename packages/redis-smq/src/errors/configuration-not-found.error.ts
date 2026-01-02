@@ -7,10 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigurationError } from './configuration.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class ConfigurationNotFoundError extends ConfigurationError {
-  constructor() {
-    super(`No configuration found in Redis`);
+export class ConfigurationNotFoundError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Configuration.NotFound',
+      defaultMessage: 'Configuration not found.',
+    };
   }
 }

@@ -148,8 +148,8 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * @param redisConfig - Configuration for Redis client connections
    * @param poolConfig - Optional pool-specific configuration settings
    *
-   * @throws {Error} When pool min size is negative
-   * @throws {Error} When pool max size is less than min size
+   * @throws Error When pool min size is negative
+   * @throws Error When pool max size is less than min size
    *
    * @example
    * ```typescript
@@ -192,7 +192,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * @param poolConfig - Optional pool configuration with size limits and timeouts
    * @param cb - Callback function invoked when initialization completes or fails
    *
-   * @throws {Error} If the pool is already initialized
+   * @throws Error If the pool is already initialized
    *
    * @example
    * ```typescript
@@ -233,7 +233,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    *
    * @returns The initialized connection pool instance
    *
-   * @throws {Error} If the pool has not been initialized via initialize()
+   * @throws Error If the pool has not been initialized via initialize()
    *
    * @example
    * ```typescript

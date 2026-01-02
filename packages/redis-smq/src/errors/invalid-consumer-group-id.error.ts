@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerGroupsError } from './consumer-groups.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class InvalidConsumerGroupIdError extends ConsumerGroupsError {}
+export class InvalidConsumerGroupIdError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.ConsumerGroup.InvalidId',
+      defaultMessage: 'Invalid consumer group ID.',
+    };
+  }
+}

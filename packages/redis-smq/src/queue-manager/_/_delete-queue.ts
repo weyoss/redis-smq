@@ -16,6 +16,7 @@ import {
   QueueManagerActiveConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
+  UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 import { EQueueProperty, IQueueParams } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
@@ -164,7 +165,7 @@ export function _deleteQueue(
         scriptArgs,
         (err, reply) => {
           if (err) cb(err);
-          else {
+          else if (reply !== 'OK') {
             if (reply === 'QUEUE_NOT_FOUND') cb(new QueueNotFoundError());
             else if (reply === 'QUEUE_NOT_EMPTY') cb(new QueueNotEmptyError());
             else if (reply === 'QUEUE_HAS_ACTIVE_CONSUMERS')
@@ -173,8 +174,8 @@ export function _deleteQueue(
               cb(new QueueHasBoundExchangesError());
             else if (reply === 'CONSUMER_SET_MISMATCH')
               cb(new ConsumerSetMismatchError());
-            else cb();
-          }
+            else cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
+          } else cb();
         },
       );
     },

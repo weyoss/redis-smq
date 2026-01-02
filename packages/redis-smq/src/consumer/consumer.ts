@@ -103,6 +103,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * It typically signifies the end of the consumption setup and can be used to
    * handle success or errors in starting the consumption process.
    *
+   * @throws InvalidQueueParametersError
+   * @throws MessageHandlerAlreadyExistsError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws MessageHandlerFileError
+   * @throws MessageHandlerFilenameExtensionError
+   * @throws UnexpectedScriptReplyError
+   *
    * @example
    * ```typescript
    * const consumer = new Consumer();
@@ -175,6 +183,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * This callback function will be invoked after the message handler associated with the given queue is removed.
    * If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
    * Otherwise, the callback function will be invoked with no arguments.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws QueueNotFoundError
    *
    * @example
    * ```typescript

@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class QueueHasNoConsumerGroupsError extends ProducerError {}
+export class QueueHasNoConsumerGroupsError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Queue.NoConsumerGroups',
+      defaultMessage: 'Queue has no consumer groups.',
+    };
+  }
+}

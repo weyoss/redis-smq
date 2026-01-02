@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageDestinationQueueRequiredError extends MessageError {}
+export class MessageDestinationQueueRequiredError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.DestinationQueueRequired',
+      defaultMessage: 'Message destination queue is required.',
+    };
+  }
+}

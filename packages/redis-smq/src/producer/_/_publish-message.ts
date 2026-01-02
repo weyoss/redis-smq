@@ -21,10 +21,10 @@ import {
   MessageAlreadyExistsError,
   MessagePriorityRequiredError,
   PriorityQueuingNotEnabledError,
-  ProducerError,
   QueueNotFoundError,
-  UnknownQueueTypeError,
+  InvalidQueueTypeError,
 } from '../../errors/index.js';
+import { UnexpectedScriptReplyError } from '../../errors/index.js';
 
 /**
  * Enqueues/schedules a message onto the specified queue in Redis.
@@ -203,12 +203,12 @@ export function _publishMessage(
           return cb(new PriorityQueuingNotEnabledError());
         case 'UNKNOWN_QUEUE_TYPE':
           logger.error(`Unknown queue type for queue ${queueName}`);
-          return cb(new UnknownQueueTypeError());
+          return cb(new InvalidQueueTypeError());
         default:
           logger.error(
             `Unknown error while publishing message ${messageId}: ${reply}`,
           );
-          return cb(new ProducerError());
+          return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
       }
     },
   );

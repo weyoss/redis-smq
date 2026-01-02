@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageManagerError } from './message-manager.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class MessageNotFoundError extends MessageManagerError {}
+export class MessageNotFoundError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Message.NotFound',
+      defaultMessage: 'Message not found.',
+    };
+  }
+}

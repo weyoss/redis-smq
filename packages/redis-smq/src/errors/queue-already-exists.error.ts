@@ -7,6 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { QueueManagerError } from './queue-manager.error.js';
+import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class QueueAlreadyExistsError extends QueueManagerError {}
+export class QueueAlreadyExistsError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Queue.AlreadyExists',
+      defaultMessage: 'A queue with the same parameters already exists.',
+    };
+  }
+}

@@ -110,8 +110,7 @@ export class ExchangeDirect {
    *                  or an object with explicit namespace and name: { ns, name }.
    * @param cb - Node.js-style callback invoked with the list of routing keys bound to the exchange.
    *
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
@@ -146,9 +145,8 @@ export class ExchangeDirect {
    * @param routingKey - Routing key to resolve. The key is validated and normalized to lowercase.
    * @param cb - Node.js-style callback invoked with the list of queues bound under the routing key.
    *
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {InvalidDirectExchangeParametersError} When the routing key format is invalid
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidExchangeParametersError When exchange parameters are invalid
+   * @throws InvalidDirectExchangeParametersError When the routing key format is invalid
    *
    * @example
    * ```typescript
@@ -201,11 +199,10 @@ export class ExchangeDirect {
    *                    format (alphanumeric characters, hyphens, underscores, dots).
    * @param cb - Callback function called with the list of matching queues or an error
    *
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {InvalidDirectExchangeParametersError} When the routing key format is invalid
-   * @throws {ExchangeError} When the exchange is not found or is not a direct exchange
-   * @throws {CallbackEmptyReplyError} When Redis returns an unexpected empty response
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidExchangeParametersError
+   * @throws InvalidDirectExchangeParametersError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
    *
    * @example
    * ```typescript
@@ -338,14 +335,14 @@ export class ExchangeDirect {
    *                    format (alphanumeric characters, hyphens, underscores, dots).
    * @param cb - Callback function called when the binding operation completes
    *
-   * @throws {InvalidQueueParametersError} When queue parameters are invalid
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {InvalidDirectExchangeParametersError} When the routing key format is invalid
-   * @throws {QueueNotFoundError} When the specified queue does not exist
-   * @throws {NamespaceMismatchError} When namespace mismatch occurs
-   * @throws {ExchangeError} When exchange type is invalid
-   *                        or concurrent modifications are detected
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidQueueParametersError
+   * @throws InvalidExchangeParametersError
+   * @throws InvalidDirectExchangeParametersError
+   * @throws QueueNotFoundError
+   * @throws ExchangeNotFoundError
+   * @throws NamespaceMismatchError
+   * @throws ExchangeTypeMismatchError
+   * @throws ExchangeQueuePolicyMismatchError
    *
    * @example
    * ```typescript
@@ -575,14 +572,13 @@ export class ExchangeDirect {
    *                    used during binding.
    * @param cb - Callback function called when the unbinding operation completes
    *
-   * @throws {InvalidQueueParametersError} When queue parameters are invalid
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {InvalidDirectExchangeParametersError} When the routing key format is invalid
-   * @throws {NamespaceMismatchError} When namespace mismatch occurs
-   * @throws {ExchangeError} When exchange type is invalid
-   *                        exchange is not found, or concurrent modifications are detected
-   * @throws {QueueNotBoundError} When the queue is not currently bound to the routing key
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidQueueParametersError
+   * @throws InvalidExchangeParametersError
+   * @throws InvalidDirectExchangeParametersError
+   * @throws NamespaceMismatchError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
+   * @throws QueueNotBoundError
    *
    * @example
    * ```typescript
@@ -847,11 +843,10 @@ export class ExchangeDirect {
    *                  an object with name and namespace properties.
    * @param cb - Callback function called when the deletion completes
    *
-   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
-   * @throws {ExchangeError} When the exchange is not found, is not a direct exchange,
-   *                        or concurrent modifications are detected
-   * @throws {ExchangeHasBoundQueuesError} When the exchange still has bound queues
-   * @throws {Error} When Redis operations fail
+   * @throws InvalidExchangeParametersError
+   * @throws ExchangeHasBoundQueuesError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
    *
    * @example
    * ```typescript

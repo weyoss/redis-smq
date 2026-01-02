@@ -18,10 +18,10 @@ import { Configuration } from '../config/index.js';
 import { DeadLetteredMessageAuditNotEnabledError } from '../errors/index.js';
 
 /**
- * Manages dead-lettered messages in a queue.
+ * Manages audited dead-lettered messages in a queue.
  *
  * Dead-lettered messages are those that have failed processing multiple times
- * and exceeded their retry limits.  When the system is configured to audit them,
+ * and exceeded their retry limits. When the system is configured to audit them,
  * these messages are moved to a dead-letter queue for later inspection, troubleshooting, or manual reprocessing.
  *
  * @extends MessageBrowserAbstract
@@ -33,6 +33,20 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
     this.logger.debug('QueueDeadLetteredMessages initialized');
   }
 
+  /**
+   * Retrieves audited dead-lettered messages from the specified queue.
+   *
+   * @param queue - Extended queue parameters
+   * @param page - Page number
+   * @param pageSize - Number of items per page
+   * @param cb - Callback returning an IQueueMessagesPage of IMessageTransferable
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws DeadLetteredMessageAuditNotEnabledError
+   */
   override getMessages(
     queue: TQueueExtendedParams,
     page: number,
@@ -45,6 +59,21 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
     super.getMessages(queue, page, pageSize, cb);
   }
 
+  /**
+   * Purges all audited dead-lettered messages from the specified queue.
+   *
+   * @param queue - The queue to purge. Can be a string, queue parameters object,
+   *                or queue consumer group parameters.
+   * @param cb - Callback function that will be invoked when the operation completes.
+   *             If an error occurs, the first parameter will contain the Error object.
+   *             Otherwise, the first parameter will be null/undefined.
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws DeadLetteredMessageAuditNotEnabledError
+   */
   override purge(queue: TQueueExtendedParams, cb: ICallback) {
     const cfg = Configuration.getConfig();
     if (!cfg.messageAudit.deadLetteredMessages.enabled)
@@ -52,6 +81,18 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
     super.purge(queue, cb);
   }
 
+  /**
+   * Counts the total number of audited dead-lettered messages in the queue.
+   *
+   * @param queue - Extended queue parameters
+   * @param cb - Callback returning the count
+   *
+   * @throws InvalidQueueParametersError
+   * @throws ConsumerGroupRequiredError
+   * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueNotFoundError
+   * @throws DeadLetteredMessageAuditNotEnabledError
+   */
   override countMessages(queue: TQueueExtendedParams, cb: ICallback<number>) {
     const cfg = Configuration.getConfig();
     if (!cfg.messageAudit.deadLetteredMessages.enabled)

@@ -32,8 +32,8 @@ import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
 import {
-  ExchangeError,
   ExchangeHasBoundQueuesError,
+  InvalidTopicBindingPatternError,
   InvalidTopicExchangeParamsError,
   NamespaceMismatchError,
   QueueAlreadyBound,
@@ -114,8 +114,7 @@ export class ExchangeTopic {
    * @param routingKey - Routing key to match against binding patterns.
    * @param cb - Callback invoked with an array of matching queues or an error.
    *
-   * @throws Error via callback on invalid exchange parameters.
-   * @throws Error via callback on Redis operations failure.
+   * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
@@ -188,8 +187,7 @@ export class ExchangeTopic {
    * @param exchange - Exchange name or parameter object.
    * @param cb - Callback invoked with an array of binding patterns or an error.
    *
-   * @throws Error via callback on invalid exchange parameters.
-   * @throws Error via callback on Redis operations failure.
+   * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
@@ -227,8 +225,7 @@ export class ExchangeTopic {
    * @param bindingPattern - The binding pattern to query (e.g., 'order.*.created').
    * @param cb - Callback invoked with an array of queues bound to the pattern or an error.
    *
-   * @throws Error via callback on invalid exchange parameters.
-   * @throws Error via callback on Redis operations failure.
+   * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
@@ -281,10 +278,14 @@ export class ExchangeTopic {
    * @param routingPattern - Topic binding pattern (e.g., 'order.*.created', 'user.#').
    * @param cb - Callback invoked when the operation completes.
    *
-   * @throws QueueNotFoundError via callback if the queue does not exist in the namespace index.
-   * @throws NamespaceMismatchError When namespace mismatch occurs
-   * @throws ExchangeError via callback on invalid binding pattern or exchange type mismatch.
-   * @throws ExchangeError via callback on concurrent modifications.
+   * @throws InvalidQueueParametersError
+   * @throws InvalidExchangeParametersError
+   * @throws InvalidTopicBindingPatternError
+   * @throws QueueNotFoundError
+   * @throws ExchangeNotFoundError
+   * @throws NamespaceMismatchError
+   * @throws ExchangeTypeMismatchError
+   * @throws ExchangeQueuePolicyMismatchError
    *
    * @example
    * ```typescript
@@ -327,7 +328,11 @@ export class ExchangeTopic {
       return cb(new NamespaceMismatchError());
     }
     if (!_validateTopicExchangeBindingPattern(routingPattern)) {
-      return cb(new ExchangeError('Invalid topic binding pattern'));
+      return cb(
+        new InvalidTopicBindingPatternError({
+          metadata: { pattern: routingPattern },
+        }),
+      );
     }
 
     const { keyQueueProperties, keyQueueExchangeBindings } =
@@ -463,10 +468,13 @@ export class ExchangeTopic {
    * @param routingPattern - Topic binding pattern to unbind.
    * @param cb - Callback invoked when the operation completes.
    *
-   * @throws QueueNotBoundError via callback if the queue is not bound to the pattern.
-   * @throws NamespaceMismatchError When namespace mismatch occurs
-   * @throws ExchangeError via callback on invalid binding pattern or exchange type mismatch.
-   * @throws ExchangeError via callback on concurrency conflicts.
+   * @throws InvalidQueueParametersError
+   * @throws InvalidExchangeParametersError
+   * @throws InvalidTopicBindingPatternError
+   * @throws NamespaceMismatchError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
+   * @throws QueueNotBoundError
    *
    * @example
    * ```typescript
@@ -501,7 +509,11 @@ export class ExchangeTopic {
       return cb(new NamespaceMismatchError());
     }
     if (!_validateTopicExchangeBindingPattern(routingPattern)) {
-      return cb(new ExchangeError('Invalid topic binding pattern'));
+      return cb(
+        new InvalidTopicBindingPatternError({
+          metadata: { pattern: routingPattern },
+        }),
+      );
     }
 
     const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
@@ -685,9 +697,10 @@ export class ExchangeTopic {
    * @param exchange - Exchange name or parameter object.
    * @param cb - Callback invoked when the exchange is deleted or if an error occurs.
    *
-   * @throws ExchangeError via callback if exchange is not found or not a topic exchange.
-   * @throws ExchangeHasBoundQueuesError via callback if there are bound queues.
-   * @throws ExchangeError via callback on concurrent modifications.
+   * @throws InvalidExchangeParametersError
+   * @throws ExchangeHasBoundQueuesError
+   * @throws ExchangeNotFoundError
+   * @throws ExchangeTypeMismatchError
    *
    * @example
    * ```typescript
