@@ -21,7 +21,7 @@ import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { UnexpectedScriptReplyError } from '../../../errors/unexpected-script-reply.error.js';
+import { UnexpectedScriptReplyError } from '../../../errors/index.js';
 
 export class PublishScheduledWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {

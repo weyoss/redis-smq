@@ -20,7 +20,7 @@ import {
   EExchangeQueuePolicy,
   IExchangeParsedParams,
 } from '../types/index.js';
-import { ExchangeAlreadyExistsError } from '../../errors/exchange-already-exists.error.js';
+import { ExchangeAlreadyExistsError } from '../../errors/index.js';
 
 export function _saveExchange(
   client: IRedisClient,

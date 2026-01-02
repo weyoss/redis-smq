@@ -33,7 +33,7 @@ import { eventPublisher } from './event-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
-import { UnexpectedScriptReplyError } from '../../../errors/unexpected-script-reply.error.js';
+import { UnexpectedScriptReplyError } from '../../../errors/index.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();

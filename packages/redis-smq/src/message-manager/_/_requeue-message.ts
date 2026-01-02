@@ -26,7 +26,7 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { UnexpectedScriptReplyError } from '../../errors/unexpected-script-reply.error.js';
+import { UnexpectedScriptReplyError } from '../../errors/index.js';
 
 export function _requeueMessage(
   redisClient: IRedisClient,
