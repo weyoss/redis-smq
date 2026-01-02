@@ -8,9 +8,9 @@
  */
 
 import {
-  ICallback,
-  createLogger,
   CallbackEmptyReplyError,
+  createLogger,
+  ICallback,
 } from 'redis-smq-common';
 import { IQueueParams } from '../queue-manager/index.js';
 import { IExchangeParsedParams } from './types/index.js';

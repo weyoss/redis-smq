@@ -9,8 +9,8 @@
 
 import { expect, test } from 'vitest';
 import {
-  ConfigurationMessageAuditQueueSizeError,
   ConfigurationMessageAuditExpireError,
+  ConfigurationMessageAuditQueueSizeError,
 } from '../../../src/errors/index.js';
 import { parseMessageAuditConfig } from '../../../src/config/parse-message-audit-config.js';
 

@@ -10,6 +10,7 @@
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import {
   ExchangeNotFoundError,
+  ExchangeQueuePolicyMismatchError,
   ExchangeTypeMismatchError,
 } from '../../errors/index.js';
 import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
@@ -25,7 +26,6 @@ import {
   IExchangeProperties,
 } from '../types/index.js';
 import { _getExchangeProperties } from './_get-exchange-properties.js';
-import { ExchangeQueuePolicyMismatchError } from '../../errors/index.js';
 
 export function _validateQueueBinding(
   client: IRedisClient,

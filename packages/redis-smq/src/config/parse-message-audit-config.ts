@@ -9,8 +9,8 @@
 
 import { defaultConfig } from './default-config.js';
 import {
-  ConfigurationMessageAuditQueueSizeError,
   ConfigurationMessageAuditExpireError,
+  ConfigurationMessageAuditQueueSizeError,
 } from '../errors/index.js';
 import {
   IMessageAuditConfig,
