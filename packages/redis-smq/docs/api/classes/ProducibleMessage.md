@@ -63,10 +63,10 @@ console.log(message.hasPriority()); // false
 
 #### See
 
- - [setPriority](#setpriority)
- - [hasPriority](#haspriority)
+- [setPriority](#setpriority)
+- [hasPriority](#haspriority)
 
-***
+---
 
 ### getBody()
 
@@ -91,7 +91,7 @@ console.log(message.getBody()); // { userId: 123 }
 
 [setBody](#setbody)
 
-***
+---
 
 ### getConsumeTimeout()
 
@@ -116,7 +116,7 @@ console.log(message.getConsumeTimeout()); // 120000
 
 [setConsumeTimeout](#setconsumetimeout)
 
-***
+---
 
 ### getCreatedAt()
 
@@ -138,7 +138,7 @@ const createdTime = message.getCreatedAt();
 console.log(new Date(createdTime)); // Current date/time
 ```
 
-***
+---
 
 ### getExchange()
 
@@ -163,11 +163,11 @@ console.log(exchange?.type); // EExchangeType.TOPIC
 
 #### See
 
- - [setTopicExchange](#settopicexchange)
- - [setDirectExchange](#setdirectexchange)
- - [setFanoutExchange](#setfanoutexchange)
+- [setTopicExchange](#settopicexchange)
+- [setDirectExchange](#setdirectexchange)
+- [setFanoutExchange](#setfanoutexchange)
 
-***
+---
 
 ### getExchangeRoutingKey()
 
@@ -195,7 +195,7 @@ console.log(message.getExchangeRoutingKey()); // 'user.created'
 
 [setExchangeRoutingKey](#setexchangeroutingkey)
 
-***
+---
 
 ### getPriority()
 
@@ -220,7 +220,7 @@ console.log(message.getPriority()); // EMessagePriority.HIGH
 
 [setPriority](#setpriority)
 
-***
+---
 
 ### getQueue()
 
@@ -246,7 +246,7 @@ console.log(queue?.name); // 'my-queue'
 
 [setQueue](#setqueue)
 
-***
+---
 
 ### getRetryDelay()
 
@@ -271,7 +271,7 @@ console.log(message.getRetryDelay()); // 30000
 
 [setRetryDelay](#setretrydelay)
 
-***
+---
 
 ### getRetryThreshold()
 
@@ -296,7 +296,7 @@ console.log(message.getRetryThreshold()); // 5
 
 [setRetryThreshold](#setretrythreshold)
 
-***
+---
 
 ### getScheduledCRON()
 
@@ -321,7 +321,7 @@ console.log(message.getScheduledCRON()); // '0 0 10 * * *'
 
 [setScheduledCRON](#setscheduledcron)
 
-***
+---
 
 ### getScheduledDelay()
 
@@ -346,7 +346,7 @@ console.log(message.getScheduledDelay()); // 5000
 
 [setScheduledDelay](#setscheduleddelay)
 
-***
+---
 
 ### getScheduledRepeat()
 
@@ -371,7 +371,7 @@ console.log(message.getScheduledRepeat()); // 3
 
 [setScheduledRepeat](#setscheduledrepeat)
 
-***
+---
 
 ### getScheduledRepeatPeriod()
 
@@ -396,7 +396,7 @@ console.log(message.getScheduledRepeatPeriod()); // 60000
 
 [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
-***
+---
 
 ### getTTL()
 
@@ -421,7 +421,7 @@ console.log(message.getTTL()); // 300000
 
 [setTTL](#setttl)
 
-***
+---
 
 ### hasPriority()
 
@@ -449,7 +449,7 @@ console.log(message.hasPriority()); // true
 
 [setPriority](#setpriority)
 
-***
+---
 
 ### resetScheduledParams()
 
@@ -477,7 +477,7 @@ console.log(message.getScheduledCRON()); // null
 console.log(message.getScheduledRepeat()); // 0
 ```
 
-***
+---
 
 ### setBody()
 
@@ -504,19 +504,18 @@ This instance for method chaining
 #### Example
 
 ```typescript
-const message = new ProducibleMessage()
-  .setBody({
-    userId: 123,
-    action: 'send-email',
-    data: { email: 'user@example.com' }
-  });
+const message = new ProducibleMessage().setBody({
+  userId: 123,
+  action: 'send-email',
+  data: { email: 'user@example.com' },
+});
 ```
 
 #### See
 
 [getBody](#getbody)
 
-***
+---
 
 ### setConsumeTimeout()
 
@@ -543,7 +542,7 @@ This instance for method chaining
 
 #### Throws
 
-When the timeout is not a valid non-negative number
+MessagePropertyInvalidValueError When the timeout is not a valid non-negative number
 
 #### Example
 
@@ -557,7 +556,7 @@ const message = new ProducibleMessage()
 
 [getConsumeTimeout](#getconsumetimeout)
 
-***
+---
 
 ### setDirectExchange()
 
@@ -583,7 +582,7 @@ This instance for method chaining
 
 #### Throws
 
-When exchange parameters are invalid
+Error When exchange parameters are invalid
 
 #### Example
 
@@ -596,11 +595,11 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [setExchangeRoutingKey](#setexchangeroutingkey)
- - [setFanoutExchange](#setfanoutexchange)
- - [setTopicExchange](#settopicexchange)
+- [setExchangeRoutingKey](#setexchangeroutingkey)
+- [setFanoutExchange](#setfanoutexchange)
+- [setTopicExchange](#settopicexchange)
 
-***
+---
 
 ### setExchangeRoutingKey()
 
@@ -624,7 +623,7 @@ This instance for method chaining
 
 #### Throws
 
-When no exchange has been set
+MessageError When no exchange has been set
 
 #### Example
 
@@ -636,11 +635,11 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [getExchangeRoutingKey](#getexchangeroutingkey)
- - [setTopicExchange](#settopicexchange)
- - [setDirectExchange](#setdirectexchange)
+- [getExchangeRoutingKey](#getexchangeroutingkey)
+- [setTopicExchange](#settopicexchange)
+- [setDirectExchange](#setdirectexchange)
 
-***
+---
 
 ### setFanoutExchange()
 
@@ -666,7 +665,7 @@ This instance for method chaining
 
 #### Throws
 
-When exchange parameters are invalid
+Error When exchange parameters are invalid
 
 #### Example
 
@@ -678,10 +677,10 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [setTopicExchange](#settopicexchange)
- - [setDirectExchange](#setdirectexchange)
+- [setTopicExchange](#settopicexchange)
+- [setDirectExchange](#setdirectexchange)
 
-***
+---
 
 ### setPriority()
 
@@ -716,11 +715,11 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [getPriority](#getpriority)
- - [hasPriority](#haspriority)
- - [disablePriority](#disablepriority)
+- [getPriority](#getpriority)
+- [hasPriority](#haspriority)
+- [disablePriority](#disablepriority)
 
-***
+---
 
 ### setQueue()
 
@@ -746,7 +745,7 @@ This instance for method chaining
 
 #### Throws
 
-When queue parameters are invalid
+Error When queue parameters are invalid
 
 #### Example
 
@@ -760,7 +759,7 @@ const message = new ProducibleMessage()
 
 [getQueue](#getqueue)
 
-***
+---
 
 ### setRetryDelay()
 
@@ -787,7 +786,7 @@ This instance for method chaining
 
 #### Throws
 
-When the delay is not a valid non-negative number
+MessagePropertyInvalidValueError When the delay is not a valid non-negative number
 
 #### Example
 
@@ -799,10 +798,10 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [setRetryThreshold](#setretrythreshold)
- - [getRetryDelay](#getretrydelay)
+- [setRetryThreshold](#setretrythreshold)
+- [getRetryDelay](#getretrydelay)
 
-***
+---
 
 ### setRetryThreshold()
 
@@ -828,7 +827,7 @@ This instance for method chaining
 
 #### Throws
 
-When the threshold is not a valid non-negative number
+MessagePropertyInvalidValueError When the threshold is not a valid non-negative number
 
 #### Example
 
@@ -840,10 +839,10 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [setRetryDelay](#setretrydelay)
- - [getRetryThreshold](#getretrythreshold)
+- [setRetryDelay](#setretrydelay)
+- [getRetryThreshold](#getretrythreshold)
 
-***
+---
 
 ### setScheduledCRON()
 
@@ -859,7 +858,7 @@ Can be combined with [setScheduledRepeat](#setscheduledrepeat) and [setScheduled
 
 `string`
 
-Valid CRON expression (e.g., '0 0 10 * * *' for daily at 10 AM)
+Valid CRON expression (e.g., '0 0 10 \* \* \*' for daily at 10 AM)
 
 #### Returns
 
@@ -869,7 +868,7 @@ This instance for method chaining
 
 #### Throws
 
-When the CRON expression is invalid
+Error When the CRON expression is invalid
 
 #### Example
 
@@ -883,10 +882,10 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [setScheduledRepeat](#setscheduledrepeat)
- - [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
+- [setScheduledRepeat](#setscheduledrepeat)
+- [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
-***
+---
 
 ### setScheduledDelay()
 
@@ -910,7 +909,7 @@ This instance for method chaining
 
 #### Throws
 
-When the delay is not a valid non-negative number
+MessagePropertyInvalidValueError When the delay is not a valid non-negative number
 
 #### Example
 
@@ -924,7 +923,7 @@ const message = new ProducibleMessage()
 
 [getScheduledDelay](#getscheduleddelay)
 
-***
+---
 
 ### setScheduledRepeat()
 
@@ -948,7 +947,7 @@ This instance for method chaining
 
 #### Throws
 
-When the repeat value is not a valid non-negative number
+MessagePropertyInvalidValueError When the repeat value is not a valid non-negative number
 
 #### Example
 
@@ -962,7 +961,7 @@ const message = new ProducibleMessage()
 
 [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
-***
+---
 
 ### setScheduledRepeatPeriod()
 
@@ -988,7 +987,7 @@ This instance for method chaining
 
 #### Throws
 
-When the period is not a valid non-negative number
+MessagePropertyInvalidValueError When the period is not a valid non-negative number
 
 #### Example
 
@@ -1002,7 +1001,7 @@ const message = new ProducibleMessage()
 
 [setScheduledRepeat](#setscheduledrepeat)
 
-***
+---
 
 ### setTopicExchange()
 
@@ -1028,7 +1027,7 @@ This instance for method chaining
 
 #### Throws
 
-When exchange parameters are invalid
+Error When exchange parameters are invalid
 
 #### Example
 
@@ -1041,11 +1040,11 @@ const message = new ProducibleMessage()
 
 #### See
 
- - [setExchangeRoutingKey](#setexchangeroutingkey)
- - [setFanoutExchange](#setfanoutexchange)
- - [setDirectExchange](#setdirectexchange)
+- [setExchangeRoutingKey](#setexchangeroutingkey)
+- [setFanoutExchange](#setfanoutexchange)
+- [setDirectExchange](#setdirectexchange)
 
-***
+---
 
 ### setTTL()
 
@@ -1071,7 +1070,7 @@ This instance for method chaining
 
 #### Throws
 
-When the TTL is not a valid non-negative number
+MessagePropertyInvalidValueError When the TTL is not a valid non-negative number
 
 #### Example
 
@@ -1085,7 +1084,7 @@ const message = new ProducibleMessage()
 
 [getTTL](#getttl)
 
-***
+---
 
 ### setDefaultConsumeOptions()
 
@@ -1109,7 +1108,7 @@ Partial consume options to override defaults
 
 #### Throws
 
-When any provided value is invalid
+MessagePropertyInvalidValueError When any provided value is invalid
 
 #### Example
 
@@ -1119,7 +1118,7 @@ ProducibleMessage.setDefaultConsumeOptions({
   ttl: 60000,
   retryThreshold: 5,
   retryDelay: 30000,
-  consumeTimeout: 120000
+  consumeTimeout: 120000,
 });
 
 // New instances will use these defaults

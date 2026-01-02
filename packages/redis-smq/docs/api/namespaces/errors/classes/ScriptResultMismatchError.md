@@ -1,41 +1,30 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ProducerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ScriptResultMismatchError
 
-# Class: ProducerError
+# Class: ScriptResultMismatchError
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`ProducerNotRunningError`](ProducerNotRunningError.md)
-- [`QueueHasNoConsumerGroupsError`](QueueHasNoConsumerGroupsError.md)
-- [`MessagePriorityRequiredError`](MessagePriorityRequiredError.md)
-- [`PriorityQueuingNotEnabledError`](PriorityQueuingNotEnabledError.md)
-- [`NoMatchedQueuesForMessageExchangeError`](NoMatchedQueuesForMessageExchangeError.md)
-- [`InvalidSchedulingParametersError`](InvalidSchedulingParametersError.md)
-- [`MessageAlreadyExistsError`](MessageAlreadyExistsError.md)
-- [`RoutingKeyRequiredError`](RoutingKeyRequiredError.md)
+- `RedisSMQError`\<\{ `actual`: `number`; `expected`: `number`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new ProducerError**(`message?`): `ProducerError`
+> **new ScriptResultMismatchError**(...`args`): `ScriptResultMismatchError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `actual`: `number`; `expected`: `number`; \}\>\]
 
 #### Returns
 
-`ProducerError`
+`ScriptResultMismatchError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+`RedisSMQError<{ expected: number; actual: number; }>.constructor`
 
 ## Properties
 
@@ -47,7 +36,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -57,7 +46,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -67,7 +56,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -101,9 +90,71 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.name`
+[`ExchangeTypeMismatchError`](ExchangeTypeMismatchError.md).[`name`](ExchangeTypeMismatchError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `actual`: `number`; `expected`: `number`; \} \| `null`
+
+#### Returns
+
+\{ `actual`: `number`; `expected`: `number`; \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -116,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -171,7 +222,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -193,7 +244,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

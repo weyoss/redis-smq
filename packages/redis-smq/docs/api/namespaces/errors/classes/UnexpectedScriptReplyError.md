@@ -1,43 +1,30 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ExchangeError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / UnexpectedScriptReplyError
 
-# Class: ExchangeError
+# Class: UnexpectedScriptReplyError
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`MessageExchangeRequiredError`](MessageExchangeRequiredError.md)
-- [`ExchangeFanoutError`](ExchangeFanoutError.md)
-- [`InvalidTopicExchangeParamsError`](InvalidTopicExchangeParamsError.md)
-- [`InvalidFanoutExchangeParametersError`](InvalidFanoutExchangeParametersError.md)
-- [`InvalidDirectExchangeParametersError`](InvalidDirectExchangeParametersError.md)
-- [`ExchangeHasBoundQueuesError`](ExchangeHasBoundQueuesError.md)
-- [`QueueNotBoundError`](QueueNotBoundError.md)
-- [`InvalidExchangeParametersError`](InvalidExchangeParametersError.md)
-- [`ExchangeNotFoundError`](ExchangeNotFoundError.md)
-- [`QueueAlreadyBound`](QueueAlreadyBound.md)
+- `RedisSMQError`\<\{ `reply`: `unknown`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new ExchangeError**(`message?`): `ExchangeError`
+> **new UnexpectedScriptReplyError**(...`args`): `UnexpectedScriptReplyError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `reply`: `unknown`; \}\>\]
 
 #### Returns
 
-`ExchangeError`
+`UnexpectedScriptReplyError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+`RedisSMQError<{ reply: unknown; }>.constructor`
 
 ## Properties
 
@@ -49,7 +36,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -59,7 +46,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -69,7 +56,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -105,7 +92,69 @@ not capture any frames.
 
 `RedisSMQError.name`
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `reply`: `unknown`; \} \| `null`
+
+#### Returns
+
+\{ `reply`: `unknown`; \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -118,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -173,7 +222,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -195,7 +244,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

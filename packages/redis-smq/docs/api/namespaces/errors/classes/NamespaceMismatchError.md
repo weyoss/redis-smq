@@ -10,13 +10,13 @@
 
 ### Constructor
 
-> **new NamespaceMismatchError**(`message?`): `NamespaceMismatchError`
+> **new NamespaceMismatchError**(...`args`): `NamespaceMismatchError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
@@ -36,7 +36,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -46,7 +46,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -56,7 +56,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -90,9 +90,79 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.name`
+[`ExchangeTypeMismatchError`](ExchangeTypeMismatchError.md).[`name`](ExchangeTypeMismatchError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.Namespace.Mismatch'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +175,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -160,7 +230,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -182,7 +252,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

@@ -1,30 +1,30 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / RedisKeysInvalidKeyError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidTopicBindingPatternError
 
-# Class: RedisKeysInvalidKeyError
+# Class: InvalidTopicBindingPatternError
 
 ## Extends
 
-- [`RedisKeysError`](RedisKeysError.md)
+- `RedisSMQError`\<\{ `pattern`: `string`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new RedisKeysInvalidKeyError**(`message?`): `RedisKeysInvalidKeyError`
+> **new InvalidTopicBindingPatternError**(...`args`): `InvalidTopicBindingPatternError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<\{ `pattern`: `string`; \}\>\]
 
 #### Returns
 
-`RedisKeysInvalidKeyError`
+`InvalidTopicBindingPatternError`
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`constructor`](RedisKeysError.md#constructor)
+`RedisSMQError<{ pattern: string; }>.constructor`
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`cause`](RedisKeysError.md#cause)
+`RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`message`](RedisKeysError.md#message)
+`RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`stack`](RedisKeysError.md#stack)
+`RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`stackTraceLimit`](RedisKeysError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -90,9 +90,71 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`name`](RedisKeysError.md#name)
+`RedisSMQError.name`
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `pattern`: `string`; \} \| `null`
+
+#### Returns
+
+\{ `pattern`: `string`; \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +220,9 @@ a();
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`captureStackTrace`](RedisKeysError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -180,9 +242,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`isError`](RedisKeysError.md#iserror)
+`RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +270,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`RedisKeysError`](RedisKeysError.md).[`prepareStackTrace`](RedisKeysError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`

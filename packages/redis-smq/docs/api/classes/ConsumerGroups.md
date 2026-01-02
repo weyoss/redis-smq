@@ -50,6 +50,26 @@ Callback function to handle the result or error.
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+ConsumerGroupNotEmptyError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+UnexpectedScriptReplyError
+
 ---
 
 ### getConsumerGroups()
@@ -77,6 +97,10 @@ Callback function to handle the result or error.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
 
 ---
 
@@ -111,3 +135,19 @@ Callback function to handle the result or error.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+InvalidConsumerGroupIdError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError

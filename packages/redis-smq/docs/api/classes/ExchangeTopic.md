@@ -9,8 +9,9 @@ A topic exchange routes messages to queues based on pattern matching between
 routing keys and binding patterns using AMQP-style wildcards.
 
 Topic Pattern Syntax:
+
 - Tokens are separated by dots (.)
-- '*' matches exactly one token
+- '\*' matches exactly one token
 - '#' matches zero or more tokens
 - Literal tokens match exactly
 
@@ -61,6 +62,7 @@ pattern. Messages published to the exchange with routing keys that match
 the pattern will be routed to the bound queue.
 
 Idempotency:
+
 - If the binding already exists, the operation succeeds without changes.
 
 #### Parameters
@@ -81,7 +83,7 @@ Exchange name or parameter object.
 
 `string`
 
-Topic binding pattern (e.g., 'order.*.created', 'user.#').
+Topic binding pattern (e.g., 'order.\*.created', 'user.#').
 
 ##### cb
 
@@ -95,19 +97,35 @@ Callback invoked when the operation completes.
 
 #### Throws
 
-QueueNotFoundError via callback if the queue does not exist in the namespace index.
+InvalidQueueParametersError
 
 #### Throws
 
-NamespaceMismatchError When namespace mismatch occurs
+InvalidExchangeParametersError
 
 #### Throws
 
-ExchangeError via callback on invalid binding pattern or exchange type mismatch.
+InvalidTopicBindingPatternError
 
 #### Throws
 
-ExchangeError via callback on concurrent modifications.
+QueueNotFoundError
+
+#### Throws
+
+ExchangeNotFoundError
+
+#### Throws
+
+NamespaceMismatchError
+
+#### Throws
+
+ExchangeTypeMismatchError
+
+#### Throws
+
+ExchangeQueuePolicyMismatchError
 
 #### Example
 
@@ -135,7 +153,7 @@ topicExchange.bindQueue(
 );
 ```
 
-***
+---
 
 ### create()
 
@@ -159,7 +177,7 @@ topicExchange.bindQueue(
 
 `void`
 
-***
+---
 
 ### delete()
 
@@ -190,15 +208,19 @@ Callback invoked when the exchange is deleted or if an error occurs.
 
 #### Throws
 
-ExchangeError via callback if exchange is not found or not a topic exchange.
+InvalidExchangeParametersError
 
 #### Throws
 
-ExchangeHasBoundQueuesError via callback if there are bound queues.
+ExchangeHasBoundQueuesError
 
 #### Throws
 
-ExchangeError via callback on concurrent modifications.
+ExchangeNotFoundError
+
+#### Throws
+
+ExchangeTypeMismatchError
 
 #### Example
 
@@ -223,7 +245,7 @@ topicExchange.delete(
 );
 ```
 
-***
+---
 
 ### getBindingPatternQueues()
 
@@ -247,7 +269,7 @@ Exchange name or parameter object.
 
 `string`
 
-The binding pattern to query (e.g., 'order.*.created').
+The binding pattern to query (e.g., 'order.\*.created').
 
 ##### cb
 
@@ -261,11 +283,7 @@ Callback invoked with an array of queues bound to the pattern or an error.
 
 #### Throws
 
-Error via callback on invalid exchange parameters.
-
-#### Throws
-
-Error via callback on Redis operations failure.
+InvalidExchangeParametersError
 
 #### Example
 
@@ -280,14 +298,14 @@ topicExchange.getBindingPatternQueues(
     }
 
     console.log(`Queues bound to pattern 'user.#':`);
-    queues.forEach(q => {
+    queues.forEach((q) => {
       console.log(`- ${q.name} in ${q.ns}`);
     });
-  }
+  },
 );
 ```
 
-***
+---
 
 ### getBindingPatterns()
 
@@ -319,11 +337,7 @@ Callback invoked with an array of binding patterns or an error.
 
 #### Throws
 
-Error via callback on invalid exchange parameters.
-
-#### Throws
-
-Error via callback on Redis operations failure.
+InvalidExchangeParametersError
 
 #### Example
 
@@ -335,13 +349,13 @@ topicExchange.getBindingPatterns('notifications', (err, patterns) => {
   }
 
   console.log('Binding patterns:');
-  patterns.forEach(pattern => {
+  patterns.forEach((pattern) => {
     console.log(`- ${pattern}`);
   });
 });
 ```
 
-***
+---
 
 ### matchQueues()
 
@@ -354,9 +368,10 @@ patterns registered for the exchange. Queues bound to matching patterns are
 returned, with duplicates removed (a queue may match multiple patterns).
 
 Pattern Matching Rules:
-- 'order.*' matches 'order.created', 'order.updated', but not 'order.item.created'
+
+- 'order.\*' matches 'order.created', 'order.updated', but not 'order.item.created'
 - 'order.#' matches 'order.created', 'order.item.created', 'order.item.variant.updated'
-- 'order.*.created' matches 'order.premium.created', but not 'order.created'
+- 'order.\*.created' matches 'order.premium.created', but not 'order.created'
 
 #### Parameters
 
@@ -384,30 +399,30 @@ Callback invoked with an array of matching queues or an error.
 
 #### Throws
 
-Error via callback on invalid exchange parameters.
-
-#### Throws
-
-Error via callback on Redis operations failure.
+InvalidExchangeParametersError
 
 #### Example
 
 ```typescript
 // Match queues for a specific routing key
-topicExchange.matchQueues('notifications', 'user.premium.signup', (err, queues) => {
-  if (err) {
-    console.error('Failed to match queues:', err);
-    return;
-  }
+topicExchange.matchQueues(
+  'notifications',
+  'user.premium.signup',
+  (err, queues) => {
+    if (err) {
+      console.error('Failed to match queues:', err);
+      return;
+    }
 
-  console.log(`Found ${queues.length} matching queues:`);
-  queues.forEach(q => {
-    console.log(`- ${q.name} in namespace ${q.ns}`);
-  });
-});
+    console.log(`Found ${queues.length} matching queues:`);
+    queues.forEach((q) => {
+      console.log(`- ${q.name} in namespace ${q.ns}`);
+    });
+  },
+);
 ```
 
-***
+---
 
 ### unbindQueue()
 
@@ -451,19 +466,31 @@ Callback invoked when the operation completes.
 
 #### Throws
 
-QueueNotBoundError via callback if the queue is not bound to the pattern.
+InvalidQueueParametersError
 
 #### Throws
 
-NamespaceMismatchError When namespace mismatch occurs
+InvalidExchangeParametersError
 
 #### Throws
 
-ExchangeError via callback on invalid binding pattern or exchange type mismatch.
+InvalidTopicBindingPatternError
 
 #### Throws
 
-ExchangeError via callback on concurrency conflicts.
+NamespaceMismatchError
+
+#### Throws
+
+ExchangeNotFoundError
+
+#### Throws
+
+ExchangeTypeMismatchError
+
+#### Throws
+
+QueueNotBoundError
 
 #### Example
 
@@ -479,6 +506,6 @@ topicExchange.unbindQueue(
       return;
     }
     console.log('Queue unbound successfully');
-  }
+  },
 );
 ```

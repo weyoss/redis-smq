@@ -2,7 +2,7 @@
 
 # Class: QueueDeadLetteredMessages
 
-Manages dead-lettered messages in a queue.
+Manages audited dead-lettered messages in a queue.
 
 Dead-lettered messages are those that have failed processing multiple times
 and exceeded their retry limits. When the system is configured to audit them,
@@ -36,7 +36,7 @@ these messages are moved to a dead-letter queue for later inspection, troublesho
 
 > **countMessages**(`queue`, `cb`): `void`
 
-Counts the total number of messages in the queue.
+Counts the total number of audited dead-lettered messages in the queue.
 
 #### Parameters
 
@@ -56,6 +56,26 @@ Callback returning the count
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+DeadLetteredMessageAuditNotEnabledError
+
 #### Overrides
 
 `MessageBrowserAbstract.countMessages`
@@ -66,7 +86,7 @@ Callback returning the count
 
 > **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
-Retrieves detailed messages for a specific page.
+Retrieves audited dead-lettered messages from the specified queue.
 
 #### Parameters
 
@@ -98,6 +118,26 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 `void`
 
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+DeadLetteredMessageAuditNotEnabledError
+
 #### Overrides
 
 `MessageBrowserAbstract.getMessages`
@@ -108,15 +148,7 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 > **purge**(`queue`, `cb`): `void`
 
-Purges all messages from the specified queue.
-
-Different message types can be purged using specific classes:
-
-- [QueueMessages](QueueMessages.md) - Delete all queue messages
-- [QueueAcknowledgedMessages](QueueAcknowledgedMessages.md) - Delete acknowledged messages (if configured to be stored)
-- QueueDeadLetteredMessages - Delete dead-lettered messages (if configured to be stored)
-- [QueueScheduledMessages](QueueScheduledMessages.md) - Delete scheduled messages
-- [QueuePendingMessages](QueuePendingMessages.md) - Delete pending messages
+Purges all audited dead-lettered messages from the specified queue.
 
 #### Parameters
 
@@ -138,6 +170,26 @@ Otherwise, the first parameter will be null/undefined.
 #### Returns
 
 `void`
+
+#### Throws
+
+InvalidQueueParametersError
+
+#### Throws
+
+ConsumerGroupRequiredError
+
+#### Throws
+
+ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueNotFoundError
+
+#### Throws
+
+DeadLetteredMessageAuditNotEnabledError
 
 #### Overrides
 

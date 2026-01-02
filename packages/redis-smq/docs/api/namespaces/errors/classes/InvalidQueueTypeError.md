@@ -1,33 +1,26 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConsumerGroupsError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidQueueTypeError
 
-# Class: ConsumerGroupsError
+# Class: InvalidQueueTypeError
 
 ## Extends
 
 - `RedisSMQError`
 
-## Extended by
-
-- [`ConsumerGroupNotEmptyError`](ConsumerGroupNotEmptyError.md)
-- [`InvalidConsumerGroupIdError`](InvalidConsumerGroupIdError.md)
-- [`ConsumerGroupsNotSupportedError`](ConsumerGroupsNotSupportedError.md)
-- [`ConsumerGroupRequiredError`](ConsumerGroupRequiredError.md)
-
 ## Constructors
 
 ### Constructor
 
-> **new ConsumerGroupsError**(`message?`): `ConsumerGroupsError`
+> **new InvalidQueueTypeError**(...`args`): `InvalidQueueTypeError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
-`ConsumerGroupsError`
+`InvalidQueueTypeError`
 
 #### Inherited from
 
@@ -43,7 +36,7 @@
 
 `RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -53,7 +46,7 @@
 
 `RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -63,7 +56,7 @@
 
 `RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -97,9 +90,79 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.name`
+[`ExchangeTypeMismatchError`](ExchangeTypeMismatchError.md).[`name`](ExchangeTypeMismatchError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.Queue.InvalidType'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Invalid queue type.'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -112,7 +175,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -167,7 +230,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -189,7 +252,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 

@@ -1,30 +1,30 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidRateLimitError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidConfigurationError
 
-# Class: InvalidRateLimitError
+# Class: InvalidConfigurationError
 
 ## Extends
 
-- [`QueueRateLimitError`](QueueRateLimitError.md)
+- `RedisSMQError`
 
 ## Constructors
 
 ### Constructor
 
-> **new InvalidRateLimitError**(`message?`): `InvalidRateLimitError`
+> **new InvalidConfigurationError**(...`args`): `InvalidConfigurationError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 
-`InvalidRateLimitError`
+`InvalidConfigurationError`
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`constructor`](QueueRateLimitError.md#constructor)
+`RedisSMQError.constructor`
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`cause`](QueueRateLimitError.md#cause)
+`RedisSMQError.cause`
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`message`](QueueRateLimitError.md#message)
+`RedisSMQError.message`
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`stack`](QueueRateLimitError.md#stack)
+`RedisSMQError.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`stackTraceLimit`](QueueRateLimitError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -90,9 +90,71 @@ not capture any frames.
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`name`](QueueRateLimitError.md#name)
+`RedisSMQError.name`
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+
+##### Returns
+
+> (): `IRedisSMQErrorProperties`
+
+###### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Inherited from
+
+`RedisSMQError.props`
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+`RedisSMQError.getMetadata`
+
+---
+
+### getProps()
+
+> **getProps**(): `IRedisSMQErrorProperties`
+
+#### Returns
+
+`IRedisSMQErrorProperties`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+`RedisSMQError.toJSON`
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +167,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +220,9 @@ a();
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`captureStackTrace`](QueueRateLimitError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -180,9 +242,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`isError`](QueueRateLimitError.md#iserror)
+`RedisSMQError.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +270,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`QueueRateLimitError`](QueueRateLimitError.md).[`prepareStackTrace`](QueueRateLimitError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`

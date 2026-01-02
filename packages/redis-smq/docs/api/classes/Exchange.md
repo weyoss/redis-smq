@@ -63,13 +63,13 @@ exchange.getAllExchanges((err, exchanges) => {
   }
 
   console.log(`Found ${exchanges.length} exchanges:`);
-  exchanges.forEach(ex => {
+  exchanges.forEach((ex) => {
     console.log(`- ${ex.name} (${ex.type}) in namespace ${ex.ns}`);
   });
 });
 ```
 
-***
+---
 
 ### getNamespaceExchanges()
 
@@ -101,11 +101,7 @@ Callback invoked with an array of exchange parameters for the namespace or an er
 
 #### Throws
 
-ExchangeError via callback if the namespace parameter is invalid.
-
-#### Throws
-
-CallbackEmptyReplyError via callback on unexpected empty Redis reply.
+InvalidNamespaceError
 
 #### Example
 
@@ -117,13 +113,13 @@ exchange.getNamespaceExchanges('production', (err, exchanges) => {
   }
 
   console.log(`Production namespace has ${exchanges.length} exchanges:`);
-  exchanges.forEach(ex => {
+  exchanges.forEach((ex) => {
     console.log(`- ${ex.name} (${ex.type})`);
   });
 });
 ```
 
-***
+---
 
 ### getQueueBoundExchanges()
 
@@ -158,11 +154,7 @@ Callback invoked with an array of exchange parameters the queue is bound to or a
 
 #### Throws
 
-Error via callback if the queue parameters are invalid.
-
-#### Throws
-
-CallbackEmptyReplyError via callback on unexpected empty Redis reply.
+InvalidQueueParametersError
 
 #### Example
 
@@ -175,7 +167,7 @@ exchange.getQueueBoundExchanges('order-processing', (err, exchanges) => {
   }
 
   console.log(`Queue is bound to ${exchanges.length} exchanges:`);
-  exchanges.forEach(ex => {
+  exchanges.forEach((ex) => {
     console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
   });
 });
@@ -185,6 +177,6 @@ exchange.getQueueBoundExchanges(
   { name: 'notifications', ns: 'production' },
   (err, exchanges) => {
     // Handle results...
-  }
+  },
 );
 ```
