@@ -10,11 +10,16 @@
 import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 import { RedisSMQError } from '../../errors/index.js';
 
-export class WorkerAlreadyDownError extends RedisSMQError {
+/**
+ * Indicates that a logger namespace contains invalid characters.
+ * Namespaces must only contain alphanumeric characters, underscores, and hyphens.
+ */
+export class LoggerInvalidNamespaceError extends RedisSMQError {
   getProps(): IRedisSMQErrorProperties {
     return {
-      code: 'RedisSMQ.Worker.AlreadyDown',
-      defaultMessage: 'Worker is already down.',
+      code: 'RedisSMQ.Logger.InvalidNamespace',
+      defaultMessage:
+        'Namespace must contain only alphanumeric characters, underscores, and hyphens.',
     };
   }
 }

@@ -7,15 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { TWorkerThreadChildMessage } from '../types/index.js';
 import { RedisSMQError } from '../../errors/index.js';
 import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 
-export class WorkerThreadError extends RedisSMQError<TWorkerThreadChildMessage> {
+/**
+ * Indicates that an incoming message from the event bus could not be parsed as JSON.
+ */
+export class EventBusMessageJSONParseError extends RedisSMQError<{
+  error: string;
+}> {
   getProps(): IRedisSMQErrorProperties {
     return {
-      code: 'RedisSMQ.Worker.WorkerThreadError',
-      defaultMessage: 'A worker thread has encountered an error.',
+      code: 'RedisSMQ.EventBus.MessageJSONParse.Failed',
+      defaultMessage: 'Failed to parse an incoming message from the event bus.',
     };
   }
 }

@@ -9,15 +9,14 @@
 
 import { TFunction } from '../async/index.js';
 import { EventEmitter } from '../event/index.js';
-import { TimerError } from './errors/index.js';
+import { TimerNotSetError } from './errors/index.js';
 import { TTimer, TTimerEvent } from './types/index.js';
 
 export class Timer extends EventEmitter<TTimerEvent> {
   protected timer: TTimer | null = null;
 
   protected onTick = () => {
-    if (!this.timer)
-      this.emit('error', new TimerError('Expected a non-empty timer property'));
+    if (!this.timer) this.emit('error', new TimerNotSetError());
     else {
       const { fn, periodic } = this.timer;
       if (!periodic) this.timer = null;

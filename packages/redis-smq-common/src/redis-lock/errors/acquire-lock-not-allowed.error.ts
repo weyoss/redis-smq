@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class TimerError extends RedisSMQError {}
+export class AcquireLockNotAllowedError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisLock.AcquireLock.NotAllowed',
+      defaultMessage: 'This method can not be used when autoExtend is enabled.',
+    };
+  }
+}

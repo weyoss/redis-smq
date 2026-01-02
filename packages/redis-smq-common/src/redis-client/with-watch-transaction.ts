@@ -8,12 +8,16 @@
  */
 
 import { ICallback } from '../async/index.js';
-import { RedisClientError, WatchedKeysChangedError } from './errors/index.js';
+import {
+  WatchedKeysChangedError,
+  WatchTransactionMaxRetriesExceeded,
+} from './errors/index.js';
 import { IRedisClient } from './types/index.js';
 import {
   IWatchTransactionAttemptResult,
   IWatchTransactionOptions,
 } from './types/index.js';
+import { CallbackEmptyReplyError } from '../errors/index.js';
 
 /**
  * Runs a WATCH/MULTI/EXEC attempt with automatic retry on concurrent modification.
@@ -43,7 +47,7 @@ export function withWatchTransaction(
     if (attemptNo > maxAttempts) {
       const err =
         options?.makeRetryExceededError?.() ??
-        new RedisClientError('Too many concurrent retries');
+        new WatchTransactionMaxRetriesExceeded();
       return callback(err);
     }
 
@@ -66,7 +70,10 @@ export function withWatchTransaction(
         // Defensive: invalid attempt result
         return client.unwatch(() =>
           callback(
-            new RedisClientError('Invalid attempt result: missing MULTI'),
+            new CallbackEmptyReplyError({
+              message:
+                'Invalid attempt result. Expected a result object with a "multi" key.',
+            }),
           ),
         );
       }

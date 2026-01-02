@@ -10,7 +10,7 @@
 import { ILogger } from '../types/index.js';
 import { ConsoleMessageFormatter } from './console-message-formatter.js';
 import { EConsoleLoggerLevel, IConsoleLoggerOptions } from './types/index.js';
-import { LoggerError } from '../errors/index.js';
+import { LoggerInvalidNamespaceError } from '../errors/index.js';
 
 /**
  * ConsoleLogger implements the ILogger interface and provides formatted logging
@@ -48,7 +48,7 @@ export class ConsoleLogger implements ILogger {
    * @param options - Configuration options for the logger behavior and formatting
    * @param namespaces - Single namespace string or array of namespace strings for message categorization
    *
-   * @throws {LoggerError} When any namespace is empty or contains invalid characters
+   * @throws {LoggerInvalidNamespaceError} When any namespace is empty or contains invalid characters
    *
    * @example
    * ```typescript
@@ -225,20 +225,20 @@ export class ConsoleLogger implements ILogger {
    *
    * @returns Array of validated and normalized (lowercase) namespace strings
    *
-   * @throws {LoggerError} When any namespace is empty, whitespace-only, or contains invalid characters
+   * @throws {LoggerInvalidNamespaceError} When any namespace is empty, whitespace-only, or contains invalid characters
    */
   private validateNamespaces(namespaces: string[]): string[] {
     return namespaces.map((ns) => {
       if (!ns || ns.trim() === '') {
-        throw new LoggerError('Namespace cannot be empty');
+        throw new LoggerInvalidNamespaceError({
+          message: 'Namespaces cannot be empty.',
+        });
       }
 
       // Only allow alphanumeric characters, underscores, and hyphens
       const validNamespacePattern = /^[a-zA-Z0-9_-]+$/;
       if (!validNamespacePattern.test(ns)) {
-        throw new LoggerError(
-          'Namespace must contain only alphanumeric characters, underscores, and hyphens',
-        );
+        throw new LoggerInvalidNamespaceError();
       }
 
       return ns.toLowerCase();

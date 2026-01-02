@@ -7,10 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { RedisClientError } from './redis-client.error.js';
+import { RedisSMQError } from '../../errors/index.js';
 
-export class WatchedKeysChangedError extends RedisClientError {
-  constructor(msg = 'One (or more) of the watched keys has been changed') {
-    super(msg);
+export class WatchedKeysChangedError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisClient.WatchedKeysChanged',
+      defaultMessage:
+        'Redis transaction failed. One or more watched keys were modified by another client.',
+    };
   }
 }

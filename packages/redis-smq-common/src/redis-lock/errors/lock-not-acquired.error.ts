@@ -7,12 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { LockError } from './lock.error.js';
+import { RedisSMQError } from '../../errors/index.js';
 
-export class LockNotAcquiredError extends LockError {
-  constructor(
-    message = `Can not extend a lock which has not been yet acquired. Maybe a pending operation is in progress.`,
-  ) {
-    super(message);
+export class LockNotAcquiredError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisLock.ExtendLock.Failed',
+      defaultMessage:
+        'Can not extend a lock which has not been yet acquired. Maybe a pending operation is in progress.',
+    };
   }
 }

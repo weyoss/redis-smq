@@ -9,10 +9,14 @@
 
 import { Redis, RedisOptions } from 'ioredis';
 import { ICallback } from '../../../async/index.js';
-import { CallbackEmptyReplyError } from '../../../errors/index.js';
-import { RedisClientError } from '../../errors/index.js';
+import {
+  CallbackEmptyReplyError,
+  CallbackInvalidReplyError,
+  InvalidArgumentsError,
+} from '../../../errors/index.js';
 import { RedisClientAbstract } from '../redis-client-abstract.js';
 import { IoredisClientMulti } from './ioredis-client-multi.js';
+import { CommandNotSupportedError } from '../../errors/index.js';
 
 export class IoredisClient extends RedisClientAbstract {
   protected client: Redis;
@@ -174,7 +178,7 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.sscan(...args, (err, reply) => {
       if (err) return cb(err);
       const [cursor, items] = reply ?? [];
-      if (!cursor || !items) return cb(new RedisClientError());
+      if (!cursor || !items) return cb(new CallbackEmptyReplyError());
       cb(null, { cursor, items });
     });
   }
@@ -287,7 +291,7 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.hscan(...args, (err, reply) => {
       if (err) return cb(err);
       const [cursor, items] = reply ?? [];
-      if (!cursor || !items) return cb(new RedisClientError());
+      if (!cursor || !items) return cb(new CallbackEmptyReplyError());
       const result: Record<string, string> = {};
       while (items.length) {
         const key = String(items.shift());
@@ -399,7 +403,7 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.script('LOAD', script, (err, data) => {
       if (err) return cb(err);
       if (!data) return cb(new CallbackEmptyReplyError());
-      if (typeof data !== 'string') return cb(new RedisClientError());
+      if (typeof data !== 'string') return cb(new CallbackInvalidReplyError());
       cb(null, data);
     });
   }
@@ -438,11 +442,7 @@ export class IoredisClient extends RedisClientAbstract {
     cb: ICallback<string | null>,
   ): void {
     if (!this.validateRedisVersion(6, 2)) {
-      cb(
-        new RedisClientError(
-          'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.',
-        ),
-      );
+      cb(new CommandNotSupportedError({ metadata: { command: 'lmove' } }));
     } else {
       if (from === 'LEFT' && to === 'RIGHT') {
         this.client.lmove(source, destination, from, to, cb);
@@ -450,9 +450,10 @@ export class IoredisClient extends RedisClientAbstract {
         this.client.lmove(source, destination, from, to, cb);
       } else {
         cb(
-          new RedisClientError(
-            'Invalid move direction. Use LEFT -> RIGHT or RIGHT -> LEFT.',
-          ),
+          new InvalidArgumentsError({
+            message:
+              'Invalid move direction. Use LEFT -> RIGHT or RIGHT -> LEFT.',
+          }),
         );
       }
     }

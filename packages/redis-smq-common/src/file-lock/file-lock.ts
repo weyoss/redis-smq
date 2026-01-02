@@ -11,8 +11,9 @@ import { FileHandle, open, unlink, stat, utimes } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { env } from '../env/index.js';
 import {
-  FileLockAttemptsExhaustedError,
-  FileLockError,
+  AcquireLockError,
+  AttemptsExhaustedError,
+  ReleaseLockError,
 } from './errors/index.js';
 
 /**
@@ -247,14 +248,19 @@ export class FileLock {
           continue;
         }
         // For any other error, throw
-        throw new FileLockError(
-          `Failed to acquire lock (${lockFile}): ${getErrorMessage(err)}`,
-        );
+        throw new AcquireLockError({
+          metadata: {
+            lockFile,
+            error: getErrorMessage(lockFile),
+          },
+        });
       }
     }
 
     // If we get here, we've exhausted our retries
-    throw new FileLockAttemptsExhaustedError(lockFile, retries);
+    throw new AttemptsExhaustedError({
+      metadata: { lockFile, retries },
+    });
   }
 
   /**
@@ -285,9 +291,12 @@ export class FileLock {
     } catch (err) {
       // Ignore if file doesn't exist
       if (!isFileNotFoundError(err)) {
-        throw new FileLockError(
-          `Failed to release lock on (${lockFile}): ${getErrorMessage(err)}`,
-        );
+        throw new ReleaseLockError({
+          metadata: {
+            lockFile,
+            error: getErrorMessage(err),
+          },
+        });
       }
     }
   }

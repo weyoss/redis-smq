@@ -7,12 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { RedisServerError } from './redis-server.error.js';
+import { RedisSMQError } from '../../errors/index.js';
 
-export class RedisServerBinaryNotFoundError extends RedisServerError {
-  constructor() {
-    super(
-      `A Redis server binary could not be found. Please set up Redis server first.`,
-    );
+export class RedisServerBinaryNotFoundError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisServer.BinaryNotFound',
+      defaultMessage:
+        'A Redis server binary could not be found. Please set up Redis server first.',
+    };
   }
 }

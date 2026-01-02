@@ -9,7 +9,10 @@
 
 import { describe, it, expect, vi, afterEach, MockInstance } from 'vitest';
 import { createLogger } from '../../src/logger/logger.js';
-import { ConsoleLogger, LoggerError } from '../../src/logger/index.js';
+import {
+  ConsoleLogger,
+  LoggerInvalidNamespaceError,
+} from '../../src/logger/index.js';
 
 describe('Logger', () => {
   afterEach(() => {
@@ -73,11 +76,11 @@ describe('Logger', () => {
   it('should throw an error for invalid namespace', () => {
     expect(() => {
       createLogger({ enabled: true }, 'invalid namespace with spaces');
-    }).toThrow(LoggerError);
+    }).toThrow(LoggerInvalidNamespaceError);
 
     expect(() => {
       createLogger({ enabled: true }, '$');
-    }).toThrow(LoggerError);
+    }).toThrow(LoggerInvalidNamespaceError);
   });
 
   it('should use custom logger options when provided', () => {

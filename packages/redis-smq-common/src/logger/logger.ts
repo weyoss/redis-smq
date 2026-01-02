@@ -28,7 +28,7 @@ const dummyLogger: ILogger = Object.freeze({
  * @param cfg - Logger configuration specifying if logging is enabled.
  * @param ns - Optional namespaces to prepend to each log message.
  * @returns An ILogger instance.
- * @throws LoggerError if the namespace is invalid.
+ * @throws LoggerInvalidNamespaceError if the namespace is invalid.
  */
 export function createLogger(
   cfg: ILoggerConfig = {},

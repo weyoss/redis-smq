@@ -7,10 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { PanicError } from './panic.error.js';
+import { RedisSMQError } from './redis-smq.error.js';
 
-export class CallbackEmptyReplyError extends PanicError {
-  constructor() {
-    super(`Expected a non-empty reply`);
+export class CallbackEmptyReplyError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Callback.EmptyReply',
+      defaultMessage: 'Callback returned an empty reply. A reply is required.',
+    };
   }
 }

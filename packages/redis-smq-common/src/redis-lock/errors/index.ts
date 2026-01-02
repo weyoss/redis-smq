@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export { LockError } from './lock.error.js';
-export { LockAcquireError } from './lock-acquire.error.js';
-export { LockExtendError } from './lock-extend.error.js';
-export { LockMethodNotAllowedError } from './lock-method-not-allowed.error.js';
+export { AcquireLockError } from './acquire-lock.error.js';
+export { ExtendLockError } from './extend-lock.error.js';
+export { AcquireLockNotAllowedError } from './acquire-lock-not-allowed.error.js';
 export { LockNotAcquiredError } from './lock-not-acquired.error.js';

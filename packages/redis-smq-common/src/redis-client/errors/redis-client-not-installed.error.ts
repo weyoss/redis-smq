@@ -8,13 +8,15 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
-export class AsyncCallbackTimeoutError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
+export class RedisClientNotInstalledError extends RedisSMQError<{
+  clientId: string;
+}> {
+  getProps() {
     return {
-      code: 'RedisSMQ.Async.CallbackTimeout',
-      defaultMessage: 'Callback has timed out.',
+      code: 'RedisSMQ.RedisClient.ClientNotInstalled',
+      defaultMessage:
+        'REDIS client is not available. Please install your selected client first.',
     };
   }
 }

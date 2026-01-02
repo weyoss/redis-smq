@@ -8,5 +8,4 @@
  */
 
 export * from './redis-server-binary-not-found.error.js';
-export * from './redis-server.error.js';
 export * from './redis-server-unsupported-platform.error.js';
