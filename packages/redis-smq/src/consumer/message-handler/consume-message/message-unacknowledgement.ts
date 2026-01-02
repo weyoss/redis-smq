@@ -28,7 +28,7 @@ import {
 } from './types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { ScriptResultMismatchError } from '../../../errors/index.js';
-import { UnexpectedScriptReplyError } from '../../../errors/unexpected-script-reply.error.js';
+import { UnexpectedScriptReplyError } from '../../../errors/index.js';
 
 type TScriptArgs = {
   keys: string[];
