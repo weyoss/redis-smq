@@ -11,4 +11,4 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type GetRoutingKeysDirectXControllerResponseDTO =
   | readonly [200, string[]]
-  | TErrors['InvalidDirectExchangeParametersError'];
+  | TErrors['InvalidExchangeParametersError'];

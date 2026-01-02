@@ -11,6 +11,8 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type DeleteConsumerGroupControllerResponseDTO =
   | readonly [204, null]
+  | TErrors['InvalidQueueParametersError']
   | TErrors['QueueNotFoundError']
   | TErrors['ConsumerGroupNotEmptyError']
-  | TErrors['InvalidQueueParametersError'];
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['UnexpectedScriptReplyError'];

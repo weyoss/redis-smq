@@ -13,4 +13,5 @@ export type SaveConsumerGroupControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
   | TErrors['QueueNotFoundError']
+  | TErrors['InvalidConsumerGroupIdError']
   | TErrors['ConsumerGroupsNotSupportedError'];

@@ -8,7 +8,7 @@
  */
 
 import { TApplicationMiddleware } from '../../application/types/index.js';
-import { RouterResponseValidatorNotFoundError } from '../errors/RouterResponseValidatorNotFoundError.js';
+import { ResponseValidatorNotFoundError } from '../errors/ResponseValidatorNotFoundError.js';
 
 export function ValidateResponseMiddleware(
   validatorMap: Map<string, (data: unknown) => void>,
@@ -20,6 +20,6 @@ export function ValidateResponseMiddleware(
       validator(ctx.body);
       return next();
     }
-    throw new RouterResponseValidatorNotFoundError();
+    throw new ResponseValidatorNotFoundError();
   };
 }

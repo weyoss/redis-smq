@@ -12,6 +12,8 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type SetQueueRateLimitControllerResponseDTO =
   | readonly [200, IQueueRateLimit]
-  | TErrors['QueueNotFoundError']
-  | TErrors['InvalidRateLimitError']
-  | TErrors['InvalidRateLimitIntervalError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['InvalidRateLimitValueError']
+  | TErrors['InvalidRateLimitIntervalError']
+  | TErrors['UnexpectedScriptReplyError']
+  | TErrors['QueueNotFoundError'];

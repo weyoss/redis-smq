@@ -13,6 +13,6 @@ import { TErrors } from '../../../errors/errors.js';
 export type GetQueuePendingMessagesControllerResponseDTO =
   | readonly [200, IBrowserPage<IMessageTransferable>]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueNotFoundError']
+  | TErrors['ConsumerGroupRequiredError']
   | TErrors['ConsumerGroupsNotSupportedError']
-  | TErrors['ConsumerGroupRequiredError'];
+  | TErrors['QueueNotFoundError'];

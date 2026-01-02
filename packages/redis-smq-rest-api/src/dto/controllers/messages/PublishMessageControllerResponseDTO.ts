@@ -13,10 +13,13 @@ export type PublishMessageControllerResponseDTO =
   | readonly [201, string[]]
   | TErrors['ProducerNotRunningError']
   | TErrors['MessageExchangeRequiredError']
+  | TErrors['RoutingKeyRequiredError']
   | TErrors['NoMatchedQueuesForMessageExchangeError']
   | TErrors['QueueHasNoConsumerGroupsError']
-  | TErrors['MessagePropertyError']
   | TErrors['QueueNotFoundError']
-  | TErrors['InvalidSchedulingParametersError']
+  | TErrors['ConsumerGroupNotFoundError']
   | TErrors['MessagePriorityRequiredError']
-  | TErrors['PriorityQueuingNotEnabledError'];
+  | TErrors['MessageAlreadyExistsError']
+  | TErrors['PriorityQueuingNotEnabledError']
+  | TErrors['InvalidQueueTypeError']
+  | TErrors['UnexpectedScriptReplyError'];

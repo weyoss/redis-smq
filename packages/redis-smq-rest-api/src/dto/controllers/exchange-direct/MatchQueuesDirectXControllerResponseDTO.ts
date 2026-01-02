@@ -12,4 +12,7 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type MatchQueuesDirectXControllerResponseDTO =
   | readonly [200, IQueueParams[]]
-  | TErrors['InvalidDirectExchangeParametersError'];
+  | TErrors['InvalidExchangeParametersError']
+  | TErrors['InvalidDirectExchangeParametersError']
+  | TErrors['ExchangeNotFoundError']
+  | TErrors['ExchangeTypeMismatchError'];

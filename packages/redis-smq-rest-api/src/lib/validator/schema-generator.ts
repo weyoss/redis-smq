@@ -11,8 +11,8 @@ import { readFileSync } from 'fs';
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { constants } from '../../config/constants.js';
 import { EControllerRequestPayload } from '../controller/types/index.js';
-import { RouterRequestValidationError } from '../router/errors/RouterRequestValidationError.js';
-import { RouterResponseValidationError } from '../router/errors/RouterResponseValidationError.js';
+import { RequestValidationError } from '../router/errors/RequestValidationError.js';
+import { ResponseValidationError } from '../router/errors/ResponseValidationError.js';
 import { TResponseSchemaMap, TResponseSchemaMapItem } from './types/index.js';
 import { ajv } from './validator.js';
 
@@ -151,7 +151,11 @@ export function SchemaGenerator() {
         const validatorFn = (data: unknown) => {
           const isValid = validator(data);
           if (!isValid && validator.errors) {
-            throw new RouterRequestValidationError(validator.errors);
+            throw new RequestValidationError({
+              metadata: {
+                errorObjects: validator.errors,
+              },
+            });
           }
         };
         accumulator.set(currentValue, validatorFn);
@@ -168,7 +172,11 @@ export function SchemaGenerator() {
         const validatorFn = (data: unknown) => {
           const isValid = validator(data);
           if (!isValid && validator.errors) {
-            throw new RouterResponseValidationError(validator.errors);
+            throw new ResponseValidationError({
+              metadata: {
+                errorObjects: validator.errors,
+              },
+            });
           }
         };
         m.set(key, validatorFn);

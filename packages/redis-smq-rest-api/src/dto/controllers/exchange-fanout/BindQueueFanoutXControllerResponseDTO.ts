@@ -12,6 +12,9 @@ import { TErrors } from '../../../errors/errors.js';
 export type BindQueueFanoutXControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['InvalidFanoutExchangeParametersError']
+  | TErrors['InvalidExchangeParametersError']
   | TErrors['QueueNotFoundError']
-  | TErrors['QueueDeliveryModelMismatchError'];
+  | TErrors['ExchangeNotFoundError']
+  | TErrors['NamespaceMismatchError']
+  | TErrors['ExchangeTypeMismatchError']
+  | TErrors['ExchangeQueuePolicyMismatchError'];

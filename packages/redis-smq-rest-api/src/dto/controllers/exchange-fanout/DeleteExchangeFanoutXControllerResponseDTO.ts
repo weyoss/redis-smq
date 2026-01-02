@@ -11,5 +11,7 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type DeleteExchangeFanoutXControllerResponseDTO =
   | readonly [204, null]
-  | TErrors['InvalidFanoutExchangeParametersError']
-  | TErrors['ExchangeHasBoundQueuesError'];
+  | TErrors['InvalidExchangeParametersError']
+  | TErrors['ExchangeHasBoundQueuesError']
+  | TErrors['ExchangeNotFoundError']
+  | TErrors['ExchangeTypeMismatchError'];

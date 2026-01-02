@@ -14,4 +14,7 @@ export type DeleteQueueControllerResponseDTO =
   | TErrors['InvalidQueueParametersError']
   | TErrors['QueueNotFoundError']
   | TErrors['QueueNotEmptyError']
-  | TErrors['QueueManagerActiveConsumersError'];
+  | TErrors['QueueManagerActiveConsumersError']
+  | TErrors['QueueHasBoundExchangesError']
+  | TErrors['ConsumerSetMismatchError']
+  | TErrors['UnexpectedScriptReplyError'];

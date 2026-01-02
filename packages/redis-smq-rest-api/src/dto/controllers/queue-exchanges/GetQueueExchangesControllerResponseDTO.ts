@@ -8,8 +8,8 @@
  */
 
 import { IExchangeParsedParams } from 'redis-smq';
+import { TErrors } from '../../../errors/errors.js';
 
-export type GetQueueExchangesControllerResponseDTO = readonly [
-  200,
-  IExchangeParsedParams[],
-];
+export type GetQueueExchangesControllerResponseDTO =
+  | readonly [200, IExchangeParsedParams[]]
+  | TErrors['InvalidQueueParametersError'];

@@ -8,7 +8,7 @@
  */
 
 import { GetQueueExchangesControllerResponseDTO } from '../../dto/controllers/queue-exchanges/GetQueueExchangesControllerResponseDTO.js';
-import { GetQueueExchangesControllerRequestPathDTO } from '../../dto/controllers/queue-exchanges/GetQueueExhangesControllerRequestPathDTO.js';
+import { GetQueueExchangesControllerRequestPathDTO } from '../../dto/controllers/queue-exchanges/GetQueueExchangesControllerRequestPathDTO.js';
 import {
   TControllerRequestHandler,
   TControllerRequestPayloadEmpty,

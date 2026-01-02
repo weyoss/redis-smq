@@ -12,4 +12,4 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type MatchQueuesTopicXControllerResponseDTO =
   | readonly [200, IQueueParams[]]
-  | TErrors['InvalidDirectExchangeParametersError'];
+  | TErrors['InvalidExchangeParametersError'];

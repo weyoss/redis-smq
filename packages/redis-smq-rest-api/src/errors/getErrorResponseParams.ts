@@ -7,13 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
 import { errors } from './errors.js';
 
-export function getErrorResponseParams(
-  error: RedisSMQError | (new () => RedisSMQError),
-) {
-  const className = error.name;
+export function getErrorResponseParams(className: string) {
   const errs: Record<string, readonly [number, string]> = errors;
   return errs[className] ?? [500, 'InternalServerError'];
 }

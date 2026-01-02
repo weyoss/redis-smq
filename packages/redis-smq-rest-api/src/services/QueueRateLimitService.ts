@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { IQueueParams, IQueueRateLimit, QueueRateLimit } from 'redis-smq';
-import { PanicError } from 'redis-smq-common';
+import { CallbackEmptyReplyError } from 'redis-smq-common';
 
 const { promisifyAll } = bluebird;
 
@@ -27,7 +27,7 @@ export class QueueRateLimitService {
     await this.queueRateLimit.setAsync(queueParams, queueRateLimit);
     const rateLimit = await this.getRateLimit(queueParams);
     if (!rateLimit) {
-      throw new PanicError(`Expected a non-empty reply`);
+      throw new CallbackEmptyReplyError();
     }
     return rateLimit;
   }

@@ -10,7 +10,7 @@
 import { RedisSMQError } from 'redis-smq-common';
 import { getErrorResponseParams } from '../../../errors/getErrorResponseParams.js';
 import { TApplicationMiddleware } from '../../application/types/index.js';
-import { ValidationError } from '../errors/ValidationError.js';
+import { RequestValidationError } from '../../router/errors/RequestValidationError.js';
 
 export const errorHandlerMiddleware: TApplicationMiddleware = async (
   ctx,
@@ -22,13 +22,19 @@ export const errorHandlerMiddleware: TApplicationMiddleware = async (
     // @todo retrieve logger from the di container
     console.error(e);
     if (e instanceof RedisSMQError) {
-      const [code, message] = getErrorResponseParams(e);
+      // type-coverage:ignore-next-line
+      const [code, message] = getErrorResponseParams(e.name);
+      const validationErrors =
+        // type-coverage:ignore-next-line
+        e instanceof RequestValidationError
+          ? e.getMetadata()?.errorObjects
+          : null;
       ctx.status = code;
       ctx.body = {
         error: {
           code,
           message,
-          details: e instanceof ValidationError ? e.errorObjects : {},
+          details: validationErrors ?? {},
         },
       };
     } else {

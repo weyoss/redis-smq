@@ -13,4 +13,5 @@ export type PurgeQueuePendingMessagesControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
   | TErrors['ConsumerGroupsNotSupportedError']
-  | TErrors['ConsumerGroupRequiredError'];
+  | TErrors['ConsumerGroupRequiredError']
+  | TErrors['QueueNotFoundError'];

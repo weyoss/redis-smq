@@ -11,4 +11,4 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type GetBindingPatternsTopicXControllerResponseDTO =
   | readonly [200, string[]]
-  | TErrors['InvalidTopicExchangeParamsError'];
+  | TErrors['InvalidExchangeParametersError'];

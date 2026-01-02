@@ -7,6 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSmqRestApiError } from '../../errors/errors/RedisSmqRestApiError.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class RouterResponseValidatorNotFoundError extends RedisSmqRestApiError {}
+export abstract class RedisSMQRestApiError<
+  Metadata extends Record<string, unknown> = never,
+> extends RedisSMQError<Metadata> {}

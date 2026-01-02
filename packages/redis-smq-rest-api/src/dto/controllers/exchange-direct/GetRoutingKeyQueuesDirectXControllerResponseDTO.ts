@@ -12,4 +12,5 @@ import { TErrors } from '../../../errors/errors.js';
 
 export type GetRoutingKeyQueuesDirectXControllerResponseDTO =
   | readonly [200, IQueueParams[]]
+  | TErrors['InvalidExchangeParametersError']
   | TErrors['InvalidDirectExchangeParametersError'];

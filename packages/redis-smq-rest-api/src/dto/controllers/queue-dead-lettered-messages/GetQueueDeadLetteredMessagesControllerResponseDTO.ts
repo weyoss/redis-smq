@@ -13,4 +13,7 @@ import { TErrors } from '../../../errors/errors.js';
 export type GetQueueDeadLetteredMessagesControllerResponseDTO =
   | readonly [200, IBrowserPage<IMessageTransferable>]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueNotFoundError'];
+  | TErrors['ConsumerGroupRequiredError']
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['DeadLetteredMessageAuditNotEnabledError'];
