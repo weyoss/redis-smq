@@ -9,12 +9,11 @@
 
 import { RedisSMQError } from './redis-smq.error.js';
 
-export class PanicError extends RedisSMQError {
+export class OperationNotAllowedError extends RedisSMQError {
   getProps() {
     return {
-      code: 'RedisSMQ.Panic',
-      defaultMessage:
-        'Fatal error. The system may be in an inconsistent state.',
+      code: 'RedisSMQ.OperationNotAllowed',
+      defaultMessage: 'Operation not allowed.',
     };
   }
 }

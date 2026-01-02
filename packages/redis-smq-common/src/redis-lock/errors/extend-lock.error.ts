@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class LoggerError extends RedisSMQError {}
+export class ExtendLockError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisLock.Extend.Failed',
+      defaultMessage: 'Failed to extend a lock.',
+    };
+  }
+}

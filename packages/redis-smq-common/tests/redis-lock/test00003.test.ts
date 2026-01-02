@@ -11,7 +11,7 @@ import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import {
   RedisLock,
-  LockMethodNotAllowedError,
+  AcquireLockNotAllowedError,
 } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 
@@ -22,7 +22,7 @@ it('Locker: autoExtend', async () => {
   );
   await expect(lock.acquireLockAsync()).resolves.toBe(true);
   await expect(lock.extendLockAsync()).rejects.toThrowError(
-    LockMethodNotAllowedError,
+    AcquireLockNotAllowedError,
   );
 
   await bluebird.delay(20000);

@@ -9,7 +9,7 @@
 
 import { ICallback } from '../../async/index.js';
 import { EventEmitter } from '../../event/index.js';
-import { RedisClientError } from '../errors/index.js';
+import { PanicError } from '../../errors/index.js';
 
 export * from './config.js';
 
@@ -37,7 +37,7 @@ export interface IRedisClient extends EventEmitter<TRedisClientEvent> {
     cb: ICallback<Record<string, string>>,
   ): void;
   loadScript(script: string, cb: ICallback<string>): void;
-  getScriptId(name: string): string | RedisClientError;
+  getScriptId(name: string): string | PanicError;
   runScript(
     scriptName: string,
     keys: (string | number)[],

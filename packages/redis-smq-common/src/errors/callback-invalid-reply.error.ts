@@ -7,10 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { PanicError } from './panic.error.js';
+import { RedisSMQError } from './redis-smq.error.js';
 
-export class CallbackInvalidReplyError extends PanicError {
-  constructor() {
-    super(`Invalid reply type`);
+export class CallbackInvalidReplyError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Callback.InvalidReply',
+      defaultMessage: 'Callback returned an invalid reply.',
+    };
   }
 }

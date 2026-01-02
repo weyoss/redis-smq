@@ -8,13 +8,15 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
-export class AsyncCallbackTimeoutError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
+export class AttemptsExhaustedError extends RedisSMQError<{
+  lockFile: string;
+  retries: number;
+}> {
+  getProps() {
     return {
-      code: 'RedisSMQ.Async.CallbackTimeout',
-      defaultMessage: 'Callback has timed out.',
+      code: 'RedisSMQ.FileLock.AcquireLock.AttemptsExhausted',
+      defaultMessage: 'Failed to acquire a file lock after multiple attempts.',
     };
   }
 }

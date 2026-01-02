@@ -252,7 +252,7 @@ export abstract class Worker<
             errorCode,
             error: msg.error,
           });
-          callback(new WorkerThreadError(msg));
+          callback(new WorkerThreadError({ metadata: msg }));
         } else {
           this.logger.debug('Worker thread execution successful');
           callback(null, msg.data);
@@ -271,7 +271,7 @@ export abstract class Worker<
           errorCode:
             EWorkerThreadChildExitCode[EWorkerThreadChildExitCode.TERMINATED],
         });
-        callback(new WorkerThreadError(msg));
+        callback(new WorkerThreadError({ metadata: msg }));
       };
 
       worker.once('message', onMessage);

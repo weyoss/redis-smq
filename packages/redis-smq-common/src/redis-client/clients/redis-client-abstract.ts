@@ -12,14 +12,17 @@ import { resolve } from 'path';
 import { async } from '../../async/index.js';
 import { ICallback } from '../../async/index.js';
 import { env } from '../../env/index.js';
-import { CallbackEmptyReplyError } from '../../errors/index.js';
+import { CallbackEmptyReplyError, PanicError } from '../../errors/index.js';
 import { EventEmitter } from '../../event/index.js';
-import { RedisClientError } from '../errors/index.js';
 import {
   IRedisClient,
   IRedisTransaction,
   TRedisClientEvent,
 } from '../types/index.js';
+import {
+  UnknownRedisServerVersionError,
+  UnsupportedRedisServerVersionError,
+} from '../errors/index.js';
 
 const dir = env.getCurrentDir();
 
@@ -58,7 +61,7 @@ export abstract class RedisClientAbstract
 
   validateRedisVersion(major: number, feature = 0, minor = 0): boolean {
     if (!RedisClientAbstract.redisServerVersion) {
-      this.emit('error', new RedisClientError('UNKNOWN_REDIS_SERVER_VERSION'));
+      this.emit('error', new UnknownRedisServerVersionError());
       return false;
     }
     return (
@@ -73,7 +76,7 @@ export abstract class RedisClientAbstract
     const validate = (cb: ICallback) => {
       const [major, feature, minor] = minimalSupportedVersion;
       if (!this.validateRedisVersion(major, feature, minor))
-        cb(new RedisClientError('UNSUPPORTED_REDIS_SERVER_VERSION'));
+        cb(new UnsupportedRedisServerVersionError());
       else cb();
     };
     if (!RedisClientAbstract.redisServerVersion) {
@@ -495,10 +498,12 @@ export abstract class RedisClientAbstract
     );
   }
 
-  getScriptId(name: string): string | RedisClientError {
+  getScriptId(name: string): string | PanicError {
     const id = RedisClientAbstract.scripts[name];
     if (!id) {
-      return new RedisClientError(`ID of script [${name}] is missing`);
+      return new PanicError({
+        message: `ID of script [${name}] is missing`,
+      });
     }
     return id;
   }

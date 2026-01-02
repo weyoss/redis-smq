@@ -10,7 +10,10 @@
 import { ICallback } from '../async/index.js';
 import { IEventBusRedisConfig, TEventBusEvent } from './types/index.js';
 import { RedisClientFactory } from '../redis-client/index.js';
-import { EventBusError, EventBusNotConnectedError } from './errors/index.js';
+import {
+  EventBusMessageJSONParseError,
+  EventBusNotConnectedError,
+} from './errors/index.js';
 import { EventBus } from './event-bus.js';
 
 export class EventBusRedis<
@@ -149,12 +152,14 @@ export class EventBusRedis<
             .on('message', (channel: string, message: string) => {
               try {
                 this.eventEmitter.emit(channel, ...JSON.parse(message));
-              } catch (parseError) {
-                const err =
-                  parseError instanceof Error
-                    ? parseError
-                    : new EventBusError(String(parseError));
-                this.handleError(err);
+              } catch (error) {
+                this.handleError(
+                  new EventBusMessageJSONParseError({
+                    metadata: {
+                      error: String(error),
+                    },
+                  }),
+                );
               }
             });
           this.syncSubscriptionsWithListeners();

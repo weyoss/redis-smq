@@ -10,13 +10,15 @@
 import { ICallback } from '../async/index.js';
 import { CallbackEmptyReplyError, PanicError } from '../errors/index.js';
 import { EventEmitter } from '../event/index.js';
-import { InstanceLockError, RedisClientError } from './errors/index.js';
+import { InstanceLockError } from './errors/index.js';
 import {
   ERedisConfigClient,
   IRedisClient,
   IRedisConfig,
   TRedisClientEvent,
 } from './types/index.js';
+import { UnsupportedClientError } from './errors/unsupported.client.error.js';
+import { RedisClientNotInstalledError } from './errors/redis-client-not-installed.error.js';
 
 export class RedisClientFactory extends EventEmitter<
   Pick<TRedisClientEvent, 'error'>
@@ -76,9 +78,9 @@ export class RedisClientFactory extends EventEmitter<
 
   getInstance(): IRedisClient {
     if (!this.instance)
-      throw new PanicError(
-        `Use first init() to initialize the RedisClientInstance class`,
-      );
+      throw new PanicError({
+        message: 'Use first init() to initialize the RedisClientInstance class',
+      });
     return this.instance;
   }
 
@@ -93,9 +95,9 @@ export class RedisClientFactory extends EventEmitter<
       })
       .catch(() =>
         cb(
-          new RedisClientError(
-            'REDIS client is not available. Please install node-redis.',
-          ),
+          new RedisClientNotInstalledError({
+            metadata: { clientId: '@redis/client' },
+          }),
         ),
       );
   }
@@ -111,9 +113,9 @@ export class RedisClientFactory extends EventEmitter<
       })
       .catch(() =>
         cb(
-          new RedisClientError(
-            'IOREDIS client is not available. Please install ioredis.',
-          ),
+          new RedisClientNotInstalledError({
+            metadata: { clientId: 'ioredis' },
+          }),
         ),
       );
   }
@@ -128,11 +130,7 @@ export class RedisClientFactory extends EventEmitter<
     if (config.client === ERedisConfigClient.IOREDIS) {
       return this.createIORedisClient(config, cb);
     }
-    cb(
-      new RedisClientError(
-        'Unsupported Redis client type. Supported types are: REDIS, IOREDIS.',
-      ),
-    );
+    cb(new UnsupportedClientError());
   }
 
   protected createRedisClient(

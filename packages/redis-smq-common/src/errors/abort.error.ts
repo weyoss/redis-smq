@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from './redis-smq.error.js';
 
-export class AbortError extends RedisSMQError {}
+export class AbortError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.Operation.Abort',
+      defaultMessage: 'Operation aborted.',
+    };
+  }
+}

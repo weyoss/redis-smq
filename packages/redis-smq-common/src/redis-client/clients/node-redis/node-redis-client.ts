@@ -9,9 +9,9 @@
 
 import { createClient, RedisClientOptions } from '@redis/client';
 import { ICallback } from '../../../async/index.js';
-import { RedisClientError } from '../../errors/index.js';
 import { RedisClientAbstract } from '../redis-client-abstract.js';
 import { NodeRedisClientMulti } from './node-redis-client-multi.js';
+import { CommandNotSupportedError } from '../../errors/index.js';
 
 export class NodeRedisClient extends RedisClientAbstract {
   protected client;
@@ -433,9 +433,11 @@ export class NodeRedisClient extends RedisClientAbstract {
   ): void {
     if (!this.validateRedisVersion(6, 2)) {
       cb(
-        new RedisClientError(
-          'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.',
-        ),
+        new CommandNotSupportedError({
+          metadata: {
+            command: 'lmove',
+          },
+        }),
       );
     } else {
       this.client

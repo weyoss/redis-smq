@@ -9,11 +9,9 @@
 
 import { Redis } from 'ioredis';
 import { ICallback } from '../../../async/index.js';
-import {
-  RedisClientError,
-  WatchedKeysChangedError,
-} from '../../errors/index.js';
+import { WatchedKeysChangedError } from '../../errors/index.js';
 import { IRedisTransaction } from '../../types/index.js';
+import { CallbackInvalidReplyError } from '../../../errors/index.js';
 
 export class IoredisClientMulti implements IRedisTransaction {
   protected multi;
@@ -183,9 +181,9 @@ export class IoredisClientMulti implements IRedisTransaction {
           let err: Error | null = null;
           for (const i of reply) {
             if (!Array.isArray(i)) {
-              err = new RedisClientError(
-                'Expected an array reply from multi.exec()',
-              );
+              err = new CallbackInvalidReplyError({
+                message: 'Expected an array reply from multi.exec()',
+              });
               break;
             }
             const [error, result] = i;

@@ -8,13 +8,14 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
+import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 
-export class AsyncCallbackTimeoutError extends RedisSMQError {
+export class WatchTransactionMaxRetriesExceeded extends RedisSMQError {
   getProps(): IRedisSMQErrorProperties {
     return {
-      code: 'RedisSMQ.Async.CallbackTimeout',
-      defaultMessage: 'Callback has timed out.',
+      code: 'RedisSMQ.RedisClient.WatchTransaction.MaxRetriesExceeded',
+      defaultMessage:
+        'Watch transaction has failed after reaching the maximum number of retries.',
     };
   }
 }

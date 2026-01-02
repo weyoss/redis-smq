@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class LockError extends RedisSMQError {}
+export class UnknownRedisServerVersionError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisClient.UnknownRedisServerVersion',
+      defaultMessage: 'Could not determine Redis server version.',
+    };
+  }
+}

@@ -16,9 +16,9 @@ import { IRedisClient } from '../redis-client/index.js';
 import { Runnable } from '../runnable/index.js';
 import { Timer } from '../timer/index.js';
 import {
-  LockAcquireError,
-  LockExtendError,
-  LockMethodNotAllowedError,
+  AcquireLockError,
+  ExtendLockError,
+  AcquireLockNotAllowedError,
   LockNotAcquiredError,
 } from './errors/index.js';
 
@@ -149,7 +149,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
             this.logger.warn(
               'Failed to acquire lock: already held by another instance',
             );
-            return cb(new LockAcquireError());
+            return cb(new AcquireLockError());
           }
         }
 
@@ -202,7 +202,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
           this.logger.warn(
             'Failed to extend lock: lock no longer held by this instance',
           );
-          return this.shutdown(() => cb(new LockExtendError()));
+          return this.shutdown(() => cb(new ExtendLockError()));
         }
 
         this.logger.debug(
@@ -418,7 +418,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
     this.logger.info(`Attempting to run RedisLock for key: ${this.lockKey}`);
 
     super.run((err, reply) => {
-      if (err instanceof LockAcquireError) {
+      if (err instanceof AcquireLockError) {
         this.logger.info(
           `Lock already held by another instance for key: ${this.lockKey}`,
         );
@@ -491,7 +491,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    *
    * @param cb - A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
    *
-   * @throws {LockMethodNotAllowedError} - If auto-extension is enabled.
+   * @throws {AcquireLockNotAllowedError} - If auto-extension is enabled.
    * @throws {LockNotAcquiredError} - If the lock is not currently held.
    *
    * @returns {void}
@@ -505,7 +505,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
       this.logger.warn(
         'Cannot manually extend lock: auto-extension is enabled',
       );
-      return cb(new LockMethodNotAllowedError());
+      return cb(new AcquireLockNotAllowedError());
     }
 
     if (!this.powerSwitch.isRunning()) {

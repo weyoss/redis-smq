@@ -8,13 +8,15 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
-export class AsyncCallbackTimeoutError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
+export class CommandNotSupportedError extends RedisSMQError<{
+  command: string;
+}> {
+  getProps() {
     return {
-      code: 'RedisSMQ.Async.CallbackTimeout',
-      defaultMessage: 'Callback has timed out.',
+      code: 'RedisSMQ.RedisClient.CommandNotSupported',
+      defaultMessage:
+        'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.',
     };
   }
 }

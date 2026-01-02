@@ -9,4 +9,14 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class EventBusError extends RedisSMQError {}
+export class AcquireLockError extends RedisSMQError<{
+  lockFile: string;
+  error: string;
+}> {
+  getProps() {
+    return {
+      code: 'RedisSMQ.FileLock.AcquireLock.Failed',
+      defaultMessage: 'Failed to acquire a file lock after multiple attempts.',
+    };
+  }
+}

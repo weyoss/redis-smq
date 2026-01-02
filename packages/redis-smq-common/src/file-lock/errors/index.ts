@@ -7,5 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export * from './file-lock-attempts-exhausted.error.js';
-export * from './file-lock.error.js';
+export * from './attempts-exhausted.error.js';
+export * from './release-lock.error.js';
+export * from './acquire-lock.error.js';

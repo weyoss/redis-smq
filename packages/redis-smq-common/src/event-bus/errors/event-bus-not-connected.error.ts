@@ -7,6 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { EventBusError } from './event-bus.error.js';
+import { RedisSMQError } from '../../errors/index.js';
+import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 
-export class EventBusNotConnectedError extends EventBusError {}
+export class EventBusNotConnectedError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.EventBus.NotConnected',
+      defaultMessage: 'Event bus is not connected.',
+    };
+  }
+}

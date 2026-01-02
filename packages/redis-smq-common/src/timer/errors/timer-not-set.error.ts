@@ -8,5 +8,13 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
+import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
-export class FileLockError extends RedisSMQError {}
+export class TimerNotSetError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Timer.NotSet',
+      defaultMessage: 'Timer is not set.',
+    };
+  }
+}

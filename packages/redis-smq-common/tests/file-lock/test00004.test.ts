@@ -12,7 +12,7 @@ import os from 'node:os';
 import { resolve } from 'path';
 import { expect, it, vi } from 'vitest';
 import { getCurrentDir } from '../../src/env/current-dir.js';
-import { FileLockAttemptsExhaustedError } from '../../src/file-lock/errors/index.js';
+import { AttemptsExhaustedError } from '../../src/file-lock/errors/index.js';
 
 it('should throw error when maximum retry attempts are exhausted', async () => {
   const lockFile = resolve(os.tmpdir(), `${Date.now()}.lock`);
@@ -53,7 +53,7 @@ it('should throw error when maximum retry attempts are exhausted', async () => {
   const fileLock = new FileLock();
 
   await expect(fileLock.acquireLock(lockFile, { retries: 3 })).rejects.toThrow(
-    new FileLockAttemptsExhaustedError(lockFile, 3).message,
+    new AttemptsExhaustedError({ metadata: { lockFile, retries: 3 } }).message,
   );
 
   expect(fileLock.isLockHeld(lockFile)).toBe(false);

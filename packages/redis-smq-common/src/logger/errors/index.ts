@@ -7,4 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export { LoggerError } from './logger.error.js';
+export { LoggerInvalidNamespaceError } from './logger-invalid-namespace.error.js';

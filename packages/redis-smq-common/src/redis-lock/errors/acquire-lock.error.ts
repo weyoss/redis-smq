@@ -9,4 +9,11 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class RedisClientError extends RedisSMQError {}
+export class AcquireLockError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisLock.AcquireLock.Failed',
+      defaultMessage: 'Failed to acquire a lock.',
+    };
+  }
+}

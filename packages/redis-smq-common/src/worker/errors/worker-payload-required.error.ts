@@ -7,10 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { WorkerError } from './worker-error.js';
+import { RedisSMQError } from '../../errors/index.js';
+import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 
-export class WorkerPayloadRequiredError extends WorkerError {
-  constructor() {
-    super(`Worker payload is required`);
+export class WorkerPayloadRequiredError extends RedisSMQError {
+  getProps(): IRedisSMQErrorProperties {
+    return {
+      code: 'RedisSMQ.Worker.PayloadRequired',
+      defaultMessage: 'Worker payload is required.',
+    };
   }
 }

@@ -9,4 +9,14 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class WorkerError extends RedisSMQError {}
+export class ReleaseLockError extends RedisSMQError<{
+  lockFile: string;
+  error: string;
+}> {
+  getProps() {
+    return {
+      code: 'RedisSMQ.FileLock.releaseLock.Failed',
+      defaultMessage: 'Failed to release a previously acquired lock file',
+    };
+  }
+}

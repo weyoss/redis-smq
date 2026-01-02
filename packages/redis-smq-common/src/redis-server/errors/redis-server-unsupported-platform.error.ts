@@ -7,10 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { RedisServerError } from './redis-server.error.js';
+import { RedisSMQError } from '../../errors/index.js';
 
-export class RedisServerUnsupportedPlatformError extends RedisServerError {
-  constructor() {
-    super(`Unsupported platform/architecture`);
+export class RedisServerUnsupportedPlatformError extends RedisSMQError {
+  getProps() {
+    return {
+      code: 'RedisSMQ.RedisServer.UnsupportedPlatform',
+      defaultMessage: 'Unsupported platform/architecture.',
+    };
   }
 }

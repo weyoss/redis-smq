@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export { WorkerError } from './worker-error.js';
 export { WorkerThreadError } from './worker-thread.error.js';
 export { WorkerPayloadRequiredError } from './worker-payload-required.error.js';
 export { WorkerAlreadyRunningError } from './worker-already-running.error.js';
