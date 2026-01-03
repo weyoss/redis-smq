@@ -34,16 +34,17 @@ const objectMessage = new ProducibleMessage().setBody({
 ## Targeting a Queue or an Exchange
 
 Each message must target exactly one destination:
+
 - Queue
-   - `setQueue('queue-name')`
+  - `setQueue('queue-name')`
 - Direct exchange (requires routing key)
-   - `setDirectExchange('exchange-name')`
-   - `setExchangeRoutingKey('routing.key')`
+  - `setDirectExchange('exchange-name')`
+  - `setExchangeRoutingKey('routing.key')`
 - Topic exchange (requires routing key/pattern)
-   - `setTopicExchange('exchange-name')`
-   - `setExchangeRoutingKey('pattern.like.user.created' or 'user.*' or 'user.#')`
+  - `setTopicExchange('exchange-name')`
+  - `setExchangeRoutingKey('pattern.like.user.created' or 'user.*' or 'user.#')`
 - Fanout exchange (no routing key)
-   - `setFanoutExchange('exchange-name')`
+  - `setFanoutExchange('exchange-name')`
 
 If neither a queue nor an exchange is set, producing will fail.
 
@@ -58,10 +59,10 @@ const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage()
   .setBody({ hello: 'world' })
-  .setQueue('my-queue')   // Direct to a specific queue
-  .setTTL(3600000)        // 1 hour time-to-live (ms)
-  .setRetryThreshold(5)   // Max 5 retry attempts
-  .setRetryDelay(30000);  // 30 seconds between retries (ms)
+  .setQueue('my-queue') // Direct to a specific queue
+  .setTTL(3600000) // 1 hour time-to-live (ms)
+  .setRetryThreshold(5) // Max 5 retry attempts
+  .setRetryDelay(30000); // 30 seconds between retries (ms)
 ```
 
 ### Advanced Configuration
@@ -74,10 +75,10 @@ const { ProducibleMessage, EMessagePriority } = require('redis-smq');
 const msg = new ProducibleMessage()
   .setBody({ task: 'important' })
   .setPriority(EMessagePriority.HIGHEST) // Priority queues only
-  .setConsumeTimeout(120000)             // 2 minute processing timeout (ms)
-  .setScheduledDelay(60000)              // Delay delivery by 1 minute (ms)
-  .setScheduledRepeat(5)                 // Repeat 5 times after initial delivery
-  .setScheduledRepeatPeriod(3600000);    // Repeat every hour (ms)
+  .setConsumeTimeout(120000) // 2 minute processing timeout (ms)
+  .setScheduledDelay(60000) // Delay delivery by 1 minute (ms)
+  .setScheduledRepeat(5) // Repeat 5 times after initial delivery
+  .setScheduledRepeatPeriod(3600000); // Repeat every hour (ms)
 ```
 
 ### CRON Scheduling
@@ -140,15 +141,15 @@ RedisSMQ.initialize(
 
 RedisSMQ provides several specialized classes for message management:
 
-| Class                                                                   | Purpose                                       |
-|-------------------------------------------------------------------------|-----------------------------------------------|
-| [ProducibleMessage](api/classes/ProducibleMessage.md)                   | Configure and produce messages                |
-| [MessageManager](api/classes/MessageManager.md)                         | Fetch, delete, or requeue individual messages |
-| [QueueMessages](api/classes/QueueMessages.md)                           | Manage all messages within a queue            |
-| [QueuePendingMessages](api/classes/QueuePendingMessages.md)             | Manage messages awaiting processing           |
-| [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md)   | Manage successfully processed messages        |
-| [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md)   | Manage messages that failed processing        |
-| [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)         | Manage messages scheduled for future delivery |
+| Class                                                                 | Purpose                                       |
+| --------------------------------------------------------------------- | --------------------------------------------- |
+| [ProducibleMessage](api/classes/ProducibleMessage.md)                 | Configure and produce messages                |
+| [MessageManager](api/classes/MessageManager.md)                       | Fetch, delete, or requeue individual messages |
+| [QueueMessages](api/classes/QueueMessages.md)                         | Manage all messages within a queue            |
+| [QueuePendingMessages](api/classes/QueuePendingMessages.md)           | Manage messages awaiting processing           |
+| [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) | Manage successfully processed messages        |
+| [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) | Manage messages that failed processing        |
+| [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)       | Manage messages scheduled for future delivery |
 
 ## Message Operations
 
@@ -223,9 +224,7 @@ Different message types can be purged using specific classes. Prefer creating th
 ```javascript
 'use strict';
 
-const {
-  RedisSMQ,
-} = require('redis-smq');
+const { RedisSMQ } = require('redis-smq');
 
 // Purge all messages in a queue
 const queueMessages = RedisSMQ.createQueueMessages();
@@ -271,7 +270,5 @@ const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
 - Use priority only for queues configured as priority queues
 - Consider scheduled messages for pacing or backoff strategies
 - Use setConsumeTimeout(...) for long-running tasks to detect stalled consumers
-- When creating components via RedisSMQ, prefer a single RedisSMQ.shutdown(cb) at application exit instead of shutting 
-down instances individually
-
-
+- When creating components via RedisSMQ, prefer a single RedisSMQ.shutdown(cb) at application exit instead of shutting
+  down instances individually

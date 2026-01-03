@@ -3,26 +3,28 @@
 # Redis Server
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Obtaining a Redis Binary](#obtaining-a-redis-binary)
-    - [Option 1: Install Redis](#option-1-install-redis)
-    - [Option 2: Build Redis from source](#option-2-build-redis-from-source)
-    - [Option 3: Download a pre-built Redis binary](#option-3-download-a-pre-built-redis-binary)
+  - [Option 1: Install Redis](#option-1-install-redis)
+  - [Option 2: Build Redis from source](#option-2-build-redis-from-source)
+  - [Option 3: Download a pre-built Redis binary](#option-3-download-a-pre-built-redis-binary)
 - [Supported Platforms](#supported-platforms)
 - [Starting Redis server from CLI](#starting-redis-server-from-cli)
 - [Redis Server Commands Guide](#redis-server-commands-guide)
-    - [For redis-smq Developers](#for-redis-smq-developers)
-    - [For redis-smq-common Users](#for-redis-smq-common-users)
+  - [For redis-smq Developers](#for-redis-smq-developers)
+  - [For redis-smq-common Users](#for-redis-smq-common-users)
 - [Starting Redis Server Programmatically](#starting-redis-server-programmatically)
-    - [Error Handling](#error-handling)
+  - [Error Handling](#error-handling)
 - [Important Notes](#important-notes)
 
 ## Overview
 
-The `RedisServer` class is a lightweight utility for managing Redis server instances. It provides a simple way to start 
+The `RedisServer` class is a lightweight utility for managing Redis server instances. It provides a simple way to start
 and stop Redis server processes programmatically.
 
 This utility is designed for:
+
 - Testing environments requiring isolated Redis instances
 - Local development setups
 
@@ -37,7 +39,7 @@ If the RedisServer utility fails to locate a Redis binary, a `RedisServerBinaryN
 
 ### Option 1: Install Redis
 
-It is recommended to ensure that Redis is installed on your host system and accessible to the user account under which 
+It is recommended to ensure that Redis is installed on your host system and accessible to the user account under which
 your application is run.
 
 Use your package manager to install Redis. For example on Ubuntu/Debian systems:
@@ -46,7 +48,7 @@ Use your package manager to install Redis. For example on Ubuntu/Debian systems:
 sudo apt-get install redis-server
 ```
 
-You can verify the installation by running: 
+You can verify the installation by running:
 
 ```shell
 redis-server --version
@@ -80,7 +82,7 @@ pnpm redis:download
 
 Pre-built binaries are retrieved from GitHub (https://github.com/weyoss/valkey).
 
-This option is quick and easy to set up without requiring compilation but prebuilt binaries may not be compatible 
+This option is quick and easy to set up without requiring compilation but prebuilt binaries may not be compatible
 with all systems due to environment differences (e.g., GLIBC version mismatches).
 
 ## Supported Platforms
@@ -177,9 +179,7 @@ try {
 
 ## Important Notes
 
-- All RedisSMQ package tests rely on `RedisServer` to launch local server instances. Ensure you have a working 
-RedisServer setup (option 1/option 2/option 3) before running tests.
+- All RedisSMQ package tests rely on `RedisServer` to launch local server instances. Ensure you have a working
+  RedisServer setup (option 1/option 2/option 3) before running tests.
 
 - This utility is designed for development and testing only. For production environments, use a dedicated Redis server instance.
-
-

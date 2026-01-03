@@ -12,11 +12,13 @@ Multiplexing lets multiple message handlers share a single Redis connection with
 ## When to consider multiplexing
 
 Use multiplexing if:
+
 - You manage a large number of low-traffic queues
 - You must minimize Redis connections (e.g., connection quotas in serverless/PaaS)
 - You want to simplify resource planning for many queues per process
 
 Avoid or limit multiplexing if:
+
 - You need maximum throughput and parallel processing across queues
 - You have “hot” queues where head-of-line blocking would be problematic
 - Your handlers are CPU-bound or perform long-running work
@@ -44,6 +46,7 @@ Avoid or limit multiplexing if:
 You can enable multiplexing on the Consumer by passing true as the first argument.
 
 Recommended (via RedisSMQ factory):
+
 ```javascript
 'use strict';
 
@@ -63,9 +66,27 @@ RedisSMQ.initialize(
     const consumer = RedisSMQ.createConsumer(true);
 
     // Register handlers for multiple queues
-    consumer.consume('queue1', (msg, done) => { /* ... */ done(); }, (e) => e && console.error(e));
-    consumer.consume('queue2', (msg, done) => { /* ... */ done(); }, (e) => e && console.error(e));
-    consumer.consume('queue3', (msg, done) => { /* ... */ done(); }, (e) => e && console.error(e));
+    consumer.consume(
+      'queue1',
+      (msg, done) => {
+        /* ... */ done();
+      },
+      (e) => e && console.error(e),
+    );
+    consumer.consume(
+      'queue2',
+      (msg, done) => {
+        /* ... */ done();
+      },
+      (e) => e && console.error(e),
+    );
+    consumer.consume(
+      'queue3',
+      (msg, done) => {
+        /* ... */ done();
+      },
+      (e) => e && console.error(e),
+    );
 
     // Start the consumer
     consumer.run((runErr) => {
@@ -80,13 +101,20 @@ RedisSMQ.initialize(
 ```
 
 Direct instantiation (advanced):
+
 ```javascript
 'use strict';
 
 const { Consumer } = require('redis-smq');
 
 const consumer = new Consumer(true); // enable multiplexing
-consumer.consume('queueA', (msg, done) => { /* ... */ done(); }, () => {});
+consumer.consume(
+  'queueA',
+  (msg, done) => {
+    /* ... */ done();
+  },
+  () => {},
+);
 consumer.run(() => {});
 // If created directly, you can shut down this instance with consumer.shutdown(cb)
 ```
@@ -118,4 +146,5 @@ consumer.run(() => {});
 - For high-throughput or latency-sensitive queues, prefer non-multiplexed Consumers or split work across multiple Consumers.
 
 For API details, see the Consumer class:
+
 - [Consumer](api/classes/Consumer.md)

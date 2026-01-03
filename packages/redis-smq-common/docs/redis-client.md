@@ -9,8 +9,8 @@
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-    - [Basic Operations](#basic-operations)
-    - [Shutdown](#shutdown)
+  - [Basic Operations](#basic-operations)
+  - [Shutdown](#shutdown)
 - [Error Handling](#error-handling)
 
 ---
@@ -48,8 +48,10 @@ To install the necessary dependencies for using the Redis client, follow these s
 
 - For `node-redis`:
 
-  ```bash
+  ````bash
   npm install @redis/client  ```
+
+  ````
 
 - For `ioredis`:
 
@@ -189,7 +191,6 @@ redisClient.getSetInstance((err, client) => {
 
 Always properly shutdown the factory to close Redis connections:
 
-
 ```typescript
 // Graceful shutdown
 redisClient.shutdown((err) => {
@@ -228,7 +229,7 @@ redisClient.init((initErr) => {
   try {
     // Get instance (throws PanicError if not initialized)
     const instance = factory.getInstance();
-    
+
     // Handle command errors
     instance.get('somekey', (cmdErr, reply) => {
       if (cmdErr) {

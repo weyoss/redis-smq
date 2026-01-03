@@ -28,7 +28,7 @@ npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest r
 You can verify package versions in your project:
 
 ```bash
-npm list redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui 
+npm list redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui
 ```
 
 ## Troubleshooting

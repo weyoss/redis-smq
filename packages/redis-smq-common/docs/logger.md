@@ -127,7 +127,11 @@ const logLevel = logger.getLogLevel();
 ### Advanced Configuration
 
 ```typescript
-import { createLogger, EConsoleLoggerLevel, ConsoleLogger } from 'redis-smq-common';
+import {
+  createLogger,
+  EConsoleLoggerLevel,
+  ConsoleLogger,
+} from 'redis-smq-common';
 
 const config = {
   enabled: true,
@@ -141,9 +145,9 @@ const config = {
 const logger = createLogger(config, 'production-service') as ConsoleLogger;
 
 logger.debug('Debug message'); // Will not be logged (below WARN level)
-logger.info('Info message');   // Will not be logged (below WARN level)
+logger.info('Info message'); // Will not be logged (below WARN level)
 logger.warn('Warning message'); // Will be logged
-logger.error('Error message');  // Will be logged
+logger.error('Error message'); // Will be logged
 
 // Check if a level would be logged
 if (logger.isLevelEnabled(EConsoleLoggerLevel.DEBUG)) {
