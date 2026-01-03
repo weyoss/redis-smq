@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.7-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.6...v9.0.7-next.0) (2026-01-03)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** delete specific namespace queues when deleting a ns ([2a5d06b](https://github.com/weyoss/redis-smq/commit/2a5d06bf06e97db51402fbee95730ce25912be88))
+- **redis-smq:** validate queue delivery model before deleting a consumerGroupId ([b938ed0](https://github.com/weyoss/redis-smq/commit/b938ed0ae04575432df111c44c7cba164daa721d))
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.6' into 'next' ([ca76ab8](https://github.com/weyoss/redis-smq/commit/ca76ab8e5d1c313a9eaa17f034143d95cd98b94d))
+
+### 📝 Documentation
+
+- **redis-smq:** update class refs ([e86d7fc](https://github.com/weyoss/redis-smq/commit/e86d7fc0feb7e14ab2caf69c460b34b671fc1571))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** enhance error system with structured errors ([3c35d6e](https://github.com/weyoss/redis-smq/commit/3c35d6ee973fa7d786a77e9e0f543a8d2bfcb333))
+- **redis-smq-rest-api:** use structured errors ([8760c23](https://github.com/weyoss/redis-smq/commit/8760c23da4aedfa11fcc3bd2e54e434ca1151f15))
+- **redis-smq:** optimize imports ([0f0436a](https://github.com/weyoss/redis-smq/commit/0f0436a4466cd1a91fe8ba597c3d023236626bf5))
+- **redis-smq:** shorten imports ([9137833](https://github.com/weyoss/redis-smq/commit/913783308970f72161ed411c9ce832aec749fd1b))
+- **redis-smq:** use EventMultiplexer instead of EventBus ([2257bb8](https://github.com/weyoss/redis-smq/commit/2257bb8e8c5bbb58827fa66a49fb7ab3e80a52a4))
+- **redis-smq:** use structured errors ([8e8d6fb](https://github.com/weyoss/redis-smq/commit/8e8d6fb2ebfcc17764d875015bab9b39556a9b37))
+
 ## [9.0.6](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.2...v9.0.6) (2025-12-27)
 
 ### 🚀 Chore

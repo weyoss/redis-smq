@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.7-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.6...v9.0.7-next.0) (2026-01-03)
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.6' into 'next' ([ca76ab8](https://github.com/weyoss/redis-smq/commit/ca76ab8e5d1c313a9eaa17f034143d95cd98b94d))
+
 ## [9.0.6](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.2...v9.0.6) (2025-12-27)
 
 ### 🚀 Chore
