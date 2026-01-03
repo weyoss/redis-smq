@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         ## Thanks for taking the time to report this issue!
-        
+
         The more information you provide, the faster we can identify and fix the problem.
         Please fill out the sections below to help us reproduce and resolve the issue.
 
@@ -38,8 +38,8 @@ body:
     id: bug_description
     attributes:
       label: 🔴 Bug Description
-      description: "Provide a clear and concise description of what the bug is. What exactly is happening?"
-      placeholder: "When I attempt to process messages with high concurrency, the queue stops processing after approximately 1000 messages..."
+      description: 'Provide a clear and concise description of what the bug is. What exactly is happening?'
+      placeholder: 'When I attempt to process messages with high concurrency, the queue stops processing after approximately 1000 messages...'
     validations:
       required: true
 
@@ -47,7 +47,7 @@ body:
     id: reproduction_steps
     attributes:
       label: 🔄 Steps to Reproduce
-      description: "How can we reproduce this issue? Please provide detailed steps, code snippets, or configuration details."
+      description: 'How can we reproduce this issue? Please provide detailed steps, code snippets, or configuration details.'
       placeholder: |
         1. Set up RedisSMQ with the following configuration...
         2. Create a queue with these parameters...
@@ -62,13 +62,13 @@ body:
       description: |
         If possible, provide a link to a minimal GitHub repository that reproduces the issue.
         This dramatically speeds up our ability to diagnose and fix the problem.
-      placeholder: "https://github.com/username/redis-smq-bug-demo"
+      placeholder: 'https://github.com/username/redis-smq-bug-demo'
 
   - type: textarea
     attributes:
       label: ✅ Expected Behavior
-      description: "What did you expect to happen instead of the current behavior?"
-      placeholder: "The queue should continue processing all messages without interruption..."
+      description: 'What did you expect to happen instead of the current behavior?'
+      placeholder: 'The queue should continue processing all messages without interruption...'
     validations:
       required: true
 
@@ -120,4 +120,4 @@ body:
       description: |
         Include any logs, error messages, or additional context that might help us understand the issue.
         If applicable, describe any workarounds you've tried.
-      placeholder: "Error logs, Redis configuration details, or other relevant information..."
+      placeholder: 'Error logs, Redis configuration details, or other relevant information...'

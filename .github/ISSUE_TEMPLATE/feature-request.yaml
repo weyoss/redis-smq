@@ -1,4 +1,3 @@
-
 name: 💡 Feature Request
 description: Suggest a new feature or enhancement for RedisSMQ
 labels: ['type: feature']
@@ -7,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for taking the time to suggest an improvement to RedisSMQ! 
-        
+
         These issues are for **concrete and actionable proposals** that can enhance the functionality of RedisSMQ.
         Please provide as much detail as possible to help us understand your request.
 
@@ -18,7 +17,7 @@ body:
       description: |
         A clear and concise description of what workflow is meant to be improved. 
         Example: "As a message queue developer, I often need to do <something> with RedisSMQ, but I face <problem>".
-      placeholder: "As a user, I want to..."
+      placeholder: 'As a user, I want to...'
     validations:
       required: true
 
@@ -29,7 +28,7 @@ body:
       description: |
         A clear and concise description of what you want to happen. 
         Consider how your solution would fit into RedisSMQ's architecture and benefit the broader user community.
-      placeholder: "I suggest implementing..."
+      placeholder: 'I suggest implementing...'
     validations:
       required: true
 
@@ -40,7 +39,7 @@ body:
       description: |
         Help us understand the trade-offs of your proposal. What are the potential challenges or downsides?
         This shows you've thought through your request thoroughly and helps us evaluate feasibility.
-      placeholder: "Some challenges might include..."
+      placeholder: 'Some challenges might include...'
     validations:
       required: false
 
@@ -51,7 +50,7 @@ body:
       description: |
         Have you explored other ways to solve this problem? Why do you believe your proposed solution is better?
         This helps us understand your thought process and might reveal options we haven't considered.
-      placeholder: "I also considered..."
+      placeholder: 'I also considered...'
     validations:
       required: false
 
@@ -62,6 +61,6 @@ body:
       description: |
         Add any other context, examples, or screenshots about the feature request here.
         The more information you provide, the better we can understand your needs.
-      placeholder: "Other relevant details..."
+      placeholder: 'Other relevant details...'
     validations:
       required: false
