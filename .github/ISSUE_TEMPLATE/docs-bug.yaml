@@ -7,7 +7,7 @@ body:
       value: |
         # 📝🐛 Documentation Bug Report
         Thank you for taking the time to report a documentation issue. This helps us improve the RedisSMQ documentation for everyone.
-        
+
         ## 📋 Guidelines
         - 🔍 Be specific about what's incorrect or missing
         - 💡 Include examples of what you expected to find
