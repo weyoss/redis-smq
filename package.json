@@ -51,19 +51,14 @@
     "release:preminor": "scripts/release.sh preminor",
     "release:premajor": "scripts/release.sh premajor",
     "document:all": "scripts/document.sh",
-    "format:all": "eslint --fix . && prettier --write .",
+    "lint": "scripts/lint.sh",
+    "lint:all": "scripts/lint.sh --all",
     "redis:start": "scripts/redis.sh start",
     "redis:download": "scripts/redis.sh download",
     "redis:build": "scripts/redis.sh build"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "type-coverage --strict --at-least 100  --ignore-files \"**/dist/**/*\" --ignore-files \"**/redis-smq-web-ui/**/*\""
-    ],
-    "*.{js,jsx,ts,tsx,json,css,scss,less,md,mdx,yml,yaml,html,gql,graphql}": [
-      "prettier --write --ignore-unknown"
-    ]
+    "*": "scripts/lint.sh"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
