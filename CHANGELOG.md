@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.8-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.7-next.0...v9.0.8-next.0) (2026-01-03)
+
+### 📝 Documentation
+
+- fix markdown formatting and improve consistency ([382b3e8](https://github.com/weyoss/redis-smq/commit/382b3e8438826b6969d35cf9878fe0a61972ec03))
+
+### ♻️ Code Refactoring
+
+- consolidate linting into unified script ([e910926](https://github.com/weyoss/redis-smq/commit/e9109265b8ed318dec08a052e22c7318e67d9854))
+
+### 👷 Continuous Integration
+
+- standardize quote style in GitHub issue templates ([fac041f](https://github.com/weyoss/redis-smq/commit/fac041f093277c6f0a85f6578f2416ac46ac0cc5))
+
 ## [9.0.7-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.6...v9.0.7-next.0) (2026-01-03)
 
 ### 🐛 Bug Fixes
