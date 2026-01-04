@@ -16,6 +16,7 @@ import {
 } from 'redis-smq-common';
 import { Configuration } from '../../../config/index.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
+import { TConsumerMessageHandlerWorkerPayload } from './types/index.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   protected logger;
@@ -23,16 +24,19 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   protected queueParsedParams;
   private timer;
 
-  constructor(queueParsedParams: IQueueParsedParams) {
+  constructor(
+    queueParsedParams: IQueueParsedParams,
+    loggerContext: TConsumerMessageHandlerWorkerPayload['loggerContext'],
+  ) {
     super();
     this.config = Configuration.getConfig();
     this.queueParsedParams = queueParsedParams;
 
     // Logger
-    this.logger = createLogger(
-      this.config.logger,
-      this.constructor.name.toLowerCase(),
-    );
+    this.logger = createLogger(this.config.logger, [
+      ...loggerContext.namespaces,
+      this.constructor.name,
+    ]);
     this.logger.info(`Initializing worker: ${this.constructor.name}`);
 
     // Timer

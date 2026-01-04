@@ -9,13 +9,11 @@
 
 import {
   async,
-  createLogger,
   ICallback,
   ILogger,
   Runnable,
   TRedisClientEvent,
 } from 'redis-smq-common';
-import { Configuration } from '../config/index.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
 import { _getQueues } from '../queue-manager/_/_get-queues.js';
@@ -56,13 +54,10 @@ export class PubSubTargetResolver extends Runnable<
    */
   protected pubSubTargets: Record<string, string[]> = {};
 
-  constructor(producer: Producer) {
+  constructor(producer: Producer, logger: ILogger) {
     super();
     this.producerId = producer.getId();
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name,
-    );
+    this.logger = logger.createLogger(this.constructor.name);
     this.internalEventBus = InternalEventBus.getInstance();
     this.logger.debug(
       `PubSubTargetResolver instance created for producer ${this.producerId}`,

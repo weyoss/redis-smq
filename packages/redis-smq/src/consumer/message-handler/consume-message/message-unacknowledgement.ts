@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { async, createLogger, ICallback, IRedisClient } from 'redis-smq-common';
+import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
@@ -99,11 +99,8 @@ export class MessageUnacknowledgement {
   /**
    * Creates a new MessageUnacknowledgement instance.
    */
-  constructor() {
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
-    );
+  constructor(logger: ILogger) {
+    this.logger = logger.createLogger(this.constructor.name.toLowerCase());
   }
 
   /**

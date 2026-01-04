@@ -19,10 +19,13 @@ export async function startScheduleWorker(
 ): Promise<void> {
   const key = `${queueParams.ns}${queueParams.name}`;
   if (!scheduleWorker[key]) {
-    scheduleWorker[key] = new PublishScheduledWorker({
-      queueParams,
-      groupId: null,
-    });
+    scheduleWorker[key] = new PublishScheduledWorker(
+      {
+        queueParams,
+        groupId: null,
+      },
+      { namespaces: [] },
+    );
     await bluebird.promisifyAll(scheduleWorker[key]).runAsync();
   }
 }

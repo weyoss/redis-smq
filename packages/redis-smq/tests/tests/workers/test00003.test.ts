@@ -34,12 +34,12 @@ test('ReapConsumersWorker', async () => {
   const queueParsedParams = { queueParams: defaultQueue, groupId: null };
 
   const reapConsumerWorker = bluebird.promisifyAll(
-    new ReapConsumersWorker(queueParsedParams),
+    new ReapConsumersWorker(queueParsedParams, { namespaces: [] }),
   );
   await reapConsumerWorker.runAsync();
 
   const requeueWorker = bluebird.promisifyAll(
-    new RequeueImmediateWorker(queueParsedParams),
+    new RequeueImmediateWorker(queueParsedParams, { namespaces: [] }),
   );
   await requeueWorker.runAsync();
   await bluebird.delay(20000);

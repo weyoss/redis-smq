@@ -73,7 +73,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   ) {
     super();
     this.consumerContext = consumerContext;
-    this.logger = consumerContext.logger;
+    this.logger = consumerContext.logger.createLogger(this.constructor.name);
     this.config = consumerContext.config;
 
     const { queue, messageHandler } = handlerParams;
@@ -226,7 +226,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.workerResourceGroup.on('workerResourceGroup.error', this.onError);
     this.workerResourceGroup.loadFromDir<TConsumerMessageHandlerWorkerPayload>(
       WORKERS_DIR,
-      { redisConfig: this.config.redis, queueParsedParams: this.queue },
+      {
+        redisConfig: this.config.redis,
+        queueParsedParams: this.queue,
+        loggerContext: {
+          namespaces: this.logger.getNamespaces(),
+        },
+      },
       (err) => {
         if (err) return cb(err);
         this.workerResourceGroup?.run((err) => {

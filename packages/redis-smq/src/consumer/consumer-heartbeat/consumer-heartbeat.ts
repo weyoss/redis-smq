@@ -51,7 +51,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     super();
     this.consumerContext = consumerContext;
 
-    this.logger = this.consumerContext.logger;
+    this.logger = this.consumerContext.logger.createLogger(
+      this.constructor.name,
+    );
     this.logger.debug(`Initializing ConsumerHeartbeat...`);
 
     this.logger.debug('Inittializing eventPublisher...');

@@ -76,9 +76,9 @@ export class Producer extends Runnable<TProducerEvent> {
     super();
     this.logger = createLogger(
       Configuration.getConfig().logger,
-      this.constructor.name,
+      `${this.constructor.name}-${this.getId()}`,
     );
-    this.logger.info(`Producer instance created [ID: ${this.getId()}]`);
+    this.logger.info(`Producer instance created`);
 
     this.directExchange = new ExchangeDirect();
     this.topicExchange = new ExchangeTopic();
@@ -261,7 +261,7 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected _runPubSubTargetResolver = (cb: ICallback): void => {
     this.logger.debug('Starting PubSubTargetResolver...');
-    this.pubSubTargetResolver = new PubSubTargetResolver(this);
+    this.pubSubTargetResolver = new PubSubTargetResolver(this, this.logger);
     this.pubSubTargetResolver.run((err) => {
       if (err) {
         this.logger.error('Failed to start PubSubTargetResolver.', err);
@@ -297,7 +297,7 @@ export class Producer extends Runnable<TProducerEvent> {
    * @returns An array of functions to be executed in series.
    */
   protected override goingUp(): ((cb: ICallback) => void)[] {
-    this.logger.info(`Producer [ID: ${this.getId()}] is going up...`);
+    this.logger.info(`Producer is going up...`);
     return super.goingUp().concat([
       (cb: ICallback): void => {
         RedisConnectionPool.getInstance().acquire(
@@ -327,7 +327,7 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected override up(cb: ICallback<boolean>) {
     super.up(() => {
-      this.logger.info(`Producer [ID: ${this.getId()}] is up.`);
+      this.logger.info(`Producer is up.`);
       this.emit('producer.up', this.id);
       cb(null, true);
     });
@@ -340,7 +340,7 @@ export class Producer extends Runnable<TProducerEvent> {
    * @returns An array of functions to be executed in series.
    */
   protected override goingDown(): ((cb: ICallback) => void)[] {
-    this.logger.info(`Producer [ID: ${this.getId()}] is going down...`);
+    this.logger.info(`Producer is going down...`);
     this.emit('producer.goingDown', this.id);
     return [
       this._shutdownPubSubTargetResolver,
@@ -366,7 +366,7 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected override down(cb: ICallback<boolean>): void {
     super.down(() => {
-      this.logger.info(`Producer [ID: ${this.getId()}] is down.`);
+      this.logger.info(`Producer is down.`);
       this.emit('producer.down', this.id);
       cb(null, true);
     });

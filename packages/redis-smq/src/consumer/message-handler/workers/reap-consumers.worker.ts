@@ -17,13 +17,17 @@ import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { EMessageUnacknowledgementReason } from '../consume-message/types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _deleteEphemeralConsumerGroup } from '../_/_delete-ephemeral-consumer-group.js';
+import { TConsumerMessageHandlerWorkerPayload } from './types/index.js';
 
 export class ReapConsumersWorker extends WorkerAbstract {
   protected messageUnacknowledgement: MessageUnacknowledgement;
 
-  constructor(queueParsedParams: IQueueParsedParams) {
-    super(queueParsedParams);
-    this.messageUnacknowledgement = new MessageUnacknowledgement();
+  constructor(
+    queueParsedParams: IQueueParsedParams,
+    loggerContext: TConsumerMessageHandlerWorkerPayload['loggerContext'],
+  ) {
+    super(queueParsedParams, loggerContext);
+    this.messageUnacknowledgement = new MessageUnacknowledgement(this.logger);
   }
 
   protected cleanUp(consumerId: string, cb: ICallback): void {
