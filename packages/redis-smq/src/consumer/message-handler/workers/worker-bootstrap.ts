@@ -9,7 +9,6 @@
 
 import { WorkerAbstract } from './worker-abstract.js';
 import { async, ICallback } from 'redis-smq-common';
-import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
   TConsumerMessageHandlerWorkerBootstrapFn,
   TConsumerMessageHandlerWorkerPayload,
@@ -17,17 +16,19 @@ import {
 import { RedisSMQ } from '../../../redis-smq.js';
 
 export function workerBootstrap(
-  WorkerCtor: new (queueParsedParams: IQueueParsedParams) => WorkerAbstract,
+  WorkerCtor: new (
+    ...args: ConstructorParameters<typeof WorkerAbstract>
+  ) => WorkerAbstract,
 ): TConsumerMessageHandlerWorkerBootstrapFn {
   return (payload: TConsumerMessageHandlerWorkerPayload) => {
-    const { queueParsedParams, redisConfig } = payload;
+    const { queueParsedParams, redisConfig, loggerContext } = payload;
     let worker: WorkerAbstract | null = null;
     return {
       run(cb: ICallback) {
         if (!worker) {
           return RedisSMQ.initialize(redisConfig, (err) => {
             if (err) return cb(err);
-            worker = new WorkerCtor(queueParsedParams);
+            worker = new WorkerCtor(queueParsedParams, loggerContext);
             worker.run((err) => cb(err));
           });
         }

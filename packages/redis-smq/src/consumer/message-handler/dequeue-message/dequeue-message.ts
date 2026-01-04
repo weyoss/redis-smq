@@ -77,7 +77,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   ) {
     super();
     this.consumerContext = consumerContext;
-    this.logger = consumerContext.logger;
+    this.logger = consumerContext.logger.createLogger(this.constructor.name);
     this.config = consumerContext.config;
     this.queue = queue;
 

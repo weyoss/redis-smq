@@ -37,7 +37,9 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   constructor(consumerContext: IConsumerContext) {
     super();
     this.consumerContext = consumerContext;
-    this.logger = this.consumerContext.logger;
+    this.logger = this.consumerContext.logger.createLogger(
+      this.constructor.name,
+    );
     eventPublisher(this);
     this.supervisorTimer = new Timer();
     this.supervisorTimer.on('error', (err) => this.handleError(err));

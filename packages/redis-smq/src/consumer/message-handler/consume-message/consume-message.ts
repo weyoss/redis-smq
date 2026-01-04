@@ -76,12 +76,12 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   ) {
     super();
     this.consumerId = consumerContext.consumerId;
-    this.logger = consumerContext.logger;
+    this.logger = consumerContext.logger.createLogger(this.constructor.name);
     this.config = consumerContext.config;
     this.queue = queue;
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
-    this.messageUnack = new MessageUnacknowledgement();
+    this.messageUnack = new MessageUnacknowledgement(this.logger);
 
     this.logger.debug(
       `Initializing ConsumeMessage for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}, messageHandlerId ${this.messageHandlerId}`,
@@ -329,7 +329,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       this.consumeMessageWorker = new WorkerCallable<
         IMessageTransferable,
         void
-      >(messageHandlerFilename);
+      >(messageHandlerFilename, this.logger);
     }
     return this.consumeMessageWorker;
   }

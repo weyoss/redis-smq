@@ -57,7 +57,7 @@ test('An unacked message without retryDelay should be moved to queueRequeued. Re
 
   // should move from requeue queue to delay queue
   const requeueImmediateWorker = bluebird.promisifyAll(
-    new RequeueImmediateWorker(queueParsedParams),
+    new RequeueImmediateWorker(queueParsedParams, { namespaces: [] }),
   );
   await requeueImmediateWorker.runAsync();
   await bluebird.delay(5000);

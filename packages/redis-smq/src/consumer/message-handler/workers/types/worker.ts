@@ -13,6 +13,9 @@ import { ICallback, IRedisConfig } from 'redis-smq-common';
 export type TConsumerMessageHandlerWorkerPayload = {
   redisConfig: IRedisConfig;
   queueParsedParams: IQueueParsedParams;
+  loggerContext: {
+    namespaces: string[];
+  };
 };
 
 export type TConsumerMessageHandlerWorkerBootstrapFn = (

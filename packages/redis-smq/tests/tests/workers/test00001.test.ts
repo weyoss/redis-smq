@@ -56,7 +56,10 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
 
   // should move from requeue queue to delay queue
   const requeueImmediateWorker = bluebird.promisifyAll(
-    new RequeueImmediateWorker({ queueParams: defaultQueue, groupId: null }),
+    new RequeueImmediateWorker(
+      { queueParams: defaultQueue, groupId: null },
+      { namespaces: [] },
+    ),
   );
   await requeueImmediateWorker.runAsync();
   await bluebird.delay(5000);
@@ -66,7 +69,10 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
 
   // should move from requeue queue to delay queue
   const requeueDelayedWorker = bluebird.promisifyAll(
-    new RequeueDelayedWorker({ queueParams: defaultQueue, groupId: null }),
+    new RequeueDelayedWorker(
+      { queueParams: defaultQueue, groupId: null },
+      { namespaces: [] },
+    ),
   );
   await requeueDelayedWorker.runAsync();
   await bluebird.delay(10000);
