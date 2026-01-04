@@ -12,6 +12,7 @@ import bluebird from 'bluebird';
 import { resolve } from 'node:path';
 import { env } from '../../src/env/index.js';
 import { WorkerCallable } from '../../src/worker/index.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 const dir = env.getCurrentDir();
 
@@ -28,7 +29,7 @@ const check = async (fn: () => Promise<unknown>, expected: string) => {
 it('WorkerCallable: case 2', async () => {
   const filename = resolve(dir, './workers/worker-non-existent.worker.js');
   const worker = bluebird.promisifyAll(
-    new WorkerCallable<string, string>(filename),
+    new WorkerCallable<string, string>(filename, getDummyLogger()),
   );
 
   await check(() => worker.callAsync('Hello world!'), '"code":105');
@@ -39,33 +40,33 @@ it('WorkerCallable: case 2', async () => {
 
   const filename2 = resolve(dir, './workers/worker-non-existent.worker.jsc');
   const worker2 = bluebird.promisifyAll(
-    new WorkerCallable<string, string>(filename2),
+    new WorkerCallable<string, string>(filename2, getDummyLogger()),
   );
   await check(() => worker2.callAsync('Hello world!'), '"code":104');
 
   const filename3 = resolve(dir, './workers/worker-error.worker.js');
   const worker3 = bluebird.promisifyAll(
-    new WorkerCallable<string, string>(filename3),
+    new WorkerCallable<string, string>(filename3, getDummyLogger()),
   );
   await check(() => worker3.callAsync('Hello world!'), '"code":201');
   await worker3.shutdownAsync();
 
   const filename4 = resolve(dir, './workers/worker-exception.worker.js');
   const worker4 = bluebird.promisifyAll(
-    new WorkerCallable<string, string>(filename4),
+    new WorkerCallable<string, string>(filename4, getDummyLogger()),
   );
   await check(() => worker4.callAsync('Hello world!'), '"code":202');
   await worker4.shutdownAsync();
 
   const filename5 = resolve(dir, './workers/worker-faulty.worker.js');
   const worker5 = bluebird.promisifyAll(
-    new WorkerCallable<string, string>(filename5),
+    new WorkerCallable<string, string>(filename5, getDummyLogger()),
   );
   await check(() => worker5.callAsync('Hello world!'), '"code":101');
 
   const filename6 = resolve(dir, './workers/worker-faulty-exit.worker.js');
   const worker6 = bluebird.promisifyAll(
-    new WorkerCallable<string, string>(filename6),
+    new WorkerCallable<string, string>(filename6, getDummyLogger()),
   );
   await check(() => worker6.callAsync('Hello world!'), '"code":106');
 });

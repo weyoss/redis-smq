@@ -23,9 +23,8 @@ export class WorkerCallable<Payload, Reply>
 {
   protected readonly type: EWorkerType = EWorkerType.CALLABLE;
 
-  constructor(workerFilename: string, logger?: ILogger) {
-    super(workerFilename);
-    this.logger = logger ?? this.logger;
+  constructor(workerFilename: string, logger: ILogger) {
+    super(workerFilename, undefined, logger);
     this.logger.info(`WorkerCallable instance created for ${workerFilename}`);
     this.logger.debug('WorkerCallable initialization details', {
       id: this.id,

@@ -15,11 +15,12 @@ import {
 } from '../../src/redis-lock/index.js';
 import { RedisLock } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 it('Locker: locker(), extend(), releaseLock()', async () => {
   const redisClient = await getRedisInstance();
   const lock = bluebird.promisifyAll(
-    new RedisLock(redisClient, console, 'key1', 5000, false),
+    new RedisLock(redisClient, getDummyLogger(), 'key1', 5000, false),
   );
   expect(lock.getId()).toBeDefined();
   await expect(lock.acquireLockAsync()).resolves.toBe(true);

@@ -38,11 +38,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
   ) {
     super();
     this.powerManager = new PowerSwitch();
-    this.logger = logger;
-
-    this.logger.info(
-      `Initializing WorkerResourceGroup with ID: ${resourceGroupId}`,
-    );
+    this.logger = logger.createLogger(this.constructor.name);
 
     //
     this.redisClient = redisClient;
@@ -57,7 +53,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     );
     this.locker = new RedisLock(
       redisClient,
-      logger,
+      this.logger,
       resourceGroupId,
       60000,
       true,

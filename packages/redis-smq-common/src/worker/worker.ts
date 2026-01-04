@@ -13,7 +13,7 @@ import { Worker as WorkerThread } from 'worker_threads';
 import { ICallback } from '../async/index.js';
 import { env } from '../env/index.js';
 import { EventEmitter } from '../event/index.js';
-import { createLogger } from '../logger/index.js';
+import { ILogger } from '../logger/index.js';
 import { WorkerThreadError } from './errors/index.js';
 import {
   EWorkerThreadChildExecutionCode,
@@ -48,20 +48,19 @@ export abstract class Worker<
   protected readonly workerFilename;
   protected readonly initialPayload;
   protected workerThread: WorkerThread | null = null;
-  protected logger;
 
-  protected constructor(workerFilename: string, initialPayload?: unknown) {
+  protected logger: ILogger;
+
+  protected constructor(
+    workerFilename: string,
+    initialPayload: unknown,
+    logger: ILogger,
+  ) {
     super();
     this.id = randomUUID();
     this.workerFilename = workerFilename;
     this.initialPayload = initialPayload;
-    this.logger = createLogger({ enabled: false });
-    this.logger.info(`Worker instance created for ${workerFilename}`);
-    this.logger.debug('Worker initialization details', {
-      id: this.id,
-      filename: workerFilename,
-      initialPayload: this.initialPayload ? 'provided' : 'none',
-    });
+    this.logger = logger.createLogger(this.constructor.name);
   }
 
   /**
@@ -98,6 +97,7 @@ export abstract class Worker<
       });
 
       try {
+        //
         this.workerThread = new WorkerThread(workerThreadPath, {
           workerData: {
             filename: this.workerFilename,
@@ -105,35 +105,14 @@ export abstract class Worker<
             type: this.type,
           },
           stdout: true,
+          stderr: true,
         });
-        this.logger.debug('Worker thread created successfully');
 
-        // Capture worker stdout and redirect to logger
-        if (this.workerThread.stdout) {
-          this.logger.debug('Setting up stdout capture for worker thread');
-          this.workerThread.stdout.on('data', (data: Buffer) => {
-            const output = data.toString().trim();
-            if (output) {
-              this.logger.debug(output);
-            }
-          });
-        } else {
-          this.logger.warn('Worker thread stdout is not available');
-        }
+        //
+        this.workerThread.stdout.pipe(process.stdout);
+        this.workerThread.stderr.pipe(process.stderr);
 
-        // Capture worker stderr and redirect to logger
-        if (this.workerThread.stderr) {
-          this.logger.debug('Setting up stderr capture for worker thread');
-          this.workerThread.stderr.on('data', (data: Buffer) => {
-            const output = data.toString().trim();
-            if (output) {
-              this.logger.error(output);
-            }
-          });
-        } else {
-          this.logger.warn('Worker thread stderr is not available');
-        }
-
+        //
         this.workerThread.on('messageerror', (err) => {
           this.logger.error(
             `Worker message deserialization error: ${err.message}`,
@@ -145,6 +124,7 @@ export abstract class Worker<
           );
         });
 
+        //
         this.workerThread.on('error', (err) => {
           this.logger.error(`Worker uncaught exception: ${err.message}`, {
             error: err.message,
@@ -153,6 +133,7 @@ export abstract class Worker<
           });
         });
 
+        //
         this.workerThread.on('exit', (code) => {
           if (code === 0) {
             this.logger.info('Worker thread exited successfully with code 0');
@@ -161,6 +142,8 @@ export abstract class Worker<
           }
           this.workerThread = null;
         });
+
+        this.logger.debug('Worker thread created successfully');
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Unknown error');
         this.logger.error(`Failed to create worker thread: ${error.message}`, {

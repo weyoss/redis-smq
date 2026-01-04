@@ -38,6 +38,7 @@ import { LoggerInvalidNamespaceError } from '../errors/index.js';
  * ```
  */
 export class ConsoleLogger implements ILogger {
+  private readonly options: Required<IConsoleLoggerOptions>;
   private readonly logLevel: EConsoleLoggerLevel;
   private readonly formatter: ConsoleMessageFormatter;
   private readonly namespaces: string[];
@@ -71,26 +72,23 @@ export class ConsoleLogger implements ILogger {
     options: IConsoleLoggerOptions = {},
     namespaces: string | string[] = [],
   ) {
-    const {
-      includeTimestamp = true,
-      colorize = true,
-      logLevel = EConsoleLoggerLevel.INFO,
-    } = options;
+    this.options = {
+      includeTimestamp: true,
+      colorize: true,
+      logLevel: EConsoleLoggerLevel.INFO,
+      ...options,
+    };
 
     this.logLevel =
-      typeof logLevel === 'number' ? logLevel : EConsoleLoggerLevel[logLevel];
+      typeof this.options.logLevel === 'number'
+        ? this.options.logLevel
+        : EConsoleLoggerLevel[this.options.logLevel];
 
     const namespaceArr =
       typeof namespaces === 'string' ? [namespaces] : namespaces;
     this.namespaces = this.validateNamespaces(namespaceArr);
 
-    this.formatter = new ConsoleMessageFormatter(
-      {
-        includeTimestamp,
-        colorize,
-      },
-      this.namespaces,
-    );
+    this.formatter = new ConsoleMessageFormatter(this.options, this.namespaces);
   }
 
   /**
@@ -214,6 +212,29 @@ export class ConsoleLogger implements ILogger {
 
     const formattedMessage = this.formatter.format('WARN', message);
     console.warn(formattedMessage, ...params);
+  }
+
+  /**
+   * Creates a new child logger instance with an additional namespace.
+   *
+   * The new logger inherits the configuration of the parent logger but appends
+   * the given namespace to its namespace hierarchy. This is useful for creating
+   * more specific loggers for different parts of an application.
+   *
+   * @param ns - The namespace string to append to the current logger's namespaces.
+   *
+   * @returns A new `ILogger` instance with the extended namespace.
+   *
+   * @example
+   * ```typescript
+   * const appLogger = new ConsoleLogger({}, 'app');
+   * const serviceLogger = appLogger.createLogger('service');
+   * serviceLogger.info('This message is from the service.');
+   * // Output: [timestamp] INFO (app / service): This message is from the service.
+   * ```
+   */
+  public createLogger(ns: string): ILogger {
+    return new ConsoleLogger(this.options, [...this.namespaces, ns]);
   }
 
   /**

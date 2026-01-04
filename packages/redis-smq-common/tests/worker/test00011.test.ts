@@ -16,12 +16,15 @@ import {
   WorkerAlreadyRunningError,
   WorkerRunnable,
 } from '../../src/worker/index.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 const dir = env.getCurrentDir();
 
 it('WorkerRunnable', async () => {
   const filename = resolve(dir, './workers/runnable/runnable1.worker.js');
-  const worker = bluebird.promisifyAll(new WorkerRunnable<string>(filename));
+  const worker = bluebird.promisifyAll(
+    new WorkerRunnable<string>(filename, '', getDummyLogger()),
+  );
   // will emit an error upon shutdown
   worker.on('worker.error', (err) => {
     console.error(err);

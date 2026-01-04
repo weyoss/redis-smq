@@ -17,6 +17,12 @@ export interface ILogger {
   error(message: unknown, ...params: unknown[]): void;
 
   debug(message: unknown, ...params: unknown[]): void;
+
+  getNamespaces(): string[];
+
+  getLogLevel(): number;
+
+  createLogger(ns: string): ILogger;
 }
 
 export interface ILoggerConfig {
