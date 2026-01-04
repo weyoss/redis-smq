@@ -12,11 +12,12 @@ import bluebird from 'bluebird';
 import { AbortError } from '../../src/errors/index.js';
 import { RedisLock } from '../../src/redis-lock/index.js';
 import { getMockedRedisClient } from './common.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 it('Locker: extendLock() -> LockAbortError', async () => {
   const redisClient = getMockedRedisClient();
   const lock = bluebird.promisifyAll(
-    new RedisLock(redisClient, console, 'key1', 10000, false),
+    new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false),
   );
   await expect(lock.acquireLockAsync()).resolves.toBe(true);
   await expect(

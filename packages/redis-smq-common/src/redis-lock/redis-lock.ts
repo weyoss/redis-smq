@@ -68,7 +68,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
     this.ttl = ttl;
     this.retryOnFail = retryOnFail;
     this.autoExtendInterval = autoExtendInterval;
-    this.logger = logger;
+    this.logger = logger.createLogger(this.constructor.name);
 
     this.logger.info(`RedisLock instance created for key: ${lockKey}`);
     this.logger.debug('RedisLock initialization details', {

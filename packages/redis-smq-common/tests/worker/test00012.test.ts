@@ -13,13 +13,14 @@ import { resolve } from 'node:path';
 import { env } from '../../src/env/index.js';
 import { WorkerResourceGroup } from '../../src/worker/index.js';
 import { getRedisInstance } from '../common.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 const dir = env.getCurrentDir();
 
 it('WorkerResourceGroup: addWorker()', async () => {
   const redisClient = await getRedisInstance();
   const workerRunnableResourceGroup = bluebird.promisifyAll(
-    new WorkerResourceGroup(redisClient, console, 'mygroupid'),
+    new WorkerResourceGroup(redisClient, getDummyLogger(), 'mygroupid'),
   );
 
   const filename = resolve(dir, './workers/runnable/runnable1.worker.js');

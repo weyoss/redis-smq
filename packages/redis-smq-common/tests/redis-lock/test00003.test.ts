@@ -14,11 +14,12 @@ import {
   AcquireLockNotAllowedError,
 } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 it('Locker: autoExtend', async () => {
   const redisClient = await getRedisInstance();
   const lock = bluebird.promisifyAll(
-    new RedisLock(redisClient, console, 'key1', 10000, false, 3000),
+    new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false, 3000),
   );
   await expect(lock.acquireLockAsync()).resolves.toBe(true);
   await expect(lock.extendLockAsync()).rejects.toThrowError(
@@ -28,7 +29,7 @@ it('Locker: autoExtend', async () => {
   await bluebird.delay(20000);
 
   const lock2 = bluebird.promisifyAll(
-    new RedisLock(redisClient, console, 'key1', 10000, false),
+    new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false),
   );
   await expect(lock2.acquireLockAsync()).resolves.toBe(false);
 

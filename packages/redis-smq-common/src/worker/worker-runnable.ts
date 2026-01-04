@@ -30,17 +30,15 @@ export class WorkerRunnable<InitialPayload>
 
   constructor(
     workerFilename: string,
-    initialPayload?: InitialPayload,
-    logger?: ILogger,
+    initialPayload: InitialPayload,
+    logger: ILogger,
   ) {
-    super(workerFilename, initialPayload);
-    this.logger = logger ?? this.logger;
+    super(workerFilename, initialPayload, logger);
     this.powerSwitch = new PowerSwitch();
     this.logger.info(`WorkerRunnable instance created for ${workerFilename}`);
     this.logger.debug('WorkerRunnable initialization details', {
       id: this.id,
       type: EWorkerType[this.type],
-      hasCustomLogger: !!logger,
       initialPayload: this.initialPayload ? 'provided' : 'none',
     });
   }

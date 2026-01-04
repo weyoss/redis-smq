@@ -19,6 +19,9 @@ const dummyLogger: ILogger = Object.freeze({
   info: noop,
   warn: noop,
   error: noop,
+  getNamespaces: () => [],
+  getLogLevel: () => -1,
+  createLogger: () => dummyLogger,
 });
 
 /**
@@ -38,4 +41,8 @@ export function createLogger(
     return dummyLogger;
   }
   return new ConsoleLogger(cfg.options, ns);
+}
+
+export function getDummyLogger() {
+  return dummyLogger;
 }
