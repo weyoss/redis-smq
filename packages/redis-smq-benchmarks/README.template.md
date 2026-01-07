@@ -24,7 +24,7 @@ This benchmark suite provides tools to measure RedisSMQ performance across diffe
 ### Installation
 
 ```bash
-npm install redis-smq@__TAG_SUFFIX__ redis-smq-common@__TAG_SUFFIX__ redis-smq-benchmark@__TAG_SUFFIX__ --save
+npm install redis-smq@__TAG_SUFFIX__ redis-smq-common@__TAG_SUFFIX__ redis-smq-benchmarks@__TAG_SUFFIX__ --save
 ```
 
 ### Basic Usage
