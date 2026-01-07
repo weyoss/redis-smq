@@ -33,15 +33,15 @@ npm install redis-smq@__TAG_SUFFIX__ redis-smq-common@__TAG_SUFFIX__ redis-smq-b
 
 Benchmarks can be configured using environment variables:
 
-| Variable              | Description                       | Default     |
-|-----------------------|-----------------------------------|-------------|
-| `BENCH_MESSAGES`      | Total messages to process         | `100000`    |
-| `BENCH_PRODUCERS`     | Number of producer worker threads | `10`        |
-| `BENCH_CONSUMERS`     | Number of consumer worker threads | `10`        |
-| `BENCH_SHOW_PROGRESS` | Benchmark progress reporting      | `0`         |
+| Variable              | Description                       | Default    |
+|-----------------------|-----------------------------------|------------|
+| `BENCH_MESSAGES`      | Total messages to process         | `100000`   |
+| `BENCH_PRODUCERS`     | Number of producer worker threads | `0`        |
+| `BENCH_CONSUMERS`     | Number of consumer worker threads | `0`        |
+| `BENCH_SHOW_PROGRESS` | Benchmark progress reporting      | `0`        |
 | `REDIS_HOST`          | Redis server host                 | `localhost` |
-| `REDIS_PORT`          | Redis server port                 | `6379`      |
-| `REDIS_DB`            | Redis server database             | `0`         |
+| `REDIS_PORT`          | Redis server port                 | `6379`     |
+| `REDIS_DB`            | Redis server database             | `0`        |
 
 
 ### Example Configuration
