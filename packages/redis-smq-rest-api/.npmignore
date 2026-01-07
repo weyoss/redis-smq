@@ -2,12 +2,14 @@
 *
 
 # Except the dist directory
+!dist/cjs/bin/**
 !dist/cjs/src/**
 !dist/cjs/index.d.ts
 !dist/cjs/index.d.ts.map
 !dist/cjs/index.js
 !dist/cjs/index.js.map
 !dist/cjs/package.json
+!dist/esm/bin/**
 !dist/esm/src/**
 !dist/esm/index.d.ts
 !dist/esm/index.d.ts.map
