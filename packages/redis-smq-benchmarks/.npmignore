@@ -1,0 +1,13 @@
+# Ignore everything
+*
+
+# Except the dist directory
+!dist/esm/bin/**
+!dist/esm/src/**
+!dist/esm/index.d.ts
+!dist/esm/index.d.ts.map
+!dist/esm/index.js
+!dist/esm/index.js.map
+!LICENSE
+!CHANGELOG.md
+!package.json
