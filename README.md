@@ -62,12 +62,14 @@ npm install @redis/client --save
 **Ecosystem**
 
 | Package                                                                                           | Description                                          |
-| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+|---------------------------------------------------------------------------------------------------| ---------------------------------------------------- |
 | [packages/redis-smq/README.md](packages/redis-smq/README.md)                       | Core message queue for Node.js                       |
 | [packages/redis-smq-common/README.md](packages/redis-smq-common/README.md)         | Shared components and utilities                      |
 | [packages/redis-smq-rest-api/README.md](packages/redis-smq-rest-api/README.md)     | REST API with OpenAPI v3 and Swagger UI              |
 | [packages/redis-smq-web-server/README.md](packages/redis-smq-web-server/README.md) | Web server to host the UI and in-process/proxied API |
 | [packages/redis-smq-web-ui/README.md](packages/redis-smq-web-ui/README.md)         | SPA for monitoring and managing RedisSMQ             |
+| [packages/redis-smq-benchmarks/README.md](packages/redis-smq-benchmarks/README.md) | Benchmarking tool for RedisSMQ            |
+
 
 **Version compatibility**
 
