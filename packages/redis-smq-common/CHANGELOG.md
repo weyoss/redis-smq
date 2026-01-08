@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.8...v9.0.9-next.0) (2026-01-08)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** include 'bin' directory in npm package ([71b1cb5](https://github.com/weyoss/redis-smq/commit/71b1cb5b9afe8625fd29d028cc022a94ff5d4a09))
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.8' into 'next' ([9ea29cc](https://github.com/weyoss/redis-smq/commit/9ea29cc2af7906285c5ccc675c65167d2e8005d6))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** enhance logger interface with child logger support ([f48345f](https://github.com/weyoss/redis-smq/commit/f48345fd7d2ed200a55257b1181d0a025bbcba31))
+
 ## [9.0.8](https://github.com/weyoss/redis-smq/compare/v9.0.8-next.0...v9.0.8) (2026-01-04)
 
 ### 🚀 Chore

@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.8...v9.0.9-next.0) (2026-01-08)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-benchmarks:** update bin script name to match pkg name ([b277b88](https://github.com/weyoss/redis-smq/commit/b277b887ee62f6eb3bf2dce69a4df8e6b99ae1bf))
+- **redis-smq-common:** include 'bin' directory in npm package ([71b1cb5](https://github.com/weyoss/redis-smq/commit/71b1cb5b9afe8625fd29d028cc022a94ff5d4a09))
+- **redis-smq-rest-api:** include 'bin' directory in npm package ([88e27ca](https://github.com/weyoss/redis-smq/commit/88e27ca83b4c2670a41735c5795bff767f201c89))
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.8' into 'next' ([9ea29cc](https://github.com/weyoss/redis-smq/commit/9ea29cc2af7906285c5ccc675c65167d2e8005d6))
+
+### 📝 Documentation
+
+- add link to benchmarking tool package in RedisSMQ ecosystem ([1daf477](https://github.com/weyoss/redis-smq/commit/1daf477daee0bad7ad4cd633d809e4830894009c))
+- **redis-smq-benchmarks:** fix installation command ([173bb75](https://github.com/weyoss/redis-smq/commit/173bb755b140bc61a77fc3662934e312b7f87e36))
+- **redis-smq-benchmarks:** update configuration default values ([37d38f1](https://github.com/weyoss/redis-smq/commit/37d38f1e9196ffa701f773e15d4d1aed128b0ddb))
+- **redis-smq:** update performance.md with a link to benchmarking tool ([14fd7ae](https://github.com/weyoss/redis-smq/commit/14fd7aed6c8bdcbdd757ae332b5a82907b2e2632))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** enhance logger interface with child logger support ([f48345f](https://github.com/weyoss/redis-smq/commit/f48345fd7d2ed200a55257b1181d0a025bbcba31))
+- **redis-smq:** improve logger context with hierarchical namespaces ([3d2be16](https://github.com/weyoss/redis-smq/commit/3d2be161b403331a57e47de857ad1ff95260a0c7))
+
+### ⚡ Performance Improvements
+
+- **redis-smq-benchmarks:** add benchmarking tool to assess performance and throughput ([57f672c](https://github.com/weyoss/redis-smq/commit/57f672cfbcf221cde3d75c0946741759bf52b742))
+
 ## [9.0.8](https://github.com/weyoss/redis-smq/compare/v9.0.8-next.0...v9.0.8) (2026-01-04)
 
 ### 🚀 Chore

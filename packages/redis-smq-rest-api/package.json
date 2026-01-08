@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-rest-api",
-  "version": "9.0.8",
+  "version": "9.0.9-next.0",
   "description": "REST API for RedisSMQ: OpenAPI 3 schema and Swagger UI for managing queues, messages, and consumers.",
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
