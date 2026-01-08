@@ -17,6 +17,7 @@ import {
 } from './types/index.js';
 import { createWorker } from './helpers/create-worker.js';
 import { Worker } from 'worker_threads';
+import { HighResTimer } from './helpers/timing.js';
 
 /**
  * RedisSMQ Benchmark: End-to-End Throughput with N producers and M consumers.
@@ -73,10 +74,10 @@ export function runE2EBenchmark(
       const { workerId, processed, timeTaken } = msg.data;
       totalProduced += Number(processed);
       totalProductionTime += Number(timeTaken);
-      productionEndTime = Date.now();
+      productionEndTime = HighResTimer.now();
 
       console.log(
-        `Producer ${workerId} completed: ${processed} messages in ${(Number(timeTaken) / 1000).toFixed(2)}s (${(Number(processed) / (Number(timeTaken) / 1000)).toFixed(0)} msg/s)`,
+        `Producer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
       );
 
       checkBenchmarkCompletion();
@@ -92,10 +93,10 @@ export function runE2EBenchmark(
       const { workerId, processed, timeTaken } = msg.data;
       totalConsumed += Number(processed);
       totalConsumptionTime += Number(timeTaken);
-      consumptionEndTime = Date.now();
+      consumptionEndTime = HighResTimer.now();
 
       console.log(
-        `Consumer ${workerId} completed: ${processed} messages in ${(Number(timeTaken) / 1000).toFixed(2)}s (${(Number(processed) / (Number(timeTaken) / 1000)).toFixed(0)} msg/s)`,
+        `Consumer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
       );
 
       checkBenchmarkCompletion();
@@ -111,19 +112,21 @@ export function runE2EBenchmark(
       completedProducers === producerCount &&
       completedConsumers === consumerCount
     ) {
-      benchmarkEndTime = Date.now();
+      benchmarkEndTime = HighResTimer.now();
       const totalTime = benchmarkEndTime - benchmarkStartTime;
 
       const productionTime = productionEndTime - productionStartTime;
       const consumptionTime = consumptionEndTime - consumptionStartTime;
 
-      const productionThroughput = totalProduced / (productionTime / 1000);
-      const consumptionThroughput = totalConsumed / (consumptionTime / 1000);
+      const productionThroughput =
+        totalProduced / HighResTimer.toSeconds(productionTime);
+      const consumptionThroughput =
+        totalConsumed / HighResTimer.toSeconds(consumptionTime);
 
       console.log('\n========== E2E BENCHMARK COMPLETE ==========');
       console.log(`Production Phase:`);
       console.log(`  Total produced: ${totalProduced}`);
-      console.log(`  Production time: ${(productionTime / 1000).toFixed(2)}s`);
+      console.log(`  Production time: ${HighResTimer.format(productionTime)}`);
       console.log(
         `  Production throughput: ${productionThroughput.toFixed(0)} msg/s`,
       );
@@ -131,16 +134,16 @@ export function runE2EBenchmark(
       console.log(`\nConsumption Phase:`);
       console.log(`  Total consumed: ${totalConsumed}`);
       console.log(
-        `  Consumption time: ${(consumptionTime / 1000).toFixed(2)}s`,
+        `  Consumption time: ${HighResTimer.format(consumptionTime)}`,
       );
       console.log(
         `  Consumption throughput: ${consumptionThroughput.toFixed(0)} msg/s`,
       );
 
       console.log(`\nEnd-to-End:`);
-      console.log(`  Total time: ${(totalTime / 1000).toFixed(2)}s`);
+      console.log(`  Total time: ${HighResTimer.format(totalTime)}`);
       console.log(
-        `  Overall throughput: ${(totalProduced / (totalTime / 1000)).toFixed(0)} msg/s`,
+        `  Overall throughput: ${(totalProduced / HighResTimer.toSeconds(totalTime)).toFixed(0)} msg/s`,
       );
       console.log(
         `  System backlog: ${totalProduced - totalConsumed} messages`,
@@ -196,9 +199,9 @@ export function runE2EBenchmark(
         console.log(`Messages per producer (approx): ${messagesPerProducer}`);
         console.log(`Messages per consumer (approx): ${messagesPerConsumer}`);
 
-        benchmarkStartTime = Date.now();
-        productionStartTime = Date.now();
-        consumptionStartTime = Date.now();
+        benchmarkStartTime = HighResTimer.now();
+        productionStartTime = HighResTimer.now();
+        consumptionStartTime = HighResTimer.now();
 
         try {
           // Create producers
