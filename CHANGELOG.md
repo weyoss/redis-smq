@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.1...v9.0.9-next.2) (2026-01-08)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-benchmarks:** use correct redis config for non-dev environment ([8001b33](https://github.com/weyoss/redis-smq/commit/8001b33106130cd8495ca2cd7f66322726a8ec32))
+
 ## [9.0.9-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.0...v9.0.9-next.1) (2026-01-08)
 
 ### 🐛 Bug Fixes
