@@ -60,7 +60,7 @@
     "build": "scripts/build.sh"
   },
   "bin": {
-    "redis-smq-benchmark": "./dist/esm/bin/cli.js"
+    "redis-smq-benchmarks": "./dist/esm/bin/cli.js"
   },
   "engineStrict": true,
   "engines": {

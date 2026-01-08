@@ -51,7 +51,7 @@ Benchmarks can be configured using environment variables:
 REDIS_HOST=127.0.0.1 \
 BENCH_PRODUCERS=10 \
 BENCH_CONSUMERS=5 \
-npx redis-smq-benchmark
+npx redis-smq-benchmarks
 ```
 
 ## 📈 Benchmark Types
@@ -70,7 +70,7 @@ Measures how quickly producers can enqueue messages.
 **Usage:**
 
 ```bash
-BENCH_MESSAGES=50000 BENCH_PRODUCERS=4 npx redis-smq-benchmark
+BENCH_MESSAGES=50000 BENCH_PRODUCERS=4 npx redis-smq-benchmarks
 ```
 
 ### 2. Consumer Throughput Benchmark
@@ -87,7 +87,7 @@ Measures how quickly consumers can process messages.
 **Usage:**
 
 ```bash
-BENCH_MESSAGES=50000 BENCH_CONSUMERS=4 npx redis-smq-benchmark
+BENCH_MESSAGES=50000 BENCH_CONSUMERS=4 npx redis-smq-benchmarks
 ```
 
 ### 3. End-to-End Throughput Benchmark
@@ -104,7 +104,7 @@ Measures complete system performance with concurrent producers and consumers.
 **Usage:**
 
 ```bash
-BENCH_MESSAGES=100000 BENCH_PRODUCERS=8 BENCH_CONSUMERS=8 npx redis-smq-benchmark
+BENCH_MESSAGES=100000 BENCH_PRODUCERS=8 BENCH_CONSUMERS=8 npx redis-smq-benchmarks
 ```
 
 ## 📊 Output Metrics
