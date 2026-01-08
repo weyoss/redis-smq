@@ -15,6 +15,7 @@ import {
   IWorkerData,
   TWorkerMessage,
 } from '../types/index.js';
+import { HighResTimer } from '../helpers/timing.js';
 
 const { queue, redisConfig, workerId, expectedMessages } =
   workerData as IWorkerData;
@@ -30,7 +31,7 @@ RedisSMQ.initialize(redisConfig, (err) => {
     [
       (cb) => consumer.run(cb),
       (cb) => {
-        startTime = Date.now();
+        startTime = HighResTimer.now();
         consumer.consume(
           queue,
           (_msg, ack) => {
@@ -52,7 +53,7 @@ RedisSMQ.initialize(redisConfig, (err) => {
 
             // Stop consuming after reaching expected message count
             if (expectedMessages > 0 && consumedCount >= expectedMessages) {
-              const timeTaken = Date.now() - startTime;
+              const timeTaken = HighResTimer.now() - startTime;
               consumer.cancel(queue, (err) => {
                 if (err) {
                   console.error(

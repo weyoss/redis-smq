@@ -2,6 +2,7 @@ import { async, ICallback } from 'redis-smq-common';
 import { ensureQueue } from './helpers/ensure-queue.js';
 import { IBenchmarkResult } from './types/index.js';
 import { BaseBenchmark } from './common/base-benchmark.js';
+import { HighResTimer } from './helpers/timing.js';
 
 export class ProducerBenchmark extends BaseBenchmark {
   protected async ensureQueue(): Promise<void> {
@@ -25,9 +26,9 @@ export class ProducerBenchmark extends BaseBenchmark {
           const { total, totalTime } = result;
           console.log('\n========== BENCHMARK COMPLETE ==========');
           console.log(`Total messages produced: ${total}`);
-          console.log(`Total time: ${(totalTime / 1000).toFixed(2)}s`);
+          console.log(`Total time: ${HighResTimer.format(totalTime)}`);
           console.log(
-            `Overall throughput: ${(total / (totalTime / 1000)).toFixed(0)} messages/second`,
+            `Overall throughput: ${(total / HighResTimer.toSeconds(totalTime)).toFixed(0)} messages/second`,
           );
           console.log('========================================\n');
           cb(null, result);

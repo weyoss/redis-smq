@@ -19,6 +19,7 @@ import {
 } from '../types/index.js';
 import { Worker } from 'worker_threads';
 import { createWorker } from '../helpers/create-worker.js';
+import { HighResTimer } from '../helpers/timing.js';
 
 export abstract class BaseBenchmark {
   protected showProgress = false;
@@ -69,11 +70,12 @@ export abstract class BaseBenchmark {
         this.totalProcessingTime += timeTaken;
 
         console.log(
-          `${this.workerLabel} ${workerId} completed: ${processed} messages in ${(timeTaken / 1000).toFixed(2)}s (${(processed / (timeTaken / 1000)).toFixed(0)} msg/s)`,
+          `${this.workerLabel} ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
         );
 
         if (this.completedWorkers === this.workerCount) {
-          const totalTime = Date.now() - this.startTime;
+          const totalTime = HighResTimer.now() - this.startTime;
+
           onComplete({
             totalTime,
             totalWorkerTime: this.totalProcessingTime,
@@ -103,7 +105,7 @@ export abstract class BaseBenchmark {
       `Messages per ${this.workerLabel} (approx): ${messagesPerWorker}`,
     );
 
-    this.startTime = Date.now();
+    this.startTime = HighResTimer.now();
 
     for (let i = 0; i < this.workerCount; i++) {
       let workerMessageCount = messagesPerWorker;
