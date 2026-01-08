@@ -13,10 +13,10 @@ import {
   EWorkerMessageType,
   IE2EBenchmarkConfig,
   IE2EBenchmarkResult,
+  TWorkerMessageHandler,
 } from './types/index.js';
 import { createWorker } from './helpers/create-worker.js';
 import { Worker } from 'worker_threads';
-import { IWorkerMessage } from './common/base-benchmark.js';
 
 /**
  * RedisSMQ Benchmark: End-to-End Throughput with N producers and M consumers.
@@ -67,7 +67,7 @@ export function runE2EBenchmark(
   let benchmarkStartTime = 0;
   let benchmarkEndTime = 0;
 
-  const onProducerMessage = (msg: IWorkerMessage) => {
+  const onProducerMessage: TWorkerMessageHandler = (msg) => {
     if (msg.type === EWorkerMessageType.COMPLETED) {
       completedProducers++;
       const { workerId, processed, timeTaken } = msg.data;
@@ -81,12 +81,12 @@ export function runE2EBenchmark(
 
       checkBenchmarkCompletion();
     } else if (msg.type === EWorkerMessageType.PROGRESS && showProgress) {
-      const { workerId, processed } = msg.data;
-      console.log(`Producer ${workerId} progress: ${processed} messages`);
+      const { workerId, progress } = msg.data;
+      console.log(`Producer ${workerId} progress: ${progress} messages`);
     }
   };
 
-  const onConsumerMessage = (msg: IWorkerMessage) => {
+  const onConsumerMessage: TWorkerMessageHandler = (msg) => {
     if (msg.type === EWorkerMessageType.COMPLETED) {
       completedConsumers++;
       const { workerId, processed, timeTaken } = msg.data;
@@ -100,8 +100,8 @@ export function runE2EBenchmark(
 
       checkBenchmarkCompletion();
     } else if (msg.type === EWorkerMessageType.PROGRESS && showProgress) {
-      const { workerId, processed } = msg.data;
-      console.log(`Consumer ${workerId} progress: ${processed} messages`);
+      const { workerId, progress } = msg.data;
+      console.log(`Consumer ${workerId} progress: ${progress} messages`);
     }
   };
 

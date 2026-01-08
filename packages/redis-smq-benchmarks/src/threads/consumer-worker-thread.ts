@@ -10,7 +10,11 @@
 import { parentPort, workerData } from 'worker_threads';
 import { RedisSMQ } from 'redis-smq';
 import { async } from 'redis-smq-common';
-import { EWorkerMessageType, IWorkerData } from '../types/index.js';
+import {
+  EWorkerMessageType,
+  IWorkerData,
+  TWorkerMessage,
+} from '../types/index.js';
 
 const { queue, redisConfig, workerId, expectedMessages } =
   workerData as IWorkerData;
@@ -39,10 +43,11 @@ RedisSMQ.initialize(redisConfig, (err) => {
               consumedCount % Math.max(1, Math.floor(expectedMessages / 10)) ===
                 0
             ) {
-              parentPort?.postMessage({
+              const message: TWorkerMessage = {
                 type: EWorkerMessageType.PROGRESS,
-                data: { workerId, processed: consumedCount },
-              });
+                data: { workerId, progress: consumedCount },
+              };
+              parentPort?.postMessage(message);
             }
 
             // Stop consuming after reaching expected message count
@@ -56,7 +61,7 @@ RedisSMQ.initialize(redisConfig, (err) => {
                   );
                   return cb(err);
                 }
-                parentPort?.postMessage({
+                const message: TWorkerMessage = {
                   type: EWorkerMessageType.COMPLETED,
                   data: {
                     workerId,
@@ -64,7 +69,8 @@ RedisSMQ.initialize(redisConfig, (err) => {
                     timeTaken,
                     expected: expectedMessages,
                   },
-                });
+                };
+                parentPort?.postMessage(message);
                 cb();
               });
             }

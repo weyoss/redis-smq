@@ -15,13 +15,6 @@ export enum EWorkerMessageType {
   COMPLETED = 'COMPLETED',
 }
 
-export interface IWorkerMessageData {
-  workerId: number;
-  processed: number;
-  timeTaken: number;
-  expected: number;
-}
-
 export interface IWorkerData {
   queue: IQueueParams;
   redisConfig: IRedisConfig;
@@ -29,9 +22,26 @@ export interface IWorkerData {
   expectedMessages: number;
 }
 
-export interface IWorkerMessage {
-  type: EWorkerMessageType;
-  data: IWorkerMessageData;
+export type TWorkerMessage = IWorkerProgressMessage | IWorkerCompleteMessage;
+
+export type TWorkerMessageHandler = (msg: TWorkerMessage) => void;
+
+export interface IWorkerCompleteMessage {
+  type: EWorkerMessageType.COMPLETED;
+  data: {
+    workerId: number;
+    processed: number;
+    timeTaken: number;
+    expected: number;
+  };
+}
+
+export interface IWorkerProgressMessage {
+  type: EWorkerMessageType.PROGRESS;
+  data: {
+    workerId: number;
+    progress: number;
+  };
 }
 
 export interface IBenchmarkConfig {

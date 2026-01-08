@@ -10,7 +10,11 @@
 import { parentPort, workerData } from 'worker_threads';
 import { ProducibleMessage, RedisSMQ } from 'redis-smq';
 import { async } from 'redis-smq-common';
-import { EWorkerMessageType, IWorkerData } from '../types/index.js';
+import {
+  EWorkerMessageType,
+  IWorkerData,
+  TWorkerMessage,
+} from '../types/index.js';
 
 const { queue, redisConfig, workerId, expectedMessages } =
   workerData as IWorkerData;
@@ -42,7 +46,7 @@ RedisSMQ.initialize(redisConfig, (err) => {
           // Stop consuming after reaching expected message count
           else if (producedCount >= expectedMessages) {
             const timeTaken = Date.now() - startTime;
-            parentPort?.postMessage({
+            const message: TWorkerMessage = {
               type: EWorkerMessageType.COMPLETED,
               data: {
                 workerId,
@@ -50,7 +54,8 @@ RedisSMQ.initialize(redisConfig, (err) => {
                 timeTaken,
                 expected: expectedMessages,
               },
-            });
+            };
+            parentPort?.postMessage(message);
             return cb();
           }
 
