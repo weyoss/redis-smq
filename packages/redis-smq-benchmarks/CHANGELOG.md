@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.0...v9.0.9-next.1) (2026-01-08)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-benchmarks:** make bin/cli.js executable ([512af9b](https://github.com/weyoss/redis-smq/commit/512af9bf51d1e7b89f85181e07bc6f3f90e94b21))
+
 ## [9.0.9-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.8...v9.0.9-next.0) (2026-01-08)
 
 ### 🐛 Bug Fixes
