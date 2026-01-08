@@ -131,29 +131,9 @@ Your results will vary. Use these as a rough directional reference only.
 
 ## Measuring throughput yourself
 
-Producer-only sketch:
+RedisSMQ comes with a [benchmarking tool](/packages/redis-smq-benchmarks/README.md) to help you to assess the performance and throughput in your application environment.
 
-- Initialize via RedisSMQ.initialize(...)
-- Create a Producer and call run(cb)
-- Produce N messages as fast as possible, measure time
-
-Consumer-only sketch:
-
-- Preload a queue with N messages
-- Create a Consumer, register a fast handler, run, and measure time to drain
-
-Combined:
-
-- Start producer and consumer simultaneously
-- Measure end-to-end time to send and acknowledge N messages
-
-Tips for accurate measurement:
-
-- Pin CPU and minimize background load
-- Disable logging
-- Use stable message bodies and sizes
-- Warm up before timing
-- Repeat multiple runs and report median/p95
+See [/packages/redis-smq-benchmarks/README.md](/packages/redis-smq-benchmarks/README.md) for more details.
 
 ## Feature impact summary
 
