@@ -8,7 +8,7 @@
  */
 
 import { Worker } from 'worker_threads';
-import { IWorkerData, IWorkerMessage } from '../types/index.js';
+import { IWorkerData, TWorkerMessage } from '../types/index.js';
 import { IQueueParams } from 'redis-smq';
 import { IRedisConfig } from 'redis-smq-common';
 
@@ -18,7 +18,7 @@ export function createWorker(params: {
   queue: IQueueParams;
   expectedMessages: number;
   redisConfig: IRedisConfig;
-  onMessage: (message: IWorkerMessage) => void;
+  onMessage: (message: TWorkerMessage) => void;
 }) {
   //
   const { queue, workerId, expectedMessages, redisConfig } = params;

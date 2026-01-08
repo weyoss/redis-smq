@@ -22,12 +22,12 @@ export class ProducerBenchmark extends BaseBenchmark {
     const onComplete = (result: IBenchmarkResult) => {
       this.shutdownWorkers()
         .then(() => {
-          const totalTime = Date.now() - this.startTime;
+          const { total, totalTime } = result;
           console.log('\n========== BENCHMARK COMPLETE ==========');
-          console.log(`Total messages produced: ${result.total}`);
+          console.log(`Total messages produced: ${total}`);
           console.log(`Total time: ${(totalTime / 1000).toFixed(2)}s`);
           console.log(
-            `Overall throughput: ${(result.total / (totalTime / 1000)).toFixed(0)} messages/second`,
+            `Overall throughput: ${(total / (totalTime / 1000)).toFixed(0)} messages/second`,
           );
           console.log('========================================\n');
           cb(null, result);

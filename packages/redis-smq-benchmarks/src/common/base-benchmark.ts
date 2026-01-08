@@ -13,21 +13,12 @@ import {
   EWorkerMessageType,
   IBenchmarkConfig,
   IBenchmarkResult,
+  IWorkerCompleteMessage,
+  TWorkerMessage,
+  TWorkerMessageHandler,
 } from '../types/index.js';
 import { Worker } from 'worker_threads';
 import { createWorker } from '../helpers/create-worker.js';
-
-export interface IWorkerMessage {
-  type: EWorkerMessageType;
-  data: {
-    workerId: number;
-    processed?: number;
-    timeTaken?: number;
-    expected?: number;
-  };
-}
-
-export type MessageHandler = (msg: IWorkerMessage) => void;
 
 export abstract class BaseBenchmark {
   protected showProgress = false;
@@ -38,6 +29,7 @@ export abstract class BaseBenchmark {
   protected workerPath: string;
   protected workerLabel: string;
   protected workers: Worker[] = [];
+  protected workerResults: IWorkerCompleteMessage['data'][] = [];
   protected completedWorkers = 0;
   protected totalProcessed = 0;
   protected totalProcessingTime = 0;
@@ -66,16 +58,18 @@ export abstract class BaseBenchmark {
 
   protected createMessageHandler(
     onComplete: (result: IBenchmarkResult) => void,
-  ): MessageHandler {
-    return (msg: IWorkerMessage) => {
+  ): TWorkerMessageHandler {
+    return (msg: TWorkerMessage) => {
       if (msg.type === EWorkerMessageType.COMPLETED) {
         this.completedWorkers++;
+        this.workerResults.push(msg.data);
+
         const { workerId, processed, timeTaken } = msg.data;
-        this.totalProcessed += Number(processed);
-        this.totalProcessingTime += Number(timeTaken);
+        this.totalProcessed += processed;
+        this.totalProcessingTime += timeTaken;
 
         console.log(
-          `${this.workerLabel} ${workerId} completed: ${processed} messages in ${(Number(timeTaken) / 1000).toFixed(2)}s (${(Number(processed) / (Number(timeTaken) / 1000)).toFixed(0)} msg/s)`,
+          `${this.workerLabel} ${workerId} completed: ${processed} messages in ${(timeTaken / 1000).toFixed(2)}s (${(processed / (timeTaken / 1000)).toFixed(0)} msg/s)`,
         );
 
         if (this.completedWorkers === this.workerCount) {
@@ -91,15 +85,17 @@ export abstract class BaseBenchmark {
         msg.type === EWorkerMessageType.PROGRESS &&
         this.showProgress
       ) {
-        const { workerId, processed } = msg.data;
+        const { workerId, progress } = msg.data;
         console.log(
-          `${this.workerLabel} ${workerId} progress: ${processed} messages`,
+          `${this.workerLabel} ${workerId} progress: ${progress} messages`,
         );
       }
     };
   }
 
-  protected async createWorkers(onMessage: MessageHandler): Promise<void> {
+  protected async createWorkers(
+    onMessage: TWorkerMessageHandler,
+  ): Promise<void> {
     const { count: messagesPerWorker, remainder: remainingMessages } =
       this.calculateMessageDistribution();
 
