@@ -58,15 +58,12 @@ const isDevelopment =
   process.env.NODE_ENV === 'development' ||
   process.env.BENCH_ENV === 'development';
 
-// Redis configuration based on environment
+// Redis configuration
 let useRedisConfig: IRedisConfig = redisConfig;
-
 if (!isDevelopment) {
-  // Require Redis configuration for production/package usage
   const redisHost = process.env.REDIS_HOST || '127.0.0.1';
   const redisPort = process.env.REDIS_PORT || '6379';
   const redisDB = process.env.REDIS_DB || '0';
-
   useRedisConfig = {
     client: ERedisConfigClient.IOREDIS,
     options: {
@@ -87,6 +84,7 @@ async.series(
     // Start Redis server only in development mode
     (cb) => {
       if (isDevelopment) {
+        // After starting the local Redis server redisConfig.options.port will be updated
         startRedisServer()
           .then(() => cb())
           .catch(cb);
@@ -141,7 +139,7 @@ async.series(
       if (!consumerCount || !producerCount) return cb();
 
       const config: IE2EBenchmarkConfig = {
-        redisConfig,
+        redisConfig: useRedisConfig,
         queue: { ns, name },
         totalMessages,
         consumerCount,
