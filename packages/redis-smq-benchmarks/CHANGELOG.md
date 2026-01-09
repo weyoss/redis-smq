@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.5](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.4...v9.0.9-next.5) (2026-01-09)
+
+### 🚀 Chore
+
+- **redis-smq-benchmarks:** update copyright headers ([bc84c45](https://github.com/weyoss/redis-smq/commit/bc84c452a4e0e8b8be6a462463ddc32837112d65))
+
 ## [9.0.9-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.3...v9.0.9-next.4) (2026-01-09)
 
 ### 🐛 Bug Fixes
