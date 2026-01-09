@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.2...v9.0.9-next.3) (2026-01-09)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-benchmarks:** improve throughput calculation and benchmark result reporting ([06c7f23](https://github.com/weyoss/redis-smq/commit/06c7f23987943a3993335fe19d612d2abebd5859))
+- **redis-smq-benchmarks:** provide nanosecond-precision throughput measurements ([776f35a](https://github.com/weyoss/redis-smq/commit/776f35a583358b5799e2064f80fe17d067ed51a2))
+- **redis-smq-benchmarks:** use strong typing for thread messages, clean up ([a74baf7](https://github.com/weyoss/redis-smq/commit/a74baf7de3bc63d15d52e656596a336336eb8e2d))
+
 ## [9.0.9-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.1...v9.0.9-next.2) (2026-01-08)
 
 ### 🐛 Bug Fixes
