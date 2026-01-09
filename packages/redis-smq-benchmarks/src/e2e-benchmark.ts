@@ -187,7 +187,7 @@ export function runE2EBenchmark(
             }
 
             console.log(
-              `Producer ${i + 1} will produce ${producerMessageCount} messages`,
+              `Producer ${i} will produce ${producerMessageCount} messages`,
             );
 
             const producer = createWorker({
@@ -210,7 +210,7 @@ export function runE2EBenchmark(
             }
 
             console.log(
-              `Consumer ${i + 1} will consume ${consumerMessageCount} messages`,
+              `Consumer ${i} will consume ${consumerMessageCount} messages`,
             );
 
             const consumer = createWorker({
