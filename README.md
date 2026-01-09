@@ -3,16 +3,16 @@
 A High-Performance Redis Simple Message Queue for Node.js
 
 > [!NOTE]
-> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
-> For the latest stable documentation, see:
+> You are viewing the documentation for the "master" branch. These docs describe the latest stable release.
+> For pre-release documentation, see:
 >
-> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master
+> - Next (pre-release) README: https://github.com/weyoss/redis-smq/tree/next
 > - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
 > - Install stable packages with @latest; pre-release with @next.
 
-[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/weyoss/redis-smq/releases)
-[![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
-[![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
+[![Stable](https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=redis-smq%40latest)](https://github.com/weyoss/redis-smq/releases/latest)
+[![Build (master)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=master&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Amaster)
+[![Code Quality (master)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=master&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Amaster)
 
 **Key Features**
 
@@ -46,7 +46,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 Install core packages:
 
 ```bash
-npm i redis-smq@next redis-smq-common@next --save
+npm i redis-smq redis-smq-common --save
 ```
 
 > Upgrading to v9? This is a major release with breaking changes. Please read the [v9.0.0 Release Notes](release-notes/release-v9.md) for details.
