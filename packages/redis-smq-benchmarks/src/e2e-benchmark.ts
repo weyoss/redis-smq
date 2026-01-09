@@ -13,11 +13,13 @@ import {
   EWorkerMessageType,
   IE2EBenchmarkConfig,
   IE2EBenchmarkResult,
+  IWorkerCompleteMessage,
   TWorkerMessageHandler,
 } from './types/index.js';
 import { createWorker } from './helpers/create-worker.js';
 import { Worker } from 'worker_threads';
 import { HighResTimer } from './helpers/timing.js';
+import { calculateBenchmarkResult } from './helpers/calculate-benchmark-result.js';
 
 /**
  * RedisSMQ Benchmark: End-to-End Throughput with N producers and M consumers.
@@ -52,29 +54,17 @@ export function runE2EBenchmark(
   );
 
   const allWorkers: Worker[] = [];
+  const consumerWorkerResults: IWorkerCompleteMessage['data'][] = [];
+  const producerWorkerResults: IWorkerCompleteMessage['data'][] = [];
 
   let completedProducers = 0;
   let completedConsumers = 0;
-  let totalProduced = 0;
-  let totalConsumed = 0;
-  let totalProductionTime = 0;
-  let totalConsumptionTime = 0;
-
-  let productionStartTime = 0;
-  let consumptionStartTime = 0;
-  let productionEndTime = 0;
-  let consumptionEndTime = 0;
-
-  let benchmarkStartTime = 0;
-  let benchmarkEndTime = 0;
 
   const onProducerMessage: TWorkerMessageHandler = (msg) => {
     if (msg.type === EWorkerMessageType.COMPLETED) {
       completedProducers++;
+      producerWorkerResults.push(msg.data);
       const { workerId, processed, timeTaken } = msg.data;
-      totalProduced += Number(processed);
-      totalProductionTime += Number(timeTaken);
-      productionEndTime = HighResTimer.now();
 
       console.log(
         `Producer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
@@ -90,10 +80,8 @@ export function runE2EBenchmark(
   const onConsumerMessage: TWorkerMessageHandler = (msg) => {
     if (msg.type === EWorkerMessageType.COMPLETED) {
       completedConsumers++;
+      consumerWorkerResults.push(msg.data);
       const { workerId, processed, timeTaken } = msg.data;
-      totalConsumed += Number(processed);
-      totalConsumptionTime += Number(timeTaken);
-      consumptionEndTime = HighResTimer.now();
 
       console.log(
         `Consumer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
@@ -112,65 +100,56 @@ export function runE2EBenchmark(
       completedProducers === producerCount &&
       completedConsumers === consumerCount
     ) {
-      benchmarkEndTime = HighResTimer.now();
-      const totalTime = benchmarkEndTime - benchmarkStartTime;
-
-      const productionTime = productionEndTime - productionStartTime;
-      const consumptionTime = consumptionEndTime - consumptionStartTime;
-
-      const productionThroughput =
-        totalProduced / HighResTimer.toSeconds(productionTime);
-      const consumptionThroughput =
-        totalConsumed / HighResTimer.toSeconds(consumptionTime);
-
       console.log('\n========== E2E BENCHMARK COMPLETE ==========');
+      const pResult = calculateBenchmarkResult(producerWorkerResults);
+      const cResult = calculateBenchmarkResult(consumerWorkerResults);
+      const result: IE2EBenchmarkResult = {
+        totalTime: Math.max(pResult.totalTimeNs, cResult.totalTimeNs),
+        totalMessages: pResult.totalMessages + cResult.totalMessages,
+        workerCount: producerCount + consumerCount,
+        productionTime: pResult.totalTimeNs,
+        consumptionTime: cResult.totalTimeNs,
+        messagesProduced: pResult.totalMessages,
+        messagesConsumed: cResult.totalMessages,
+        productionThroughput: pResult.throughput,
+        consumptionThroughput: cResult.throughput,
+      };
+
       console.log(`Production Phase:`);
-      console.log(`  Total produced: ${totalProduced}`);
-      console.log(`  Production time: ${HighResTimer.format(productionTime)}`);
+      console.log(`  Total produced: ${result.messagesProduced}`);
       console.log(
-        `  Production throughput: ${productionThroughput.toFixed(0)} msg/s`,
+        `  Production time: ${HighResTimer.format(result.productionTime)}`,
+      );
+      console.log(
+        `  Production throughput: ${result.productionThroughput} msg/s`,
       );
 
       console.log(`\nConsumption Phase:`);
-      console.log(`  Total consumed: ${totalConsumed}`);
+      console.log(`  Total consumed: ${result.messagesConsumed}`);
       console.log(
-        `  Consumption time: ${HighResTimer.format(consumptionTime)}`,
+        `  Consumption time: ${HighResTimer.format(result.consumptionTime)}`,
       );
       console.log(
-        `  Consumption throughput: ${consumptionThroughput.toFixed(0)} msg/s`,
+        `  Consumption throughput: ${result.consumptionThroughput} msg/s`,
       );
 
       console.log(`\nEnd-to-End:`);
-      console.log(`  Total time: ${HighResTimer.format(totalTime)}`);
+      console.log(`  Total time: ${HighResTimer.format(result.totalTime)}`);
       console.log(
-        `  Overall throughput: ${(totalProduced / HighResTimer.toSeconds(totalTime)).toFixed(0)} msg/s`,
+        `  Overall throughput: ${(result.messagesProduced / HighResTimer.toSeconds(result.totalTime)).toFixed(0)} msg/s`,
       );
       console.log(
-        `  System backlog: ${totalProduced - totalConsumed} messages`,
+        `  System backlog: ${result.messagesProduced - result.messagesConsumed} messages`,
       );
 
-      if (totalProduced === totalConsumed) {
+      if (result.messagesProduced === result.messagesConsumed) {
         console.log(`  Status: All messages processed successfully ✓`);
       } else {
         console.log(
-          `  Status: ${totalProduced - totalConsumed} messages not consumed ⚠️`,
+          `  Status: ${result.messagesProduced - result.messagesConsumed} messages not consumed ⚠️`,
         );
       }
       console.log('============================================\n');
-
-      // Calculate final result
-      const result: IE2EBenchmarkResult = {
-        totalTime,
-        totalWorkerTime: totalProductionTime + totalConsumptionTime,
-        total: totalProduced + totalConsumed,
-        workerCount: producerCount + consumerCount,
-        productionTime,
-        consumptionTime,
-        messagesProduced: totalProduced,
-        messagesConsumed: totalConsumed,
-        productionThroughput,
-        consumptionThroughput,
-      };
 
       // Shutdown all workers
       const shutdownPromises = Promise.all(
@@ -198,10 +177,6 @@ export function runE2EBenchmark(
 
         console.log(`Messages per producer (approx): ${messagesPerProducer}`);
         console.log(`Messages per consumer (approx): ${messagesPerConsumer}`);
-
-        benchmarkStartTime = HighResTimer.now();
-        productionStartTime = HighResTimer.now();
-        consumptionStartTime = HighResTimer.now();
 
         try {
           // Create producers

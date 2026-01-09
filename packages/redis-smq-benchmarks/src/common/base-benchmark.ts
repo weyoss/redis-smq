@@ -20,6 +20,7 @@ import {
 import { Worker } from 'worker_threads';
 import { createWorker } from '../helpers/create-worker.js';
 import { HighResTimer } from '../helpers/timing.js';
+import { calculateBenchmarkResult } from '../helpers/calculate-benchmark-result.js';
 
 export abstract class BaseBenchmark {
   protected showProgress = false;
@@ -32,9 +33,6 @@ export abstract class BaseBenchmark {
   protected workers: Worker[] = [];
   protected workerResults: IWorkerCompleteMessage['data'][] = [];
   protected completedWorkers = 0;
-  protected totalProcessed = 0;
-  protected totalProcessingTime = 0;
-  protected startTime = 0;
 
   constructor(config: IBenchmarkConfig) {
     this.redisConfig = config.redisConfig;
@@ -58,7 +56,7 @@ export abstract class BaseBenchmark {
   }
 
   protected createMessageHandler(
-    onComplete: (result: IBenchmarkResult) => void,
+    onComplete: (r: IBenchmarkResult) => void,
   ): TWorkerMessageHandler {
     return (msg: TWorkerMessage) => {
       if (msg.type === EWorkerMessageType.COMPLETED) {
@@ -66,23 +64,18 @@ export abstract class BaseBenchmark {
         this.workerResults.push(msg.data);
 
         const { workerId, processed, timeTaken } = msg.data;
-        this.totalProcessed += processed;
-        this.totalProcessingTime += timeTaken;
 
         console.log(
           `${this.workerLabel} ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
         );
 
-        if (this.completedWorkers === this.workerCount) {
-          const totalTime = HighResTimer.now() - this.startTime;
-
-          onComplete({
-            totalTime,
-            totalWorkerTime: this.totalProcessingTime,
-            total: this.totalProcessed,
-            workerCount: this.workerCount,
-          });
-        }
+        if (this.completedWorkers === this.workerCount)
+          this.shutdownWorkers()
+            .then(() => {
+              const r = calculateBenchmarkResult(this.workerResults);
+              onComplete(r);
+            })
+            .catch(() => void 0);
       } else if (
         msg.type === EWorkerMessageType.PROGRESS &&
         this.showProgress
@@ -104,8 +97,6 @@ export abstract class BaseBenchmark {
     console.log(
       `Messages per ${this.workerLabel} (approx): ${messagesPerWorker}`,
     );
-
-    this.startTime = HighResTimer.now();
 
     for (let i = 0; i < this.workerCount; i++) {
       let workerMessageCount = messagesPerWorker;

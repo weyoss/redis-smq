@@ -66,13 +66,15 @@ export interface IE2EBenchmarkConfig {
 }
 
 export interface IBenchmarkResult {
-  total: number;
-  totalTime: number;
-  totalWorkerTime: number;
-  workerCount: number;
+  totalMessages: number;
+  totalTimeNs: number;
+  throughput: number;
 }
 
-export interface IE2EBenchmarkResult extends IBenchmarkResult {
+export interface IE2EBenchmarkResult {
+  workerCount: number;
+  totalMessages: number;
+  totalTime: number;
   productionTime: number;
   consumptionTime: number;
   messagesProduced: number;
