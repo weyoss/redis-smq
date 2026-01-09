@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.9-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.3...v9.0.9-next.4) (2026-01-09)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-benchmarks:** correct worker ID to be zero-based ([4743b02](https://github.com/weyoss/redis-smq/commit/4743b028054e0865a6a12c7d674d158fd4a3bbea))
+
 ## [9.0.9-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.2...v9.0.9-next.3) (2026-01-09)
 
 ### ♻️ Code Refactoring
