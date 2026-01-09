@@ -30,7 +30,7 @@ This benchmark suite provides tools to measure RedisSMQ performance across diffe
 ### Installation
 
 ```bash
-npm install redis-smq@@next redis-smq-common@@next redis-smq-benchmarks@@next --save
+npm install redis-smq@next redis-smq-common@next redis-smq-benchmarks@next --save
 ```
 
 ### Basic Usage
