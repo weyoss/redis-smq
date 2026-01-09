@@ -30,23 +30,14 @@ export class ConsumerBenchmark extends BaseBenchmark {
       `Queue: ${this.queue.ns}/${this.queue.name} | Messages: ${this.totalMessages} | Consumers: ${this.workerCount}`,
     );
 
-    const onComplete = (result: IBenchmarkResult) => {
-      this.shutdownWorkers()
-        .then(() => {
-          const { total, totalTime } = result;
-          console.log('\n========== BENCHMARK COMPLETE ==========');
-          console.log(`Total messages consumed: ${total}`);
-          console.log(`Total time: ${HighResTimer.format(totalTime)}`);
-          console.log(
-            `Overall throughput: ${(total / HighResTimer.toSeconds(totalTime)).toFixed(0)} messages/second`,
-          );
-          console.log('========================================\n');
-          cb(null, result);
-        })
-        .catch((err) => cb(err));
+    const onComplete = (r: IBenchmarkResult) => {
+      console.log('\n========== BENCHMARK COMPLETE ==========');
+      console.log(`Total messages consumed: ${r.totalMessages}`);
+      console.log(`Total time: ${HighResTimer.format(r.totalTimeNs)}`);
+      console.log(`Overall throughput: ${r.throughput} messages/second`);
+      console.log('========================================\n');
+      cb();
     };
-
-    const messageHandler = this.createMessageHandler(onComplete);
 
     async.series(
       [
@@ -59,6 +50,7 @@ export class ConsumerBenchmark extends BaseBenchmark {
             .then(() => cb())
             .catch(cb),
         (cb) => {
+          const messageHandler = this.createMessageHandler(onComplete);
           this.createWorkers(messageHandler)
             .then(() => cb())
             .catch(cb);
