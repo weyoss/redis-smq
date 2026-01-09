@@ -1,10 +1,10 @@
 # RedisSMQ Benchmarks
 
 > [!NOTE]
-> You are viewing the documentation for the "master" branch. These docs describe the latest stable release.
-> For pre-release documentation, see:
+> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
+> For the latest stable documentation, see:
 >
-> - Next (pre-release) README: https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-benchmarks
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-benchmarks
 > - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
 > - Install stable packages with @latest; pre-release with @next.
 
@@ -30,7 +30,7 @@ This benchmark suite provides tools to measure RedisSMQ performance across diffe
 ### Installation
 
 ```bash
-npm install redis-smq@ redis-smq-common@ redis-smq-benchmarks@ --save
+npm install redis-smq@@next redis-smq-common@@next redis-smq-benchmarks@@next --save
 ```
 
 ### Basic Usage
@@ -189,4 +189,4 @@ End-to-End:
 
 ## License
 
-RedisSMQ Benchmarks is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/master/LICENSE).
+RedisSMQ Benchmarks is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
