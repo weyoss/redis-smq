@@ -105,7 +105,7 @@ export abstract class BaseBenchmark {
       }
 
       console.log(
-        `${this.workerLabel} ${i + 1} will handle ${workerMessageCount} messages`,
+        `${this.workerLabel} ${i} will handle ${workerMessageCount} messages`,
       );
 
       const worker = createWorker({
