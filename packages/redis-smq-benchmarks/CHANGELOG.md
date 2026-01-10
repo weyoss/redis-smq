@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.10-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.0...v9.0.10-next.1) (2026-01-10)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-benchmarks:** add npm and codecov badges to README ([0e45f1c](https://github.com/weyoss/redis-smq/commit/0e45f1c7e2821f79aced45ef3b4ec3ff1054e68b))
+- **redis-smq-benchmarks:** remove explicit process.exit() upon benchmark completion ([24a89ee](https://github.com/weyoss/redis-smq/commit/24a89eeb6d0296796d57c17895bd431f447218ed))
+
+### ✅ Tests
+
+- **redis-smq-benchmarks:** add tests to ensure functionality and reliability ([169f2f1](https://github.com/weyoss/redis-smq/commit/169f2f1f7bbe257a267657716f290fde5c6415f8))
+
 ## [9.0.10-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.9...v9.0.10-next.0) (2026-01-09)
 
 ### 🚀 Chore
