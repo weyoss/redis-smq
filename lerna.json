@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-  "version": "9.0.10-next.1",
+  "version": "9.0.10-next.2",
   "ignoreChanges": [],
   "npmClient": "pnpm",
   "command": {
