@@ -8,6 +8,9 @@
 > - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
 > - Install stable packages with @latest; pre-release with @next.
 
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-benchmarks/next?style=flat-square&label=redis-smq-benchmarks%40next)](https://github.com/weyoss/redis-smq/releases)
+[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-benchmarks&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-benchmarks)
+
 A comprehensive benchmarking suite for RedisSMQ message queue system, measuring throughput, latency, and end-to-end performance under various workloads.
 
 ## 📊 Overview
