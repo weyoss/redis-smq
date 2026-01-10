@@ -166,6 +166,5 @@ async.series(
   ],
   (err) => {
     if (err) throw err;
-    process.exit(0);
   },
 );
