@@ -133,6 +133,10 @@ importers:
       redis-smq-common:
         specifier: workspace:^
         version: link:../redis-smq-common
+    devDependencies:
+      bluebird:
+        specifier: 3.7.2
+        version: 3.7.2
 
   packages/redis-smq-common:
     dependencies:
