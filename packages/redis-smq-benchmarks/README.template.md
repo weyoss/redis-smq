@@ -30,8 +30,6 @@ This benchmark suite provides tools to measure RedisSMQ performance across diffe
 npm install redis-smq__TAG_SUFFIX__ redis-smq-common__TAG_SUFFIX__ redis-smq-benchmarks__TAG_SUFFIX__ --save
 ```
 
-### Basic Usage
-
 ## ⚙️ Configuration
 
 Benchmarks can be configured using environment variables:
