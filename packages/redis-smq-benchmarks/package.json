@@ -56,8 +56,12 @@
   "dependencies": {
     "ioredis": "^5"
   },
+  "devDependencies": {
+    "bluebird": "3.7.2"
+  },
   "scripts": {
-    "build": "scripts/build.sh"
+    "build": "scripts/build.sh",
+    "test": "../../scripts/test-workspace-esm.sh"
   },
   "bin": {
     "redis-smq-benchmarks": "./dist/esm/bin/cli.js"
