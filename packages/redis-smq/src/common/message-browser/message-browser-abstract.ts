@@ -126,7 +126,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
             );
             return cb(err);
           }
-          this._purgeMessages(client, parsedParams, cb);
+          this.purgeMessages(client, parsedParams, cb);
         },
       );
     }, cb);
@@ -409,7 +409,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    * @param parsedParams - Validated queue parameters
    * @param cb - Callback function
    */
-  protected _purgeMessages(
+  protected purgeMessages(
     client: IRedisClient,
     parsedParams: IQueueParsedParams,
     cb: ICallback,
