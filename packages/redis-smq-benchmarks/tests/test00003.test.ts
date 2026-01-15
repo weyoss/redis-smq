@@ -15,9 +15,9 @@ describe('E2E throughput benchmark', () => {
     const logSpy = vi.spyOn(console, 'log');
 
     process.env.NODE_ENV = 'development';
-    process.env.BENCH_PRODUCERS = '1';
-    process.env.BENCH_CONSUMERS = '1';
-    process.env.BENCH_MESSAGES = '1';
+    process.env.BENCH_PRODUCERS = '5';
+    process.env.BENCH_CONSUMERS = '10';
+    process.env.BENCH_MESSAGES = '100';
 
     import('../index.js');
 
@@ -29,12 +29,12 @@ describe('E2E throughput benchmark', () => {
 
     expect(output).toContain('========== E2E BENCHMARK COMPLETE ==========');
     expect(output).toContain('Production Phase:');
-    expect(output).toContain('Total produced: 1');
+    expect(output).toContain('Total produced: 100');
     expect(output).toContain('Production time:');
     expect(output).toContain('Production throughput:');
 
     expect(output).toContain('Consumption Phase:');
-    expect(output).toContain('Total consumed: 1');
+    expect(output).toContain('Total consumed: 100');
     expect(output).toContain('Consumption time:');
     expect(output).toContain('Consumption throughput:');
 

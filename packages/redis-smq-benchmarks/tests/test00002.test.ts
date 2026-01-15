@@ -15,8 +15,8 @@ describe('Producer throughput benchmark', () => {
     const logSpy = vi.spyOn(console, 'log');
 
     process.env.NODE_ENV = 'development';
-    process.env.BENCH_PRODUCERS = '1';
-    process.env.BENCH_MESSAGES = '1';
+    process.env.BENCH_PRODUCERS = '5';
+    process.env.BENCH_MESSAGES = '100';
 
     import('../index.js');
 
@@ -27,7 +27,7 @@ describe('Producer throughput benchmark', () => {
     }, '');
 
     expect(output).toContain('========== BENCHMARK COMPLETE ==========');
-    expect(output).toContain('Total messages produced: 1');
+    expect(output).toContain('Total messages produced: 100');
     expect(output).toContain('Total time:');
     expect(output).toContain('Overall throughput:');
   });
