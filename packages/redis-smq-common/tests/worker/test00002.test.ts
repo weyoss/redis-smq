@@ -68,5 +68,5 @@ it('WorkerCallable: case 2', async () => {
   const worker6 = bluebird.promisifyAll(
     new WorkerCallable<string, string>(filename6, getDummyLogger()),
   );
-  await check(() => worker6.callAsync('Hello world!'), '"code":106');
+  await check(() => worker6.callAsync('Hello world!'), '"code":333');
 });
