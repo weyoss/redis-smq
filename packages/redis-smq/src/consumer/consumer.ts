@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { createLogger, ICallback, ILogger, Runnable } from 'redis-smq-common';
+import { createLogger, ICallback, Runnable } from 'redis-smq-common';
 import { TConsumerEvent } from '../common/index.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
@@ -440,14 +440,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
       this.emit('consumer.down', this.id);
       cb(null, true);
     });
-  }
-
-  /**
-   * Gets the logger instance for the consumer.
-   * @returns {ILogger} - The logger instance.
-   */
-  protected override getLogger(): ILogger {
-    return this.logger;
   }
 
   /**

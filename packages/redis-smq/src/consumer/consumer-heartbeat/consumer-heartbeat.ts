@@ -111,10 +111,6 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     });
   }
 
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
-
   /**
    * Compute CPU usage percentage since the last call (instance-local).
    */

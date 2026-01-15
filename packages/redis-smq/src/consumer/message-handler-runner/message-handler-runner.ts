@@ -28,9 +28,9 @@ import { IConsumerContext } from '../types/consumer-context.js';
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
   protected readonly handlerReconciliationInterval = 5000; // todo: make it configurable: config.consumer.handlerReconciliationInterval
   protected readonly consumerContext: IConsumerContext;
-  protected readonly logger: ILogger;
   protected readonly supervisorTimer: Timer;
 
+  protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerParams[] = [];
 
@@ -185,10 +185,6 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
    */
   getQueues(): IQueueParsedParams[] {
     return this.messageHandlers.map((i) => i.queue);
-  }
-
-  protected override getLogger(): ILogger {
-    return this.logger;
   }
 
   /**

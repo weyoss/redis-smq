@@ -99,10 +99,6 @@ export class PubSubTargetResolver extends Runnable<
     };
   }
 
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
-
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('PubSubTargetResolver is going up...');
     return super

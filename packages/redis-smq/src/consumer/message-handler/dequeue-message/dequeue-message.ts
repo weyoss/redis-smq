@@ -51,9 +51,9 @@ const IPAddresses = (() => {
 
 export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected readonly consumerContext: IConsumerContext;
-  protected readonly logger: ILogger;
   protected readonly config: IRedisSMQParsedConfig;
 
+  protected logger: ILogger;
   protected queue;
   protected keyQueues;
   protected keyQueueConsumers;
@@ -180,10 +180,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     if (!this.redisClient)
       return new PanicError({ message: 'A RedisClient instance is required.' });
     return this.redisClient;
-  }
-
-  protected override getLogger(): ILogger {
-    return this.logger;
   }
 
   protected override handleError(err: Error) {

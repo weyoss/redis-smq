@@ -10,22 +10,23 @@
 import bluebird from 'bluebird';
 import { PublishScheduledWorker } from '../../src/consumer/message-handler/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
-import { WorkerAbstract } from '../../src/consumer/message-handler/workers/worker-abstract.js';
+import { config } from './config.js';
 
-const scheduleWorker: Record<string, WorkerAbstract> = {};
+const scheduleWorker: Record<string, PublishScheduledWorker> = {};
 
 export async function startScheduleWorker(
   queueParams: IQueueParams,
 ): Promise<void> {
   const key = `${queueParams.ns}${queueParams.name}`;
   if (!scheduleWorker[key]) {
-    scheduleWorker[key] = new PublishScheduledWorker(
-      {
+    scheduleWorker[key] = new PublishScheduledWorker({
+      config,
+      queueParsedParams: {
         queueParams,
         groupId: null,
       },
-      { namespaces: [] },
-    );
+      loggerContext: { namespaces: [] },
+    });
     await bluebird.promisifyAll(scheduleWorker[key]).runAsync();
   }
 }

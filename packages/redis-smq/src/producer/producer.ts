@@ -227,15 +227,6 @@ export class Producer extends Runnable<TProducerEvent> {
   }
 
   /**
-   * Retrieves the logger instance for this producer.
-   *
-   * @returns The logger instance used for logging producer operations.
-   */
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
-
-  /**
    * Retrieves the active Redis client used for publishing messages.
    *
    * @returns The active Redis client.

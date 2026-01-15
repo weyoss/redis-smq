@@ -52,9 +52,9 @@ import { IConsumerContext } from '../../types/consumer-context.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected readonly consumerId: string;
-  protected readonly logger: ILogger;
   protected readonly config: IRedisSMQParsedConfig;
 
+  protected logger: ILogger;
   protected keyQueueProperties;
   protected keyQueueProcessing;
   protected keyQueueAcknowledged;
@@ -142,10 +142,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     if (!this.redisClient)
       return new PanicError({ message: 'A RedisClient instance is required.' });
     return this.redisClient;
-  }
-
-  protected override getLogger(): ILogger {
-    return this.logger;
   }
 
   protected acknowledgeMessage(message: MessageEnvelope): void {
