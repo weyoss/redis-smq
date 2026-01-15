@@ -219,7 +219,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     let completed = 0;
     let hasError = false;
 
-    const onWorkerShutdown = (err?: Error): void => {
+    const onWorkerShutdown: ICallback = (err): void => {
       completed++;
 
       if (err && !hasError) {
@@ -243,9 +243,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
         `Shutting down worker ${index + 1}/${workersToShutdown.length}`,
       );
 
-      worker.shutdown((err) => {
-        onWorkerShutdown(err || undefined);
-      });
+      worker.shutdown(onWorkerShutdown);
     });
   };
 
