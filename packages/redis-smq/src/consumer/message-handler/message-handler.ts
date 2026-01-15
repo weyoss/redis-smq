@@ -208,7 +208,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected setUpConsumerWorkers = (cb: ICallback): void => {
     const redisClient = this.getRedisClient();
-    if (redisClient instanceof Error) return cb(redisClient);
+    if (redisClient instanceof Error) {
+      return cb(redisClient);
+    }
+
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
       this.queue.queueParams.ns,
       this.queue.queueParams.name,
@@ -231,13 +234,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       },
       (err) => {
         if (err) return cb(err);
-        this.workerResourceGroup?.run((err) => {
-          if (err) this.handleError(err);
-        });
+
+        // This operation may hang on forever as
+        // the callback is invoked only when a lock is acquired
+        this.workerResourceGroup?.run(() => void 0);
         cb();
       },
     );
-    cb();
   };
 
   protected shutDownConsumerWorkers = (cb: ICallback): void => {
