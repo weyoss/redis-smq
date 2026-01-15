@@ -53,7 +53,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
   protected readonly redisClient;
   protected readonly autoExtendInterval;
   protected readonly timer;
-  protected readonly logger;
+  protected logger;
 
   constructor(
     redisClient: IRedisClient,
@@ -357,15 +357,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
     this.emit('locker.error', err, this.id);
     super.handleError(err);
   };
-
-  /**
-   * Retrieves the logger instance used by the Locker class.
-   *
-   * @returns {ILogger} - The logger instance used by the Locker class.
-   */
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
 
   /**
    * Overrides the `up` method from the `Runnable` class to emit events when the locker transitions to the 'up' state.
