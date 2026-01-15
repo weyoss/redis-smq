@@ -7,53 +7,32 @@
  * in the root directory of this source tree.
  */
 
-import {
-  createLogger,
-  ICallback,
-  ILogger,
-  Runnable,
-  Timer,
-} from 'redis-smq-common';
-import { Configuration } from '../../../config/index.js';
-import { IQueueParsedParams } from '../../../queue-manager/index.js';
-import { TConsumerMessageHandlerWorkerPayload } from './types/index.js';
+import { ICallback, Runnable, Timer } from 'redis-smq-common';
+import { RedisSMQ } from '../../redis-smq.js';
+import { IRedisSMQParsedConfig } from '../../config/index.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
-  protected logger;
-  protected config;
-  protected queueParsedParams;
   private timer;
+  protected initialized = false;
+  protected config;
 
-  constructor(
-    queueParsedParams: IQueueParsedParams,
-    loggerContext: TConsumerMessageHandlerWorkerPayload['loggerContext'],
-  ) {
+  constructor(config: IRedisSMQParsedConfig) {
     super();
-    this.config = Configuration.getConfig();
-    this.queueParsedParams = queueParsedParams;
-
-    // Logger
-    this.logger = createLogger(this.config.logger, [
-      ...loggerContext.namespaces,
-      this.constructor.name,
-    ]);
-    this.logger.info(`Initializing worker: ${this.constructor.name}`);
-
-    // Timer
+    this.config = config;
     this.timer = new Timer();
     this.timer.on('error', (err: Error) => this.handleError(err));
   }
 
   abstract work(cb: ICallback<void>): void;
 
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
-
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('Worker going up');
     return super.goingUp().concat([
-      (cb: ICallback<void>) => {
+      (cb) => {
+        if (RedisSMQ.isInitialized()) return cb();
+        RedisSMQ.initialize(this.config.redis, cb);
+      },
+      (cb) => {
         this.logger.debug('Setting up worker timer');
         this.timer.setTimeout(this.onTick, 1000);
         cb();
@@ -64,7 +43,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('Worker going down');
     return [
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.logger.debug('Resetting worker timer');
         this.timer.reset();
         cb();

@@ -18,12 +18,11 @@ import {
 } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
-import { WorkerAbstract } from './worker-abstract.js';
-import { workerBootstrap } from './worker-bootstrap.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { UnexpectedScriptReplyError } from '../../../errors/index.js';
+import { MessageHandlerWorkerAbstract } from '../../../common/worker/message-handler-worker-abstract.js';
 
-export class PublishScheduledWorker extends WorkerAbstract {
+export class PublishScheduledWorker extends MessageHandlerWorkerAbstract {
   work = (cb: ICallback): void => {
     this.logger.debug('Starting publish scheduled messages work cycle');
     this.logger.debug(
@@ -319,4 +318,4 @@ export class PublishScheduledWorker extends WorkerAbstract {
   };
 }
 
-export default workerBootstrap(PublishScheduledWorker);
+export default PublishScheduledWorker;

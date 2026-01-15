@@ -18,6 +18,7 @@ import {
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
+import { config } from '../../common/config.js';
 
 test('ReapConsumersWorker', async () => {
   const defaultQueue = getDefaultQueue();
@@ -29,17 +30,26 @@ test('ReapConsumersWorker', async () => {
   expect(messages.totalItems).toBe(1);
   const [message] = messages.items;
 
+  console.log('KKKKKKKKK', message.status);
   expect(message.status === EMessagePropertyStatus.PROCESSING).toBe(true);
 
   const queueParsedParams = { queueParams: defaultQueue, groupId: null };
 
   const reapConsumerWorker = bluebird.promisifyAll(
-    new ReapConsumersWorker(queueParsedParams, { namespaces: [] }),
+    new ReapConsumersWorker({
+      config,
+      queueParsedParams,
+      loggerContext: { namespaces: [] },
+    }),
   );
   await reapConsumerWorker.runAsync();
 
   const requeueWorker = bluebird.promisifyAll(
-    new RequeueImmediateWorker(queueParsedParams, { namespaces: [] }),
+    new RequeueImmediateWorker({
+      config,
+      queueParsedParams,
+      loggerContext: { namespaces: [] },
+    }),
   );
   await requeueWorker.runAsync();
   await bluebird.delay(20000);

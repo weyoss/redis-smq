@@ -7,4 +7,8 @@
  * in the root directory of this source tree.
  */
 
-export * from './worker.js';
+import { IRedisSMQParsedConfig } from '../../../config/index.js';
+
+export type TRedisSMQWorkerPayload = {
+  config: IRedisSMQParsedConfig;
+};

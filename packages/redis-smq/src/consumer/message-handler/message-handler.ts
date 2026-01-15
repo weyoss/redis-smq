@@ -40,20 +40,20 @@ import { ConsumeMessage } from './consume-message/consume-message.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { eventPublisher } from './event-publisher.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
-import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
+import { IMessageHandlerWorkerPayload } from '../../common/worker/types/message-handler-worker.js';
 
 const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected readonly consumerContext: IConsumerContext;
-  protected readonly logger: ILogger;
   protected readonly config: IRedisSMQParsedConfig;
 
+  protected logger: ILogger;
   protected queue;
   protected dequeueMessage: DequeueMessage | null = null;
   protected consumeMessage: ConsumeMessage | null = null;
@@ -193,10 +193,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     }
   };
 
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
-
   protected override handleError(err: Error) {
     if (this.isRunning()) {
       this.logger.error(`MessageHandler error: ${err.message}`, err);
@@ -224,10 +220,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       keyQueueWorkersLock,
     );
     this.workerResourceGroup.on('workerResourceGroup.error', this.onError);
-    this.workerResourceGroup.loadFromDir<TConsumerMessageHandlerWorkerPayload>(
+    this.workerResourceGroup.loadFromDir<IMessageHandlerWorkerPayload>(
       WORKERS_DIR,
       {
-        redisConfig: this.config.redis,
+        config: this.config,
         queueParsedParams: this.queue,
         loggerContext: {
           namespaces: this.logger.getNamespaces(),
@@ -241,6 +237,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         cb();
       },
     );
+    cb();
   };
 
   protected shutDownConsumerWorkers = (cb: ICallback): void => {

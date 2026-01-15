@@ -17,12 +17,11 @@ import {
 } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
-import { WorkerAbstract } from './worker-abstract.js';
-import { workerBootstrap } from './worker-bootstrap.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { UnexpectedScriptReplyError } from '../../../errors/index.js';
+import { MessageHandlerWorkerAbstract } from '../../../common/worker/message-handler-worker-abstract.js';
 
-export class RequeueImmediateWorker extends WorkerAbstract {
+export class RequeueImmediateWorker extends MessageHandlerWorkerAbstract {
   work = (cb: ICallback): void => {
     this.logger.debug('Starting requeue unacknowledged messages work cycle');
 
@@ -179,4 +178,4 @@ export class RequeueImmediateWorker extends WorkerAbstract {
   };
 }
 
-export default workerBootstrap(RequeueImmediateWorker);
+export default RequeueImmediateWorker;

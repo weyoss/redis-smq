@@ -25,6 +25,7 @@ import {
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
+import { config } from '../../common/config.js';
 
 test('An unacked message with retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queueDelayed. RequeueDelayedWorker should move the message from queueDelayed to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
@@ -56,10 +57,16 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
 
   // should move from requeue queue to delay queue
   const requeueImmediateWorker = bluebird.promisifyAll(
-    new RequeueImmediateWorker(
-      { queueParams: defaultQueue, groupId: null },
-      { namespaces: [] },
-    ),
+    new RequeueImmediateWorker({
+      config,
+      queueParsedParams: {
+        queueParams: defaultQueue,
+        groupId: null,
+      },
+      loggerContext: {
+        namespaces: [],
+      },
+    }),
   );
   await requeueImmediateWorker.runAsync();
   await bluebird.delay(5000);
@@ -69,10 +76,16 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
 
   // should move from requeue queue to delay queue
   const requeueDelayedWorker = bluebird.promisifyAll(
-    new RequeueDelayedWorker(
-      { queueParams: defaultQueue, groupId: null },
-      { namespaces: [] },
-    ),
+    new RequeueDelayedWorker({
+      queueParsedParams: {
+        queueParams: defaultQueue,
+        groupId: null,
+      },
+      loggerContext: {
+        namespaces: [],
+      },
+      config,
+    }),
   );
   await requeueDelayedWorker.runAsync();
   await bluebird.delay(10000);
