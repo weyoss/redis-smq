@@ -9,47 +9,64 @@
 
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'path';
-import { Worker as WorkerThread } from 'worker_threads';
-import { ICallback } from '../async/index.js';
+import { Worker as WorkerThread, WorkerOptions } from 'worker_threads';
+import { async, ICallback } from '../async/index.js';
 import { env } from '../env/index.js';
 import { EventEmitter } from '../event/index.js';
 import { ILogger } from '../logger/index.js';
-import { WorkerThreadError } from './errors/index.js';
+import {
+  WorkerIsShuttingDownError,
+  WorkerThreadError,
+  WorkerThreadFailureError,
+} from './errors/index.js';
 import {
   EWorkerThreadChildExecutionCode,
-  EWorkerThreadChildExitCode,
-  EWorkerThreadParentMessage,
   EWorkerType,
   TWorkerThreadChildMessage,
   TWorkerThreadParentMessage,
 } from './types/index.js';
+import { WorkerLogger } from './worker-logger.js';
 
 export type TWorkerEvent = {
   'worker.error': (err: Error) => void;
   'worker.data': (payload: unknown) => void;
+  'worker.terminated': () => void;
 };
 
 const dir = env.getCurrentDir();
 
+// Track all workers for cleanup
+const allWorkers: Worker<never>[] = [];
+
+// Cleanup all workers on process termination
+const cleanupAllWorkers = (): void => {
+  if (allWorkers.length === 0) return;
+  const tasks = allWorkers.map((worker) => {
+    return (cb: ICallback) => {
+      worker.shutdown(() => cb());
+    };
+  });
+  async.parallel(tasks, () => () => void 0);
+};
+
+// Setup signal handlers
+process.once('SIGTERM', cleanupAllWorkers);
+process.once('SIGINT', cleanupAllWorkers);
+process.once('exit', cleanupAllWorkers);
+
 /**
- * Abstract class representing a worker that executes in a separate thread.
- *
- * @template Payload - The type of payload that the worker accepts.
- * @template Reply - The type of reply that the worker returns.
- *
- * @extends EventEmitter<TWorkerEvent>
+ * Worker base class with custom stream handling
  */
-export abstract class Worker<
-  Payload,
-  Reply,
-> extends EventEmitter<TWorkerEvent> {
+export abstract class Worker<Reply> extends EventEmitter<TWorkerEvent> {
   protected abstract readonly type: EWorkerType;
   protected readonly id;
   protected readonly workerFilename;
   protected readonly initialPayload;
   protected workerThread: WorkerThread | null = null;
-
+  private stdoutStream: WorkerLogger | null = null;
+  private stderrStream: WorkerLogger | null = null;
   protected logger: ILogger;
+  private isShuttingDown = false;
 
   protected constructor(
     workerFilename: string,
@@ -61,280 +78,222 @@ export abstract class Worker<
     this.workerFilename = workerFilename;
     this.initialPayload = initialPayload;
     this.logger = logger.createLogger(this.constructor.name);
+
+    allWorkers.push(this);
   }
 
   /**
-   * Gets the worker ID.
-   *
-   * @returns The worker ID.
+   * Clean up custom streams
    */
-  getId(): string {
-    return this.id;
+  private cleanupStreams(): void {
+    if (this.stdoutStream) {
+      try {
+        this.stdoutStream.end();
+        this.stdoutStream.destroy();
+        this.stdoutStream = null;
+      } catch (error) {
+        this.logger.debug(`Error cleaning up stdout stream: ${error}`);
+      }
+    }
+
+    if (this.stderrStream) {
+      try {
+        this.stderrStream.end();
+        this.stderrStream.destroy();
+        this.stderrStream = null;
+      } catch (error) {
+        this.logger.debug(`Error cleaning up stderr stream: ${error}`);
+      }
+    }
   }
 
   /**
-   * Retrieves the worker thread instance. If the worker thread does not exist, it creates a new one.
-   *
-   * @returns The worker thread instance.
-   *
-   * @remarks
-   * This method ensures that only one worker thread is created per instance of the `Worker` class.
-   * If the worker thread has already been created, it returns the existing instance.
-   * If the worker thread has been terminated, it creates a new one.
-   *
-   * The worker thread is initialized with the provided worker filename and initial payload.
-   * It also sets up event listeners for 'messageerror', 'error', and 'exit' events.
-   * If the worker thread exits, it sets the `workerThread` property to `null`.
+   * Get or create worker thread with custom stream handling
    */
   protected getWorkerThread(): WorkerThread {
+    if (this.isShuttingDown) {
+      throw new WorkerIsShuttingDownError();
+    }
+
     if (!this.workerThread) {
       const workerThreadPath = resolve(dir, './worker-thread/worker-thread.js');
-      this.logger.info(`Creating new worker thread from ${workerThreadPath}`);
-      this.logger.debug('Worker thread configuration', {
-        filename: this.workerFilename,
-        type: EWorkerType[this.type],
-        workerThreadPath,
-      });
 
-      try {
-        //
-        this.workerThread = new WorkerThread(workerThreadPath, {
-          workerData: {
-            filename: this.workerFilename,
-            initialPayload: this.initialPayload,
-            type: this.type,
-          },
-          stdout: true,
-          stderr: true,
+      // Create custom streams with worker ID prefix for debugging
+      this.stdoutStream = new WorkerLogger(false);
+      this.stderrStream = new WorkerLogger(true);
+
+      const workerOptions: WorkerOptions = {
+        workerData: {
+          filename: this.workerFilename,
+          initialPayload: this.initialPayload,
+          type: this.type,
+        },
+        stdout: true, // Enable stdout stream from worker
+        stderr: true, // Enable stderr stream from worker
+      };
+
+      this.workerThread = new WorkerThread(workerThreadPath, workerOptions);
+
+      // Pipe worker streams to our custom writable streams
+      // This doesn't add listeners to process.stdout/stderr directly
+      const workerStdout = this.workerThread.stdout;
+      const workerStderr = this.workerThread.stderr;
+
+      if (workerStdout && this.stdoutStream) {
+        workerStdout.pipe(this.stdoutStream);
+
+        // Handle pipe errors
+        workerStdout.on('error', (err) => {
+          this.logger.debug(`Worker stdout error: ${err.message}`);
         });
-
-        //
-        this.workerThread.stdout.pipe(process.stdout);
-        this.workerThread.stderr.pipe(process.stderr);
-
-        //
-        this.workerThread.on('messageerror', (err) => {
-          this.logger.error(
-            `Worker message deserialization error: ${err.message}`,
-            {
-              error: err.message,
-              stack: err.stack,
-              name: err.name,
-            },
-          );
-        });
-
-        //
-        this.workerThread.on('error', (err) => {
-          this.logger.error(`Worker uncaught exception: ${err.message}`, {
-            error: err.message,
-            stack: err.stack,
-            name: err.name,
-          });
-        });
-
-        //
-        this.workerThread.on('exit', (code) => {
-          if (code === 0) {
-            this.logger.info('Worker thread exited successfully with code 0');
-          } else {
-            this.logger.warn(`Worker thread exited with code ${code}`);
-          }
-          this.workerThread = null;
-        });
-
-        this.logger.debug('Worker thread created successfully');
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown error');
-        this.logger.error(`Failed to create worker thread: ${error.message}`, {
-          error: error.message,
-          stack: error.stack,
-        });
-        throw err;
       }
-    } else {
-      this.logger.debug('Reusing existing worker thread');
+
+      if (workerStderr && this.stderrStream) {
+        workerStderr.pipe(this.stderrStream);
+
+        // Handle pipe errors
+        workerStderr.on('error', (err) => {
+          this.logger.debug(`Worker stderr error: ${err.message}`);
+        });
+      }
+
+      // Setup event listeners
+      this.setupWorkerListeners();
+
+      this.logger.debug('Worker thread created with custom stream handling');
     }
     return this.workerThread;
   }
 
   /**
-   * Registers event listeners for the worker thread and handles the callback function.
-   *
-   * @param cb - The callback function or worker instance to handle the response.
-   *
-   * @remarks
-   * This function sets up event listeners for the worker thread's 'message' and 'exit' events.
-   * It also cleans up the event listeners after receiving a response or when the worker thread exits.
-   *
-   * If the provided callback is an instance of the `Worker` class, it emits 'worker.error' or 'worker.data' events.
-   * Otherwise, it calls the callback function with an error or the received data.
-   *
-   * If the worker thread exits unexpectedly, it calls the callback function with a `WorkerThreadError` indicating termination.
+   * Setup worker thread event listeners
    */
-  protected registerEvents(
-    cb: ICallback<Reply> | Worker<Payload, Reply>,
-  ): void {
-    try {
-      const worker = this.getWorkerThread();
-      this.logger.debug('Registering worker thread event handlers');
+  private setupWorkerListeners(): void {
+    if (!this.workerThread) return;
 
-      const cleanUp = () => {
-        this.logger.debug('Cleaning up worker thread event listeners');
-        worker
-          .removeListener('message', onMessage)
-          .removeListener('exit', onExit);
-      };
+    // Clean up existing listeners first
+    this.workerThread.removeAllListeners();
 
-      const callback: ICallback<Reply> = (err, data) => {
-        if (err) {
-          this.logger.error(`Worker callback error: ${err.message}`, {
-            error: err.message,
-            stack: err.stack,
-            name: err.name,
-          });
-          if (cb instanceof Worker) {
-            this.logger.debug('Emitting worker.error event');
-            this.emit('worker.error', err);
-          } else {
-            this.logger.debug('Calling error callback');
-            cb(err);
-          }
-        } else {
-          this.logger.debug('Worker callback success');
-          if (cb instanceof Worker) {
-            this.logger.debug('Emitting worker.data event');
-            this.emit('worker.data', data);
-          } else {
-            this.logger.debug('Calling success callback');
-            cb(null, data);
-          }
-        }
-      };
+    this.workerThread.on('messageerror', (err) => {
+      this.logger.error(`Message error: ${err.message}`);
+    });
 
-      const onMessage = (msg: TWorkerThreadChildMessage<Reply>) => {
-        this.logger.debug(
-          `Received message from worker thread with code ${msg.code}`,
-          {
-            code: msg.code,
-            hasData: msg.data !== undefined,
-            hasError: msg.error !== null && msg.error !== undefined,
-          },
-        );
+    this.workerThread.on('error', (err) => {
+      this.logger.error(`Worker error: ${err.message}`);
+      this.emit('worker.error', err);
+      this.cleanupStreams();
+    });
 
-        cleanUp();
-
-        if (msg.code !== EWorkerThreadChildExecutionCode.OK) {
-          const errorCode =
-            EWorkerThreadChildExecutionCode[msg.code] ||
-            EWorkerThreadChildExitCode[msg.code] ||
-            `Unknown(${msg.code})`;
-
-          this.logger.error(`Worker thread execution error: ${errorCode}`, {
-            code: msg.code,
-            errorCode,
-            error: msg.error,
-          });
-          callback(new WorkerThreadError({ metadata: msg }));
-        } else {
-          this.logger.debug('Worker thread execution successful');
-          callback(null, msg.data);
-        }
-      };
-
-      const onExit = (code: number) => {
-        this.logger.warn(`Worker thread exited unexpectedly with code ${code}`);
-        cleanUp();
-        const msg = {
-          code: EWorkerThreadChildExitCode.TERMINATED,
-          error: null,
-        };
-        this.logger.error('Worker thread terminated', {
-          exitCode: code,
-          errorCode:
-            EWorkerThreadChildExitCode[EWorkerThreadChildExitCode.TERMINATED],
-        });
-        callback(new WorkerThreadError({ metadata: msg }));
-      };
-
-      worker.once('message', onMessage);
-      worker.once('exit', onExit);
-      this.logger.debug('Worker thread event handlers registered successfully');
-    } catch (err) {
-      this.logger.error(
-        `Failed to register worker thread events: ${err instanceof Error ? err.message : 'unknown error'}`,
-        err,
-      );
-      throw err;
-    }
-  }
-
-  /**
-   * Posts a message to the worker thread.
-   *
-   * @param message - The message to post to the worker thread.
-   */
-  postMessage(message: TWorkerThreadParentMessage): void {
-    try {
-      this.logger.debug(
-        `Posting message to worker thread: ${EWorkerThreadParentMessage[message.type]}`,
-        {
-          messageType: EWorkerThreadParentMessage[message.type],
-          hasPayload: 'payload' in message && message.payload !== undefined,
-        },
-      );
-
-      const worker = this.getWorkerThread();
-      worker.postMessage(message);
-
-      this.logger.debug('Message posted successfully to worker thread');
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
-      this.logger.error(
-        `Failed to post message to worker thread: ${error.message}`,
-        {
-          error: error.message,
-          stack: error.stack,
-          messageType: message.type,
-        },
-      );
-      throw err;
-    }
-  }
-
-  /**
-   * Shuts down the worker thread.
-   *
-   * @param cb - The callback function to call after shutdown.
-   */
-  shutdown(cb: ICallback<void>) {
-    this.logger.info('Shutting down worker thread');
-
-    const callback = () => {
-      this.logger.info('Worker thread shutdown complete');
+    this.workerThread.on('exit', (code) => {
+      this.logger.info(`Worker exited with code ${code}`);
+      this.cleanupStreams();
       this.workerThread = null;
-      cb();
+      this.emit('worker.terminated');
+    });
+  }
+
+  /**
+   * Send a message and wait for response
+   */
+  protected postMessage(
+    message: TWorkerThreadParentMessage,
+    callback?: ICallback<Reply>,
+  ): void {
+    if (!callback) {
+      callback = (err, reply): void => {
+        if (err) this.emit('worker.error', err);
+        if (reply) this.emit('worker.data', reply);
+      };
+    }
+
+    if (this.isShuttingDown) {
+      return callback(new WorkerIsShuttingDownError());
+    }
+
+    const worker = this.getWorkerThread();
+
+    const onMessage = (msg: TWorkerThreadChildMessage<Reply>) => {
+      worker.removeListener('message', onMessage);
+      worker.removeListener('exit', onExit);
+
+      if (msg.code === EWorkerThreadChildExecutionCode.OK) {
+        callback(null, msg.data);
+      } else {
+        callback(new WorkerThreadError({ metadata: msg }));
+      }
     };
 
-    if (this.workerThread) {
-      this.logger.debug('Terminating active worker thread');
+    const onExit = (code: number) => {
+      worker.removeListener('message', onMessage);
+      worker.removeListener('exit', onExit);
 
-      this.workerThread
-        .terminate()
-        .then((code) => {
-          this.logger.debug(`Worker thread terminated with exit code ${code}`);
-          callback();
-        })
-        .catch((err: Error) => {
-          this.logger.error(`Error terminating worker thread: ${err.message}`, {
-            error: err.message,
-            stack: err.stack,
-          });
-          callback();
-        });
-    } else {
-      this.logger.debug('No active worker thread to terminate');
-      cb();
+      const error =
+        code !== 0
+          ? new WorkerThreadFailureError({
+              metadata: {
+                code,
+              },
+            })
+          : null;
+      callback(error);
+    };
+
+    worker.once('message', onMessage);
+    worker.once('exit', onExit);
+    worker.postMessage(message);
+  }
+
+  /**
+   * Shutdown worker with proper cleanup
+   */
+  shutdown(cb: ICallback): void {
+    if (this.isShuttingDown) {
+      return cb(new WorkerIsShuttingDownError());
     }
+
+    this.isShuttingDown = true;
+
+    if (!this.workerThread) {
+      this.cleanupStreams();
+      this.removeFromGlobalList();
+      return cb(null);
+    }
+
+    this.workerThread.removeAllListeners();
+
+    this.workerThread
+      .terminate()
+      .then(() => {
+        this.cleanupStreams();
+        this.workerThread = null;
+        this.isShuttingDown = false;
+        this.removeFromGlobalList();
+        cb(null);
+      })
+      .catch((err) => {
+        this.isShuttingDown = false;
+        cb(err);
+      });
+  }
+
+  /**
+   * Remove worker from global cleanup list
+   */
+  private removeFromGlobalList(): void {
+    const index = allWorkers.indexOf(this);
+    if (index > -1) {
+      allWorkers.splice(index, 1);
+    }
+  }
+
+  /**
+   * Get worker ID
+   */
+  getId(): string {
+    return this.id;
+  }
+
+  getWorkerFilename(): string {
+    return this.workerFilename;
   }
 }

@@ -14,11 +14,12 @@ import {
   EWorkerThreadParentMessage,
   EWorkerType,
   IWorkerCallable,
+  TWorkerThreadParentMessageCall,
 } from './types/index.js';
 import { Worker } from './worker.js';
 
 export class WorkerCallable<Payload, Reply>
-  extends Worker<Payload, Reply>
+  extends Worker<Reply>
   implements IWorkerCallable<Payload, Reply>
 {
   protected readonly type: EWorkerType = EWorkerType.CALLABLE;
@@ -26,43 +27,27 @@ export class WorkerCallable<Payload, Reply>
   constructor(workerFilename: string, logger: ILogger) {
     super(workerFilename, undefined, logger);
     this.logger.info(`WorkerCallable instance created for ${workerFilename}`);
-    this.logger.debug('WorkerCallable initialization details', {
-      id: this.id,
-      type: EWorkerType[this.type],
-      hasCustomLogger: !!logger,
-    });
   }
 
   call(payload: Payload, cb: ICallback<Reply>) {
     this.logger.info(`Calling worker ${this.id}`);
-    this.logger.debug('Call details', {
-      hasPayload: payload !== null && payload !== undefined,
-      payloadType:
-        payload !== null && payload !== undefined
-          ? typeof payload
-          : 'null/undefined',
-    });
 
     if (payload === null || payload === undefined) {
       this.logger.error('Worker call failed: payload is required');
       cb(new WorkerPayloadRequiredError());
-    } else {
-      try {
-        this.logger.debug('Registering worker thread event handlers');
-        this.registerEvents(cb);
-
-        this.logger.debug('Posting CALL message to worker thread');
-        this.postMessage({ type: EWorkerThreadParentMessage.CALL, payload });
-
-        this.logger.debug('Worker call initiated successfully');
-      } catch (err: unknown) {
-        const error = err instanceof Error ? err : new Error('Unknown error');
-        this.logger.error(`Worker call failed: ${error.message}`, {
-          error: error.message,
-          stack: error.stack,
-        });
-        cb(error);
-      }
+      return;
     }
+
+    const message: TWorkerThreadParentMessageCall = {
+      type: EWorkerThreadParentMessage.CALL,
+      payload,
+    };
+
+    this.logger.debug(
+      'Posting CALL message to worker thread (request-response)',
+    );
+
+    // Use parent's postMessage which expects a callback
+    super.postMessage(message, cb);
   }
 }

@@ -21,6 +21,7 @@ import { WorkerRunnable } from './worker-runnable.js';
 
 export type TWorkerResourceGroupEvent = {
   'workerResourceGroup.error': (err: Error) => void;
+  'workerResourceGroup.workerAdded': (worker: WorkerRunnable<unknown>) => void;
 };
 
 export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
@@ -28,8 +29,9 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
   protected readonly locker;
   protected readonly redisClient;
   protected readonly logger;
+  protected readonly resourceGroupId: string;
   protected workers: WorkerRunnable<unknown>[] = [];
-  protected runWorkersLocked = false;
+  private runWorkersLocked = false;
 
   constructor(
     redisClient: IRedisClient,
@@ -37,17 +39,13 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     resourceGroupId: string,
   ) {
     super();
+
+    this.resourceGroupId = resourceGroupId;
     this.powerManager = new PowerSwitch();
     this.logger = logger.createLogger(this.constructor.name);
 
-    //
     this.redisClient = redisClient;
-    this.redisClient.once('error', (err) => {
-      this.logger.error(`Redis client error: ${err.message}`, err);
-      this.handleError(err);
-    });
 
-    // Locker
     this.logger.debug(
       `Creating RedisLock for resource group: ${resourceGroupId}`,
     );
@@ -59,17 +57,61 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
       true,
       15000,
     );
+
     this.locker.on('locker.error', (err) => {
       this.logger.error(`Locker error: ${err.message}`, err);
       this.handleError(err);
     });
 
     this.logger.info(
-      `WorkerResourceGroup initialized with ID: ${resourceGroupId}`,
+      `WorkerResourceGroup initialized for ID: ${resourceGroupId}`,
     );
   }
 
-  protected lock = (cb: ICallback<void>) => {
+  /**
+   * Clean up a batch of workers
+   */
+  private cleanupWorkerBatch(
+    workers: WorkerRunnable<unknown>[],
+    cb: ICallback<void>,
+  ): void {
+    if (workers.length === 0) {
+      cb();
+      return;
+    }
+
+    this.logger.debug(`Cleaning up batch of ${workers.length} workers...`);
+
+    async.each(
+      workers,
+      (worker, _, done) => {
+        worker.shutdown((err) => {
+          if (err) {
+            this.logger.warn(
+              `Worker cleanup failed for ${worker.getId()}: ${err.message}`,
+            );
+          }
+          done();
+        });
+      },
+      (err) => {
+        if (err) {
+          this.logger.warn(`Some workers had cleanup errors: ${err.message}`);
+        }
+        this.logger.debug(
+          `Batch cleanup completed for ${workers.length} workers`,
+        );
+        cb();
+      },
+    );
+  }
+
+  protected lock = (cb: ICallback<void>): void => {
+    if (!this.isRunning()) {
+      cb(new Error('Resource group is shutting down'));
+      return;
+    }
+
     this.logger.debug('Attempting to acquire lock...');
     this.locker.acquireLock((err, acquired) => {
       if (err) {
@@ -77,98 +119,139 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
         cb(err);
       } else if (acquired) {
         this.logger.info(
-          `Workers are exclusively running from this instance (Lock ID ${this.locker.getId()}).`,
+          `Lock acquired successfully (Lock ID: ${this.locker.getId()})`,
         );
         cb();
       } else {
-        this.logger.warn('Lock was not acquired, but no error was returned');
-        cb();
+        this.logger.warn(
+          'Could not acquire lock (already locked by another instance)',
+        );
+        cb(new AbortError());
       }
     });
   };
 
-  protected runWorkers = (cb: ICallback<void>) => {
-    if (!this.runWorkersLocked) {
-      this.logger.info(`Starting ${this.workers.length} workers...`);
-      this.runWorkersLocked = true;
-      async.eachOf(
-        this.workers,
-        (worker, index, done) => {
-          this.logger.debug(
-            `Starting worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()})`,
-          );
-          worker.run((err) => {
-            if (err) {
-              this.logger.error(
-                `Failed to start worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}): ${err.message}`,
-                err,
-              );
-            } else {
-              this.logger.debug(
-                `Worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}) started successfully`,
-              );
-            }
-            done(err);
-          });
-        },
-        (err) => {
-          this.runWorkersLocked = false;
+  protected runWorkers = (cb: ICallback<void>): void => {
+    if (!this.isRunning()) {
+      return cb(new Error('Resource group is shutting down'));
+    }
+
+    if (this.runWorkersLocked) {
+      this.logger.warn('Workers are already running');
+      return cb(new AbortError());
+    }
+
+    if (this.workers.length === 0) {
+      this.logger.warn('No workers to run');
+      return cb();
+    }
+
+    this.runWorkersLocked = true;
+    this.logger.info(`Starting ${this.workers.length} workers...`);
+
+    async.eachOf(
+      this.workers,
+      (worker, index, done) => {
+        this.logger.debug(
+          `Starting worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()})`,
+        );
+
+        worker.run((err) => {
           if (err) {
-            this.logger.error(`Error starting workers: ${err.message}`, err);
+            this.logger.error(
+              `Failed to start worker ${index + 1}/${this.workers.length}: ${err.message}`,
+              err,
+            );
           } else {
-            this.logger.info(
-              `All ${this.workers.length} workers started successfully`,
+            this.logger.debug(
+              `Worker ${index + 1}/${this.workers.length} started successfully`,
             );
           }
-          cb(err);
-        },
-      );
-    } else {
-      this.logger.warn('Attempted to run workers while already locked');
-      cb(new AbortError());
-    }
+          done(err);
+        });
+      },
+      (err) => {
+        this.runWorkersLocked = false;
+
+        if (err) {
+          this.logger.error(`Error starting workers: ${err.message}`, err);
+          // Stop any workers that did start
+          this.stopAllWorkers();
+        } else {
+          this.logger.info(
+            `All ${this.workers.length} workers started successfully`,
+          );
+        }
+        cb(err);
+      },
+    );
   };
+
+  /**
+   * Stop all workers immediately
+   */
+  private stopAllWorkers(): void {
+    if (this.workers.length === 0) return;
+
+    this.logger.info(`Stopping ${this.workers.length} workers...`);
+
+    this.workers.forEach((worker, index) => {
+      this.logger.debug(`Stopping worker ${index + 1}/${this.workers.length}`);
+      worker.shutdown((err) => {
+        if (err) {
+          this.logger.warn(`Error stopping worker: ${err.message}`);
+        }
+      });
+    });
+  }
 
   protected shutDownWorkers = (cb: ICallback<void>): void => {
-    if (!this.runWorkersLocked) {
-      this.logger.info(`Shutting down ${this.workers.length} workers...`);
-      this.runWorkersLocked = true;
-      async.eachOf(
-        this.workers,
-        (worker, index, done) => {
-          this.logger.debug(
-            `Shutting down worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()})`,
-          );
-          worker.shutdown((err) => {
-            if (err) {
-              this.logger.warn(
-                `Error shutting down worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}): ${err.message}`,
-              );
-            } else {
-              this.logger.debug(
-                `Worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}) shut down successfully`,
-              );
-            }
-            done(); // Always continue shutdown process regardless of errors
-          });
-        },
-        () => {
-          this.workers = [];
-          this.runWorkersLocked = false;
-          this.logger.info('All workers have been shut down');
-          cb();
-        },
-      );
-    } else {
-      this.logger.debug(
-        'Workers shutdown requested but workers are locked, retrying in 1 second...',
-      );
-      setTimeout(() => this.shutDownWorkers(cb), 1000);
+    if (this.workers.length === 0) {
+      this.logger.debug('No workers to shut down');
+      cb();
+      return;
     }
+
+    this.logger.info(`Shutting down ${this.workers.length} workers...`);
+
+    const workersToShutdown = [...this.workers];
+
+    let completed = 0;
+    let hasError = false;
+
+    const onWorkerShutdown = (err?: Error): void => {
+      completed++;
+
+      if (err && !hasError) {
+        hasError = true;
+        this.logger.warn(`Worker shutdown error: ${err.message}`);
+      }
+
+      if (completed === workersToShutdown.length) {
+        this.workers = []; // Clear only after all shutdowns complete
+        if (hasError) {
+          this.logger.warn('Some workers had errors during shutdown');
+        } else {
+          this.logger.info('All workers shut down successfully');
+        }
+        cb();
+      }
+    };
+
+    workersToShutdown.forEach((worker, index) => {
+      this.logger.debug(
+        `Shutting down worker ${index + 1}/${workersToShutdown.length}`,
+      );
+
+      worker.shutdown((err) => {
+        onWorkerShutdown(err || undefined);
+      });
+    });
   };
 
-  protected releaseLock = (cb: ICallback<void>) => {
+  protected releaseLock = (cb: ICallback<void>): void => {
     this.logger.debug('Releasing lock...');
+
     this.locker.releaseLock((err) => {
       if (err) {
         this.logger.error(`Failed to release lock: ${err.message}`, err);
@@ -201,17 +284,46 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     }
   }
 
-  addWorker = (filename: string, payload: unknown): void => {
-    this.logger.debug(`Adding worker from file: ${filename}`);
-    const worker = new WorkerRunnable(filename, payload, this.logger);
+  protected addWorkerInstance = (worker: WorkerRunnable<never>): void => {
+    const filename = worker.getWorkerFilename();
+    worker.removeAllListeners('worker.error');
     worker.on('worker.error', (err) => {
       this.logger.error(`Worker error from ${filename}: ${err.message}`, err);
       this.handleError(err);
     });
+
     this.workers.push(worker);
+    this.emit('workerResourceGroup.workerAdded', worker);
+
     this.logger.info(
-      `Worker added from file: ${filename}, total workers: ${this.workers.length}`,
+      `Worker added: ${filename}, total workers: ${this.workers.length}`,
     );
+  };
+
+  protected validateStateChange(): Error | void {
+    if (!this.isDown()) {
+      this.logger.warn(
+        'Cannot load workers: Resource group is not in DOWN state',
+      );
+      return new Error('Resource group must be in DOWN state to load workers');
+    }
+
+    if (this.isGoingUp()) {
+      this.logger.warn('Cannot load workers: Resource group is going up');
+      return new Error('Cannot load workers while going up');
+    }
+  }
+
+  addWorker = (filename: string, payload: unknown): WorkerRunnable<unknown> => {
+    const err = this.validateStateChange();
+    if (err) throw err;
+
+    this.logger.debug(`Adding worker from file: ${filename}`);
+
+    const worker = new WorkerRunnable(filename, payload, this.logger);
+    this.addWorkerInstance(worker);
+
+    return worker;
   };
 
   loadFromDir = <WorkerPayload = unknown>(
@@ -219,57 +331,101 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     payload: WorkerPayload,
     cb: ICallback<void>,
   ): void => {
-    if (this.isDown() && !this.isGoingUp()) {
-      this.logger.info(`Loading workers from directory: ${workersDir}`);
-      readdir(workersDir, (err, files) => {
-        if (err) {
-          this.logger.error(
-            `Failed to read workers directory ${workersDir}: ${err.message}`,
-            err,
-          );
-          cb(err);
-        } else {
-          this.logger.debug(`Found ${files.length} files in workers directory`);
-          let workerCount = 0;
+    const err = this.validateStateChange();
+    if (err) return cb(err);
 
-          async.eachOf(
-            files ?? [],
-            (file, index, done) => {
-              if (file.endsWith('.worker.js')) {
-                const filepath = path.resolve(workersDir, file);
-                this.logger.debug(
-                  `Loading worker file ${index + 1}/${files.length}: ${file}`,
-                );
-                this.addWorker(filepath, payload);
-                workerCount++;
-                done();
-              } else {
-                this.logger.debug(`Skipping non-worker file: ${file}`);
-                done();
-              }
-            },
-            (err) => {
-              if (err) {
-                this.logger.error(`Error loading workers: ${err.message}`, err);
-              } else {
-                this.logger.info(
-                  `Successfully loaded ${workerCount} workers from ${files.length} files`,
-                );
-              }
-              cb(err);
-            },
-          );
-        }
-      });
-    } else {
+    if (this.workers.length > 0) {
       this.logger.warn(
-        'Cannot load workers: WorkerResourceGroup is not in DOWN state',
+        'Cannot load workers: Workers already exist in resource group',
       );
-      cb(
-        new Error(
-          'Cannot load workers: WorkerResourceGroup is not in DOWN state',
-        ),
-      );
+      cb(new Error('Workers already exist, cannot load new ones'));
+      return;
     }
+
+    this.logger.info(`Loading workers from directory: ${workersDir}`);
+
+    readdir(workersDir, (err, files) => {
+      if (err) {
+        this.logger.error(
+          `Failed to read directory ${workersDir}: ${err.message}`,
+          err,
+        );
+        cb(err);
+        return;
+      }
+
+      const workerFiles = files.filter((file) => file.endsWith('.worker.js'));
+
+      if (workerFiles.length === 0) {
+        this.logger.warn(`No .worker.js files found in ${workersDir}`);
+        cb();
+        return;
+      }
+
+      this.logger.debug(`Found ${workerFiles.length} worker files`);
+
+      // Temporary array for this batch
+      const tempWorkers: WorkerRunnable<unknown>[] = [];
+
+      async.eachOf(
+        workerFiles,
+        (file, index, done) => {
+          const filepath = path.resolve(workersDir, file);
+          this.logger.debug(
+            `Creating worker ${index + 1}/${workerFiles.length}: ${file}`,
+          );
+
+          try {
+            const worker = new WorkerRunnable(filepath, payload, this.logger);
+
+            // Set up temporary error handling
+            worker.on('worker.error', (err) => {
+              this.logger.debug(
+                `Temporary worker error from ${file}: ${err.message}`,
+              );
+            });
+
+            tempWorkers.push(worker);
+            done();
+          } catch (error) {
+            const err =
+              error instanceof Error
+                ? error
+                : new Error('Failed to create worker');
+            this.logger.error(
+              `Failed to create worker from ${file}: ${err.message}`,
+              err,
+            );
+            done(err);
+          }
+        },
+        (err) => {
+          if (err) {
+            this.logger.error(`Error creating workers: ${err.message}`, err);
+
+            // Rollback: Clean up all temporary workers
+            return this.cleanupWorkerBatch(tempWorkers, () => {
+              this.logger.info(
+                'Rollback complete: All temporary workers cleaned up',
+              );
+              cb(err);
+            });
+          }
+
+          // Success! All workers created without errors
+          this.logger.info(
+            `Successfully created ${tempWorkers.length} workers, adding to resource group...`,
+          );
+
+          // Replace temporary error handlers with permanent ones
+          tempWorkers.forEach((worker) => this.addWorkerInstance(worker));
+
+          this.logger.info(
+            `Successfully loaded ${tempWorkers.length} workers from ${workersDir}`,
+          );
+          cb();
+        },
+      );
+    });
   };
 }

@@ -11,3 +11,5 @@ export { WorkerThreadError } from './worker-thread.error.js';
 export { WorkerPayloadRequiredError } from './worker-payload-required.error.js';
 export { WorkerAlreadyRunningError } from './worker-already-running.error.js';
 export { WorkerAlreadyDownError } from './worker-already-down.error.js';
+export { WorkerThreadFailureError } from './worker-thread-failure.error.js';
+export { WorkerIsShuttingDownError } from './worker-is-shutting-down.error.js';

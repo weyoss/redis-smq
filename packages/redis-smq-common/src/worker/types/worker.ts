@@ -29,10 +29,9 @@ export type TWorkerFunction =
 
 export interface IWorkerRunnable {
   run(cb: ICallback<void>): void;
-
   shutdown(cb: ICallback<void>): void;
 }
 
 export interface IWorkerCallable<Payload, Reply> {
-  call(args: Payload, cb: ICallback<Reply>): void;
+  call(payload: Payload, cb: ICallback<Reply>): void;
 }
