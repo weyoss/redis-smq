@@ -17,17 +17,13 @@ import { ICallback } from '../async/index.js';
  * EventBus with optional namespace support.
  */
 export class EventBus<Events extends TEventBusEvent> extends Runnable<Events> {
-  private readonly logger: ILogger;
   private readonly namespace: string;
+  protected logger: ILogger;
 
   constructor(config: IEventBusConfig = {}, namespace = '') {
     super();
     this.logger = createLogger(config?.logger);
     this.namespace = namespace ? `${namespace}:` : '';
-  }
-
-  protected override getLogger(): ILogger {
-    return this.logger;
   }
 
   /**

@@ -12,8 +12,8 @@ import { async } from '../async/index.js';
 import { ICallback } from '../async/index.js';
 import { AbortError } from '../errors/index.js';
 import { EventEmitter, TEventEmitterEvent } from '../event/index.js';
-import { ILogger } from '../logger/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
+import { ILogger } from '../logger/index.js';
 
 /**
  * A Runnable class that provides a foundation for managing long-running tasks.
@@ -30,6 +30,12 @@ export abstract class Runnable<
   protected powerSwitch;
   protected forceShutdownOnError = true;
   protected cleanUpBeforeShutdown = false;
+  protected abstract logger: ILogger;
+
+  /**
+   * Callbacks waiting for the Runnable to be up
+   */
+  private waitingForUpCallbacks: ICallback<void>[] = [];
 
   protected constructor() {
     super();
@@ -75,6 +81,8 @@ export abstract class Runnable<
    */
   protected up(cb: ICallback<boolean>): void {
     this.powerSwitch.commit();
+    // Notify all waiting callbacks that we're now up
+    this.flushWaitingCallbacks();
     cb(null, true);
   }
 
@@ -88,6 +96,8 @@ export abstract class Runnable<
    */
   protected down(cb: ICallback<boolean>): void {
     this.powerSwitch.commit();
+    // Notify all waiting callbacks that we're down (with error)
+    this.flushWaitingCallbacks(new Error('Runnable is down'));
     cb(null, true);
   }
 
@@ -100,27 +110,35 @@ export abstract class Runnable<
    */
   protected handleError(err: Error): void {
     if (this.isRunning()) {
-      this.getLogger().error(err);
+      this.logger.error(err);
+      // Notify waiting callbacks before shutdown
+      this.flushWaitingCallbacks(err);
       this.shutdown(() => void 0);
     }
   }
 
   /**
-   * Retrieves the logger instance associated with the Runnable instance.
-   *
-   * The `getLogger` method is an abstract method that must be implemented by each subclass of Runnable.
-   * It returns an instance of the ILogger interface, which provides logging functionality for the Runnable instance.
-   *
-   * @returns {ILogger} - An instance of the ILogger interface, providing logging functionality for the Runnable instance.
+   * Flush all waiting callbacks with the given error (or success if null)
    */
-  protected abstract getLogger(): ILogger;
+  private flushWaitingCallbacks(error?: Error | null): void {
+    const callbacks = this.waitingForUpCallbacks;
+    this.waitingForUpCallbacks = [];
+
+    callbacks.forEach((callback) => {
+      try {
+        callback(error);
+      } catch (e) {
+        this.logger.error('Error in waiting callback:', e);
+      }
+    });
+  }
 
   /**
    * Checks if the Runnable instance is currently running or going up.
    *
    * @returns {boolean} - Returns `true` if the Runnable instance is running or going up, `false` otherwise.
    */
-  isRunning() {
+  isRunning(): boolean {
     return this.powerSwitch.isRunning() || this.powerSwitch.isGoingUp();
   }
 
@@ -129,7 +147,7 @@ export abstract class Runnable<
    *
    * @returns {boolean} - Returns `true` if the Runnable instance is going up, `false` otherwise.
    */
-  isGoingUp() {
+  isGoingUp(): boolean {
     return this.powerSwitch.isGoingUp();
   }
 
@@ -138,7 +156,7 @@ export abstract class Runnable<
    *
    * @returns {boolean} - Returns `true` if the Runnable instance is going down, `false` otherwise.
    */
-  isGoingDown() {
+  isGoingDown(): boolean {
     return this.powerSwitch.isGoingDown();
   }
 
@@ -147,7 +165,7 @@ export abstract class Runnable<
    *
    * @returns {boolean} - Returns `true` if the Runnable instance is up, `false` otherwise.
    */
-  isUp() {
+  isUp(): boolean {
     return this.powerSwitch.isUp();
   }
 
@@ -156,7 +174,7 @@ export abstract class Runnable<
    *
    * @returns {boolean} - Returns `true` if the Runnable instance is down, `false` otherwise.
    */
-  isDown() {
+  isDown(): boolean {
     return this.powerSwitch.isDown();
   }
 
@@ -184,12 +202,29 @@ export abstract class Runnable<
       async.series(tasks, (err) => {
         if (this.isRunning()) {
           if (err) {
-            if (this.forceShutdownOnError) this.shutdown(() => cb(err));
-            else cb(err);
+            if (this.forceShutdownOnError) {
+              // Notify waiting callbacks before shutdown
+              this.flushWaitingCallbacks(err);
+              this.shutdown(() => cb(err));
+            } else {
+              // Notify waiting callbacks and call original callback
+              this.flushWaitingCallbacks(err);
+              cb(err);
+            }
           } else this.up(cb);
-        } else this.shutdown(() => cb(new AbortError()));
+        } else {
+          // Notify waiting callbacks before calling the original callback
+          this.flushWaitingCallbacks(new AbortError());
+          this.shutdown(() => cb(new AbortError()));
+        }
       });
-    } else cb(null, r);
+    } else {
+      // Can't go up, notify any waiting callbacks
+      this.flushWaitingCallbacks(
+        new Error('Cannot start Runnable - already running'),
+      );
+      cb(null, r);
+    }
   }
 
   /**
@@ -207,13 +242,19 @@ export abstract class Runnable<
    */
   shutdown(cb: ICallback<void>): void {
     /*
-        down and null -> do nothing
-        down and goingUp -> rollback
-        up and null -> rollback
-        up and goingDown -> do nothing
-         */
+    down and null -> do nothing
+    down and goingUp -> rollback
+    up and null -> rollback
+    up and goingDown -> do nothing
+     */
     if (this.isRunning()) {
-      if (this.isGoingUp()) this.powerSwitch.rollback();
+      if (this.isGoingUp()) {
+        this.powerSwitch.rollback();
+        // Notify waiting callbacks about rollback
+        this.flushWaitingCallbacks(
+          new Error('Runnable startup was rolled back'),
+        );
+      }
       if (this.isUp()) this.powerSwitch.goingDown();
       const tasks = this.goingDown();
       this.cleanUpBeforeShutdown = false;
@@ -221,7 +262,40 @@ export abstract class Runnable<
         if (this.cleanUpBeforeShutdown) this.shutdown(cb);
         else this.down(() => cb());
       });
-    } else cb();
+    } else {
+      // Notify any remaining waiting callbacks
+      this.flushWaitingCallbacks(new Error('Runnable is not running'));
+      cb();
+    }
+  }
+
+  /**
+   * Ensures the Runnable instance is running. If it's not running or going up, starts it.
+   * Calls the callback when the instance is fully up and running.
+   *
+   * @param {ICallback<void>} cb - Callback function to be called when the instance is up and running.
+   * @returns {void}
+   */
+  ensureIsRunning(cb: ICallback<void>): void {
+    if (this.isUp()) {
+      // Already up and running, call callback immediately
+      cb();
+    } else if (this.isGoingUp()) {
+      // Currently going up, add callback to queue
+      this.waitingForUpCallbacks.push(cb);
+    } else {
+      // Not running at all, start it
+      this.run((err, wasRunning) => {
+        if (err) {
+          cb(err);
+        } else if (!wasRunning) {
+          cb(new Error('Failed to start Runnable instance'));
+        } else {
+          // Successfully started going up, add callback to queue
+          this.waitingForUpCallbacks.push(cb);
+        }
+      });
+    }
   }
 
   /**
