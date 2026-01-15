@@ -262,10 +262,6 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     });
   };
 
-  protected override getLogger(): ILogger {
-    return this.logger;
-  }
-
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('WorkerResourceGroup going up...');
     return super.goingUp().concat([this.lock, this.runWorkers]);

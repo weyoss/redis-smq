@@ -21,11 +21,16 @@ import {
   EWorkerType,
   IWorkerThreadData,
   TWorkerFunction,
+  TWorkerRunnableClass,
   TWorkerRunnableFunctionFactory,
 } from '../types/index.js';
 import { handleWorkerCallable } from './worker-thread-callable.js';
 import { exit } from './worker-thread-message.js';
 import { handleWorkerRunnable } from './worker-thread-runnable.js';
+
+function isWorkerFunction(Worker: unknown): Worker is TWorkerFunction {
+  return typeof Worker === 'function';
+}
 
 function importWorkerInstance(
   filename: string,
@@ -40,14 +45,17 @@ function importWorkerInstance(
     exit(EWorkerThreadChildExitCode.FILE_READ_ERROR, e);
   }
   import(filename)
-    .then((importedModule: { default?: TWorkerFunction } | TWorkerFunction) => {
+    .then((importedModule: unknown) => {
       const fn =
-        typeof importedModule !== 'function' && importedModule.default
+        importedModule &&
+        typeof importedModule === 'object' &&
+        'default' in importedModule
           ? importedModule.default
           : importedModule;
-      if (typeof fn !== 'function') {
-        exit(EWorkerThreadChildExitCode.INVALID_WORKER_TYPE);
-      } else cb(fn);
+      if (!isWorkerFunction(fn)) {
+        return exit(EWorkerThreadChildExitCode.INVALID_WORKER_TYPE);
+      }
+      cb(fn);
     })
     .catch(() => {
       exit(EWorkerThreadChildExitCode.FILE_IMPORT_ERROR);
@@ -57,7 +65,7 @@ function importWorkerInstance(
 function isRunnableFunctionFactory(
   worker: TWorkerFunction,
   type: EWorkerType,
-): worker is TWorkerRunnableFunctionFactory {
+): worker is TWorkerRunnableFunctionFactory | TWorkerRunnableClass {
   return type === EWorkerType.RUNNABLE;
 }
 

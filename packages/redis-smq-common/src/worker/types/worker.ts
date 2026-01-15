@@ -23,8 +23,13 @@ export type TWorkerRunnableFunctionFactory = (
   initialPayload: unknown,
 ) => IWorkerRunnable;
 
+export type TWorkerRunnableClass = new (
+  initialPayload: unknown,
+) => IWorkerRunnable;
+
 export type TWorkerFunction =
   | TWorkerRunnableFunctionFactory
+  | TWorkerRunnableClass
   | TWorkerCallableFunction;
 
 export interface IWorkerRunnable {
@@ -33,5 +38,5 @@ export interface IWorkerRunnable {
 }
 
 export interface IWorkerCallable<Payload, Reply> {
-  call(payload: Payload, cb: ICallback<Reply>): void;
+  call(args: Payload, cb: ICallback<Reply>): void;
 }

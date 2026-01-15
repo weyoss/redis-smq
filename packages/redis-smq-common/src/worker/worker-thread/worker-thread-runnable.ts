@@ -13,33 +13,41 @@ import {
   EWorkerThreadChildExitCode,
   EWorkerThreadParentMessage,
   IWorkerRunnable,
+  TWorkerRunnableClass,
   TWorkerRunnableFunctionFactory,
   TWorkerThreadParentMessage,
 } from '../types/index.js';
 import { exit } from './worker-thread-message.js';
 
+function isWorkerClass(
+  Worker: TWorkerRunnableFunctionFactory | TWorkerRunnableClass,
+): Worker is TWorkerRunnableClass {
+  return Worker.prototype && typeof Worker.prototype.constructor === 'function';
+}
+
 export function handleWorkerRunnable(
-  worker: TWorkerRunnableFunctionFactory,
+  Worker: TWorkerRunnableFunctionFactory | TWorkerRunnableClass,
   messagePort: MessagePort,
   initialPayload: unknown,
 ) {
   let instance: IWorkerRunnable | null = null;
   try {
-    instance = worker(initialPayload);
+    if (isWorkerClass(Worker)) instance = new Worker(initialPayload);
+    else instance = Worker(initialPayload);
   } catch (err: unknown) {
     exit(EWorkerThreadChildExitCode.INVALID_WORKER_TYPE, err);
   }
   if (
     !instance ||
     typeof instance !== 'object' ||
-    !instance?.run ||
-    !instance?.shutdown
+    !instance.run ||
+    !instance.shutdown
   ) {
     exit(EWorkerThreadChildExitCode.INVALID_WORKER_TYPE);
   } else {
     const run = () => {
       try {
-        instance?.run((err?: unknown | null) => {
+        instance.run((err?: unknown | null) => {
           if (err) exit(EWorkerThreadChildExecutionCode.PROCESSING_ERROR, err);
         });
       } catch (err: unknown) {
@@ -47,7 +55,7 @@ export function handleWorkerRunnable(
       }
     };
     const shutdown = () => {
-      instance?.shutdown(() => void 0);
+      instance.shutdown(() => void 0);
     };
     const onMessage = (message: TWorkerThreadParentMessage) => {
       if (message.type === EWorkerThreadParentMessage.RUN) run();
