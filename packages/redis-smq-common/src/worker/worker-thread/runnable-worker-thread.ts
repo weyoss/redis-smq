@@ -12,25 +12,25 @@ import {
   EWorkerThreadChildExecutionCode,
   EWorkerThreadChildExitCode,
   EWorkerThreadParentMessage,
-  IWorkerRunnable,
-  TWorkerRunnableClass,
-  TWorkerRunnableFunctionFactory,
+  IRunnableWorker,
+  TRunnableWorkerClass,
+  TRunnableWorkerFactory,
   TWorkerThreadParentMessage,
 } from '../types/index.js';
 import { exit } from './worker-thread-message.js';
 
 function isWorkerClass(
-  Worker: TWorkerRunnableFunctionFactory | TWorkerRunnableClass,
-): Worker is TWorkerRunnableClass {
+  Worker: TRunnableWorkerFactory | TRunnableWorkerClass,
+): Worker is TRunnableWorkerClass {
   return Worker.prototype && typeof Worker.prototype.constructor === 'function';
 }
 
-export function handleWorkerRunnable(
-  Worker: TWorkerRunnableFunctionFactory | TWorkerRunnableClass,
+export function handleRunnableWorker(
+  Worker: TRunnableWorkerFactory | TRunnableWorkerClass,
   messagePort: MessagePort,
   initialPayload: unknown,
 ) {
-  let instance: IWorkerRunnable | null = null;
+  let instance: IRunnableWorker | null = null;
   try {
     if (isWorkerClass(Worker)) instance = new Worker(initialPayload);
     else instance = Worker(initialPayload);

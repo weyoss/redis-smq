@@ -1,19 +1,19 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerResourceGroup
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerCluster
 
-# Class: WorkerResourceGroup
+# Class: WorkerCluster
 
 A Runnable class that provides a foundation for managing long-running tasks.
 It provides methods for starting, stopping, and handling errors during the execution of tasks.
 
 ## Extends
 
-- [`Runnable`](Runnable.md)\<[`TWorkerResourceGroupEvent`](../type-aliases/TWorkerResourceGroupEvent.md)\>
+- [`Runnable`](Runnable.md)\<[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\>
 
 ## Constructors
 
 ### Constructor
 
-> **new WorkerResourceGroup**(`redisClient`, `logger`, `resourceGroupId`): `WorkerResourceGroup`
+> **new WorkerCluster**(`redisClient`, `logger`, `resourceGroupId`): `WorkerCluster`
 
 #### Parameters
 
@@ -31,17 +31,17 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 #### Returns
 
-`WorkerResourceGroup`
+`WorkerCluster`
 
 #### Overrides
 
-`Runnable<TWorkerResourceGroupEvent>.constructor`
+`Runnable<TWorkerClusterEvent>.constructor`
 
 ## Methods
 
 ### addWorker()
 
-> **addWorker**(`filename`, `payload`): `void`
+> **addWorker**(`filename`, `payload`): [`RunnableWorker`](RunnableWorker.md)\<`unknown`\>
 
 #### Parameters
 
@@ -55,9 +55,9 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 #### Returns
 
-`void`
+[`RunnableWorker`](RunnableWorker.md)\<`unknown`\>
 
-***
+---
 
 ### emit()
 
@@ -67,7 +67,7 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 ##### E
 
-`E` *extends* `"workerResourceGroup.error"`
+`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
 
 #### Parameters
 
@@ -77,7 +77,7 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 ##### args
 
-...`Parameters`\<[`TWorkerResourceGroupEvent`](../type-aliases/TWorkerResourceGroupEvent.md)\[`E`\]\>
+...`Parameters`\<[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -87,7 +87,32 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 [`Runnable`](Runnable.md).[`emit`](Runnable.md#emit)
 
-***
+---
+
+### ensureIsRunning()
+
+> **ensureIsRunning**(`cb`): `void`
+
+Ensures the Runnable instance is running. If it's not running or going up, starts it.
+Calls the callback when the instance is fully up and running.
+
+#### Parameters
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+Callback function to be called when the instance is up and running.
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`ensureIsRunning`](Runnable.md#ensureisrunning)
+
+---
 
 ### getId()
 
@@ -105,7 +130,7 @@ Retrieves the unique identifier of the Runnable instance.
 
 [`Runnable`](Runnable.md).[`getId`](Runnable.md#getid)
 
-***
+---
 
 ### isDown()
 
@@ -123,7 +148,7 @@ Checks if the Runnable instance is currently down.
 
 [`Runnable`](Runnable.md).[`isDown`](Runnable.md#isdown)
 
-***
+---
 
 ### isGoingDown()
 
@@ -141,7 +166,7 @@ Checks if the Runnable instance is currently going down.
 
 [`Runnable`](Runnable.md).[`isGoingDown`](Runnable.md#isgoingdown)
 
-***
+---
 
 ### isGoingUp()
 
@@ -159,7 +184,7 @@ Checks if the Runnable instance is currently going up.
 
 [`Runnable`](Runnable.md).[`isGoingUp`](Runnable.md#isgoingup)
 
-***
+---
 
 ### isRunning()
 
@@ -177,7 +202,7 @@ Checks if the Runnable instance is currently running or going up.
 
 [`Runnable`](Runnable.md).[`isRunning`](Runnable.md#isrunning)
 
-***
+---
 
 ### isUp()
 
@@ -195,7 +220,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
 
-***
+---
 
 ### loadFromDir()
 
@@ -225,7 +250,7 @@ Checks if the Runnable instance is currently up.
 
 `void`
 
-***
+---
 
 ### on()
 
@@ -235,7 +260,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `"workerResourceGroup.error"`
+`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
 
 #### Parameters
 
@@ -245,7 +270,7 @@ Checks if the Runnable instance is currently up.
 
 ##### listener
 
-[`TWorkerResourceGroupEvent`](../type-aliases/TWorkerResourceGroupEvent.md)\[`E`\]
+[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]
 
 #### Returns
 
@@ -255,7 +280,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`on`](Runnable.md#on)
 
-***
+---
 
 ### once()
 
@@ -265,7 +290,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `"workerResourceGroup.error"`
+`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
 
 #### Parameters
 
@@ -275,7 +300,7 @@ Checks if the Runnable instance is currently up.
 
 ##### listener
 
-[`TWorkerResourceGroupEvent`](../type-aliases/TWorkerResourceGroupEvent.md)\[`E`\]
+[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]
 
 #### Returns
 
@@ -285,7 +310,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`once`](Runnable.md#once)
 
-***
+---
 
 ### removeAllListeners()
 
@@ -295,7 +320,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `"workerResourceGroup.error"`
+`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
 
 #### Parameters
 
@@ -311,7 +336,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`removeAllListeners`](Runnable.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -321,7 +346,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `"workerResourceGroup.error"`
+`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
 
 #### Parameters
 
@@ -331,7 +356,7 @@ Checks if the Runnable instance is currently up.
 
 ##### listener
 
-[`TWorkerResourceGroupEvent`](../type-aliases/TWorkerResourceGroupEvent.md)\[`E`\]
+[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]
 
 #### Returns
 
@@ -341,7 +366,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`removeListener`](Runnable.md#removelistener)
 
-***
+---
 
 ### run()
 
@@ -359,10 +384,10 @@ If the Runnable instance is already running or going up, the method will return 
 [`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
 
 A callback function that will be called after the execution process is completed.
-            If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
-            If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
-            If the Runnable instance was not running, the callback will be called with `true`.
-            If the Runnable instance was already running, the callback will be called with `false`.
+If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
+If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
+If the Runnable instance was not running, the callback will be called with `true`.
+If the Runnable instance was already running, the callback will be called with `false`.
 
 #### Returns
 
@@ -372,7 +397,7 @@ A callback function that will be called after the execution process is completed
 
 [`Runnable`](Runnable.md).[`run`](Runnable.md#run)
 
-***
+---
 
 ### shutdown()
 
@@ -382,6 +407,7 @@ Performs a graceful shutdown of the Runnable instance.
 
 The shutdown process involves executing the `goingDown` tasks, which are responsible for cleaning up resources.
 The shutdown behavior depends on the current state of the Runnable instance:
+
 - If the Runnable is running (`isRunning()`) and going up (`isGoingUp()`), the shutdown process will rollback the going up state.
 - If the Runnable is running (`isRunning()`) and up (`isUp()`), the shutdown process will mark the Runnable as going down.
 - After executing the `goingDown` tasks, the Runnable will call the `down` method to finalize the shutdown process.
@@ -393,8 +419,8 @@ The shutdown behavior depends on the current state of the Runnable instance:
 [`ICallback`](../interfaces/ICallback.md)\<`void`\>
 
 A callback function that will be called after the shutdown process is completed.
-            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
-            If the shutdown process is successful, the callback will be called with no arguments.
+If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 

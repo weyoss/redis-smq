@@ -13,20 +13,20 @@ import { WorkerPayloadRequiredError } from './errors/index.js';
 import {
   EWorkerThreadParentMessage,
   EWorkerType,
-  IWorkerCallable,
+  ICallableWorker,
   TWorkerThreadParentMessageCall,
 } from './types/index.js';
 import { Worker } from './worker.js';
 
-export class WorkerCallable<Payload, Reply>
+export class CallableWorker<Payload, Reply>
   extends Worker<Reply>
-  implements IWorkerCallable<Payload, Reply>
+  implements ICallableWorker<Payload, Reply>
 {
   protected readonly type: EWorkerType = EWorkerType.CALLABLE;
 
   constructor(workerFilename: string, logger: ILogger) {
     super(workerFilename, undefined, logger);
-    this.logger.info(`WorkerCallable instance created for ${workerFilename}`);
+    this.logger.info(`CallableWorker instance created for ${workerFilename}`);
   }
 
   call(payload: Payload, cb: ICallback<Reply>) {

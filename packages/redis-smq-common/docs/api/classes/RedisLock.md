@@ -78,7 +78,7 @@ or an error (if any) upon successful execution.
 
 `void`
 
-***
+---
 
 ### emit()
 
@@ -88,7 +88,7 @@ or an error (if any) upon successful execution.
 
 ##### E
 
-`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
+`E` _extends_ keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
@@ -108,7 +108,32 @@ or an error (if any) upon successful execution.
 
 [`Runnable`](Runnable.md).[`emit`](Runnable.md#emit)
 
-***
+---
+
+### ensureIsRunning()
+
+> **ensureIsRunning**(`cb`): `void`
+
+Ensures the Runnable instance is running. If it's not running or going up, starts it.
+Calls the callback when the instance is fully up and running.
+
+#### Parameters
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+Callback function to be called when the instance is up and running.
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`ensureIsRunning`](Runnable.md#ensureisrunning)
+
+---
 
 ### extendLock()
 
@@ -139,7 +164,7 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 - If the lock is not currently held.
 
-***
+---
 
 ### getId()
 
@@ -157,7 +182,7 @@ Retrieves the unique identifier of the Runnable instance.
 
 [`Runnable`](Runnable.md).[`getId`](Runnable.md#getid)
 
-***
+---
 
 ### isDown()
 
@@ -175,7 +200,7 @@ Checks if the Runnable instance is currently down.
 
 [`Runnable`](Runnable.md).[`isDown`](Runnable.md#isdown)
 
-***
+---
 
 ### isGoingDown()
 
@@ -193,7 +218,7 @@ Checks if the Runnable instance is currently going down.
 
 [`Runnable`](Runnable.md).[`isGoingDown`](Runnable.md#isgoingdown)
 
-***
+---
 
 ### isGoingUp()
 
@@ -211,7 +236,7 @@ Checks if the Runnable instance is currently going up.
 
 [`Runnable`](Runnable.md).[`isGoingUp`](Runnable.md#isgoingup)
 
-***
+---
 
 ### isLocked()
 
@@ -227,7 +252,7 @@ This method returns a boolean indicating whether the lock is currently held by t
 
 - Returns `true` if the lock is held, `false` otherwise.
 
-***
+---
 
 ### isReleased()
 
@@ -243,7 +268,7 @@ This method returns a boolean indicating whether the lock is currently released.
 
 - Returns `true` if the lock is released, `false` otherwise.
 
-***
+---
 
 ### isRunning()
 
@@ -261,7 +286,7 @@ Checks if the Runnable instance is currently running or going up.
 
 [`Runnable`](Runnable.md).[`isRunning`](Runnable.md#isrunning)
 
-***
+---
 
 ### isUp()
 
@@ -279,7 +304,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
 
-***
+---
 
 ### on()
 
@@ -289,7 +314,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
+`E` _extends_ keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
@@ -309,7 +334,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`on`](Runnable.md#on)
 
-***
+---
 
 ### once()
 
@@ -319,7 +344,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
+`E` _extends_ keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
@@ -339,7 +364,7 @@ Checks if the Runnable instance is currently up.
 
 [`Runnable`](Runnable.md).[`once`](Runnable.md#once)
 
-***
+---
 
 ### releaseLock()
 
@@ -363,7 +388,7 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 `void`
 
-***
+---
 
 ### removeAllListeners()
 
@@ -373,7 +398,7 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 ##### E
 
-`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
+`E` _extends_ keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
@@ -389,7 +414,7 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 [`Runnable`](Runnable.md).[`removeAllListeners`](Runnable.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -399,7 +424,7 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 ##### E
 
-`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
+`E` _extends_ keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
@@ -419,7 +444,7 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 [`Runnable`](Runnable.md).[`removeListener`](Runnable.md#removelistener)
 
-***
+---
 
 ### run()
 
@@ -454,7 +479,7 @@ If auto-extension is enabled, the lock's TTL will be extended automatically at r
 
 [`Runnable`](Runnable.md).[`run`](Runnable.md#run)
 
-***
+---
 
 ### shutdown()
 
@@ -464,6 +489,7 @@ Performs a graceful shutdown of the Runnable instance.
 
 The shutdown process involves executing the `goingDown` tasks, which are responsible for cleaning up resources.
 The shutdown behavior depends on the current state of the Runnable instance:
+
 - If the Runnable is running (`isRunning()`) and going up (`isGoingUp()`), the shutdown process will rollback the going up state.
 - If the Runnable is running (`isRunning()`) and up (`isUp()`), the shutdown process will mark the Runnable as going down.
 - After executing the `goingDown` tasks, the Runnable will call the `down` method to finalize the shutdown process.
@@ -475,8 +501,8 @@ The shutdown behavior depends on the current state of the Runnable instance:
 [`ICallback`](../interfaces/ICallback.md)\<`void`\>
 
 A callback function that will be called after the shutdown process is completed.
-            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
-            If the shutdown process is successful, the callback will be called with no arguments.
+If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 

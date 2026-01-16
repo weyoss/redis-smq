@@ -1,26 +1,28 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerAlreadyDownError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EventBusMessageJSONParseError
 
-# Class: WorkerAlreadyDownError
+# Class: EventBusMessageJSONParseError
+
+Indicates that an incoming message from the event bus could not be parsed as JSON.
 
 ## Extends
 
-- [`RedisSMQError`](RedisSMQError.md)
+- [`RedisSMQError`](RedisSMQError.md)\<\{ `error`: `string`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new WorkerAlreadyDownError**(...`args`): `WorkerAlreadyDownError`
+> **new EventBusMessageJSONParseError**(...`args`): `EventBusMessageJSONParseError`
 
 #### Parameters
 
 ##### args
 
-...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<\{ `error`: `string`; \}\>\]
 
 #### Returns
 
-`WorkerAlreadyDownError`
+`EventBusMessageJSONParseError`
 
 #### Inherited from
 
@@ -116,11 +118,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): `null`
+> **getMetadata**(): \{ `error`: `string`; \} \| `null`
 
 #### Returns
 
-`null`
+\{ `error`: `string`; \} \| `null`
 
 #### Inherited from
 

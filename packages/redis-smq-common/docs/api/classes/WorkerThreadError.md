@@ -4,27 +4,27 @@
 
 ## Extends
 
-- [`WorkerError`](WorkerError.md)
+- [`RedisSMQError`](RedisSMQError.md)\<[`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md)\>
 
 ## Constructors
 
 ### Constructor
 
-> **new WorkerThreadError**(`msg`): `WorkerThreadError`
+> **new WorkerThreadError**(...`args`): `WorkerThreadError`
 
 #### Parameters
 
-##### msg
+##### args
 
-[`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md)
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<[`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md)\>\]
 
 #### Returns
 
 `WorkerThreadError`
 
-#### Overrides
+#### Inherited from
 
-[`WorkerError`](WorkerError.md).[`constructor`](WorkerError.md#constructor)
+[`RedisSMQError`](RedisSMQError.md).[`constructor`](RedisSMQError.md#constructor)
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`cause`](WorkerError.md#cause)
+[`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`message`](WorkerError.md#message)
+[`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`stack`](WorkerError.md#stack)
+[`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`stackTraceLimit`](WorkerError.md#stacktracelimit)
+[`RedisSMQError`](RedisSMQError.md).[`stackTraceLimit`](RedisSMQError.md#stacktracelimit)
 
 ## Accessors
 
@@ -90,9 +90,73 @@ not capture any frames.
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`name`](WorkerError.md#name)
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): [`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md) \| `null`
+
+#### Returns
+
+[`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md) \| `null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
+
+---
+
+### getProps()
+
+> **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +169,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +222,9 @@ a();
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`captureStackTrace`](WorkerError.md#capturestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
-***
+---
 
 ### isError()
 
@@ -180,9 +244,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`isError`](WorkerError.md#iserror)
+[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +272,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`WorkerError`](WorkerError.md).[`prepareStackTrace`](WorkerError.md#preparestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`prepareStackTrace`](RedisSMQError.md#preparestacktrace)

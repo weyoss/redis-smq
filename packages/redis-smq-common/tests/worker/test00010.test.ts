@@ -18,7 +18,7 @@ import {
 } from '../../src/worker/index.js';
 import { mockWorkerThread } from './mock-worker-thread.js';
 
-it('WorkerCallable: case 10', async () => {
+it('CallableWorker: case 10', async () => {
   const dir = env.getCurrentDir();
   const { parentPort, mockExit } = await mockWorkerThread({
     filename: resolve(dir, './workers/worker-non-existent.cjsx'),

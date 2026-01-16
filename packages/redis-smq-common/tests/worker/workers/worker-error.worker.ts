@@ -9,6 +9,6 @@
 
 import { ICallback } from '../../../src/async/index.js';
 
-export default function myWorkerCallable(msg: string, cb: ICallback<string>) {
+export default function myCallableWorker(msg: string, cb: ICallback<string>) {
   cb(new Error('MY_ERROR'));
 }

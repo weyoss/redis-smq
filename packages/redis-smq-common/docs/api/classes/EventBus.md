@@ -80,6 +80,31 @@ Emit an event.
 
 ---
 
+### ensureIsRunning()
+
+> **ensureIsRunning**(`cb`): `void`
+
+Ensures the Runnable instance is running. If it's not running or going up, starts it.
+Calls the callback when the instance is fully up and running.
+
+#### Parameters
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+Callback function to be called when the instance is up and running.
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`ensureIsRunning`](Runnable.md#ensureisrunning)
+
+---
+
 ### getId()
 
 > **getId**(): `string`

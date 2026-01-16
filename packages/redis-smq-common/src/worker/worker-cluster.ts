@@ -1,12 +1,3 @@
-/*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
- */
-
 import { readdir } from 'fs';
 import path from 'path';
 import { async } from '../async/index.js';
@@ -17,20 +8,20 @@ import { ILogger } from '../logger/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import { IRedisClient } from '../redis-client/index.js';
 import { Runnable } from '../runnable/index.js';
-import { WorkerRunnable } from './worker-runnable.js';
+import { RunnableWorker } from './runnable-worker.js';
 
-export type TWorkerResourceGroupEvent = {
-  'workerResourceGroup.error': (err: Error) => void;
-  'workerResourceGroup.workerAdded': (worker: WorkerRunnable<unknown>) => void;
+export type TWorkerClusterEvent = {
+  'workerCluster.error': (err: Error) => void;
+  'workerCluster.workerAdded': (worker: RunnableWorker<unknown>) => void;
 };
 
-export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
+export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
   protected readonly powerManager;
   protected readonly locker;
   protected readonly redisClient;
   protected readonly logger;
   protected readonly resourceGroupId: string;
-  protected workers: WorkerRunnable<unknown>[] = [];
+  protected workers: RunnableWorker<unknown>[] = [];
   private runWorkersLocked = false;
 
   constructor(
@@ -63,16 +54,14 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
       this.handleError(err);
     });
 
-    this.logger.info(
-      `WorkerResourceGroup initialized for ID: ${resourceGroupId}`,
-    );
+    this.logger.info(`WorkerCluster initialized for ID: ${resourceGroupId}`);
   }
 
   /**
    * Clean up a batch of workers
    */
   private cleanupWorkerBatch(
-    workers: WorkerRunnable<unknown>[],
+    workers: RunnableWorker<unknown>[],
     cb: ICallback<void>,
   ): void {
     if (workers.length === 0) {
@@ -261,24 +250,24 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
   };
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.debug('WorkerResourceGroup going up...');
+    this.logger.debug('WorkerCluster going up...');
     return super.goingUp().concat([this.lock, this.runWorkers]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.debug('WorkerResourceGroup going down...');
+    this.logger.debug('WorkerCluster going down...');
     return [this.shutDownWorkers, this.releaseLock].concat(super.goingDown());
   }
 
   protected override handleError(err: Error) {
     if (this.isRunning()) {
-      this.logger.error(`WorkerResourceGroup error: ${err.message}`, err);
-      this.emit('workerResourceGroup.error', err);
+      this.logger.error(`WorkerCluster error: ${err.message}`, err);
+      this.emit('workerCluster.error', err);
       super.handleError(err);
     }
   }
 
-  protected addWorkerInstance = (worker: WorkerRunnable<never>): void => {
+  protected addWorkerInstance = (worker: RunnableWorker<never>): void => {
     const filename = worker.getWorkerFilename();
     worker.removeAllListeners('worker.error');
     worker.on('worker.error', (err) => {
@@ -287,7 +276,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     });
 
     this.workers.push(worker);
-    this.emit('workerResourceGroup.workerAdded', worker);
+    this.emit('workerCluster.workerAdded', worker);
 
     this.logger.info(
       `Worker added: ${filename}, total workers: ${this.workers.length}`,
@@ -308,13 +297,13 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     }
   }
 
-  addWorker = (filename: string, payload: unknown): WorkerRunnable<unknown> => {
+  addWorker = (filename: string, payload: unknown): RunnableWorker<unknown> => {
     const err = this.validateStateChange();
     if (err) throw err;
 
     this.logger.debug(`Adding worker from file: ${filename}`);
 
-    const worker = new WorkerRunnable(filename, payload, this.logger);
+    const worker = new RunnableWorker(filename, payload, this.logger);
     this.addWorkerInstance(worker);
 
     return worker;
@@ -359,7 +348,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
       this.logger.debug(`Found ${workerFiles.length} worker files`);
 
       // Temporary array for this batch
-      const tempWorkers: WorkerRunnable<unknown>[] = [];
+      const tempWorkers: RunnableWorker<unknown>[] = [];
 
       async.eachOf(
         workerFiles,
@@ -370,7 +359,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
           );
 
           try {
-            const worker = new WorkerRunnable(filepath, payload, this.logger);
+            const worker = new RunnableWorker(filepath, payload, this.logger);
 
             // Set up temporary error handling
             worker.on('worker.error', (err) => {

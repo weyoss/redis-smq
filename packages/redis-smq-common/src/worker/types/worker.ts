@@ -14,29 +14,29 @@ export enum EWorkerType {
   RUNNABLE,
 }
 
-export type TWorkerCallableFunction = (
+export type TCallableWorkerFunction = (
   args: unknown,
   cb: ICallback<unknown>,
 ) => void;
 
-export type TWorkerRunnableFunctionFactory = (
+export type TRunnableWorkerFactory = (
   initialPayload: unknown,
-) => IWorkerRunnable;
+) => IRunnableWorker;
 
-export type TWorkerRunnableClass = new (
+export type TRunnableWorkerClass = new (
   initialPayload: unknown,
-) => IWorkerRunnable;
+) => IRunnableWorker;
 
-export type TWorkerFunction =
-  | TWorkerRunnableFunctionFactory
-  | TWorkerRunnableClass
-  | TWorkerCallableFunction;
+export type TWorkerDefinition =
+  | TRunnableWorkerFactory
+  | TRunnableWorkerClass
+  | TCallableWorkerFunction;
 
-export interface IWorkerRunnable {
+export interface IRunnableWorker {
   run(cb: ICallback<void>): void;
   shutdown(cb: ICallback<void>): void;
 }
 
-export interface IWorkerCallable<Payload, Reply> {
-  call(args: Payload, cb: ICallback<Reply>): void;
+export interface ICallableWorker<Input, Output> {
+  call(input: Input, cb: ICallback<Output>): void;
 }

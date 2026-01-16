@@ -11,13 +11,13 @@ import { MessagePort } from 'worker_threads';
 import {
   EWorkerThreadChildExecutionCode,
   EWorkerThreadParentMessage,
-  TWorkerCallableFunction,
+  TCallableWorkerFunction,
   TWorkerThreadParentMessage,
 } from '../types/index.js';
 import { postMessage } from './worker-thread-message.js';
 
-export function handleWorkerCallable(
-  worker: TWorkerCallableFunction,
+export function handleCallableWorker(
+  worker: TCallableWorkerFunction,
   messagePort: MessagePort,
 ) {
   const callback = (err?: Error | null, reply?: unknown) => {

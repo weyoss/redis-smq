@@ -11,23 +11,23 @@ import { it } from 'vitest';
 import bluebird from 'bluebird';
 import { resolve } from 'node:path';
 import { env } from '../../src/env/index.js';
-import { WorkerResourceGroup } from '../../src/worker/index.js';
+import { WorkerCluster } from '../../src/worker/index.js';
 import { getRedisInstance } from '../common.js';
 import { getDummyLogger } from '../../src/logger/index.js';
 
 const dir = env.getCurrentDir();
 
-it('WorkerResourceGroup: addWorker()', async () => {
+it('WorkerCluster: addWorker()', async () => {
   const redisClient = await getRedisInstance();
-  const workerRunnableResourceGroup = bluebird.promisifyAll(
-    new WorkerResourceGroup(redisClient, getDummyLogger(), 'mygroupid'),
+  const workerCluster = bluebird.promisifyAll(
+    new WorkerCluster(redisClient, getDummyLogger(), 'mygroupid'),
   );
 
   const filename = resolve(dir, './workers/runnable/runnable1.worker.js');
-  workerRunnableResourceGroup.addWorker(filename, 'hello world');
-  await workerRunnableResourceGroup.runAsync();
+  workerCluster.addWorker(filename, 'hello world');
+  await workerCluster.runAsync();
 
   await bluebird.delay(10000);
 
-  await workerRunnableResourceGroup.shutdownAsync();
+  await workerCluster.shutdownAsync();
 });

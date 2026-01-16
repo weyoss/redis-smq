@@ -20,7 +20,7 @@ import { mockWorkerThread } from './mock-worker-thread.js';
 
 const dir = env.getCurrentDir();
 
-it('WorkerCallable: case 6', async () => {
+it('CallableWorker: case 6', async () => {
   const { parentPort, mockExit } = await mockWorkerThread({
     filename: resolve(dir, './workers/worker-faulty.worker.js'),
     type: EWorkerType.CALLABLE,

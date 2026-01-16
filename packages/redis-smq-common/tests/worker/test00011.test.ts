@@ -14,16 +14,16 @@ import { env } from '../../src/env/index.js';
 import {
   WorkerAlreadyDownError,
   WorkerAlreadyRunningError,
-  WorkerRunnable,
+  RunnableWorker,
 } from '../../src/worker/index.js';
 import { getDummyLogger } from '../../src/logger/index.js';
 
 const dir = env.getCurrentDir();
 
-it('WorkerRunnable', async () => {
+it('RunnableWorker', async () => {
   const filename = resolve(dir, './workers/runnable/runnable1.worker.js');
   const worker = bluebird.promisifyAll(
-    new WorkerRunnable<string>(filename, '', getDummyLogger()),
+    new RunnableWorker<string>(filename, '', getDummyLogger()),
   );
   // will emit an error upon shutdown
   worker.on('worker.error', (err) => {

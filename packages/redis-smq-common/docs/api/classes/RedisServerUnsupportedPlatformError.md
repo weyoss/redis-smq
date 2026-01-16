@@ -4,21 +4,27 @@
 
 ## Extends
 
-- [`RedisServerError`](RedisServerError.md)
+- [`RedisSMQError`](RedisSMQError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new RedisServerUnsupportedPlatformError**(): `RedisServerUnsupportedPlatformError`
+> **new RedisServerUnsupportedPlatformError**(...`args`): `RedisServerUnsupportedPlatformError`
+
+#### Parameters
+
+##### args
+
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 
 `RedisServerUnsupportedPlatformError`
 
-#### Overrides
+#### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`constructor`](RedisServerError.md#constructor)
+[`RedisSMQError`](RedisSMQError.md).[`constructor`](RedisSMQError.md#constructor)
 
 ## Properties
 
@@ -28,9 +34,9 @@
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`cause`](RedisServerError.md#cause)
+[`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
-***
+---
 
 ### message
 
@@ -38,9 +44,9 @@
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`message`](RedisServerError.md#message)
+[`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
-***
+---
 
 ### stack?
 
@@ -48,9 +54,9 @@
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`stack`](RedisServerError.md#stack)
+[`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -68,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`stackTraceLimit`](RedisServerError.md#stacktracelimit)
+[`RedisSMQError`](RedisSMQError.md).[`stackTraceLimit`](RedisSMQError.md#stacktracelimit)
 
 ## Accessors
 
@@ -84,9 +90,81 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`name`](RedisServerError.md#name)
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisServer.UnsupportedPlatform'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Unsupported platform/architecture.'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
+
+---
 
 ### captureStackTrace()
 
@@ -99,7 +177,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -152,9 +230,9 @@ a();
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`captureStackTrace`](RedisServerError.md#capturestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
-***
+---
 
 ### isError()
 
@@ -174,9 +252,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`isError`](RedisServerError.md#iserror)
+[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -202,4 +280,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`RedisServerError`](RedisServerError.md).[`prepareStackTrace`](RedisServerError.md#preparestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`prepareStackTrace`](RedisSMQError.md#preparestacktrace)

@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerAlreadyDownError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / UnsupportedRedisServerVersionError
 
-# Class: WorkerAlreadyDownError
+# Class: UnsupportedRedisServerVersionError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new WorkerAlreadyDownError**(...`args`): `WorkerAlreadyDownError`
+> **new UnsupportedRedisServerVersionError**(...`args`): `UnsupportedRedisServerVersionError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`WorkerAlreadyDownError`
+`UnsupportedRedisServerVersionError`
 
 #### Inherited from
 

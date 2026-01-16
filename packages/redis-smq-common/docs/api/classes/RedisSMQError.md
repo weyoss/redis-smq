@@ -1,6 +1,6 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RedisSMQError
 
-# Abstract Class: RedisSMQError
+# Abstract Class: RedisSMQError\<Metadata\>
 
 ## Extends
 
@@ -9,32 +9,58 @@
 ## Extended by
 
 - [`AsyncCallbackTimeoutError`](AsyncCallbackTimeoutError.md)
-- [`EventBusError`](EventBusError.md)
-- [`RedisServerError`](RedisServerError.md)
+- [`CallbackEmptyReplyError`](CallbackEmptyReplyError.md)
+- [`CallbackInvalidReplyError`](CallbackInvalidReplyError.md)
 - [`PanicError`](PanicError.md)
 - [`AbortError`](AbortError.md)
-- [`LockError`](LockError.md)
-- [`LoggerError`](LoggerError.md)
-- [`RedisClientError`](RedisClientError.md)
+- [`InvalidArgumentsError`](InvalidArgumentsError.md)
+- [`OperationNotAllowedError`](OperationNotAllowedError.md)
+- [`EventBusNotConnectedError`](EventBusNotConnectedError.md)
+- [`EventBusMessageJSONParseError`](EventBusMessageJSONParseError.md)
+- [`RedisServerBinaryNotFoundError`](RedisServerBinaryNotFoundError.md)
+- [`RedisServerUnsupportedPlatformError`](RedisServerUnsupportedPlatformError.md)
+- [`AcquireLockError`](AcquireLockError.md)
+- [`ExtendLockError`](ExtendLockError.md)
+- [`AcquireLockNotAllowedError`](AcquireLockNotAllowedError.md)
+- [`LockNotAcquiredError`](LockNotAcquiredError.md)
+- [`LoggerInvalidNamespaceError`](LoggerInvalidNamespaceError.md)
+- [`WatchedKeysChangedError`](WatchedKeysChangedError.md)
 - [`InstanceLockError`](InstanceLockError.md)
-- [`TimerError`](TimerError.md)
-- [`WorkerError`](WorkerError.md)
+- [`UnsupportedClientError`](UnsupportedClientError.md)
+- [`RedisClientNotInstalledError`](RedisClientNotInstalledError.md)
+- [`CommandNotSupportedError`](CommandNotSupportedError.md)
+- [`UnsupportedRedisServerVersionError`](UnsupportedRedisServerVersionError.md)
+- [`UnknownRedisServerVersionError`](UnknownRedisServerVersionError.md)
+- [`WatchTransactionMaxRetriesExceeded`](WatchTransactionMaxRetriesExceeded.md)
+- [`TimerNotSetError`](TimerNotSetError.md)
+- [`WorkerThreadError`](WorkerThreadError.md)
+- [`WorkerPayloadRequiredError`](WorkerPayloadRequiredError.md)
+- [`WorkerAlreadyRunningError`](WorkerAlreadyRunningError.md)
+- [`WorkerAlreadyDownError`](WorkerAlreadyDownError.md)
+- [`WorkerThreadFailureError`](WorkerThreadFailureError.md)
+- [`WorkerIsShuttingDownError`](WorkerIsShuttingDownError.md)
+
+## Type Parameters
+
+### Metadata
+
+`Metadata` _extends_ `Record`\<`string`, `unknown`\> = `never`
 
 ## Constructors
 
 ### Constructor
 
-> **new RedisSMQError**(`message?`): `RedisSMQError`
+> **new RedisSMQError**\<`Metadata`\>(...`args`): `RedisSMQError`\<`Metadata`\>
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[`Metadata`\] _extends_ \[`never`\] ? \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\<`Metadata`\>\>\] : \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\]
 
 #### Returns
 
-`RedisSMQError`
+`RedisSMQError`\<`Metadata`\>
 
 #### Overrides
 
@@ -50,7 +76,7 @@
 
 `Error.cause`
 
-***
+---
 
 ### message
 
@@ -60,7 +86,7 @@
 
 `Error.message`
 
-***
+---
 
 ### stack?
 
@@ -70,7 +96,7 @@
 
 `Error.stack`
 
-***
+---
 
 ### stackTraceLimit
 
@@ -106,7 +132,55 @@ not capture any frames.
 
 `Error.name`
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `Metadata` \| `null`
+
+#### Returns
+
+`Metadata` \| `null`
+
+---
+
+### getProps()
+
+> `abstract` **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+---
 
 ### captureStackTrace()
 
@@ -119,7 +193,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -174,7 +248,7 @@ a();
 
 `Error.captureStackTrace`
 
-***
+---
 
 ### isError()
 
@@ -196,7 +270,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `Error.isError`
 
-***
+---
 
 ### prepareStackTrace()
 
