@@ -1,12 +1,6 @@
 # RedisSMQ Common Library
 
-> [!NOTE]
-> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
-> For the latest stable documentation, see:
->
-> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common
-> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common.
 
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-common/next?style=flat-square&label=redis-smq-common%40next)](https://github.com/weyoss/redis-smq/releases)
 [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-common&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-common)
@@ -14,9 +8,6 @@
 A shared foundation for the RedisSMQ ecosystem.
 This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure
 Redis clients, structure logging, and reuse core types across the stack.
-
-- Used by: `redis-smq`, `redis-smq-rest-api`, `redis-smq-web-server`, and `redis-smq-web-ui`
-- Node.js 20+ is required
 
 ## Features
 

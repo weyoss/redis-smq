@@ -23,7 +23,7 @@ queue using a RESTful API.
 npm install redis-smq__TAG_SUFFIX__ redis-smq-common__TAG_SUFFIX__ redis-smq-rest-api__TAG_SUFFIX__ --save
 ```
 
-Don't forget to install a Redis client. Choose either node-redis or ioredis:
+Don't forget to install a Redis client:
 
 ```shell
 npm install @redis/client --save

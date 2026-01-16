@@ -2,13 +2,13 @@
 
 __IS_NEXT_NOTE__
 
-![RedisSMQ Web UI - Home](https://raw.githubusercontent.com/weyoss/redis-smq/__BRANCH_NAME__/packages/redis-smq-web-ui/docs/screenshots/img01.png)
-
 A Single Page Application for monitoring and managing RedisSMQ. Inspect queues and messages, review consumers, and perform common actions — with an integrated, type-safe OpenAPI client.
 
 - Works seamlessly with the RedisSMQ REST API
 - Best served via the RedisSMQ Web Server (serves the static UI and hosts or proxies the API)
 - Ships with developer-friendly types and OpenAPI client generation
+
+![RedisSMQ Web UI - Home](https://raw.githubusercontent.com/weyoss/redis-smq/__BRANCH_NAME__/packages/redis-smq-web-ui/docs/screenshots/img01.png)
 
 ## Features
 

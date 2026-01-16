@@ -9,9 +9,6 @@ A shared foundation for the RedisSMQ ecosystem.
 This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure
 Redis clients, structure logging, and reuse core types across the stack.
 
-- Used by: `redis-smq`, `redis-smq-rest-api`, `redis-smq-web-server`, and `redis-smq-web-ui`
-- Node.js 20+ is required
-
 ## Features
 
 - Core types and utilities shared across RedisSMQ packages
