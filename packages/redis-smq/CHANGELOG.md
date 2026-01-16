@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.10-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.3...v9.0.10-next.4) (2026-01-16)
+
+### 📝 Documentation
+
+- adjust badges position to enhance page styling ([ef3e2fe](https://github.com/weyoss/redis-smq/commit/ef3e2fe19a1f61fb0cbd861090686c7ccfe3bbbe))
+- **redis-smq:** update Consumer and Producer references ([b70733b](https://github.com/weyoss/redis-smq/commit/b70733b6d8b0e377c50166e74488b32f543e1e2f))
+- refine notifications for master and next branch clarity ([63fef1b](https://github.com/weyoss/redis-smq/commit/63fef1bd430680e0de7eba7fe2b8c8f82e821bb9))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** update to new class and type names from redis-smq-common ([b98c1b4](https://github.com/weyoss/redis-smq/commit/b98c1b4fc320340b9b593d1e3d3773c6719993ba))
+
 ## [9.0.10-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.2...v9.0.10-next.3) (2026-01-16)
 
 ### 🐛 Bug Fixes
