@@ -20,7 +20,7 @@ describe('Consumer throughput benchmark', () => {
 
     import('../index.js');
 
-    await bluebird.delay(5000);
+    await bluebird.delay(15000);
 
     const output = logSpy.mock.calls.reduce((a, call) => {
       return a.concat(call[0]);

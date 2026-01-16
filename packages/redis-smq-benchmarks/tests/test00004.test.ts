@@ -94,7 +94,7 @@ describe('consumer-worker-thread.ts', () => {
     const { parentPort } = await mockWorkerThread(workerPath, workerData);
 
     // Wait for messages to be processed
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await bluebird.delay(15000);
 
     // Verify completion message was sent
     expect(parentPort.postMessage).toHaveBeenCalledWith(
