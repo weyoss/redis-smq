@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.10-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.2...v9.0.10-next.3) (2026-01-16)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** wait for workers to be loaded before invoking callback ([b420ebe](https://github.com/weyoss/redis-smq/commit/b420ebe3664a7ae314003cc428513d54db904a48))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** make use of redis-smq-common latest updates ([1bb0d5f](https://github.com/weyoss/redis-smq/commit/1bb0d5f6c1a134501f9cfd5b893469b31323e77c))
+- **redis-smq:** rename \_purgeMessages() to purgeMessages() ([2e5e8f2](https://github.com/weyoss/redis-smq/commit/2e5e8f2b18fafb9eae6c7f18ac1a29f6cf236e38))
+
 ## [9.0.10-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.1...v9.0.10-next.2) (2026-01-10)
 
 **Note:** Version bump only for package redis-smq

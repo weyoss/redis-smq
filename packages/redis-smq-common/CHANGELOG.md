@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.10-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.2...v9.0.10-next.3) (2026-01-16)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** resolve event emitter memory leak in piping, enhance worker architecture ([cfd58bb](https://github.com/weyoss/redis-smq/commit/cfd58bbd1abd0132cc7a7bc7b1d7b668fc995c52))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add class-based support for worker threads ([6d283d0](https://github.com/weyoss/redis-smq/commit/6d283d03301ec9b03cd46ab85cc37fcbd2c244b0))
+- **redis-smq-common:** clean up WorkerResourceGroup.shutDownWorkers() method ([edf2efd](https://github.com/weyoss/redis-smq/commit/edf2efdc5e6ffa2fea41c8b5a0914eea21c37c6f))
+- **redis-smq-common:** enhance Runnable base class implementation ([21e2d85](https://github.com/weyoss/redis-smq/commit/21e2d852ff94cfc38895bb618926818f96ed6d97))
+
 ## [9.0.10-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.1...v9.0.10-next.2) (2026-01-10)
 
 **Note:** Version bump only for package redis-smq-common
