@@ -1,9 +1,9 @@
 # RedisSMQ Web Server
 
-__IS_NEXT_NOTE__
-
 __NPM_BADGE__
 __CODECOV_BADGE__
+
+__IS_NEXT_NOTE__
 
 A lightweight server that brings the RedisSMQ management ecosystem to life. It serves the official Web UI and provides
 the REST API through two flexible modes of operation:

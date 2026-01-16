@@ -1,9 +1,9 @@
 # RedisSMQ Benchmarks
 
-__IS_NEXT_NOTE__
-
 __NPM_BADGE__
 __CODECOV_BADGE__
+
+__IS_NEXT_NOTE__
 
 A comprehensive benchmarking suite for RedisSMQ message queue system, measuring throughput, latency, and end-to-end 
 performance under various workloads.

@@ -1,10 +1,10 @@
 [![RedisSMQ](./logo.png)](https://github.com/weyoss/redis-smq)
 
-__IS_NEXT_NOTE__
-
 __NPM_BADGE__
 __BUILD_BADGE__
 __CODEQL_BADGE__
+
+__IS_NEXT_NOTE__
 
 A high-performance, reliable, and scalable message queue for Node.js.
 

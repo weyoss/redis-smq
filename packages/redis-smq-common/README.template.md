@@ -1,9 +1,9 @@
 # RedisSMQ Common Library
 
-__IS_NEXT_NOTE__
-
 __NPM_BADGE__
 __CODECOV_BADGE__
+
+__IS_NEXT_NOTE__
 
 A shared foundation for the RedisSMQ ecosystem.
 This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure

@@ -1,9 +1,9 @@
 # RedisSMQ
 
-__IS_NEXT_NOTE__
-
 __NPM_BADGE__
 __CODECOV_BADGE__
+
+__IS_NEXT_NOTE__
 
 RedisSMQ is a Redis-backed MQ focused on robustness and simplicity. It provides queue models, delivery models,
 producers/consumers APIs, and integrates with a REST API and Web UI for monitoring and administration.

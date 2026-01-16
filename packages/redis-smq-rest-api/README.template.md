@@ -1,9 +1,9 @@
 # RedisSMQ REST API
 
-__IS_NEXT_NOTE__
-
 __NPM_BADGE__
 __CODECOV_BADGE__
+
+__IS_NEXT_NOTE__
 
 RedisSMQ REST API provides an HTTP interface enabling any web-capable application to interact with the RedisSMQ message
 queue using a RESTful API.
