@@ -221,7 +221,7 @@ export const redisKeys = {
       keyQueueMessages: ERedisKey.QUEUE_MESSAGES, // SET
       keyQueueMessageIds: ERedisKey.QUEUE_MESSAGE_IDS, // NOT USED
       keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS, // SET
-      keyQueueWorkersLock: ERedisKey.QUEUE_WORKERS_LOCK, // STRING
+      keyQueueWorkerClusterLock: ERedisKey.QUEUE_WORKERS_LOCK, // STRING
       keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS, // SET
     };
 

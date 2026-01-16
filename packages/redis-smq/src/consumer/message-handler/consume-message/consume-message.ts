@@ -18,7 +18,7 @@ import {
   IRedisClient,
   PanicError,
   Runnable,
-  WorkerCallable,
+  CallableWorker,
 } from 'redis-smq-common';
 import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
@@ -63,7 +63,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected messageHandlerId;
   protected messageUnack;
   protected redisClient: IRedisClient | null = null;
-  protected consumeMessageWorker: WorkerCallable<
+  protected consumeMessageWorker: CallableWorker<
     IMessageTransferable,
     void
   > | null = null;
@@ -322,7 +322,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       this.logger.debug(
         `Creating new WorkerCallable for handler file: ${messageHandlerFilename}`,
       );
-      this.consumeMessageWorker = new WorkerCallable<
+      this.consumeMessageWorker = new CallableWorker<
         IMessageTransferable,
         void
       >(messageHandlerFilename, this.logger);
