@@ -236,6 +236,26 @@ consumer.consume(
 
 ---
 
+### ensureIsRunning()
+
+> **ensureIsRunning**(`cb`): `void`
+
+#### Parameters
+
+##### cb
+
+`ICallback`\<`void`\>
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`Runnable.ensureIsRunning`
+
+---
+
 ### getId()
 
 > **getId**(): `string`

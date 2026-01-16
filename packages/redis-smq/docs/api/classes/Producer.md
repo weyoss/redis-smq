@@ -74,6 +74,26 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ---
 
+### ensureIsRunning()
+
+> **ensureIsRunning**(`cb`): `void`
+
+#### Parameters
+
+##### cb
+
+`ICallback`\<`void`\>
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`Runnable.ensureIsRunning`
+
+---
+
 ### getId()
 
 > **getId**(): `string`
