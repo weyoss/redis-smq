@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.10-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.2...v9.0.10-next.3) (2026-01-16)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** resolve event emitter memory leak in piping, enhance worker architecture ([cfd58bb](https://github.com/weyoss/redis-smq/commit/cfd58bbd1abd0132cc7a7bc7b1d7b668fc995c52))
+- **redis-smq:** wait for workers to be loaded before invoking callback ([b420ebe](https://github.com/weyoss/redis-smq/commit/b420ebe3664a7ae314003cc428513d54db904a48))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add class-based support for worker threads ([6d283d0](https://github.com/weyoss/redis-smq/commit/6d283d03301ec9b03cd46ab85cc37fcbd2c244b0))
+- **redis-smq-common:** clean up WorkerResourceGroup.shutDownWorkers() method ([edf2efd](https://github.com/weyoss/redis-smq/commit/edf2efdc5e6ffa2fea41c8b5a0914eea21c37c6f))
+- **redis-smq-common:** enhance Runnable base class implementation ([21e2d85](https://github.com/weyoss/redis-smq/commit/21e2d852ff94cfc38895bb618926818f96ed6d97))
+- **redis-smq:** make use of redis-smq-common latest updates ([1bb0d5f](https://github.com/weyoss/redis-smq/commit/1bb0d5f6c1a134501f9cfd5b893469b31323e77c))
+- **redis-smq:** rename \_purgeMessages() to purgeMessages() ([2e5e8f2](https://github.com/weyoss/redis-smq/commit/2e5e8f2b18fafb9eae6c7f18ac1a29f6cf236e38))
+
+### ✅ Tests
+
+- **redis-smq-benchmark:** run benchmarks using 100 messages/10 consumers/5 producers ([99a0332](https://github.com/weyoss/redis-smq/commit/99a03322337a1cdb75ce41c8dcd105116aaf82f9))
+
 ## [9.0.10-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.1...v9.0.10-next.2) (2026-01-10)
 
 ### 📝 Documentation

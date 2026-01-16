@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.10-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.2...v9.0.10-next.3) (2026-01-16)
+
+### ✅ Tests
+
+- **redis-smq-benchmark:** run benchmarks using 100 messages/10 consumers/5 producers ([99a0332](https://github.com/weyoss/redis-smq/commit/99a03322337a1cdb75ce41c8dcd105116aaf82f9))
+
 ## [9.0.10-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.1...v9.0.10-next.2) (2026-01-10)
 
 ### 📝 Documentation
