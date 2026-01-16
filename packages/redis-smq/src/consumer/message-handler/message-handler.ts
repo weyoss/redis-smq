@@ -18,7 +18,7 @@ import {
   PanicError,
   Runnable,
   Timer,
-  WorkerResourceGroup,
+  WorkerCluster,
 } from 'redis-smq-common';
 import {
   TConsumerMessageHandlerEvent,
@@ -59,7 +59,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected consumeMessage: ConsumeMessage | null = null;
   protected messageHandler;
   protected autoDequeue;
-  protected workerResourceGroup: WorkerResourceGroup | null = null;
+  protected workerCluster: WorkerCluster | null = null;
   protected redisClient: IRedisClient | null = null;
   protected timer: Timer;
 
@@ -206,24 +206,24 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     super.handleError(err);
   }
 
-  protected setUpConsumerWorkers = (cb: ICallback): void => {
+  protected runWorkerCluster = (cb: ICallback): void => {
     const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) {
       return cb(redisClient);
     }
 
-    const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
+    const { keyQueueWorkerClusterLock } = redisKeys.getQueueKeys(
       this.queue.queueParams.ns,
       this.queue.queueParams.name,
       this.queue.groupId,
     );
-    this.workerResourceGroup = new WorkerResourceGroup(
+    this.workerCluster = new WorkerCluster(
       redisClient,
       this.logger,
-      keyQueueWorkersLock,
+      keyQueueWorkerClusterLock,
     );
-    this.workerResourceGroup.on('workerResourceGroup.error', this.onError);
-    this.workerResourceGroup.loadFromDir<IMessageHandlerWorkerPayload>(
+    this.workerCluster.on('workerCluster.error', this.onError);
+    this.workerCluster.loadFromDir<IMessageHandlerWorkerPayload>(
       WORKERS_DIR,
       {
         config: this.config,
@@ -237,16 +237,16 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
         // This operation may hang on forever as
         // the callback is invoked only when a lock is acquired
-        this.workerResourceGroup?.run(() => void 0);
+        this.workerCluster?.run(() => void 0);
         cb();
       },
     );
   };
 
-  protected shutDownConsumerWorkers = (cb: ICallback): void => {
-    if (this.workerResourceGroup) {
-      this.workerResourceGroup.shutdown(() => {
-        this.workerResourceGroup = null;
+  protected shutdownWorkerCluster = (cb: ICallback): void => {
+    if (this.workerCluster) {
+      this.workerCluster.shutdown(() => {
+        this.workerCluster = null;
         cb();
       });
     } else cb();
@@ -319,7 +319,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         );
         this.dequeueMessage.run((err) => cb(err));
       },
-      this.setUpConsumerWorkers,
+      this.runWorkerCluster,
       (cb: ICallback) => {
         if (this.autoDequeue) {
           this.dequeue();
@@ -350,7 +350,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           },
         );
       },
-      this.shutDownConsumerWorkers,
+      this.shutdownWorkerCluster,
       (cb: ICallback) => {
         if (this.dequeueMessage) {
           this.dequeueMessage.shutdown(() => {
