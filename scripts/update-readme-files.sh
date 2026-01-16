@@ -85,26 +85,14 @@ update_readme() {
   if [[ "$context" == "root" ]]; then
     if $is_next; then
       note=$(cat <<EOF
-> [!NOTE]
-> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
-> For the latest stable documentation, see:
->
-> - Master (stable) README: https://github.com/$owner_repo/tree/master
-> - Latest release notes/tags: https://github.com/$owner_repo/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/$owner_repo/tree/master.
 EOF
 )
       npm_badge='[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/'"$owner_repo"'/releases)'
       install_cmd='npm i redis-smq@next redis-smq-common@next --save'
     else
       note=$(cat <<EOF
-> [!NOTE]
-> You are viewing the documentation for the "master" branch. These docs describe the latest stable release.
-> For pre-release documentation, see:
->
-> - Next (pre-release) README: https://github.com/$owner_repo/tree/next
-> - Latest release notes/tags: https://github.com/$owner_repo/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "master" branch, featuring the latest stable updates. To access the most recent changes without waiting for a stable release, please refer to the "next" branch. See https://github.com/$owner_repo/tree/next.
 EOF
 )
       npm_badge='[![Stable](https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=redis-smq%40latest)](https://github.com/'"$owner_repo"'/releases/latest)'
@@ -115,25 +103,13 @@ EOF
   else # context == "package"
     if $is_next; then
       note=$(cat <<EOF
-> [!NOTE]
-> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
-> For the latest stable documentation, see:
->
-> - Master (stable) README: https://github.com/$owner_repo/tree/master/packages/$package_name
-> - Latest release notes/tags: https://github.com/$owner_repo/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/$owner_repo/tree/master/packages/$package_name.
 EOF
 )
       npm_badge="[![Pre-release (next)](https://img.shields.io/npm/v/$package_name/next?style=flat-square&label=$package_name%40next)](https://github.com/$owner_repo/releases)"
     else
       note=$(cat <<EOF
-> [!NOTE]
-> You are viewing the documentation for the "master" branch. These docs describe the latest stable release.
-> For pre-release documentation, see:
->
-> - Next (pre-release) README: https://github.com/$owner_repo/tree/next/packages/$package_name
-> - Latest release notes/tags: https://github.com/$owner_repo/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "master" branch, featuring the latest stable updates. To access the most recent changes without waiting for a stable release, please refer to the "next" branch. See https://github.com/$owner_repo/tree/next/packages/$package_name.
 EOF
 )
       npm_badge="[![Stable](https://img.shields.io/npm/v/$package_name/latest?style=flat-square&label=$package_name%40latest)](https://github.com/$owner_repo/releases/latest)"

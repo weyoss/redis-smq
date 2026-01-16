@@ -1,18 +1,12 @@
 [![RedisSMQ](./logo.png)](https://github.com/weyoss/redis-smq)
 
-A High-Performance Redis Simple Message Queue for Node.js
-
-> [!NOTE]
-> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
-> For the latest stable documentation, see:
->
-> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master
-> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master.
 
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/weyoss/redis-smq/releases)
 [![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
 [![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
+
+A high-performance, reliable, and scalable message queue for Node.js.
 
 **Key Features**
 

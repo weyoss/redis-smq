@@ -1,12 +1,6 @@
 # RedisSMQ REST API
 
-> [!NOTE]
-> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.
-> For the latest stable documentation, see:
->
-> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api
-> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
-> - Install stable packages with @latest; pre-release with @next.
+> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api.
 
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-rest-api/next?style=flat-square&label=redis-smq-rest-api%40next)](https://github.com/weyoss/redis-smq/releases)
 [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api)
@@ -29,7 +23,7 @@ queue using a RESTful API.
 npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next --save
 ```
 
-Don't forget to install a Redis client. Choose either node-redis or ioredis:
+Don't forget to install a Redis client:
 
 ```shell
 npm install @redis/client --save
