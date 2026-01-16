@@ -11,7 +11,7 @@ import { Runnable } from '../../../../src/runnable/index.js';
 import { getDummyLogger } from '../../../../src/logger/index.js';
 import { ICallback } from '../../../../src/async/index.js';
 
-export default class MyWorkerRunnable extends Runnable<Record<string, never>> {
+export default class MyRunnableWorker extends Runnable<Record<string, never>> {
   protected logger = getDummyLogger();
   protected interval: NodeJS.Timeout | null = null;
 

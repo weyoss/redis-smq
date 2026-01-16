@@ -29,4 +29,4 @@ An ILogger instance.
 
 ## Throws
 
-LoggerError if the namespace is invalid.
+LoggerInvalidNamespaceError if the namespace is invalid.

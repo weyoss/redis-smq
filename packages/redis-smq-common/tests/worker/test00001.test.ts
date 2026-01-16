@@ -12,17 +12,17 @@ import bluebird from 'bluebird';
 import { resolve } from 'node:path';
 import { env } from '../../src/env/index.js';
 import {
-  WorkerCallable,
+  CallableWorker,
   WorkerPayloadRequiredError,
 } from '../../src/worker/index.js';
 import { getDummyLogger } from '../../src/logger/index.js';
 
 const dir = env.getCurrentDir();
 
-it('WorkerCallable: case 1', async () => {
+it('CallableWorker: case 1', async () => {
   const filename = resolve(dir, './workers/worker-ok.worker.js');
   const worker = bluebird.promisifyAll(
-    new WorkerCallable<string | null, string>(filename, getDummyLogger()),
+    new CallableWorker<string | null, string>(filename, getDummyLogger()),
   );
   const reply = await worker.callAsync('Hello world!');
   expect(reply).toEqual('Hello world!');

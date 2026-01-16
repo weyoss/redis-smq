@@ -13,13 +13,13 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 - [`EventBus`](EventBus.md)
 - [`RedisLock`](RedisLock.md)
-- [`WorkerResourceGroup`](WorkerResourceGroup.md)
+- [`WorkerCluster`](WorkerCluster.md)
 
 ## Type Parameters
 
 ### Event
 
-`Event` *extends* [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
+`Event` _extends_ [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
 
 The type of events that the Runnable class can emit.
 
@@ -33,7 +33,7 @@ The type of events that the Runnable class can emit.
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -53,7 +53,28 @@ The type of events that the Runnable class can emit.
 
 [`EventEmitter`](EventEmitter.md).[`emit`](EventEmitter.md#emit)
 
-***
+---
+
+### ensureIsRunning()
+
+> **ensureIsRunning**(`cb`): `void`
+
+Ensures the Runnable instance is running. If it's not running or going up, starts it.
+Calls the callback when the instance is fully up and running.
+
+#### Parameters
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+Callback function to be called when the instance is up and running.
+
+#### Returns
+
+`void`
+
+---
 
 ### getId()
 
@@ -67,7 +88,7 @@ Retrieves the unique identifier of the Runnable instance.
 
 - The unique identifier of the Runnable instance.
 
-***
+---
 
 ### isDown()
 
@@ -81,7 +102,7 @@ Checks if the Runnable instance is currently down.
 
 - Returns `true` if the Runnable instance is down, `false` otherwise.
 
-***
+---
 
 ### isGoingDown()
 
@@ -95,7 +116,7 @@ Checks if the Runnable instance is currently going down.
 
 - Returns `true` if the Runnable instance is going down, `false` otherwise.
 
-***
+---
 
 ### isGoingUp()
 
@@ -109,7 +130,7 @@ Checks if the Runnable instance is currently going up.
 
 - Returns `true` if the Runnable instance is going up, `false` otherwise.
 
-***
+---
 
 ### isRunning()
 
@@ -123,7 +144,7 @@ Checks if the Runnable instance is currently running or going up.
 
 - Returns `true` if the Runnable instance is running or going up, `false` otherwise.
 
-***
+---
 
 ### isUp()
 
@@ -137,7 +158,7 @@ Checks if the Runnable instance is currently up.
 
 - Returns `true` if the Runnable instance is up, `false` otherwise.
 
-***
+---
 
 ### on()
 
@@ -147,7 +168,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -167,7 +188,7 @@ Checks if the Runnable instance is currently up.
 
 [`EventEmitter`](EventEmitter.md).[`on`](EventEmitter.md#on)
 
-***
+---
 
 ### once()
 
@@ -177,7 +198,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -197,7 +218,7 @@ Checks if the Runnable instance is currently up.
 
 [`EventEmitter`](EventEmitter.md).[`once`](EventEmitter.md#once)
 
-***
+---
 
 ### removeAllListeners()
 
@@ -207,7 +228,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -223,7 +244,7 @@ Checks if the Runnable instance is currently up.
 
 [`EventEmitter`](EventEmitter.md).[`removeAllListeners`](EventEmitter.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -233,7 +254,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -253,7 +274,7 @@ Checks if the Runnable instance is currently up.
 
 [`EventEmitter`](EventEmitter.md).[`removeListener`](EventEmitter.md#removelistener)
 
-***
+---
 
 ### run()
 
@@ -271,16 +292,16 @@ If the Runnable instance is already running or going up, the method will return 
 [`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
 
 A callback function that will be called after the execution process is completed.
-            If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
-            If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
-            If the Runnable instance was not running, the callback will be called with `true`.
-            If the Runnable instance was already running, the callback will be called with `false`.
+If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
+If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
+If the Runnable instance was not running, the callback will be called with `true`.
+If the Runnable instance was already running, the callback will be called with `false`.
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### shutdown()
 
@@ -290,6 +311,7 @@ Performs a graceful shutdown of the Runnable instance.
 
 The shutdown process involves executing the `goingDown` tasks, which are responsible for cleaning up resources.
 The shutdown behavior depends on the current state of the Runnable instance:
+
 - If the Runnable is running (`isRunning()`) and going up (`isGoingUp()`), the shutdown process will rollback the going up state.
 - If the Runnable is running (`isRunning()`) and up (`isUp()`), the shutdown process will mark the Runnable as going down.
 - After executing the `goingDown` tasks, the Runnable will call the `down` method to finalize the shutdown process.
@@ -301,8 +323,8 @@ The shutdown behavior depends on the current state of the Runnable instance:
 [`ICallback`](../interfaces/ICallback.md)\<`void`\>
 
 A callback function that will be called after the shutdown process is completed.
-            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
-            If the shutdown process is successful, the callback will be called with no arguments.
+If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 

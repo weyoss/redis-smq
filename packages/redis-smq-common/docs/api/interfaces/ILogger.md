@@ -4,6 +4,22 @@
 
 ## Methods
 
+### createLogger()
+
+> **createLogger**(`ns`): `ILogger`
+
+#### Parameters
+
+##### ns
+
+`string`
+
+#### Returns
+
+`ILogger`
+
+---
+
 ### debug()
 
 > **debug**(`message`, ...`params`): `void`
@@ -22,7 +38,7 @@
 
 `void`
 
-***
+---
 
 ### error()
 
@@ -42,7 +58,27 @@
 
 `void`
 
-***
+---
+
+### getLogLevel()
+
+> **getLogLevel**(): `number`
+
+#### Returns
+
+`number`
+
+---
+
+### getNamespaces()
+
+> **getNamespaces**(): `string`[]
+
+#### Returns
+
+`string`[]
+
+---
 
 ### info()
 
@@ -62,7 +98,7 @@
 
 `void`
 
-***
+---
 
 ### warn()
 

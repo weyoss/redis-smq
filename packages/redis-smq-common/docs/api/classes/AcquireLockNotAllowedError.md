@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerAlreadyDownError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / AcquireLockNotAllowedError
 
-# Class: WorkerAlreadyDownError
+# Class: AcquireLockNotAllowedError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new WorkerAlreadyDownError**(...`args`): `WorkerAlreadyDownError`
+> **new AcquireLockNotAllowedError**(...`args`): `AcquireLockNotAllowedError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`WorkerAlreadyDownError`
+`AcquireLockNotAllowedError`
 
 #### Inherited from
 
@@ -130,11 +130,19 @@ not capture any frames.
 
 ### getProps()
 
-> **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+> **getProps**(): `object`
 
 #### Returns
 
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisLock.AcquireLock.NotAllowed'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'This method can not be used when autoExtend is enabled.'`
 
 #### Overrides
 

@@ -9,6 +9,6 @@
 
 import { ICallback } from '../../../src/async/index.js';
 
-export default function myWorkerCallable(args: string, cb: ICallback<string>) {
+export default function myCallableWorker(args: string, cb: ICallback<string>) {
   setTimeout(() => cb(null, args), 5000);
 }

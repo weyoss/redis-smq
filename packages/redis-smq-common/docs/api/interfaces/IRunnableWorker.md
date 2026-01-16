@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IWorkerRunnable
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IRunnableWorker
 
-# Interface: IWorkerRunnable
+# Interface: IRunnableWorker
 
 ## Methods
 
@@ -18,7 +18,7 @@
 
 `void`
 
-***
+---
 
 ### shutdown()
 

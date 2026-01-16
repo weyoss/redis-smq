@@ -6,22 +6,17 @@
 
 - [`RedisSMQError`](RedisSMQError.md)
 
-## Extended by
-
-- [`CallbackEmptyReplyError`](CallbackEmptyReplyError.md)
-- [`CallbackInvalidReplyError`](CallbackInvalidReplyError.md)
-
 ## Constructors
 
 ### Constructor
 
-> **new PanicError**(`message?`): `PanicError`
+> **new PanicError**(...`args`): `PanicError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 
@@ -41,7 +36,7 @@
 
 [`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
-***
+---
 
 ### message
 
@@ -51,7 +46,7 @@
 
 [`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
-***
+---
 
 ### stack?
 
@@ -61,7 +56,7 @@
 
 [`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -97,7 +92,79 @@ not capture any frames.
 
 [`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
 
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
+
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.Panic'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Fatal error. The system may be in an inconsistent state.'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
+
+---
 
 ### captureStackTrace()
 
@@ -110,7 +177,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -165,7 +232,7 @@ a();
 
 [`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
-***
+---
 
 ### isError()
 
@@ -187,7 +254,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 [`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
-***
+---
 
 ### prepareStackTrace()
 

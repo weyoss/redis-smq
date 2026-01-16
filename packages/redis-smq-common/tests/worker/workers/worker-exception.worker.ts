@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export default function myWorkerCallable() {
+export default function myCallableWorker() {
   throw new Error('THROW_ERROR');
 }

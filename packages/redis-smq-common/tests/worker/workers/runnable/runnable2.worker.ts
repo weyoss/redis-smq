@@ -8,9 +8,9 @@
  */
 
 import { ICallback } from '../../../../src/async/index.js';
-import { IWorkerRunnable } from '../../../../src/worker/index.js';
+import { IRunnableWorker } from '../../../../src/worker/index.js';
 
-export default function myWorkerRunnable(): IWorkerRunnable {
+export default function myRunnableWorker(): IRunnableWorker {
   let interval: NodeJS.Timeout | null = null;
   return {
     run(cb: ICallback<void>) {

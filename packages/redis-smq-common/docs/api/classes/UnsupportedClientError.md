@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerAlreadyDownError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / UnsupportedClientError
 
-# Class: WorkerAlreadyDownError
+# Class: UnsupportedClientError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new WorkerAlreadyDownError**(...`args`): `WorkerAlreadyDownError`
+> **new UnsupportedClientError**(...`args`): `UnsupportedClientError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`WorkerAlreadyDownError`
+`UnsupportedClientError`
 
 #### Inherited from
 
@@ -130,11 +130,19 @@ not capture any frames.
 
 ### getProps()
 
-> **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+> **getProps**(): `object`
 
 #### Returns
 
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisClient.UnsupportedClient'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Unsupported Redis client type. Supported types are: REDIS, IOREDIS.'`
 
 #### Overrides
 

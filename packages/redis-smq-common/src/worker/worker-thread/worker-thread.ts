@@ -20,21 +20,21 @@ import {
   EWorkerThreadChildExitCode,
   EWorkerType,
   IWorkerThreadData,
-  TWorkerFunction,
-  TWorkerRunnableClass,
-  TWorkerRunnableFunctionFactory,
+  TWorkerDefinition,
+  TRunnableWorkerClass,
+  TRunnableWorkerFactory,
 } from '../types/index.js';
-import { handleWorkerCallable } from './worker-thread-callable.js';
+import { handleCallableWorker } from './callable-worker-thread.js';
 import { exit } from './worker-thread-message.js';
-import { handleWorkerRunnable } from './worker-thread-runnable.js';
+import { handleRunnableWorker } from './runnable-worker-thread.js';
 
-function isWorkerFunction(Worker: unknown): Worker is TWorkerFunction {
+function isWorkerFunction(Worker: unknown): Worker is TWorkerDefinition {
   return typeof Worker === 'function';
 }
 
 function importWorkerInstance(
   filename: string,
-  cb: (worker: TWorkerFunction) => void,
+  cb: (worker: TWorkerDefinition) => void,
 ): void {
   if (!['.js', '.cjs'].includes(extname(filename))) {
     exit(EWorkerThreadChildExitCode.FILE_EXTENSION_ERROR);
@@ -63,9 +63,9 @@ function importWorkerInstance(
 }
 
 function isRunnableFunctionFactory(
-  worker: TWorkerFunction,
+  worker: TWorkerDefinition,
   type: EWorkerType,
-): worker is TWorkerRunnableFunctionFactory | TWorkerRunnableClass {
+): worker is TRunnableWorkerFactory | TRunnableWorkerClass {
   return type === EWorkerType.RUNNABLE;
 }
 
@@ -83,8 +83,8 @@ if (!isMainThread && parentPort) {
     const messagePort: MessagePort = parentPort;
     importWorkerInstance(filename, (worker) => {
       if (isRunnableFunctionFactory(worker, type))
-        handleWorkerRunnable(worker, messagePort, initialPayload);
-      else handleWorkerCallable(worker, messagePort);
+        handleRunnableWorker(worker, messagePort, initialPayload);
+      else handleCallableWorker(worker, messagePort);
     });
   }
   process.on('uncaughtException', (err) => {

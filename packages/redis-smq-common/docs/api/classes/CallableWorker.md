@@ -1,10 +1,10 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerCallable
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / CallableWorker
 
-# Class: WorkerCallable\<Payload, Reply\>
+# Class: CallableWorker\<Payload, Reply\>
 
 ## Extends
 
-- `Worker`\<`Payload`, `Reply`\>
+- `Worker`\<`Reply`\>
 
 ## Type Parameters
 
@@ -18,13 +18,13 @@
 
 ## Implements
 
-- [`IWorkerCallable`](../interfaces/IWorkerCallable.md)\<`Payload`, `Reply`\>
+- [`ICallableWorker`](../interfaces/ICallableWorker.md)\<`Payload`, `Reply`\>
 
 ## Constructors
 
 ### Constructor
 
-> **new WorkerCallable**\<`Payload`, `Reply`\>(`workerFilename`, `logger?`): `WorkerCallable`\<`Payload`, `Reply`\>
+> **new CallableWorker**\<`Payload`, `Reply`\>(`workerFilename`, `logger`): `CallableWorker`\<`Payload`, `Reply`\>
 
 #### Parameters
 
@@ -32,17 +32,17 @@
 
 `string`
 
-##### logger?
+##### logger
 
 [`ILogger`](../interfaces/ILogger.md)
 
 #### Returns
 
-`WorkerCallable`\<`Payload`, `Reply`\>
+`CallableWorker`\<`Payload`, `Reply`\>
 
 #### Overrides
 
-`Worker<Payload, Reply>.constructor`
+`Worker<Reply>.constructor`
 
 ## Methods
 
@@ -66,9 +66,9 @@
 
 #### Implementation of
 
-[`IWorkerCallable`](../interfaces/IWorkerCallable.md).[`call`](../interfaces/IWorkerCallable.md#call)
+[`ICallableWorker`](../interfaces/ICallableWorker.md).[`call`](../interfaces/ICallableWorker.md#call)
 
-***
+---
 
 ### emit()
 
@@ -78,7 +78,7 @@
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -98,25 +98,37 @@
 
 `Worker.emit`
 
-***
+---
 
 ### getId()
 
 > **getId**(): `string`
 
-Gets the worker ID.
+Get worker ID
 
 #### Returns
 
 `string`
 
-The worker ID.
-
 #### Inherited from
 
 `Worker.getId`
 
-***
+---
+
+### getWorkerFilename()
+
+> **getWorkerFilename**(): `string`
+
+#### Returns
+
+`string`
+
+#### Inherited from
+
+`Worker.getWorkerFilename`
+
+---
 
 ### on()
 
@@ -126,7 +138,7 @@ The worker ID.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -146,7 +158,7 @@ The worker ID.
 
 `Worker.on`
 
-***
+---
 
 ### once()
 
@@ -156,7 +168,7 @@ The worker ID.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -176,31 +188,7 @@ The worker ID.
 
 `Worker.once`
 
-***
-
-### postMessage()
-
-> **postMessage**(`message`): `void`
-
-Posts a message to the worker thread.
-
-#### Parameters
-
-##### message
-
-[`TWorkerThreadParentMessage`](../type-aliases/TWorkerThreadParentMessage.md)
-
-The message to post to the worker thread.
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-`Worker.postMessage`
-
-***
+---
 
 ### removeAllListeners()
 
@@ -210,7 +198,7 @@ The message to post to the worker thread.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -226,7 +214,7 @@ The message to post to the worker thread.
 
 `Worker.removeAllListeners`
 
-***
+---
 
 ### removeListener()
 
@@ -236,7 +224,7 @@ The message to post to the worker thread.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -256,21 +244,19 @@ The message to post to the worker thread.
 
 `Worker.removeListener`
 
-***
+---
 
 ### shutdown()
 
 > **shutdown**(`cb`): `void`
 
-Shuts down the worker thread.
+Shutdown worker with proper cleanup
 
 #### Parameters
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
-
-The callback function to call after shutdown.
+[`ICallback`](../interfaces/ICallback.md)
 
 #### Returns
 

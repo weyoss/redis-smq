@@ -1,10 +1,10 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerRunnable
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RunnableWorker
 
-# Class: WorkerRunnable\<InitialPayload\>
+# Class: RunnableWorker\<InitialPayload\>
 
 ## Extends
 
-- `Worker`\<`void`, `void`\>
+- `Worker`\<`void`\>
 
 ## Type Parameters
 
@@ -14,13 +14,13 @@
 
 ## Implements
 
-- [`IWorkerRunnable`](../interfaces/IWorkerRunnable.md)
+- [`IRunnableWorker`](../interfaces/IRunnableWorker.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new WorkerRunnable**\<`InitialPayload`\>(`workerFilename`, `initialPayload?`, `logger?`): `WorkerRunnable`\<`InitialPayload`\>
+> **new RunnableWorker**\<`InitialPayload`\>(`workerFilename`, `initialPayload`, `logger`): `RunnableWorker`\<`InitialPayload`\>
 
 #### Parameters
 
@@ -28,21 +28,21 @@
 
 `string`
 
-##### initialPayload?
+##### initialPayload
 
 `InitialPayload`
 
-##### logger?
+##### logger
 
 [`ILogger`](../interfaces/ILogger.md)
 
 #### Returns
 
-`WorkerRunnable`\<`InitialPayload`\>
+`RunnableWorker`\<`InitialPayload`\>
 
 #### Overrides
 
-`Worker<void, void>.constructor`
+`Worker<void>.constructor`
 
 ## Methods
 
@@ -54,7 +54,7 @@
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -74,25 +74,37 @@
 
 `Worker.emit`
 
-***
+---
 
 ### getId()
 
 > **getId**(): `string`
 
-Gets the worker ID.
+Get worker ID
 
 #### Returns
 
 `string`
 
-The worker ID.
-
 #### Inherited from
 
 `Worker.getId`
 
-***
+---
+
+### getWorkerFilename()
+
+> **getWorkerFilename**(): `string`
+
+#### Returns
+
+`string`
+
+#### Inherited from
+
+`Worker.getWorkerFilename`
+
+---
 
 ### on()
 
@@ -102,7 +114,7 @@ The worker ID.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -122,7 +134,7 @@ The worker ID.
 
 `Worker.on`
 
-***
+---
 
 ### once()
 
@@ -132,7 +144,7 @@ The worker ID.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -152,31 +164,7 @@ The worker ID.
 
 `Worker.once`
 
-***
-
-### postMessage()
-
-> **postMessage**(`message`): `void`
-
-Posts a message to the worker thread.
-
-#### Parameters
-
-##### message
-
-[`TWorkerThreadParentMessage`](../type-aliases/TWorkerThreadParentMessage.md)
-
-The message to post to the worker thread.
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-`Worker.postMessage`
-
-***
+---
 
 ### removeAllListeners()
 
@@ -186,7 +174,7 @@ The message to post to the worker thread.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -202,7 +190,7 @@ The message to post to the worker thread.
 
 `Worker.removeAllListeners`
 
-***
+---
 
 ### removeListener()
 
@@ -212,7 +200,7 @@ The message to post to the worker thread.
 
 ##### E
 
-`E` *extends* keyof `TWorkerEvent`
+`E` _extends_ keyof `TWorkerEvent`
 
 #### Parameters
 
@@ -232,17 +220,20 @@ The message to post to the worker thread.
 
 `Worker.removeListener`
 
-***
+---
 
 ### run()
 
 > **run**(`cb`): `void`
 
+Run the worker in fire-and-forget mode
+No response expected from worker thread
+
 #### Parameters
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 #### Returns
 
@@ -250,23 +241,21 @@ The message to post to the worker thread.
 
 #### Implementation of
 
-[`IWorkerRunnable`](../interfaces/IWorkerRunnable.md).[`run`](../interfaces/IWorkerRunnable.md#run)
+[`IRunnableWorker`](../interfaces/IRunnableWorker.md).[`run`](../interfaces/IRunnableWorker.md#run)
 
-***
+---
 
 ### shutdown()
 
 > **shutdown**(`cb`): `void`
 
-Shuts down the worker thread.
+Shutdown worker with proper cleanup
 
 #### Parameters
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
-
-The callback function to call after shutdown.
+[`ICallback`](../interfaces/ICallback.md)
 
 #### Returns
 
@@ -274,7 +263,7 @@ The callback function to call after shutdown.
 
 #### Implementation of
 
-[`IWorkerRunnable`](../interfaces/IWorkerRunnable.md).[`shutdown`](../interfaces/IWorkerRunnable.md#shutdown)
+[`IRunnableWorker`](../interfaces/IRunnableWorker.md).[`shutdown`](../interfaces/IRunnableWorker.md#shutdown)
 
 #### Overrides
 

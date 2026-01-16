@@ -4,19 +4,19 @@
 
 ## Extends
 
-- [`EventBusError`](EventBusError.md)
+- [`RedisSMQError`](RedisSMQError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new EventBusNotConnectedError**(`message?`): `EventBusNotConnectedError`
+> **new EventBusNotConnectedError**(...`args`): `EventBusNotConnectedError`
 
 #### Parameters
 
-##### message?
+##### args
 
-`string`
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 
@@ -24,7 +24,7 @@
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`constructor`](EventBusError.md#constructor)
+[`RedisSMQError`](RedisSMQError.md).[`constructor`](RedisSMQError.md#constructor)
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`cause`](EventBusError.md#cause)
+[`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`message`](EventBusError.md#message)
+[`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`stack`](EventBusError.md#stack)
+[`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`stackTraceLimit`](EventBusError.md#stacktracelimit)
+[`RedisSMQError`](RedisSMQError.md).[`stackTraceLimit`](RedisSMQError.md#stacktracelimit)
 
 ## Accessors
 
@@ -90,9 +90,73 @@ not capture any frames.
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`name`](EventBusError.md#name)
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
+
+---
+
+### getProps()
+
+> **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +169,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +222,9 @@ a();
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`captureStackTrace`](EventBusError.md#capturestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
-***
+---
 
 ### isError()
 
@@ -180,9 +244,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`isError`](EventBusError.md#iserror)
+[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +272,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`EventBusError`](EventBusError.md).[`prepareStackTrace`](EventBusError.md#preparestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`prepareStackTrace`](RedisSMQError.md#preparestacktrace)

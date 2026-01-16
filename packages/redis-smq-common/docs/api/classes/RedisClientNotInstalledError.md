@@ -1,30 +1,30 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / LockAcquireError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RedisClientNotInstalledError
 
-# Class: LockAcquireError
+# Class: RedisClientNotInstalledError
 
 ## Extends
 
-- [`LockError`](LockError.md)
+- [`RedisSMQError`](RedisSMQError.md)\<\{ `clientId`: `string`; \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new LockAcquireError**(`message`): `LockAcquireError`
+> **new RedisClientNotInstalledError**(...`args`): `RedisClientNotInstalledError`
 
 #### Parameters
 
-##### message
+##### args
 
-`string` = `...`
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<\{ `clientId`: `string`; \}\>\]
 
 #### Returns
 
-`LockAcquireError`
+`RedisClientNotInstalledError`
 
-#### Overrides
+#### Inherited from
 
-[`LockError`](LockError.md).[`constructor`](LockError.md#constructor)
+[`RedisSMQError`](RedisSMQError.md).[`constructor`](RedisSMQError.md#constructor)
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`cause`](LockError.md#cause)
+[`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`message`](LockError.md#message)
+[`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`stack`](LockError.md#stack)
+[`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`stackTraceLimit`](LockError.md#stacktracelimit)
+[`RedisSMQError`](RedisSMQError.md).[`stackTraceLimit`](RedisSMQError.md#stacktracelimit)
 
 ## Accessors
 
@@ -90,9 +90,81 @@ not capture any frames.
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`name`](LockError.md#name)
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): \{ `clientId`: `string`; \} \| `null`
+
+#### Returns
+
+\{ `clientId`: `string`; \} \| `null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisClient.ClientNotInstalled'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'REDIS client is not available. Please install your selected client first.'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +177,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +230,9 @@ a();
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`captureStackTrace`](LockError.md#capturestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
-***
+---
 
 ### isError()
 
@@ -180,9 +252,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`isError`](LockError.md#iserror)
+[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +280,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`LockError`](LockError.md).[`prepareStackTrace`](LockError.md#preparestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`prepareStackTrace`](RedisSMQError.md#preparestacktrace)

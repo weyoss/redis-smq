@@ -15,7 +15,7 @@ import {
 } from '../../src/worker/index.js';
 import { mockWorkerThread } from './mock-worker-thread.js';
 
-it('WorkerCallable: case 8', async () => {
+it('CallableWorker: case 8', async () => {
   const { parentPort, mockExit } = await mockWorkerThread('');
 
   await bluebird.delay(5000);

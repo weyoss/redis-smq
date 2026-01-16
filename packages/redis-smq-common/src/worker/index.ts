@@ -9,6 +9,6 @@
 
 export * from './types/index.js';
 export * from './errors/index.js';
-export * from './worker-callable.js';
-export * from './worker-runnable.js';
-export * from './worker-resource-group.js';
+export * from './callable-worker.js';
+export * from './runnable-worker.js';
+export * from './worker-cluster.js';

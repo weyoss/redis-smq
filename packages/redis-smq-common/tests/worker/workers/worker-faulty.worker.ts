@@ -7,4 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export const myWorkerCallable = 6;
+export const myCallableWorker = 6;

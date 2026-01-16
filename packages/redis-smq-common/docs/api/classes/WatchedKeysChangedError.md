@@ -4,27 +4,27 @@
 
 ## Extends
 
-- [`RedisClientError`](RedisClientError.md)
+- [`RedisSMQError`](RedisSMQError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new WatchedKeysChangedError**(`msg`): `WatchedKeysChangedError`
+> **new WatchedKeysChangedError**(...`args`): `WatchedKeysChangedError`
 
 #### Parameters
 
-##### msg
+##### args
 
-`string` = `'One (or more) of the watched keys has been changed'`
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 
 `WatchedKeysChangedError`
 
-#### Overrides
+#### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`constructor`](RedisClientError.md#constructor)
+[`RedisSMQError`](RedisSMQError.md).[`constructor`](RedisSMQError.md#constructor)
 
 ## Properties
 
@@ -34,9 +34,9 @@
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`cause`](RedisClientError.md#cause)
+[`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
-***
+---
 
 ### message
 
@@ -44,9 +44,9 @@
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`message`](RedisClientError.md#message)
+[`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
-***
+---
 
 ### stack?
 
@@ -54,9 +54,9 @@
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`stack`](RedisClientError.md#stack)
+[`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -74,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`stackTraceLimit`](RedisClientError.md#stacktracelimit)
+[`RedisSMQError`](RedisSMQError.md).[`stackTraceLimit`](RedisSMQError.md#stacktracelimit)
 
 ## Accessors
 
@@ -90,9 +90,81 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`name`](RedisClientError.md#name)
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+
+---
+
+### props
+
+#### Get Signature
+
+> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+##### Returns
+
+> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+###### Returns
+
+[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
 
 ## Methods
+
+### getMetadata()
+
+> **getMetadata**(): `null`
+
+#### Returns
+
+`null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
+
+---
+
+### getProps()
+
+> **getProps**(): `object`
+
+#### Returns
+
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisClient.WatchedKeysChanged'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Redis transaction failed. One or more watched keys were modified by another client.'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
+
+---
+
+### toJSON()
+
+> **toJSON**(): `Record`\<`string`, `unknown`\>
+
+Provides a stable, JSON-friendly representation for logs or network transport.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
+
+---
 
 ### captureStackTrace()
 
@@ -105,7 +177,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -158,9 +230,9 @@ a();
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`captureStackTrace`](RedisClientError.md#capturestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
-***
+---
 
 ### isError()
 
@@ -180,9 +252,9 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`isError`](RedisClientError.md#iserror)
+[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
-***
+---
 
 ### prepareStackTrace()
 
@@ -208,4 +280,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`RedisClientError`](RedisClientError.md).[`prepareStackTrace`](RedisClientError.md#preparestacktrace)
+[`RedisSMQError`](RedisSMQError.md).[`prepareStackTrace`](RedisSMQError.md#preparestacktrace)

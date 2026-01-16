@@ -17,14 +17,14 @@ import {
 import {
   EWorkerThreadParentMessage,
   EWorkerType,
-  IWorkerRunnable,
+  IRunnableWorker,
   TWorkerThreadParentMessage,
 } from './types/index.js';
 import { Worker } from './worker.js';
 
-export class WorkerRunnable<InitialPayload>
+export class RunnableWorker<InitialPayload>
   extends Worker<void>
-  implements IWorkerRunnable
+  implements IRunnableWorker
 {
   protected readonly type: EWorkerType = EWorkerType.RUNNABLE;
   protected readonly powerSwitch;
@@ -36,7 +36,7 @@ export class WorkerRunnable<InitialPayload>
   ) {
     super(workerFilename, initialPayload, logger);
     this.powerSwitch = new PowerSwitch();
-    this.logger.info(`WorkerRunnable instance created for ${workerFilename}`);
+    this.logger.info(`RunnableWorker instance created for ${workerFilename}`);
   }
 
   /**

@@ -19,7 +19,7 @@ logger.info('Hello world');
 const logger = new ConsoleLogger({
   logLevel: EConsoleLoggerLevel.DEBUG,
   colorize: true,
-  includeTimestamp: true
+  includeTimestamp: true,
 });
 
 // With namespaces
@@ -71,7 +71,7 @@ const logger = new ConsoleLogger();
 const logger = new ConsoleLogger({
   logLevel: EConsoleLoggerLevel.WARN,
   colorize: false,
-  includeTimestamp: true
+  includeTimestamp: true,
 });
 
 // Logger with namespaces
@@ -80,6 +80,45 @@ const logger2 = new ConsoleLogger({}, 'database');
 ```
 
 ## Methods
+
+### createLogger()
+
+> **createLogger**(`ns`): [`ILogger`](../interfaces/ILogger.md)
+
+Creates a new child logger instance with an additional namespace.
+
+The new logger inherits the configuration of the parent logger but appends
+the given namespace to its namespace hierarchy. This is useful for creating
+more specific loggers for different parts of an application.
+
+#### Parameters
+
+##### ns
+
+`string`
+
+The namespace string to append to the current logger's namespaces.
+
+#### Returns
+
+[`ILogger`](../interfaces/ILogger.md)
+
+A new `ILogger` instance with the extended namespace.
+
+#### Example
+
+```typescript
+const appLogger = new ConsoleLogger({}, 'app');
+const serviceLogger = appLogger.createLogger('service');
+serviceLogger.info('This message is from the service.');
+// Output: [timestamp] INFO (app / service): This message is from the service.
+```
+
+#### Implementation of
+
+[`ILogger`](../interfaces/ILogger.md).[`createLogger`](../interfaces/ILogger.md#createlogger)
+
+---
 
 ### debug()
 
@@ -119,7 +158,7 @@ logger.debug({ complex: 'object', data: [1, 2, 3] });
 
 [`ILogger`](../interfaces/ILogger.md).[`debug`](../interfaces/ILogger.md#debug)
 
-***
+---
 
 ### error()
 
@@ -158,7 +197,7 @@ logger.error('Critical system failure', { code: 500, details: errorDetails });
 
 [`ILogger`](../interfaces/ILogger.md).[`error`](../interfaces/ILogger.md#error)
 
-***
+---
 
 ### getLogLevel()
 
@@ -180,7 +219,11 @@ const logger = new ConsoleLogger({ logLevel: EConsoleLoggerLevel.WARN });
 console.log(logger.getLogLevel()); // 2 (EConsoleLoggerLevel.WARN)
 ```
 
-***
+#### Implementation of
+
+[`ILogger`](../interfaces/ILogger.md).[`getLogLevel`](../interfaces/ILogger.md#getloglevel)
+
+---
 
 ### getNamespaces()
 
@@ -207,7 +250,11 @@ namespaces.push('modified');
 console.log(logger.getNamespaces()); // Still ['app', 'service']
 ```
 
-***
+#### Implementation of
+
+[`ILogger`](../interfaces/ILogger.md).[`getNamespaces`](../interfaces/ILogger.md#getnamespaces)
+
+---
 
 ### info()
 
@@ -239,14 +286,17 @@ Additional parameters to provide context or supplementary information
 ```typescript
 logger.info('Application started successfully');
 logger.info('User logged in:', { userId: 123, username: 'john_doe' });
-logger.info('Processing completed', { recordsProcessed: 1500, duration: '2.3s' });
+logger.info('Processing completed', {
+  recordsProcessed: 1500,
+  duration: '2.3s',
+});
 ```
 
 #### Implementation of
 
 [`ILogger`](../interfaces/ILogger.md).[`info`](../interfaces/ILogger.md#info)
 
-***
+---
 
 ### warn()
 
@@ -278,8 +328,13 @@ Additional parameters to provide context about the warning condition
 
 ```typescript
 logger.warn('API rate limit approaching');
-logger.warn('Deprecated method used:', { method: 'oldFunction', alternative: 'newFunction' });
-logger.warn('Configuration missing, using defaults', { missingKeys: ['timeout', 'retries'] });
+logger.warn('Deprecated method used:', {
+  method: 'oldFunction',
+  alternative: 'newFunction',
+});
+logger.warn('Configuration missing, using defaults', {
+  missingKeys: ['timeout', 'retries'],
+});
 ```
 
 #### Implementation of
