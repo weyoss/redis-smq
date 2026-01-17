@@ -130,14 +130,14 @@ consumer.run((err) => {
 
 ## 📦 Packages
 
-| Package | Description |
-|---------|-------------|
-| **[redis-smq](packages/redis-smq/README.md)** | Core message queue library |
-| **[redis-smq-common](packages/redis-smq-common/README.md)** | Shared utilities |
-| **[redis-smq-rest-api](packages/redis-smq-rest-api/README.md)** | REST API with Swagger UI |
-| **[redis-smq-web-ui](packages/redis-smq-web-ui/README.md)** | Web dashboard |
-| **[redis-smq-web-server](packages/redis-smq-web-server/README.md)** | Web server for UI & API |
-| **[redis-smq-benchmarks](packages/redis-smq-benchmarks/README.md)** | Performance testing |
+| Package                                                             | Description                |
+|---------------------------------------------------------------------|----------------------------|
+| **[redis-smq](packages/redis-smq/README.md)**                       | Core message queue library |
+| **[redis-smq-common](packages/redis-smq-common/README.md)**         | Shared utilities           |
+| **[redis-smq-rest-api](packages/redis-smq-rest-api/README.md)**     | REST API with Swagger UI   |
+| **[redis-smq-web-ui](packages/redis-smq-web-ui/README.md)**         | Web dashboard              |
+| **[redis-smq-web-server](packages/redis-smq-web-server/README.md)** | Web server for UI & API    |
+| **[redis-smq-benchmarks](packages/redis-smq-benchmarks/README.md)** | Performance testing        |
 
 > 🔗 **Version Compatibility:** Always use matching versions. See [version compatibility guide](packages/redis-smq/docs/version-compatibility.md).
 
