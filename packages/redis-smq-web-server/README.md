@@ -3,7 +3,7 @@
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-web-server/next?style=flat-square&label=redis-smq-web-server%40next)](https://github.com/weyoss/redis-smq/releases)
 [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-web-server&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-web-server)
 
-> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server.
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server).
 
 A lightweight server that brings the RedisSMQ management ecosystem to life. It serves the official Web UI and provides
 the REST API through two flexible modes of operation:
