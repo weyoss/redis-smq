@@ -1,6 +1,6 @@
 # RedisSMQ Web UI
 
-> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui.
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui).
 
 A Single Page Application for monitoring and managing RedisSMQ. Inspect queues and messages, review consumers, and perform common actions — with an integrated, type-safe OpenAPI client.
 

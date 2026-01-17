@@ -4,128 +4,76 @@
 [![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
 [![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
 
-> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master.
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master).
 
-A high-performance, reliable, and scalable message queue for Node.js.
+A high-performance Redis message queue for Node.js — simple to use, built for scale.
 
-**Key Features**
+## ✨ Features
 
-- 🚀 [High-performance message processing](packages/redis-smq/docs/performance.md)
-- 🔄 [Flexible producer/consumer model with multi-queue producers and consumers](packages/redis-smq/docs/consuming-messages.md)
-- 🔀 [Exchange types (Direct, Topic, Fanout) for publishing to one or multiple queues](packages/redis-smq/docs/message-exchanges.md)
-- 📬 [Two delivery models (Point-to-Point and Pub/Sub) with reliable delivery and configurable retry modes](packages/redis-smq/docs/queue-delivery-models.md)
-- 📊 [Three queuing strategies (FIFO, LIFO, Priority Queues)](packages/redis-smq/docs/queues.md)
-- 🧵 [Message handler worker threads for sandboxing and performance](packages/redis-smq/docs/message-handler-worker-threads.md)
-- ️️️️⏱️ [Message expiration and consumption timeout](packages/redis-smq/docs/messages.md)
-- 🚦 [Queue rate limiting for controlling message consumption rates](packages/redis-smq/docs/queue-rate-limiting.md)
-- ️️️🕰️ [Built-in scheduler for delayed and repeating messages](packages/redis-smq/docs/scheduling-messages.md)
-- 🌐 [RESTful API](packages/redis-smq-rest-api/README.md) and [Web UI](packages/redis-smq-web-ui/README.md)
-- 📦 [ESM and CJS support](packages/redis-smq/docs/esm-cjs-modules.md)
+- 📬 [Reliable delivery](packages/redis-smq/docs/queue-delivery-models.md) with retry mechanisms
+- 📊 [Multiple queue strategies](packages/redis-smq/docs/queues.md): FIFO, LIFO, and Priority Queues
+- 🔀 [Exchange patterns](packages/redis-smq/docs/message-exchanges.md): Direct, Topic, and Fanout routing
+- 🚦 [Rate limiting](packages/redis-smq/docs/queue-rate-limiting.md) for controlled message consumption
+- 🕰️ [Built-in scheduler](packages/redis-smq/docs/scheduling-messages.md) for delayed and repeating messages
+- 🚀 [High-throughput processing](packages/redis-smq/docs/performance.md)
+- 🧵 [Worker threads](packages/redis-smq/docs/message-handler-worker-threads.md) for sandboxing and performance
+- ⏱️ [Message expiration](packages/redis-smq/docs/messages.md) and consumption timeouts
+- 🔄 [Multi-queue](packages/redis-smq/docs/consuming-messages.md) producers and consumers
+- 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI v3 and Swagger UI
+- 📊 [Web UI](packages/redis-smq-web-ui/README.md) for real-time monitoring
+- 📦 [ESM & CJS](packages/redis-smq/docs/esm-cjs-modules.md) module support
 
-**Use Cases**
+## 🎯 Use Cases
 
-- Managing background tasks (emails, data processing)
-- Scheduling and retrying tasks
-- Communication between services in microservices architectures
-- Handling real-time events in gaming, IoT, or analytics
+- **Background jobs**: emails, reports, data processing
+- **Task scheduling** with automatic retries
+- **Microservices communication**
+- **Real-time event processing** for gaming, IoT, analytics
 
-**Requirements**
+## 📋 Requirements
 
 - Node.js 20+
-- Redis server (tested with Redis 7.x)
-- One Redis client: ioredis or @redis/client
+- Redis 4+
+- Choose one Redis client: [`ioredis`](https://github.com/redis/ioredis) or [`@redis/client`](https://github.com/redis/node-redis)
 
-**Installation**
+## 🚀 Quick Start
 
-Install core packages:
-
-```bash
-npm i redis-smq@next redis-smq-common@next --save
-```
-
-> Upgrading to v9? This is a major release with breaking changes. Please read the [v9.0.0 Release Notes](release-notes/release-v9.md) for details.
-
-Install a Redis client (choose one):
+### 1. Install
 
 ```bash
+# Core packages
+npm install redis-smq@next redis-smq-common@next --save
+
+# Pick a Redis client
 npm install ioredis --save
-# or
+# OR
 npm install @redis/client --save
 ```
 
-**Ecosystem**
+> ⚠️ **v9 Breaking Changes:** If upgrading, read the [v9.0.0 Release Notes](release-notes/release-v9.md).
 
-| Package                                                                                           | Description                                          |
-|---------------------------------------------------------------------------------------------------| ---------------------------------------------------- |
-| [packages/redis-smq/README.md](packages/redis-smq/README.md)                       | Core message queue for Node.js                       |
-| [packages/redis-smq-common/README.md](packages/redis-smq-common/README.md)         | Shared components and utilities                      |
-| [packages/redis-smq-rest-api/README.md](packages/redis-smq-rest-api/README.md)     | REST API with OpenAPI v3 and Swagger UI              |
-| [packages/redis-smq-web-server/README.md](packages/redis-smq-web-server/README.md) | Web server to host the UI and in-process/proxied API |
-| [packages/redis-smq-web-ui/README.md](packages/redis-smq-web-ui/README.md)         | SPA for monitoring and managing RedisSMQ             |
-| [packages/redis-smq-benchmarks/README.md](packages/redis-smq-benchmarks/README.md) | Benchmarking tool for RedisSMQ            |
-
-
-**Version compatibility**
-
-Always install matching versions of RedisSMQ packages. See [version-compatibility.md](packages/redis-smq/docs/version-compatibility.md).
-
-**Quick Start**
-
-RedisSMQ must be initialized once per process before creating any producers, consumers, or managers.
-
-_1. Initialize_
-
-Option A: Initialize with Redis connection (recommended for most)
+### 2. Initialize (once per process)
 
 ```javascript
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
-// Initialize once with Redis connection details
+// Simple initialization
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
+    options: { host: '127.0.0.1', port: 6379 }
   },
   (err) => {
-    if (err) console.error('Failed to initialize RedisSMQ:', err);
-  },
+    if (err) console.error('RedisSMQ init failed:', err);
+  }
 );
 ```
 
-Option B: Initialize with a full RedisSMQ configuration (persisted in Redis)
-
-Use when you want configuration persisted and shared across processes. On first run, the config is saved. Subsequent processes can initialize normally (using RedisSMQ.initialize).
+### 3. Create a Queue
 
 ```javascript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
-
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'my_project_name',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: '127.0.0.1', port: 6379, db: 0 },
-    },
-    logger: { enabled: true, options: { logLevel: EConsoleLoggerLevel.INFO } },
-    messageAudit: false,
-    eventBus: { enabled: false },
-  },
-  (err) => {
-    if (err) console.error('Failed to initialize with config:', err);
-  },
-);
-```
-
-_2. Create a queue_
-
-```javascript
-import {
-  RedisSMQ,
-  EQueueType,
-  EQueueDeliveryModel,
-} from 'redis-smq';
+import { RedisSMQ, EQueueType, EQueueDeliveryModel } from 'redis-smq';
 
 const queueManager = RedisSMQ.createQueueManager();
 queueManager.save(
@@ -133,59 +81,76 @@ queueManager.save(
   EQueueType.LIFO_QUEUE,
   EQueueDeliveryModel.POINT_TO_POINT,
   (err) => {
-    if (err) return console.error('Queue creation failed:', err);
-    console.log('Queue created');
-  },
+    if (err) console.error('Queue creation failed:', err);
+    else console.log('✅ Queue created');
+  }
 );
 ```
 
-_3. Produce a message_
+### 4. Produce a Message
 
 ```javascript
 import { RedisSMQ, ProducibleMessage } from 'redis-smq';
 
 const producer = RedisSMQ.createProducer();
 producer.run((err) => {
-  if (err) return console.error('Producer start failed', err);
+  if (err) return console.error('Producer failed:', err);
+  
   const msg = new ProducibleMessage()
     .setQueue('my_queue')
     .setBody('Hello World!');
+  
   producer.produce(msg, (err, ids) => {
-    if (err) return console.error('Produce failed:', err);
-    console.log(`Produced message IDs: ${ids.join(', ')}`);
+    if (err) console.error('Send failed:', err);
+    else console.log(`📨 Sent message: ${ids.join(', ')}`);
   });
 });
 ```
 
-_4. And consume It_
+### 5. Consume Messages
 
 ```javascript
 import { RedisSMQ } from 'redis-smq';
 
 const consumer = RedisSMQ.createConsumer();
 consumer.run((err) => {
-  if (err) return console.error('Consumer start failed:', err);
+  if (err) return console.error('Consumer failed:', err);
+  
   const handler = (message, done) => {
-    console.log('Received:', message.body);
+    console.log('📥 Received:', message.body);
     done(); // Acknowledge
   };
+  
   consumer.consume('my_queue', handler, (err) => {
-    if (err) return console.error('Consume my_queue failed:', err);
-    console.log('Consuming my_queue...');
+    if (err) console.error('Consume failed:', err);
+    else console.log('👂 Listening on my_queue...');
   });
 });
 ```
 
-**Docs**
+## 📦 Packages
 
-- Full documentation: [packages/redis-smq/docs/README.md](packages/redis-smq/docs/README.md)
-- REST API: [packages/redis-smq-rest-api/README.md](packages/redis-smq-rest-api/README.md)
-- Web UI: [packages/redis-smq-web-ui/README.md](packages/redis-smq-web-ui/README.md)
+| Package | Description |
+|---------|-------------|
+| **[redis-smq](packages/redis-smq/README.md)** | Core message queue library |
+| **[redis-smq-common](packages/redis-smq-common/README.md)** | Shared utilities |
+| **[redis-smq-rest-api](packages/redis-smq-rest-api/README.md)** | REST API with Swagger UI |
+| **[redis-smq-web-ui](packages/redis-smq-web-ui/README.md)** | Web dashboard |
+| **[redis-smq-web-server](packages/redis-smq-web-server/README.md)** | Web server for UI & API |
+| **[redis-smq-benchmarks](packages/redis-smq-benchmarks/README.md)** | Performance testing |
 
-**Contributing**
+> 🔗 **Version Compatibility:** Always use matching versions. See [version compatibility guide](packages/redis-smq/docs/version-compatibility.md).
 
-We welcome contributions. Please read [CONTRIBUTING.md](CONTRIBUTING.md).
+## 📚 Documentation
 
-**License**
+- **[Full Documentation](packages/redis-smq/docs/README.md)** - Complete API reference and guides
+- **[REST API](packages/redis-smq-rest-api/README.md)** - API endpoints and usage
+- **[Web UI](packages/redis-smq-web-ui/README.md)** - Dashboard setup and features
+
+## 🤝 Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
 
 RedisSMQ is released under the [MIT License](LICENSE).

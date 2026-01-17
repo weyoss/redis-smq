@@ -3,7 +3,7 @@
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-rest-api/next?style=flat-square&label=redis-smq-rest-api%40next)](https://github.com/weyoss/redis-smq/releases)
 [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api)
 
-> 💡 You are on the "next" branch, featuring the latest updates and upcoming features. For stable releases, please refer to the "master" branch. See https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api.
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api).
 
 RedisSMQ REST API provides an HTTP interface enabling any web-capable application to interact with the RedisSMQ message
 queue using a RESTful API.
