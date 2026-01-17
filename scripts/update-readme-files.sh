@@ -72,8 +72,6 @@ update_readme() {
   local build_badge=""
   local codeql_badge=""
   local codecov_badge=""
-  local install_cmd=""
-  local docs_prefix=""
   local tag_suffix=""
 
   if $is_next; then
@@ -89,14 +87,12 @@ update_readme() {
 EOF
 )
       npm_badge='[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/'"$owner_repo"'/releases)'
-      install_cmd='npm i redis-smq@next redis-smq-common@next --save'
     else
       note=$(cat <<EOF
 > 💡 **Note:** You are on the stable \`master\` branch. For the latest features (including breaking changes), check the [\`next\` branch](https://github.com/weyoss/redis-smq/tree/next).
 EOF
 )
       npm_badge='[![Stable](https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=redis-smq%40latest)](https://github.com/'"$owner_repo"'/releases/latest)'
-      install_cmd='npm i redis-smq redis-smq-common --save'
     fi
     build_badge='[![Build ('"$branch"')](https://img.shields.io/github/actions/workflow/status/'"$owner_repo"'/tests.yml?branch='"$branch"'&style=flat-square)](https://github.com/'"$owner_repo"'/actions/workflows/tests.yml?query=branch%3A'"$branch"')'
     codeql_badge='[![Code Quality ('"$branch"')](https://img.shields.io/github/actions/workflow/status/'"$owner_repo"'/codeql.yml?branch='"$branch"'&style=flat-square&label=quality)](https://github.com/'"$owner_repo"'/actions/workflows/codeql.yml?query=branch%3A'"$branch"')'
@@ -115,7 +111,6 @@ EOF
       npm_badge="[![Stable](https://img.shields.io/npm/v/$package_name/latest?style=flat-square&label=$package_name%40latest)](https://github.com/$owner_repo/releases/latest)"
     fi
     codecov_badge="[![Code Coverage ($branch)](https://img.shields.io/codecov/c/github/$owner_repo/$branch?flag=$package_name&style=flat-square)](https://app.codecov.io/github/$owner_repo/tree/$branch/packages/$package_name)"
-    docs_prefix="../../" # Adjust relative links from package dir
   fi
 
   # --- README Updating ---
@@ -128,10 +123,8 @@ EOF
   content="${content//__BUILD_BADGE__/$build_badge}"
   content="${content//__CODEQL_BADGE__/$codeql_badge}"
   content="${content//__CODECOV_BADGE__/$codecov_badge}"
-  content="${content//__INSTALL_CMD__/$install_cmd}"
   content="${content//__BRANCH_NAME__/$branch}"
   content="${content//__TAG_SUFFIX__/$tag_suffix}"
-  content="${content//__DOCS_PREFIX__/$docs_prefix}"
 
   # Write the final content back to the output file.
   printf '%s' "$content" > "$output_file"
