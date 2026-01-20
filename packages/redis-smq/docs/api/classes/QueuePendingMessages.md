@@ -18,6 +18,34 @@
 
 ## Methods
 
+### cancelPurge()
+
+> **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`cancelPurge`](../interfaces/IMessageBrowser.md#cancelpurge)
+
+---
+
 ### countMessages()
 
 > **countMessages**(`queue`, `cb`): `void`
@@ -39,6 +67,38 @@
 #### Implementation of
 
 [`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`countMessages`](../interfaces/IMessageBrowser.md#countmessages)
+
+---
+
+### getMessageIds()
+
+> **getMessageIds**(`queue`, `page`, `pageSize`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### page
+
+`number`
+
+##### pageSize
+
+`number`
+
+##### cb
+
+`ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<`string`\>\>
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`getMessageIds`](../interfaces/IMessageBrowser.md#getmessageids)
 
 ---
 
@@ -86,7 +146,7 @@
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`\<`string`\>
 
 #### Returns
 

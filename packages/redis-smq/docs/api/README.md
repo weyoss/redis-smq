@@ -59,7 +59,6 @@
 - [IMessageParams](interfaces/IMessageParams.md)
 - [IMessageStateTransferable](interfaces/IMessageStateTransferable.md)
 - [IMessageTransferable](interfaces/IMessageTransferable.md)
-- [IQueueConsumerGroupParams](interfaces/IQueueConsumerGroupParams.md)
 - [IQueueGroupConsumersPendingCount](interfaces/IQueueGroupConsumersPendingCount.md)
 - [IQueueMessagesCount](interfaces/IQueueMessagesCount.md)
 - [IQueueParams](interfaces/IQueueParams.md)
