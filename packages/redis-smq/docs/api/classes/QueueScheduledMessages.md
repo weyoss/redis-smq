@@ -10,17 +10,51 @@
 
 ### Constructor
 
-> **new QueueScheduledMessages**(): `QueueScheduledMessages`
+> **new QueueScheduledMessages**(`logger?`): `QueueScheduledMessages`
+
+#### Parameters
+
+##### logger?
+
+`ILogger`
 
 #### Returns
 
 `QueueScheduledMessages`
 
-#### Overrides
+#### Inherited from
 
 `MessageBrowserAbstract.constructor`
 
 ## Methods
+
+### cancelPurge()
+
+> **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`MessageBrowserAbstract.cancelPurge`
+
+---
 
 ### countMessages()
 
@@ -65,6 +99,48 @@ QueueNotFoundError
 #### Inherited from
 
 `MessageBrowserAbstract.countMessages`
+
+---
+
+### getMessageIds()
+
+> **getMessageIds**(`queue`, `page`, `pageSize`, `cb`): `void`
+
+Retrieves message IDs for a specific page.
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+Parsed queue parameters
+
+##### page
+
+`number`
+
+Page number
+
+##### pageSize
+
+`number`
+
+Number of items per page
+
+##### cb
+
+`ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<`string`\>\>
+
+Callback returning an IQueueMessagesPage of message IDs
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`MessageBrowserAbstract.getMessageIds`
 
 ---
 
@@ -151,11 +227,11 @@ or queue consumer group parameters.
 
 ##### cb
 
-`ICallback`
+`ICallback`\<`string`\>
 
 Callback function that will be invoked when the operation completes.
 If an error occurs, the first parameter will contain the Error object.
-Otherwise, the first parameter will be null/undefined.
+Otherwise, the first parameter will be the ID of the job created for purging queue messages.
 
 #### Returns
 

@@ -4,6 +4,30 @@
 
 ## Methods
 
+### cancelPurge()
+
+> **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`
+
+#### Returns
+
+`void`
+
+---
+
 ### countMessages()
 
 > **countMessages**(`queue`, `cb`): `void`
@@ -17,6 +41,34 @@
 ##### cb
 
 `ICallback`\<`number`\>
+
+#### Returns
+
+`void`
+
+---
+
+### getMessageIds()
+
+> **getMessageIds**(`queue`, `page`, `pageSize`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### page
+
+`number`
+
+##### pageSize
+
+`number`
+
+##### cb
+
+`ICallback`\<[`IBrowserPage`](IBrowserPage.md)\<`string`\>\>
 
 #### Returns
 
@@ -64,7 +116,7 @@
 
 ##### cb
 
-`ICallback`
+`ICallback`\<`string`\>
 
 #### Returns
 

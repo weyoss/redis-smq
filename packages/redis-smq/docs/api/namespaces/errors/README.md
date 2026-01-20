@@ -5,6 +5,8 @@
 ## Classes
 
 - [AcknowledgedMessageAuditNotEnabledError](classes/AcknowledgedMessageAuditNotEnabledError.md)
+- [BackgroundJobNotFoundError](classes/BackgroundJobNotFoundError.md)
+- [BackgroundJobTargetLockedError](classes/BackgroundJobTargetLockedError.md)
 - [ConfigurationMessageAuditExpireError](classes/ConfigurationMessageAuditExpireError.md)
 - [ConfigurationMessageAuditQueueSizeError](classes/ConfigurationMessageAuditQueueSizeError.md)
 - [ConfigurationNamespaceError](classes/ConfigurationNamespaceError.md)
@@ -28,6 +30,7 @@
 - [InvalidExchangeParametersError](classes/InvalidExchangeParametersError.md)
 - [InvalidFanoutExchangeParametersError](classes/InvalidFanoutExchangeParametersError.md)
 - [InvalidNamespaceError](classes/InvalidNamespaceError.md)
+- [InvalidPurgeQueueJobIdError](classes/InvalidPurgeQueueJobIdError.md)
 - [InvalidQueueParametersError](classes/InvalidQueueParametersError.md)
 - [InvalidQueueTypeError](classes/InvalidQueueTypeError.md)
 - [InvalidRateLimitIntervalError](classes/InvalidRateLimitIntervalError.md)
