@@ -9,15 +9,15 @@
 
 import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
 import { BrowserStorageSortedSet } from '../common/message-browser/browser-storage/browser-storage-sorted-set.js';
-import { MessageManager } from '../message-manager/index.js';
+import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
+import { ILogger } from 'redis-smq-common';
+import { BrowserStorageAbstract } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
 
 export class QueueScheduledMessages extends MessageBrowserAbstract {
-  constructor() {
-    super(
-      new BrowserStorageSortedSet(),
-      new MessageManager(),
-      'keyQueueScheduled',
-    );
-    this.logger.debug('QueueScheduledMessages initialized');
+  protected readonly redisKey = 'keyQueueScheduled';
+  protected type = EQueueMessagesType.SCHEDULED;
+
+  protected geMessageStorage(logger: ILogger): BrowserStorageAbstract {
+    return new BrowserStorageSortedSet(logger);
   }
 }

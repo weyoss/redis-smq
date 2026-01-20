@@ -25,11 +25,13 @@ import { IBrowserPage, IMessageBrowser } from '../common/index.js';
 import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
 
 export class QueuePendingMessages implements IMessageBrowser {
   protected priorityQueueMessages;
   protected sequentialQueuePendingMessages;
   protected logger;
+  protected type = EQueueMessagesType.PENDING;
 
   constructor() {
     this.logger = createLogger(
@@ -51,6 +53,22 @@ export class QueuePendingMessages implements IMessageBrowser {
     }
   }
 
+  getMessageIds(
+    queue: TQueueExtendedParams,
+    page: number,
+    pageSize: number,
+    cb: ICallback<IBrowserPage<string>>,
+  ): void {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) cb(parsedParams);
+    else {
+      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
+        if (err) cb(err);
+        else pendingMessages?.getMessageIds(queue, page, pageSize, cb);
+      });
+    }
+  }
+
   getMessages(
     queue: TQueueExtendedParams,
     page: number,
@@ -67,13 +85,24 @@ export class QueuePendingMessages implements IMessageBrowser {
     }
   }
 
-  purge(queue: TQueueExtendedParams, cb: ICallback<void>): void {
+  purge(queue: TQueueExtendedParams, cb: ICallback<string>): void {
     const parsedParams = _parseQueueExtendedParams(queue);
     if (parsedParams instanceof Error) cb(parsedParams);
     else {
       this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
         if (err) cb(err);
         else pendingMessages?.purge(queue, cb);
+      });
+    }
+  }
+
+  cancelPurge(queue: TQueueExtendedParams, jobId: string, cb: ICallback): void {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) cb(parsedParams);
+    else {
+      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
+        if (err) cb(err);
+        else pendingMessages?.cancelPurge(queue, jobId, cb);
       });
     }
   }

@@ -7,11 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { TRedisSMQWorkerPayload } from './worker.js';
 
-export interface IQueueWorkerPayload extends TRedisSMQWorkerPayload {
-  queueParsedParams: IQueueParsedParams;
+export interface IGlobalWorkerPayload extends TRedisSMQWorkerPayload {
   loggerContext: {
     namespaces: string[];
   };

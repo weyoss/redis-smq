@@ -18,15 +18,7 @@ export interface IQueueParams {
   ns: string;
 }
 
-export interface IQueueConsumerGroupParams {
-  queue: string | IQueueParams;
-  groupId: string | null;
-}
-
-export type TQueueExtendedParams =
-  | string
-  | IQueueParams
-  | IQueueConsumerGroupParams;
+export type TQueueExtendedParams = string | IQueueParams | IQueueParsedParams;
 
 export interface IQueueParsedParams {
   queueParams: IQueueParams;

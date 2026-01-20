@@ -21,7 +21,16 @@ export interface IMessageBrowser {
     cb: ICallback<IBrowserPage<IMessageTransferable>>,
   ): void;
 
-  purge(queue: TQueueExtendedParams, cb: ICallback): void;
+  getMessageIds(
+    queue: TQueueExtendedParams,
+    page: number,
+    pageSize: number,
+    cb: ICallback<IBrowserPage<string>>,
+  ): void;
+
+  purge(queue: TQueueExtendedParams, cb: ICallback<string>): void;
+
+  cancelPurge(queue: TQueueExtendedParams, jobId: string, cb: ICallback): void;
 }
 
 export interface IBrowserPage<T> {

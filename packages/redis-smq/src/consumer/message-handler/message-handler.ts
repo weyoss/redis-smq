@@ -45,9 +45,12 @@ import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/re
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
-import { IMessageHandlerWorkerPayload } from '../../common/worker/types/message-handler-worker.js';
+import { IQueueWorkerPayload } from '../../common/worker/types/message-handler-worker.js';
 
-const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
+const WORKERS_DIR = path.resolve(
+  env.getCurrentDir(),
+  './queue-workers/workers',
+);
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected readonly consumerContext: IConsumerContext;
@@ -59,7 +62,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected consumeMessage: ConsumeMessage | null = null;
   protected messageHandler;
   protected autoDequeue;
-  protected workerCluster: WorkerCluster | null = null;
+  protected queueWorkerCluster: WorkerCluster | null = null;
   protected redisClient: IRedisClient | null = null;
   protected timer: Timer;
 
@@ -217,13 +220,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       this.queue.queueParams.name,
       this.queue.groupId,
     );
-    this.workerCluster = new WorkerCluster(
+    this.queueWorkerCluster = new WorkerCluster(
       redisClient,
       this.logger,
       keyQueueWorkerClusterLock,
     );
-    this.workerCluster.on('workerCluster.error', this.onError);
-    this.workerCluster.loadFromDir<IMessageHandlerWorkerPayload>(
+    this.queueWorkerCluster.on('workerCluster.error', this.onError);
+    this.queueWorkerCluster.loadFromDir<IQueueWorkerPayload>(
       WORKERS_DIR,
       {
         config: this.config,
@@ -237,16 +240,16 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
         // This operation may hang on forever as
         // the callback is invoked only when a lock is acquired
-        this.workerCluster?.run(() => void 0);
+        this.queueWorkerCluster?.run(() => void 0);
         cb();
       },
     );
   };
 
   protected shutdownWorkerCluster = (cb: ICallback): void => {
-    if (this.workerCluster) {
-      this.workerCluster.shutdown(() => {
-        this.workerCluster = null;
+    if (this.queueWorkerCluster) {
+      this.queueWorkerCluster.shutdown(() => {
+        this.queueWorkerCluster = null;
         cb();
       });
     } else cb();

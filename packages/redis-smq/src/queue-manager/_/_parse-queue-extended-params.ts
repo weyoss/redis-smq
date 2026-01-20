@@ -33,7 +33,7 @@ export function _parseQueueExtendedParams(
     const queueParams = _parseQueueParams(args);
     if (queueParams instanceof Error) return queueParams;
     return {
-      queueParams,
+      queueParams: queueParams,
       groupId: null,
     };
   }
@@ -41,11 +41,11 @@ export function _parseQueueExtendedParams(
     const queueParams = _parseQueueParams(args);
     if (queueParams instanceof Error) return queueParams;
     return {
-      queueParams,
+      queueParams: queueParams,
       groupId: null,
     };
   }
-  const queueParams = _parseQueueParams(args.queue);
+  const queueParams = _parseQueueParams(args.queueParams);
   if (queueParams instanceof Error) return queueParams;
   let groupId: string | RedisSMQError | null = null;
   if (args.groupId) {
@@ -53,7 +53,7 @@ export function _parseQueueExtendedParams(
     if (groupId instanceof Error) return new InvalidQueueParametersError();
   }
   return {
-    queueParams,
+    queueParams: queueParams,
     groupId,
   };
 }

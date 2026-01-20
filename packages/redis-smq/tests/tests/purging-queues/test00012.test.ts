@@ -16,6 +16,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import bluebird from 'bluebird';
 
 test('Purging dead letter queue', async () => {
   const defaultQueue = getDefaultQueue();
@@ -29,6 +30,8 @@ test('Purging dead letter queue', async () => {
 
   const dlm = await getQueueDeadLetteredMessages();
   await dlm.purgeAsync(queue);
+
+  await bluebird.delay(5000);
 
   const m1 = await queueMessages.countMessagesByStatusAsync(queue);
   expect(m1.deadLettered).toBe(0);

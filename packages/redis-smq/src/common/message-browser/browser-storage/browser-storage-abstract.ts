@@ -17,11 +17,10 @@ import { Configuration } from '../../../config/index.js';
 export abstract class BrowserStorageAbstract {
   protected logger: ILogger;
 
-  constructor() {
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
-    );
+  constructor(logger?: ILogger) {
+    this.logger = logger
+      ? logger.createLogger(this.constructor.name)
+      : createLogger(Configuration.getConfig().logger, this.constructor.name);
   }
 
   /**

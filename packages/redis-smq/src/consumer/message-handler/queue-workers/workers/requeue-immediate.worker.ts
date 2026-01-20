@@ -8,20 +8,20 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
-import { _getMessages } from '../../../message-manager/_/_get-message.js';
+import { ELuaScriptName } from '../../../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
+import { _getMessages } from '../../../../message-manager/_/_get-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
-} from '../../../message/index.js';
-import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
-import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { UnexpectedScriptReplyError } from '../../../errors/index.js';
-import { MessageHandlerWorkerAbstract } from '../../../common/worker/message-handler-worker-abstract.js';
+} from '../../../../message/index.js';
+import { MessageEnvelope } from '../../../../message/message-envelope.js';
+import { EQueueProperty, EQueueType } from '../../../../queue-manager/index.js';
+import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
+import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 
-export class RequeueImmediateWorker extends MessageHandlerWorkerAbstract {
+export class RequeueImmediateWorker extends QueueWorkerAbstract {
   work = (cb: ICallback): void => {
     this.logger.debug('Starting requeue unacknowledged messages work cycle');
 

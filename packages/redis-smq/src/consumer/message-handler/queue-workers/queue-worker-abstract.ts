@@ -8,15 +8,15 @@
  */
 
 import { createLogger, ILogger } from 'redis-smq-common';
-import { WorkerAbstract } from './worker-abstract.js';
-import { IMessageHandlerWorkerPayload } from './types/message-handler-worker.js';
+import { WorkerAbstract } from '../../../common/worker/worker-abstract.js';
+import { IQueueWorkerPayload } from '../../../common/worker/types/message-handler-worker.js';
 
-export abstract class MessageHandlerWorkerAbstract extends WorkerAbstract {
+export abstract class QueueWorkerAbstract extends WorkerAbstract {
   protected queueParsedParams;
   protected loggerContext;
   protected override logger: ILogger;
 
-  constructor(payload: IMessageHandlerWorkerPayload) {
+  constructor(payload: IQueueWorkerPayload) {
     super(payload.config);
     this.logger = createLogger(payload.config.logger, [
       ...payload.loggerContext.namespaces,

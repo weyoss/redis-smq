@@ -10,8 +10,8 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import { EMessagePropertyStatus, QueueMessages } from '../../../src/index.js';
-import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
-import { ReapConsumersWorker } from '../../../src/consumer/message-handler/workers/reap-consumers.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
+import { ReapConsumersWorker } from '../../../src/consumer/message-handler/queue-workers/workers/reap-consumers.worker.js';
 import {
   crashAConsumerConsumingAMessage,
   createQueue,
@@ -30,7 +30,6 @@ test('ReapConsumersWorker', async () => {
   expect(messages.totalItems).toBe(1);
   const [message] = messages.items;
 
-  console.log('KKKKKKKKK', message.status);
   expect(message.status === EMessagePropertyStatus.PROCESSING).toBe(true);
 
   const queueParsedParams = { queueParams: defaultQueue, groupId: null };

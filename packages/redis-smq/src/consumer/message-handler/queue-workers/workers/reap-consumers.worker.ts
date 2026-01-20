@@ -8,19 +8,19 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { _getQueueConsumerIds } from '../../../queue-manager/_/_get-queue-consumer-ids.js';
-import { ConsumerHeartbeat } from '../../consumer-heartbeat/consumer-heartbeat.js';
-import { MessageUnacknowledgement } from '../consume-message/message-unacknowledgement.js';
-import { EMessageUnacknowledgementReason } from '../consume-message/types/index.js';
-import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { _deleteEphemeralConsumerGroup } from '../_/_delete-ephemeral-consumer-group.js';
-import { MessageHandlerWorkerAbstract } from '../../../common/worker/message-handler-worker-abstract.js';
-import { IMessageHandlerWorkerPayload } from '../../../common/worker/types/message-handler-worker.js';
+import { _getQueueConsumerIds } from '../../../../queue-manager/_/_get-queue-consumer-ids.js';
+import { ConsumerHeartbeat } from '../../../consumer-heartbeat/consumer-heartbeat.js';
+import { MessageUnacknowledgement } from '../../consume-message/message-unacknowledgement.js';
+import { EMessageUnacknowledgementReason } from '../../consume-message/types/index.js';
+import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { _deleteEphemeralConsumerGroup } from '../../_/_delete-ephemeral-consumer-group.js';
+import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
+import { IQueueWorkerPayload } from '../../../../common/worker/types/message-handler-worker.js';
 
-export class ReapConsumersWorker extends MessageHandlerWorkerAbstract {
+export class ReapConsumersWorker extends QueueWorkerAbstract {
   protected messageUnacknowledgement: MessageUnacknowledgement;
 
-  constructor(payload: IMessageHandlerWorkerPayload) {
+  constructor(payload: IQueueWorkerPayload) {
     super(payload);
     this.messageUnacknowledgement = new MessageUnacknowledgement(this.logger);
   }

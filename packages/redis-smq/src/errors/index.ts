@@ -69,3 +69,6 @@ export * from './invalid-cron-expression.error.js';
 export * from './message-property-invalid-value.error.js';
 export * from './invalid-configuration.error.js';
 export * from './configuration-update.error.js';
+export * from './invalid-purge-queue-job-id.error.js';
+export * from './background-job-not-found.error.js';
+export * from './background-job-target-locked.error.js';
