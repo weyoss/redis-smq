@@ -60,6 +60,39 @@ export class IoredisClientMulti implements IRedisTransaction {
     return this;
   }
 
+  set(
+    key: string,
+    value: string | number,
+    options: {
+      expire?: { mode: 'EX' | 'PX'; value: number };
+      exists?: 'NX' | 'XX';
+    },
+  ): void {
+    if (options.exists && options.expire) {
+      this.multi.set(
+        key,
+        value,
+        // @ts-expect-error any
+        options.expire.mode,
+        options.expire.value,
+        options.exists,
+      );
+    } else if (options.expire) {
+      this.multi.set(
+        key,
+        value,
+        // @ts-expect-error any
+        options.expire.mode,
+        options.expire.value,
+      );
+    } else if (options.exists) {
+      // @ts-expect-error any
+      this.multi.set(key, value, options.exists);
+    } else {
+      this.multi.set(key, value);
+    }
+  }
+
   incr(key: string): this {
     this.multi.incr(key);
     return this;

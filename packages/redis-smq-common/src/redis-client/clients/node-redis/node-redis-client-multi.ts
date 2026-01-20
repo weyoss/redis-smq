@@ -85,6 +85,23 @@ export class NodeRedisClientMulti implements IRedisTransaction {
     return this;
   }
 
+  set(
+    key: string,
+    value: string | number,
+    options: {
+      expire?: { mode: 'EX' | 'PX'; value: number };
+      exists?: 'NX' | 'XX';
+    },
+  ) {
+    this.multi.set(key, value, {
+      ...(options.expire
+        ? { [options.expire.mode]: options.expire.value }
+        : {}),
+      ...(options.exists ? { [options.exists]: true } : {}),
+    });
+    return this;
+  }
+
   incr(key: string): this {
     this.multi.incr(key);
     return this;
