@@ -246,6 +246,14 @@ export interface IRedisTransaction {
 
   // Write commands
   del(key: string | string[]): this;
+  set(
+    key: string,
+    value: string | number,
+    options: {
+      expire?: { mode: 'EX' | 'PX'; value: number };
+      exists?: 'NX' | 'XX';
+    },
+  ): void;
   lrem(key: string, count: number, element: string): this;
   lpop(key: string): this;
   rpush(key: string, element: string): this;
