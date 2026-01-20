@@ -9,13 +9,14 @@
 
 import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
 import { BrowserStorageList } from '../common/message-browser/browser-storage/browser-storage-list.js';
-import { MessageManager } from '../message-manager/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
-import { ICallback } from 'redis-smq-common';
+import { ICallback, ILogger } from 'redis-smq-common';
 import { IBrowserPage } from '../common/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { Configuration } from '../config/index.js';
 import { AcknowledgedMessageAuditNotEnabledError } from '../errors/index.js';
+import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
+import { BrowserStorageAbstract } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
 
 /**
  * Manages acknowledged messages in a queue.
@@ -28,13 +29,11 @@ import { AcknowledgedMessageAuditNotEnabledError } from '../errors/index.js';
  * @see /packages/redis-smq/docs/configuration.md#message-audit
  */
 export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
-  constructor() {
-    super(
-      new BrowserStorageList(),
-      new MessageManager(),
-      'keyQueueAcknowledged',
-    );
-    this.logger.debug('QueueAcknowledgedMessages initialized');
+  protected type = EQueueMessagesType.ACKNOWLEDGED;
+  protected readonly redisKey = 'keyQueueAcknowledged';
+
+  protected geMessageStorage(logger: ILogger): BrowserStorageAbstract {
+    return new BrowserStorageList(logger);
   }
 
   /**
@@ -70,7 +69,7 @@ export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
    *                or queue consumer group parameters.
    * @param cb - Callback function that will be invoked when the operation completes.
    *             If an error occurs, the first parameter will contain the Error object.
-   *             Otherwise, the first parameter will be null/undefined.
+   *             Otherwise, the first parameter will be the ID of purge job created.
    *
    * @throws InvalidQueueParametersError
    * @throws ConsumerGroupRequiredError
@@ -78,7 +77,7 @@ export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
    * @throws QueueNotFoundError
    * @throws AcknowledgedMessageAuditNotEnabledError
    */
-  override purge(queue: TQueueExtendedParams, cb: ICallback) {
+  override purge(queue: TQueueExtendedParams, cb: ICallback<string>) {
     const cfg = Configuration.getConfig();
     if (!cfg.messageAudit.acknowledgedMessages.enabled)
       return cb(new AcknowledgedMessageAuditNotEnabledError());

@@ -50,9 +50,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
    * Generates a unique, consistent identifier for a queue configuration.
    */
   protected getQueueIdentifier(queue: IQueueParsedParams): string {
-    return `${queue.queueParams.ns}:${queue.queueParams.name}:${
-      queue.groupId ?? ''
-    }`;
+    return `${queue.queueParams.ns}:${queue.queueParams.name}:${queue.groupId ?? ''}`;
   }
 
   /**

@@ -21,6 +21,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import bluebird from 'bluebird';
 
 test('Deleting a message queue with all of its data', async () => {
   const defaultQueue = getDefaultQueue();
@@ -37,6 +38,8 @@ test('Deleting a message queue with all of its data', async () => {
   await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotEmptyError);
 
   await queueMessages.purgeAsync(getDefaultQueue());
+
+  await bluebird.delay(5000);
 
   await expect(q.deleteAsync(queue)).rejects.toThrow(
     QueueManagerActiveConsumersError,

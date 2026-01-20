@@ -23,7 +23,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
 import { config } from '../../common/config.js';
 
 test('An unacked message without retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queuePending.', async () => {

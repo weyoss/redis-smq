@@ -15,6 +15,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages.js';
+import bluebird from 'bluebird';
 
 test('Purging scheduled message queue', async () => {
   const defaultQueue = getDefaultQueue();
@@ -27,6 +28,8 @@ test('Purging scheduled message queue', async () => {
 
   const sm = await getQueueScheduledMessages();
   await sm.purgeAsync(getDefaultQueue());
+
+  await bluebird.delay(5000);
 
   const m1 = await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
   expect(m1.scheduled).toBe(0);

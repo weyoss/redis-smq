@@ -83,6 +83,13 @@ enum ERedisKey {
   NAMESPACES,
   EXCHANGES,
   CONFIGURATION,
+  GLOBAL_WORKER_CLUSTER,
+  PURGE_QUEUE_BACKGROUND_JOBS,
+  PURGE_QUEUE_BACKGROUND_JOBS_PENDING,
+  PURGE_QUEUE_BACKGROUND_JOBS_PROCESSING,
+
+  // Purge queue background jobs
+  PURGE_QUEUE_TARGET_LOCK,
 }
 
 /**
@@ -308,8 +315,28 @@ export const redisKeys = {
       keyExchanges: ERedisKey.EXCHANGES,
       keyNamespaces: ERedisKey.NAMESPACES,
       keyConfiguration: ERedisKey.CONFIGURATION,
+      keyGlobalWorkerClusterLock: ERedisKey.GLOBAL_WORKER_CLUSTER,
+      keyPurgeQueueBackgroundJobs: ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS,
+      keyPurgeQueueBackgroundJobsPending:
+        ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS_PENDING,
+      keyPurgeQueueBackgroundJobsProcessing:
+        ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS_PROCESSING,
     };
     return makeNamespacedKeys(mainKeys, REDIS_KEY_CONFIG.GLOBAL_NAMESPACE);
+  },
+
+  getPurgeQueueTargetKeys(queueParams: IQueueParams, groupId: string | null) {
+    const keys = {
+      keyPurgeQueueTargetLock: ERedisKey.PURGE_QUEUE_TARGET_LOCK,
+    };
+    return {
+      ...makeNamespacedKeys(
+        keys,
+        queueParams.ns,
+        queueParams.name,
+        ...(groupId ? [groupId] : []),
+      ),
+    };
   },
 
   /**

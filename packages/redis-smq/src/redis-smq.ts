@@ -39,6 +39,7 @@ import { parseRedisConfig } from './config/parse-redis-config.js';
 import { RedisConnectionPool } from './common/redis/redis-connection-pool/redis-connection-pool.js';
 import { InternalEventBus } from './event-bus/internal-event-bus.js';
 import { EventMultiplexer } from './event-bus/event-multiplexer.js';
+import { BackgroundJobWorkerCluster } from './common/background-job/background-job-worker-cluster.js';
 
 function isDisposable(disposable: unknown): disposable is Disposable {
   return (
@@ -169,15 +170,16 @@ export class RedisSMQ {
 
     async.series(
       [
-        (cb: ICallback) =>
+        (cb) =>
           RedisConnectionPool.initialize(redisConfig, {}, (err) => cb(err)),
-        (cb: ICallback) => {
+        (cb) => {
           if (typeof redisSMQConfig === 'function')
             return Configuration.initialize(cb);
           Configuration.initializeWithConfig(redisSMQConfig, cb);
         },
         (cb) => InternalEventBus.getInstance().run((err) => cb(err)),
-        (cb: ICallback) => {
+        (cb) => BackgroundJobWorkerCluster.run(cb),
+        (cb) => {
           const config = Configuration.getConfig();
           if (config.eventBus.enabled) {
             return EventBus.getInstance().run((err) => cb(err));
@@ -718,6 +720,7 @@ export class RedisSMQ {
 
     async.series(
       [
+        (cb) => BackgroundJobWorkerCluster.shutdown(cb),
         (cb) =>
           RedisSMQ.shutdownComponents((err) => {
             if (err) errors.push(err);

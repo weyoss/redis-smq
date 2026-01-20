@@ -16,6 +16,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import bluebird from 'bluebird';
 
 test('Purging acknowledged queue using QueueAcknowledgedMessages', async () => {
   const defaultQueue = getDefaultQueue();
@@ -29,6 +30,8 @@ test('Purging acknowledged queue using QueueAcknowledgedMessages', async () => {
 
   const am = await getQueueAcknowledgedMessages();
   await am.purgeAsync(queue);
+
+  await bluebird.delay(5000);
 
   const m1 = await queueMessages.countMessagesByStatusAsync(queue);
   expect(m1.acknowledged).toBe(0);

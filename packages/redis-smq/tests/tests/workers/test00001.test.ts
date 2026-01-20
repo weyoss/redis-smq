@@ -14,7 +14,7 @@ import {
   MessageManager,
   ProducibleMessage,
 } from '../../../src/index.js';
-import { RequeueDelayedWorker } from '../../../src/consumer/message-handler/workers/requeue-delayed.worker.js';
+import { RequeueDelayedWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-delayed.worker.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
@@ -24,7 +24,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
 import { config } from '../../common/config.js';
 
 test('An unacked message with retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queueDelayed. RequeueDelayedWorker should move the message from queueDelayed to queuePending.', async () => {

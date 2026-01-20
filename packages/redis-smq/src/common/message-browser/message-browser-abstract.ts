@@ -7,16 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { async, createLogger, ICallback, IRedisClient } from 'redis-smq-common';
+import {
+  async,
+  CallbackEmptyReplyError,
+  createLogger,
+  ICallback,
+  ILogger,
+} from 'redis-smq-common';
 import { redisKeys } from '../redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { _deleteMessage } from '../../message-manager/_/_delete-message.js';
 import { IMessageTransferable } from '../../message/index.js';
 import { _parseQueueExtendedParams } from '../../queue-manager/_/_parse-queue-extended-params.js';
-import {
-  IQueueParsedParams,
-  TQueueExtendedParams,
-} from '../../queue-manager/index.js';
+import { TQueueExtendedParams } from '../../queue-manager/index.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
 import { BrowserStorageAbstract } from './browser-storage/browser-storage-abstract.js';
 import {
@@ -26,6 +28,9 @@ import {
 } from './types/index.js';
 import { MessageManager } from '../../message-manager/index.js';
 import { withSharedPoolConnection } from '../redis/redis-connection-pool/with-shared-pool-connection.js';
+import { PurgeQueueJobManager } from '../background-job/purge-queue-job-manager.js';
+import { EQueueMessagesType } from '../queue-messages-registry/queue-messages-types.js';
+import { InvalidPurgeQueueJobIdError } from '../../errors/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
@@ -41,44 +46,44 @@ import { withSharedPoolConnection } from '../redis/redis-connection-pool/with-sh
  */
 export abstract class MessageBrowserAbstract implements IMessageBrowser {
   /**
-   * Message manager for retrieving detailed message information.
-   */
-  protected readonly messageManager: MessageManager;
-
-  /**
    * Flag indicating if a consumer group ID is required during validation.
    */
   protected requireGroupId: boolean = false;
 
   /**
+   * Message manager for retrieving detailed message information.
+   */
+  protected readonly messageManager: MessageManager;
+
+  /**
    * Redis key for the message collection.
    * Subclasses must specify this to correctly target the underlying Redis key.
    */
-  protected readonly redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>;
+  protected abstract readonly redisKey: keyof ReturnType<
+    typeof redisKeys.getQueueKeys
+  >;
 
   /**
    * Storage manager for queue messages.
    */
-  protected readonly storageAbstract: BrowserStorageAbstract;
+  protected readonly messageStorage: BrowserStorageAbstract;
 
   /**
    * Logger instance for logging operations.
    */
   protected readonly logger;
 
-  protected constructor(
-    messagesStorage: BrowserStorageAbstract,
-    messageManager: MessageManager,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-  ) {
-    this.storageAbstract = messagesStorage;
-    this.messageManager = messageManager;
-    this.redisKey = redisKey;
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
-    );
+  protected abstract readonly type: EQueueMessagesType;
+
+  constructor(logger?: ILogger) {
+    this.logger = logger
+      ? logger.createLogger(this.constructor.name)
+      : createLogger(Configuration.getConfig().logger, this.constructor.name);
+    this.messageManager = new MessageManager();
+    this.messageStorage = this.geMessageStorage(this.logger);
   }
+
+  protected abstract geMessageStorage(logger: ILogger): BrowserStorageAbstract;
 
   /**
    * Purges all messages from the specified queue.
@@ -94,14 +99,14 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    *                or queue consumer group parameters.
    * @param cb - Callback function that will be invoked when the operation completes.
    *             If an error occurs, the first parameter will contain the Error object.
-   *             Otherwise, the first parameter will be null/undefined.
+   *             Otherwise, the first parameter will be the ID of the job created for purging queue messages.
    *
    * @throws InvalidQueueParametersError
    * @throws ConsumerGroupRequiredError
    * @throws ConsumerGroupsNotSupportedError
    * @throws QueueNotFoundError
    */
-  purge(queue: TQueueExtendedParams, cb: ICallback): void {
+  purge(queue: TQueueExtendedParams, cb: ICallback<string>): void {
     const parsedParams = _parseQueueExtendedParams(queue);
     if (parsedParams instanceof Error) {
       this.logger.error(
@@ -111,7 +116,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
     }
 
     this.logger.info(
-      `Purging messages from queue ${parsedParams.queueParams.name}`,
+      `Creating a job for purging messages from queue ${parsedParams.queueParams.name}`,
     );
 
     withSharedPoolConnection((client, cb) => {
@@ -126,7 +131,69 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
             );
             return cb(err);
           }
-          this.purgeMessages(client, parsedParams, cb);
+
+          const purgeQueueJobManager = new PurgeQueueJobManager(
+            client,
+            this.logger,
+          );
+          purgeQueueJobManager.create(
+            {
+              queue: parsedParams,
+              queueType: this.type,
+            },
+            {},
+            (err, jobId) => {
+              if (err) return cb(err);
+              if (!jobId) return cb(new CallbackEmptyReplyError());
+              this.logger.info(
+                `Created job ${jobId} for purging messages from queue ${parsedParams.queueParams.name}`,
+              );
+              cb(null, jobId);
+            },
+          );
+        },
+      );
+    }, cb);
+  }
+
+  cancelPurge(queue: TQueueExtendedParams, jobId: string, cb: ICallback): void {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) {
+      this.logger.error(
+        `Error parsing queue parameters: ${parsedParams.message}`,
+      );
+      return cb(parsedParams);
+    }
+
+    this.logger.info(
+      `Canceling a job for purging messages from queue ${parsedParams.queueParams.name}`,
+    );
+
+    withSharedPoolConnection((client, cb) => {
+      const purgeQueueJobManager = new PurgeQueueJobManager(
+        client,
+        this.logger,
+      );
+      purgeQueueJobManager.getActiveJob(
+        {
+          queue: parsedParams,
+          queueType: this.type,
+        },
+        (err, reply) => {
+          if (err) return cb(err);
+          if (!reply) {
+            this.logger.error(
+              `Queue ${parsedParams.queueParams.name}@${parsedParams.queueParams.ns} has no an active job`,
+            );
+            return cb(new InvalidPurgeQueueJobIdError({ metadata: { jobId } }));
+          }
+          if (reply.id !== jobId) {
+            this.logger.error(
+              `Queue ${parsedParams.queueParams.name}@${parsedParams.queueParams.ns} has a different active job (job ID ${reply.id}).`,
+            );
+            cb(new InvalidPurgeQueueJobIdError({ metadata: { jobId } }));
+          }
+          purgeQueueJobManager.cancel(jobId, cb);
         },
       );
     }, cb);
@@ -179,7 +246,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
           async.withCallback(
             // Get message IDs for the requested page
             (cb: ICallback<IBrowserPage<string>>) =>
-              this.getMessagesIds(parsedParams, page, pageSize, cb),
+              this.getMessageIds(parsedParams, page, pageSize, cb),
             (pageResult, cb) => {
               // If no messages on this page, return empty result
               if (pageResult.items.length === 0) {
@@ -261,7 +328,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
           );
           const keyVal = keys[this.redisKey];
 
-          this.storageAbstract.count(keyVal, (err, count) => {
+          this.messageStorage.count(keyVal, (err, count) => {
             if (err) {
               this.logger.error(`Error counting messages: ${err.message}`);
               return cb(err);
@@ -320,20 +387,28 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    * @param pageSize - Number of items per page
    * @param cb - Callback returning an IQueueMessagesPage of message IDs
    */
-  protected getMessagesIds(
-    queue: IQueueParsedParams,
+  getMessageIds(
+    queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
     cb: ICallback<IBrowserPage<string>>,
   ): void {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) {
+      this.logger.error(
+        `Error parsing queue parameters: ${parsedParams.message}`,
+      );
+      return cb(parsedParams);
+    }
+
     this.logger.debug(
-      `Getting message IDs for queue ${queue.queueParams.name}, page ${page}, size ${pageSize}`,
+      `Getting message IDs for queue ${parsedParams.queueParams.name}, page ${page}, size ${pageSize}`,
     );
 
     const keys = redisKeys.getQueueKeys(
-      queue.queueParams.ns,
-      queue.queueParams.name,
-      queue.groupId,
+      parsedParams.queueParams.ns,
+      parsedParams.queueParams.name,
+      parsedParams.groupId,
     );
     const keyVal = keys[this.redisKey];
 
@@ -342,15 +417,15 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
         // Step 1: Count total messages
         (next: ICallback<number>) => {
           this.logger.debug(
-            `Counting messages for queue ${queue.queueParams.name}`,
+            `Counting messages for queue ${parsedParams.queueParams.name}`,
           );
-          this.storageAbstract.count(keyVal, next);
+          this.messageStorage.count(keyVal, next);
         },
 
         // Step 2: Fetch messages for the requested page
         (totalItems: number, next: ICallback<IBrowserPage<string>>) => {
           this.logger.debug(
-            `Found ${totalItems} total messages for queue ${queue.queueParams.name}`,
+            `Found ${totalItems} total messages for queue ${parsedParams.queueParams.name}`,
           );
 
           const { currentPage, offsetStart, offsetEnd } =
@@ -359,7 +434,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
           // Return empty result if no items
           if (totalItems === 0) {
             this.logger.debug(
-              `No messages found for queue ${queue.queueParams.name}`,
+              `No messages found for queue ${parsedParams.queueParams.name}`,
             );
             return next(null, {
               totalItems,
@@ -369,10 +444,10 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
 
           // Fetch items for the current page
           this.logger.debug(
-            `Fetching messages for queue ${queue.queueParams.name} from index ${offsetStart} to ${offsetEnd}`,
+            `Fetching messages for queue ${parsedParams.queueParams.name} from index ${offsetStart} to ${offsetEnd}`,
           );
 
-          this.storageAbstract.fetchItems(
+          this.messageStorage.fetchItems(
             keyVal,
             { page: currentPage, pageSize, offsetStart, offsetEnd },
             (err, items) => {
@@ -382,7 +457,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
               }
 
               this.logger.debug(
-                `Retrieved ${items?.length || 0} messages for queue ${queue.queueParams.name}`,
+                `Retrieved ${items?.length || 0} messages for queue ${parsedParams.queueParams.name}`,
               );
 
               next(null, {
@@ -400,91 +475,5 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
         cb(err, result);
       },
     );
-  }
-
-  /**
-   * Internal method to purge messages in batches.
-   *
-   * @param client - Redis client instance
-   * @param parsedParams - Validated queue parameters
-   * @param cb - Callback function
-   */
-  protected purgeMessages(
-    client: IRedisClient,
-    parsedParams: IQueueParsedParams,
-    cb: ICallback,
-  ): void {
-    this.logger.debug(
-      `Starting batch purge for queue ${parsedParams.queueParams.name}`,
-    );
-
-    // Batch size
-    const pageSize = 1000;
-
-    // Recursive function to process batches
-    const purgeBatch = (page = 1): void => {
-      this.logger.debug(
-        `Processing purge batch with page ${page} / ${pageSize} for queue ${parsedParams.queueParams.name}`,
-      );
-
-      async.waterfall(
-        [
-          // Step 1: Get batch of message IDs
-          (next: ICallback<IBrowserPage<string>>) => {
-            this.getMessagesIds(parsedParams, page, pageSize, next);
-          },
-
-          // Step 2: Delete the messages and return next page
-          (result: IBrowserPage<string>, next: ICallback<number>) => {
-            const { items } = result;
-
-            // If no items, we're done with this batch
-            if (items.length === 0) {
-              this.logger.debug(
-                `No messages to purge in this batch for queue ${parsedParams.queueParams.name}`,
-              );
-              return next();
-            }
-
-            this.logger.debug(
-              `Deleting batch of ${items.length} messages from queue ${parsedParams.queueParams.name}`,
-            );
-
-            // Delete the batch of messages
-            _deleteMessage(client, items, (err, reply) => {
-              if (err) {
-                this.logger.error(`Error deleting messages: ${err.message}`);
-                return next(err);
-              }
-              this.logger.debug('MessageList deletion completed', reply);
-              next(null, page + 1);
-            });
-          },
-        ],
-        (err, nextPage) => {
-          if (err) {
-            this.logger.error(`Error in purge batch: ${err.message}`);
-            return cb(err);
-          }
-
-          // If there are more messages to process, continue with next batch
-          if (nextPage) {
-            this.logger.debug(
-              `More messages to purge, continuing with page ${nextPage} for queue ${parsedParams.queueParams.name}`,
-            );
-            purgeBatch(nextPage);
-          } else {
-            // All messages purged
-            this.logger.info(
-              `Successfully purged all messages from queue ${parsedParams.queueParams.name}`,
-            );
-            cb();
-          }
-        },
-      );
-    };
-
-    // Start purging from the first batch
-    purgeBatch(1);
   }
 }

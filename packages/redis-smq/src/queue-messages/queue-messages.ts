@@ -11,6 +11,7 @@ import {
   async,
   CallbackEmptyReplyError,
   ICallback,
+  ILogger,
   IRedisClient,
 } from 'redis-smq-common';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
@@ -33,8 +34,9 @@ import {
   IQueueGroupConsumersPendingCount,
   IQueueMessagesCount,
 } from './types/index.js';
-import { MessageManager } from '../message-manager/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
+import { BrowserStorageAbstract } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
 
 /**
  * QueueMessages class manages message counting and state reporting across queue types.
@@ -47,15 +49,21 @@ export class QueueMessages extends MessageBrowserAbstract {
   protected readonly queueDeadLetteredMessages: QueueDeadLetteredMessages;
   protected readonly queueScheduledMessages: QueueScheduledMessages;
   protected readonly queueAcknowledgedMessages: QueueAcknowledgedMessages;
+  protected readonly redisKey = 'keyQueueMessages';
+  protected type = EQueueMessagesType.ALL_MESSAGES;
 
   constructor() {
-    super(new BrowserStorageSet(), new MessageManager(), 'keyQueueMessages');
-    this.priorityQueueMessages = new PriorityQueuePendingMessages();
-    this.queuePendingMessages = new SequentialQueuePendingMessages();
-    this.queueDeadLetteredMessages = new QueueDeadLetteredMessages();
-    this.queueScheduledMessages = new QueueScheduledMessages();
-    this.queueAcknowledgedMessages = new QueueAcknowledgedMessages();
-    this.logger.debug('QueueMessages initialized');
+    super();
+    this.priorityQueueMessages = new PriorityQueuePendingMessages(this.logger);
+    this.queuePendingMessages = new SequentialQueuePendingMessages(this.logger);
+    this.queueDeadLetteredMessages = new QueueDeadLetteredMessages(this.logger);
+    this.queueScheduledMessages = new QueueScheduledMessages(this.logger);
+    this.queueAcknowledgedMessages = new QueueAcknowledgedMessages(this.logger);
+    this.logger.debug(`${this.constructor.name} initialized`);
+  }
+
+  protected geMessageStorage(logger: ILogger): BrowserStorageAbstract {
+    return new BrowserStorageSet(logger);
   }
 
   /**
@@ -75,8 +83,7 @@ export class QueueMessages extends MessageBrowserAbstract {
       return cb(queueParams);
     }
     withSharedPoolConnection(
-      (client, cb) =>
-        this.executeCountingPipeline(client, queueParams, queue, cb),
+      (client, cb) => this.executeCountingPipeline(client, queueParams, cb),
       cb,
     );
   }
@@ -85,13 +92,11 @@ export class QueueMessages extends MessageBrowserAbstract {
    * Execute a series of counting operations using a waterfall flow.
    * @param client - Redis client instance.
    * @param queueParams - Parsed queue parameters.
-   * @param queue - Original queue parameter.
    * @param cb - Callback function that returns a populated IQueueMessagesCount.
    */
   private executeCountingPipeline(
     client: IRedisClient,
     queueParams: IQueueParams,
-    queue: string | IQueueParams,
     cb: ICallback<IQueueMessagesCount>,
   ): void {
     const count: IQueueMessagesCount = {
@@ -110,14 +115,7 @@ export class QueueMessages extends MessageBrowserAbstract {
         (
           properties: IQueueProperties,
           next: ICallback<number | IQueueGroupConsumersPendingCount>,
-        ) =>
-          this.countPendingMessages(
-            client,
-            properties,
-            queue,
-            queueParams,
-            next,
-          ),
+        ) => this.countPendingMessages(client, properties, queueParams, next),
 
         // Count dead-lettered messages.
         (
@@ -125,19 +123,19 @@ export class QueueMessages extends MessageBrowserAbstract {
           next: ICallback<number>,
         ) => {
           count.pending = pendingCount;
-          this.queueDeadLetteredMessages.countMessages(queue, next);
+          this.queueDeadLetteredMessages.countMessages(queueParams, next);
         },
 
         // Count acknowledged messages.
         (deadLettered: number, next: ICallback<number>) => {
           count.deadLettered = deadLettered;
-          this.queueAcknowledgedMessages.countMessages(queue, next);
+          this.queueAcknowledgedMessages.countMessages(queueParams, next);
         },
 
         // Count scheduled messages.
         (acknowledged: number, next: ICallback<number>) => {
           count.acknowledged = acknowledged;
-          this.queueScheduledMessages.countMessages(queue, next);
+          this.queueScheduledMessages.countMessages(queueParams, next);
         },
       ],
       (err, scheduled) => {
@@ -178,14 +176,12 @@ export class QueueMessages extends MessageBrowserAbstract {
    * For POINT_TO_POINT, performs a singular pending count.
    * @param client - Redis client.
    * @param properties - Queue properties.
-   * @param queue - Original queue parameter.
    * @param queueParams - Parsed queue parameters.
    * @param cb - Callback returning count or group counts.
    */
   private countPendingMessages(
     client: IRedisClient,
     properties: IQueueProperties,
-    queue: string | IQueueParams,
     queueParams: IQueueParams,
     cb: ICallback<number | IQueueGroupConsumersPendingCount>,
   ): void {
@@ -197,9 +193,15 @@ export class QueueMessages extends MessageBrowserAbstract {
       callback: ICallback<number>,
     ) => {
       if (queueType === EQueueType.PRIORITY_QUEUE) {
-        this.priorityQueueMessages.countMessages({ queue, groupId }, callback);
+        this.priorityQueueMessages.countMessages(
+          { queueParams, groupId },
+          callback,
+        );
       } else {
-        this.queuePendingMessages.countMessages({ queue, groupId }, callback);
+        this.queuePendingMessages.countMessages(
+          { queueParams, groupId },
+          callback,
+        );
       }
     };
 

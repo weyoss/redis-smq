@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { PublishScheduledWorker } from '../../src/consumer/message-handler/workers/publish-scheduled.worker.js';
+import { PublishScheduledWorker } from '../../src/consumer/message-handler/queue-workers/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
 import { config } from './config.js';
 

@@ -47,6 +47,8 @@ test('Combined test: Disable message audit, produce and acknowledge a message, a
 
   await messages.purgeAsync(queue);
 
+  await bluebird.delay(5000);
+
   const res5 = await messages.countMessagesAsync(queue);
   expect(res5).toBe(0);
 });

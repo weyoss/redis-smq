@@ -16,6 +16,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueManager } from '../../common/queue-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import bluebird from 'bluebird';
 
 test('Deleting a message queue having messages', async () => {
   const defaultQueue = getDefaultQueue();
@@ -29,6 +30,8 @@ test('Deleting a message queue having messages', async () => {
 
   const qm = await getQueueMessages();
   await qm.purgeAsync(defaultQueue);
+
+  await bluebird.delay(5000);
 
   // should succeed
   await q.deleteAsync(defaultQueue);
