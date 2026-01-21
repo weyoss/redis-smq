@@ -19,6 +19,8 @@ export const errors = {
     500,
     'AcknowledgedMessageAuditNotEnabledError',
   ],
+  BackgroundJobNotFoundError: [404, 'BackgroundJobNotFoundError'],
+  BackgroundJobTargetLockedError: [500, 'BackgroundJobTargetLockedError'],
   ConfigurationMessageAuditExpireError: [
     400,
     'ConfigurationMessageAuditExpireError',
@@ -57,6 +59,7 @@ export const errors = {
     'InvalidFanoutExchangeParametersError',
   ],
   InvalidNamespaceError: [400, 'InvalidNamespaceError'],
+  InvalidPurgeQueueJobIdError: [400, 'InvalidPurgeQueueJobIdError'],
   InvalidQueueParametersError: [400, 'InvalidQueueParametersError'],
   InvalidQueueTypeError: [400, 'InvalidQueueTypeError'],
   InvalidRateLimitIntervalError: [429, 'InvalidRateLimitIntervalError'],
