@@ -28,7 +28,8 @@ export class QueueAcknowledgedMessagesService {
   }
 
   async purge(queueParams: IQueueParams) {
-    return this.queueAcknowledgedMessages.purgeAsync(queueParams);
+    await this.queueAcknowledgedMessages.purgeAsync(queueParams);
+    await bluebird.delay(5000);
   }
 
   async countMessagesAsync(queueParams: IQueueParams) {

@@ -75,9 +75,10 @@ export class ConsumerGroupsService {
     queueParams: IQueueParams,
     consumerGroupId: string,
   ) {
-    return this.queuePendingMessages.purgeAsync({
+    await this.queuePendingMessages.purgeAsync({
       queueParams,
       groupId: consumerGroupId,
     });
+    await bluebird.delay(5000);
   }
 }

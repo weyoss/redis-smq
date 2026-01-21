@@ -28,7 +28,8 @@ export class QueueDeadLetteredMessagesService {
   }
 
   async purge(queueParams: IQueueParams) {
-    return this.queueDeadLetteredMessages.purgeAsync(queueParams);
+    await this.queueDeadLetteredMessages.purgeAsync(queueParams);
+    await bluebird.delay(5000);
   }
 
   async countMessagesAsync(queueParams: IQueueParams) {
