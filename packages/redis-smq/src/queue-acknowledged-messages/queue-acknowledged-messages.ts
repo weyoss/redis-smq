@@ -10,7 +10,7 @@
 import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
 import { BrowserStorageList } from '../common/message-browser/browser-storage/browser-storage-list.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
-import { ICallback, ILogger } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common';
 import { IBrowserPage } from '../common/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { Configuration } from '../config/index.js';
@@ -32,8 +32,8 @@ export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
   protected type = EQueueMessagesType.ACKNOWLEDGED;
   protected readonly redisKey = 'keyQueueAcknowledged';
 
-  protected geMessageStorage(logger: ILogger): BrowserStorageAbstract {
-    return new BrowserStorageList(logger);
+  protected createDefaultStorage(): BrowserStorageAbstract {
+    return new BrowserStorageList(this.logger);
   }
 
   /**
