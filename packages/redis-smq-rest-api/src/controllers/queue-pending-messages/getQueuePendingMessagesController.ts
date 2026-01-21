@@ -30,7 +30,7 @@ export const getQueuePendingMessagesController: TControllerRequestHandler<
     ctx.scope.resolve('requestQueryDTO');
   const r = await queuePendingMessagesService.getMessages(
     {
-      queue: queueParams,
+      queueParams,
       groupId: consumerGroupId ?? null,
     },
     page,
