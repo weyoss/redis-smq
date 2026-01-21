@@ -36,7 +36,8 @@ export class QueuePendingMessagesService {
   }
 
   async purge(queueParams: IQueueParams) {
-    return this.queuePendingMessages.purgeAsync(queueParams);
+    await this.queuePendingMessages.purgeAsync(queueParams);
+    await bluebird.delay(5000);
   }
 
   async countMessagesAsync(queueParams: IQueueParams, groupId?: string) {

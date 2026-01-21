@@ -28,7 +28,8 @@ export class QueueScheduledMessagesService {
   }
 
   async purge(queueParams: IQueueParams) {
-    return this.queueScheduledMessages.purgeAsync(queueParams);
+    await this.queueScheduledMessages.purgeAsync(queueParams);
+    await bluebird.delay(5000);
   }
 
   async countMessagesAsync(queueParams: IQueueParams) {
