@@ -82,7 +82,7 @@
     "commander": "14.0.2",
     "dotenv": "17.2.3",
     "jsdom": "27.1.0",
-    "orval": "7.16.0",
+    "orval": "8.0.2",
     "redis-smq": "workspace:^",
     "redis-smq-common": "workspace:^",
     "redis-smq-rest-api": "workspace:^",

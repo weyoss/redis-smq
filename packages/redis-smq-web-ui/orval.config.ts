@@ -13,6 +13,7 @@ export default {
       target: 'node_modules/redis-smq-rest-api/dist/openapi-specs.json',
     },
     output: {
+      httpClient: 'axios',
       mode: 'tags-split',
       target: './src/api/generated',
       schemas: './src/api/model',
