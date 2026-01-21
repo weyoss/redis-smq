@@ -10,15 +10,14 @@
 import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
 import { BrowserStorageList } from '../common/message-browser/browser-storage/browser-storage-list.js';
 import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
-import { ILogger } from 'redis-smq-common';
-import { BrowserStorageAbstract } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
 
 export class SequentialQueuePendingMessages extends MessageBrowserAbstract {
   protected override requireGroupId = true;
   protected readonly redisKey = 'keyQueuePending';
   protected type = EQueueMessagesType.PENDING;
 
-  protected geMessageStorage(logger: ILogger): BrowserStorageAbstract {
-    return new BrowserStorageList(logger);
+  protected createDefaultStorage(): IBrowserStorage {
+    return new BrowserStorageList(this.logger);
   }
 }

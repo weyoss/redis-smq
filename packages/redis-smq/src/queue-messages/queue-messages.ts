@@ -11,7 +11,6 @@ import {
   async,
   CallbackEmptyReplyError,
   ICallback,
-  ILogger,
   IRedisClient,
 } from 'redis-smq-common';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
@@ -36,7 +35,7 @@ import {
 } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
-import { BrowserStorageAbstract } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
 
 /**
  * QueueMessages class manages message counting and state reporting across queue types.
@@ -54,16 +53,26 @@ export class QueueMessages extends MessageBrowserAbstract {
 
   constructor() {
     super();
-    this.priorityQueueMessages = new PriorityQueuePendingMessages(this.logger);
-    this.queuePendingMessages = new SequentialQueuePendingMessages(this.logger);
-    this.queueDeadLetteredMessages = new QueueDeadLetteredMessages(this.logger);
-    this.queueScheduledMessages = new QueueScheduledMessages(this.logger);
-    this.queueAcknowledgedMessages = new QueueAcknowledgedMessages(this.logger);
+    this.priorityQueueMessages = new PriorityQueuePendingMessages({
+      logger: this.logger,
+    });
+    this.queuePendingMessages = new SequentialQueuePendingMessages({
+      logger: this.logger,
+    });
+    this.queueDeadLetteredMessages = new QueueDeadLetteredMessages({
+      logger: this.logger,
+    });
+    this.queueScheduledMessages = new QueueScheduledMessages({
+      logger: this.logger,
+    });
+    this.queueAcknowledgedMessages = new QueueAcknowledgedMessages({
+      logger: this.logger,
+    });
     this.logger.debug(`${this.constructor.name} initialized`);
   }
 
-  protected geMessageStorage(logger: ILogger): BrowserStorageAbstract {
-    return new BrowserStorageSet(logger);
+  protected createDefaultStorage(): IBrowserStorage {
+    return new BrowserStorageSet(this.logger);
   }
 
   /**

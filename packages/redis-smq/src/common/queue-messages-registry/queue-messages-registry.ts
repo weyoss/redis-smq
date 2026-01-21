@@ -42,7 +42,7 @@ export class QueueMessagesRegistry {
     logger: ILogger,
   ): IMessageBrowser {
     for (const [key, Ctor] of registry) {
-      if (type === key) return new Ctor(logger);
+      if (type === key) return new Ctor({ logger });
     }
     throw new Error(`Unsupported message type instance ${type}`);
   }

@@ -10,11 +10,26 @@
 import { createLogger, ICallback, ILogger } from 'redis-smq-common';
 import { Configuration } from '../../../config/index.js';
 
+export interface IBrowserStorage {
+  count(redisKey: string, cb: ICallback<number>): void;
+  fetchItems(
+    redisKey: string,
+    options: {
+      page: number;
+      pageSize: number;
+      offsetStart: number;
+      offsetEnd: number;
+    },
+    cb: ICallback<string[]>,
+  ): void;
+  fetchAllItems(redisKey: string, cb: ICallback<string[]>): void;
+}
+
 /**
  * Abstract class for queue message storage operations
  * Provides a common interface for different Redis data structures (lists, sets, etc.)
  */
-export abstract class BrowserStorageAbstract {
+export abstract class BrowserStorageAbstract implements IBrowserStorage {
   protected logger: ILogger;
 
   constructor(logger?: ILogger) {
