@@ -39,8 +39,10 @@ export class QueuePendingMessagesService {
     return this.queuePendingMessages.purgeAsync(queueParams);
   }
 
-  async countMessagesAsync(queue: IQueueParams, groupId?: string) {
-    const params: TQueueExtendedParams = groupId ? { queue, groupId } : queue;
+  async countMessagesAsync(queueParams: IQueueParams, groupId?: string) {
+    const params: TQueueExtendedParams = groupId
+      ? { queueParams, groupId }
+      : queueParams;
     return this.queuePendingMessages.countMessagesAsync(params);
   }
 }

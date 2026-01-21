@@ -53,7 +53,7 @@ export class ConsumerGroupsService {
   ) {
     return this.queuePendingMessages.getMessagesAsync(
       {
-        queue: queueParams,
+        queueParams,
         groupId: consumerGroupId,
       },
       page,
@@ -66,7 +66,7 @@ export class ConsumerGroupsService {
     consumerGroupId: string,
   ) {
     return this.queuePendingMessages.countMessagesAsync({
-      queue: queueParams,
+      queueParams,
       groupId: consumerGroupId,
     });
   }
@@ -76,7 +76,7 @@ export class ConsumerGroupsService {
     consumerGroupId: string,
   ) {
     return this.queuePendingMessages.purgeAsync({
-      queue: queueParams,
+      queueParams,
       groupId: consumerGroupId,
     });
   }
