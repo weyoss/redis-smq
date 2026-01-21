@@ -8,7 +8,7 @@
  */
 
 import path from 'node:path';
-import { vi } from 'vitest';
+import { Mock, vi } from 'vitest';
 import { env } from '../../src/env/index.js';
 
 const currentDir = env.getCurrentDir();
@@ -50,22 +50,25 @@ export function mockChildProcess(
     removeListener: vi.fn(),
   };
 
+  const spawnMock: Mock = vi.fn().mockReturnValue(process);
+  const execMock: Mock = vi
+    .fn()
+    .mockImplementation(
+      (
+        command: string,
+        callback: (
+          error: Error | null,
+          res: { stdout?: string | Buffer; stderr?: string | Buffer },
+        ) => void,
+      ) => {
+        callback(null, {
+          stdout: args.redisBinPath ?? '/path/to/redis-server',
+        });
+      },
+    );
+
   return {
-    spawn: vi.fn().mockReturnValue(process),
-    exec: vi
-      .fn()
-      .mockImplementation(
-        (
-          command: string,
-          callback: (
-            error: Error | null,
-            res: { stdout?: string | Buffer; stderr?: string | Buffer },
-          ) => void,
-        ) => {
-          callback(null, {
-            stdout: args.redisBinPath ?? '/path/to/redis-server',
-          });
-        },
-      ),
+    spawn: spawnMock,
+    exec: execMock,
   };
 }

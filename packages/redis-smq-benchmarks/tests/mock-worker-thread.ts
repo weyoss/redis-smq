@@ -8,16 +8,18 @@
  */
 
 import esmock from 'esmock';
-import { vi } from 'vitest';
+import { Mock, vi } from 'vitest';
 import { IWorkerData } from '../src/types/index.js';
 
 export async function mockWorkerThread(
   filename: string,
   workerData: IWorkerData,
 ) {
+  const postMessageMock: Mock = vi.fn();
+  const onMock: Mock = vi.fn();
   const parentPort = {
-    postMessage: vi.fn(),
-    on: vi.fn(),
+    postMessage: postMessageMock,
+    on: onMock,
   };
   await esmock(
     filename,
