@@ -1,6 +1,6 @@
 # RedisSMQ Web UI
 
-> 💡 **Note:** You are on the stable `master` branch. For the latest features (including breaking changes), check the [`next` branch](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-ui).
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui).
 
 A Single Page Application for monitoring and managing RedisSMQ. Inspect queues and messages, review consumers, and perform common actions — with an integrated, type-safe OpenAPI client.
 
@@ -8,7 +8,7 @@ A Single Page Application for monitoring and managing RedisSMQ. Inspect queues a
 - Best served via the RedisSMQ Web Server (serves the static UI and hosts or proxies the API)
 - Ships with developer-friendly types and OpenAPI client generation
 
-![RedisSMQ Web UI - Home](https://raw.githubusercontent.com/weyoss/redis-smq/master/packages/redis-smq-web-ui/docs/screenshots/img01.png)
+![RedisSMQ Web UI - Home](https://raw.githubusercontent.com/weyoss/redis-smq/next/packages/redis-smq-web-ui/docs/screenshots/img01.png)
 
 ## Features
 
@@ -20,14 +20,14 @@ A Single Page Application for monitoring and managing RedisSMQ. Inspect queues a
 
 ## Requirements
 
-See [RedisSMQ requirements](https://github.com/weyoss/redis-smq/tree/master/README.md).
+See [RedisSMQ requirements](https://github.com/weyoss/redis-smq/tree/next/README.md).
 
 ## Installation
 
-Typically consumed via the [RedisSMQ Web Server](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server/README.md). To set up everything:
+Typically consumed via the [RedisSMQ Web Server](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/README.md). To set up everything:
 
 ```bash
-npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui redis-smq-web-server
+npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next
 # Choose a Redis client:
 npm install ioredis
 # or
@@ -36,19 +36,19 @@ npm install @redis/client
 
 ## Version Compatibility
 
-Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/version-compatibility.md) for details.
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/docs/version-compatibility.md) for details.
 
 ## Documentation
 
-For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui/docs/README.md).
+For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-ui/docs/README.md).
 
 ## Related packages
 
-- [redis-smq](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/README.md): Core message queue
-- [redis-smq-common](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common/README.md): Shared components/utilities
-- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
-- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server/README.md): Static hosting + in-process or proxied API
+- [redis-smq](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/README.md): Core message queue
+- [redis-smq-common](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/README.md): Shared components/utilities
+- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
+- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/README.md): Static hosting + in-process or proxied API
 
 ## License
 
-RedisSMQ Web UI is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/master/LICENSE).
+RedisSMQ Web UI is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
