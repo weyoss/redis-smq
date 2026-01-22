@@ -3,12 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## <small>9.0.11-next.1 (2026-01-22)</small>
+## [9.0.11-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.0...v9.0.11-next.1) (2026-01-22)
 
-- chore: replace lerna with lerna-lite due to security vulnerabilities in outdated tar package ([e0e6827](https://github.com/weyoss/redis-smq/commit/e0e6827))
-- chore: update lodash to v4.17.23 to address security vulnerabilities ([33b0266](https://github.com/weyoss/redis-smq/commit/33b0266))
-- docs(redis-smq): update API reference ([ea6fa16](https://github.com/weyoss/redis-smq/commit/ea6fa16))
-- refactor(redis-smq): clean up and improve queue messages implementations ([05eee62](https://github.com/weyoss/redis-smq/commit/05eee62))
+### 🚀 Chore
+
+- replace lerna with lerna-lite due to security vulnerabilities in outdated tar package ([e0e6827](https://github.com/weyoss/redis-smq/commit/e0e6827))
+- update lodash to v4.17.23 to address security vulnerabilities ([33b0266](https://github.com/weyoss/redis-smq/commit/33b0266))
+
+### 📝 Documentation
+
+- **redis-smq:** update API reference ([ea6fa16](https://github.com/weyoss/redis-smq/commit/ea6fa16))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** clean up and improve queue messages implementations ([05eee62](https://github.com/weyoss/redis-smq/commit/05eee62))
 
 ## [9.0.11-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.4...v9.0.11-next.0) (2026-01-22)
 
