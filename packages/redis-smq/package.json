@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "cron-parser": "5.4.0",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "uuid": "13.0.0"
   },
   "scripts": {
