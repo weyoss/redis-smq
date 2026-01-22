@@ -7,15 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
 import { BrowserStorageSortedSet } from '../common/message-browser/browser-storage/browser-storage-sorted-set.js';
-import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
 import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { PendingMessagesAbstract } from './pending-messages-abstract.js';
 
-export class PriorityQueuePendingMessages extends MessageBrowserAbstract {
-  protected override requireGroupId = true;
+export class PriorityQueuePendingMessages extends PendingMessagesAbstract {
   protected readonly redisKey = 'keyQueuePriorityPending';
-  protected type = EQueueMessagesType.PENDING;
 
   protected createDefaultStorage(): IBrowserStorage {
     return new BrowserStorageSortedSet(this.logger);

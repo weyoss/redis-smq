@@ -10,8 +10,11 @@
 import { TQueueExtendedParams } from '../../../queue-manager/index.js';
 import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable } from '../../../message/index.js';
+import { EQueueMessageType } from '../../queue-messages-registry/types/queue-messages-registry.js';
 
 export interface IMessageBrowser {
+  readonly messageType: EQueueMessageType;
+
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void;
 
   getMessages(

@@ -11,11 +11,11 @@ import { BackgroundJobManagerAbstract } from './background-job-manager-abstract.
 import { ILogger, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../redis/redis-keys/redis-keys.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
-import { EQueueMessagesType } from '../queue-messages-registry/queue-messages-types.js';
+import { EQueueMessageType } from '../queue-messages-registry/types/queue-messages-registry.js';
 
 export type TPurgeQueueJobTarget = {
   queue: IQueueParsedParams;
-  queueType: EQueueMessagesType;
+  messageType: EQueueMessageType;
 };
 
 export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQueueJobTarget> {
