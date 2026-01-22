@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.11-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.4...v9.0.11-next.0) (2026-01-22)
+
+### 🚀 Chore
+
+- continue updating packages to fix security vulnerabilities ([e92a155](https://github.com/weyoss/redis-smq/commit/e92a155cffa92e68bb159ac397d54a549bf1acb6))
+- update packages to latest versions to address security vulnerabilities ([4d19ed8](https://github.com/weyoss/redis-smq/commit/4d19ed8bae1bd89e484c974183baa069407a7203))
+
+### 📝 Documentation
+
+- improve README files for clarity ([6ba6543](https://github.com/weyoss/redis-smq/commit/6ba65433d6743d336141e7351ee6267de42a0219))
+- **redis-smq-common:** update API reference ([c10163c](https://github.com/weyoss/redis-smq/commit/c10163c9a65970ee9ddb5f44ff1670b2dc91cd01))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add 'set' method to IRedisTransaction interface ([b8130a1](https://github.com/weyoss/redis-smq/commit/b8130a1e0449ca48ea805706eabef2f9eb7fcf83))
+
 ## [9.0.10-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.3...v9.0.10-next.4) (2026-01-16)
 
 ### 📝 Documentation

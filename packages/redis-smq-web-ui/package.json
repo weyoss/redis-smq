@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-web-ui",
-  "version": "9.0.10-next.4",
+  "version": "9.0.11-next.0",
   "description": "Web UI for RedisSMQ: monitor and manage queues, messages, and consumers.",
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
