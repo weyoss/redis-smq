@@ -20,15 +20,29 @@ and leverages a waterfall pattern for processing.
 
 `QueueMessages`
 
-#### Overrides
+#### Inherited from
 
 `MessageBrowserAbstract.constructor`
+
+## Properties
+
+### messageType
+
+> `readonly` **messageType**: `ALL_MESSAGES` = `EQueueMessageType.ALL_MESSAGES`
+
+Type of queue messages this browser handles.
+
+#### Overrides
+
+`MessageBrowserAbstract.messageType`
 
 ## Methods
 
 ### cancelPurge()
 
 > **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+Cancels an active purge job.
 
 #### Parameters
 

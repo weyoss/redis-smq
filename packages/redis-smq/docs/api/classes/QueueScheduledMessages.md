@@ -10,13 +10,7 @@
 
 ### Constructor
 
-> **new QueueScheduledMessages**(`logger?`): `QueueScheduledMessages`
-
-#### Parameters
-
-##### logger?
-
-`ILogger`
+> **new QueueScheduledMessages**(): `QueueScheduledMessages`
 
 #### Returns
 
@@ -26,11 +20,25 @@
 
 `MessageBrowserAbstract.constructor`
 
+## Properties
+
+### messageType
+
+> `readonly` **messageType**: `SCHEDULED` = `EQueueMessageType.SCHEDULED`
+
+Type of queue messages this browser handles.
+
+#### Overrides
+
+`MessageBrowserAbstract.messageType`
+
 ## Methods
 
 ### cancelPurge()
 
 > **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+Cancels an active purge job.
 
 #### Parameters
 

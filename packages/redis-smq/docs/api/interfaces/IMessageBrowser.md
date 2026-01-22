@@ -2,6 +2,12 @@
 
 # Interface: IMessageBrowser
 
+## Properties
+
+### messageType
+
+> `readonly` **messageType**: `EQueueMessageType`
+
 ## Methods
 
 ### cancelPurge()
