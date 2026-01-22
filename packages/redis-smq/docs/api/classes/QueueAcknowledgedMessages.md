@@ -20,13 +20,7 @@ and management of these messages when the system is configured to audit them.
 
 ### Constructor
 
-> **new QueueAcknowledgedMessages**(`logger?`): `QueueAcknowledgedMessages`
-
-#### Parameters
-
-##### logger?
-
-`ILogger`
+> **new QueueAcknowledgedMessages**(): `QueueAcknowledgedMessages`
 
 #### Returns
 
@@ -36,11 +30,25 @@ and management of these messages when the system is configured to audit them.
 
 `MessageBrowserAbstract.constructor`
 
+## Properties
+
+### messageType
+
+> `readonly` **messageType**: `ACKNOWLEDGED` = `EQueueMessageType.ACKNOWLEDGED`
+
+Type of queue messages this browser handles.
+
+#### Overrides
+
+`MessageBrowserAbstract.messageType`
+
 ## Methods
 
 ### cancelPurge()
 
 > **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+Cancels an active purge job.
 
 #### Parameters
 

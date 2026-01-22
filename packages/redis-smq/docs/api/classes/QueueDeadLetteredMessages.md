@@ -20,13 +20,7 @@ these messages are moved to a dead-letter queue for later inspection, troublesho
 
 ### Constructor
 
-> **new QueueDeadLetteredMessages**(`logger?`): `QueueDeadLetteredMessages`
-
-#### Parameters
-
-##### logger?
-
-`ILogger`
+> **new QueueDeadLetteredMessages**(): `QueueDeadLetteredMessages`
 
 #### Returns
 
@@ -36,11 +30,25 @@ these messages are moved to a dead-letter queue for later inspection, troublesho
 
 `MessageBrowserAbstract.constructor`
 
+## Properties
+
+### messageType
+
+> `readonly` **messageType**: `DEAD_LETTERED` = `EQueueMessageType.DEAD_LETTERED`
+
+Type of queue messages this browser handles.
+
+#### Overrides
+
+`MessageBrowserAbstract.messageType`
+
 ## Methods
 
 ### cancelPurge()
 
 > **cancelPurge**(`queue`, `jobId`, `cb`): `void`
+
+Cancels an active purge job.
 
 #### Parameters
 

@@ -16,6 +16,16 @@
 
 `QueuePendingMessages`
 
+## Properties
+
+### messageType
+
+> `readonly` **messageType**: `PENDING` = `EQueueMessageType.PENDING`
+
+#### Implementation of
+
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`messageType`](../interfaces/IMessageBrowser.md#messagetype)
+
 ## Methods
 
 ### cancelPurge()
