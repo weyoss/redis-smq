@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.11-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.1...v9.0.11-next.2) (2026-01-22)
+
+### 🚀 Chore
+
+- fix CHANGELOG broken formatting ([a9c893a](https://github.com/weyoss/redis-smq/commit/a9c893a27124412825a1dfa4a8b100e1d521aff3))
+- revert lerna replacement with lerna-lite ([bed64b9](https://github.com/weyoss/redis-smq/commit/bed64b997deb319eea0df00c5b0076fe054ac6c5))
+
 ## [9.0.11-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.0...v9.0.11-next.1) (2026-01-22)
 
 ### 🚀 Chore

@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.11-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.1...v9.0.11-next.2) (2026-01-22)
+
+**Note:** Version bump only for package redis-smq-common
+
 ## <small>9.0.11-next.1 (2026-01-22)</small>
 
 - chore: update lodash to v4.17.23 to address security vulnerabilities ([33b0266](https://github.com/weyoss/redis-smq/commit/33b0266))
