@@ -1,9 +1,9 @@
 # RedisSMQ Common Library
 
-[![Stable](https://img.shields.io/npm/v/redis-smq-common/latest?style=flat-square&label=redis-smq-common%40latest)](https://github.com/weyoss/redis-smq/releases/latest)
-[![Code Coverage (master)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/master?flag=redis-smq-common&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-common)
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-common/next?style=flat-square&label=redis-smq-common%40next)](https://github.com/weyoss/redis-smq/releases)
+[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-common&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-common)
 
-> 💡 **Note:** You are on the stable `master` branch. For the latest features (including breaking changes), check the [`next` branch](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common).
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common).
 
 A shared foundation for the RedisSMQ ecosystem.
 This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure
@@ -23,9 +23,9 @@ Redis clients, structure logging, and reuse core types across the stack.
 Install the package:
 
 ```bash
-npm install redis-smq-common
+npm install redis-smq-common@next
 # or
-pnpm add redis-smq-common
+pnpm add redis-smq-common@next
 ```
 
 This package works with multiple Redis clients. Install one of the supported clients based on your needs:
@@ -46,19 +46,19 @@ Note: Redis clients are optional peer dependencies; pick one and configure it in
 
 ## Version compatibility
 
-Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/version-compatibility.md) for details.
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/docs/version-compatibility.md) for details.
 
 ## Documentation
 
-For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common/docs/README.md).
+For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/docs/README.md).
 
 ## Related packages
 
-- [redis-smq](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/README.md): Core message queue for Node.js
-- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
-- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server/README.md): Web server for hosting the UI and proxying/serving the API
-- [redis-smq-web-ui](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
+- [redis-smq](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/README.md): Core message queue for Node.js
+- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
+- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/README.md): Web server for hosting the UI and proxying/serving the API
+- [redis-smq-web-ui](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
 
 ## License
 
-RedisSMQ Common Library is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/master/LICENSE).
+RedisSMQ Common Library is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
