@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-benchmarks",
-  "version": "9.0.11-next.2",
+  "version": "9.0.11",
   "description": "Benchmarking tool for RedisSMQ to assess performance and throughput in your application environment.",
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
