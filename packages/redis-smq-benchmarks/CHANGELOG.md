@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.11-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.1...v9.0.11-next.2) (2026-01-22)
+
+**Note:** Version bump only for package redis-smq-benchmarks
+
 ## <small>9.0.11-next.1 (2026-01-22)</small>
 
 **Note:** Version bump only for package redis-smq-benchmarks
