@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.11-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.4...v9.0.11-next.0) (2026-01-22)
+
+### 🚀 Chore
+
+- continue updating packages to fix security vulnerabilities ([e92a155](https://github.com/weyoss/redis-smq/commit/e92a155cffa92e68bb159ac397d54a549bf1acb6))
+- downgrade vitest to 3.2.4 due to incorrect code coverage results ([d1b4898](https://github.com/weyoss/redis-smq/commit/d1b4898c3c6aaf92fef24693bf8257b07e4ab423))
+- remove redundant variables from README.template.md ([a43f8df](https://github.com/weyoss/redis-smq/commit/a43f8dfb8b13810a19da6a49de0613a69c802cf3))
+- update packages to latest versions to address security vulnerabilities ([4d19ed8](https://github.com/weyoss/redis-smq/commit/4d19ed8bae1bd89e484c974183baa069407a7203))
+
+### 📝 Documentation
+
+- improve README files for clarity ([6ba6543](https://github.com/weyoss/redis-smq/commit/6ba65433d6743d336141e7351ee6267de42a0219))
+- improve table formatting in README.template.md ([15d9bd5](https://github.com/weyoss/redis-smq/commit/15d9bd56956e59d97bffc0dbd36bff6817e18169))
+- **redis-smq-common:** update API reference ([c10163c](https://github.com/weyoss/redis-smq/commit/c10163c9a65970ee9ddb5f44ff1670b2dc91cd01))
+- **redis-smq:** update API reference ([c7edb43](https://github.com/weyoss/redis-smq/commit/c7edb436bc4694d9e776f61618357970dbf394c2))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add 'set' method to IRedisTransaction interface ([b8130a1](https://github.com/weyoss/redis-smq/commit/b8130a1e0449ca48ea805706eabef2f9eb7fcf83))
+- **redis-smq-rest-api:** rename queue to queueParams to correctly pass IQueueParsedParams ([d95bc48](https://github.com/weyoss/redis-smq/commit/d95bc48585d32ad9c214499383acba7febbfdc48))
+- **redis-smq-rest-api:** update error mapping ([48da1da](https://github.com/weyoss/redis-smq/commit/48da1da9c470ef86a9902a62ace8d8ba60f084cf))
+- **redis-smq:** clean up MessageBrowserAbstract and BrowserStorageAbstract implementations ([321583d](https://github.com/weyoss/redis-smq/commit/321583d7e015ee1bf3f85b4af4020f481b6ef6ca))
+- **redis-smq:** implement background jobs for purge queue management ([bd4e2af](https://github.com/weyoss/redis-smq/commit/bd4e2af34ac5d61575ad97d2510a330720651543))
+
+### ✅ Tests
+
+- **redis-smq-rest-api:** fix purge messages test cases ([c9a0343](https://github.com/weyoss/redis-smq/commit/c9a03434480b9dfdb0a84588235e58bd210020db))
+
 ## [9.0.10-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.3...v9.0.10-next.4) (2026-01-16)
 
 ### 📝 Documentation

@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.11-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.4...v9.0.11-next.0) (2026-01-22)
+
+### 📝 Documentation
+
+- improve README files for clarity ([6ba6543](https://github.com/weyoss/redis-smq/commit/6ba65433d6743d336141e7351ee6267de42a0219))
+- **redis-smq:** update API reference ([c7edb43](https://github.com/weyoss/redis-smq/commit/c7edb436bc4694d9e776f61618357970dbf394c2))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** clean up MessageBrowserAbstract and BrowserStorageAbstract implementations ([321583d](https://github.com/weyoss/redis-smq/commit/321583d7e015ee1bf3f85b4af4020f481b6ef6ca))
+- **redis-smq:** implement background jobs for purge queue management ([bd4e2af](https://github.com/weyoss/redis-smq/commit/bd4e2af34ac5d61575ad97d2510a330720651543))
+
 ## [9.0.10-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.3...v9.0.10-next.4) (2026-01-16)
 
 ### 📝 Documentation
