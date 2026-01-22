@@ -13,22 +13,21 @@ import { QueueDeadLetteredMessages } from '../../queue-dead-lettered-messages/in
 import { QueueScheduledMessages } from '../../queue-scheduled-messages/index.js';
 import { QueuePendingMessages } from '../../queue-pending-messages/index.js';
 import { QueueMessages } from '../../queue-messages/index.js';
-import { EQueueMessagesType } from './queue-messages-types.js';
-import { ILogger } from 'redis-smq-common';
+import { EQueueMessageType } from './types/queue-messages-registry.js';
 
 export const registry = [
-  [EQueueMessagesType.ACKNOWLEDGED, QueueAcknowledgedMessages],
-  [EQueueMessagesType.DEAD_LETTERED, QueueDeadLetteredMessages],
-  [EQueueMessagesType.SCHEDULED, QueueScheduledMessages],
-  [EQueueMessagesType.PENDING, QueuePendingMessages],
-  [EQueueMessagesType.ALL_MESSAGES, QueueMessages],
+  [EQueueMessageType.ACKNOWLEDGED, QueueAcknowledgedMessages],
+  [EQueueMessageType.DEAD_LETTERED, QueueDeadLetteredMessages],
+  [EQueueMessageType.SCHEDULED, QueueScheduledMessages],
+  [EQueueMessageType.PENDING, QueuePendingMessages],
+  [EQueueMessageType.ALL_MESSAGES, QueueMessages],
 ] as const;
 
 export class QueueMessagesRegistry {
   /**
    * Determines the message type from a MessageBrowser instance
    */
-  static getQueueType(instance: IMessageBrowser): EQueueMessagesType {
+  static getQueueType(instance: IMessageBrowser): EQueueMessageType {
     for (const [key, value] of registry) {
       if (instance instanceof value) return key;
     }
@@ -37,12 +36,9 @@ export class QueueMessagesRegistry {
     );
   }
 
-  static getMessageBrowser(
-    type: EQueueMessagesType,
-    logger: ILogger,
-  ): IMessageBrowser {
+  static getMessageBrowser(type: EQueueMessageType): IMessageBrowser {
     for (const [key, Ctor] of registry) {
-      if (type === key) return new Ctor({ logger });
+      if (type === key) return new Ctor();
     }
     throw new Error(`Unsupported message type instance ${type}`);
   }

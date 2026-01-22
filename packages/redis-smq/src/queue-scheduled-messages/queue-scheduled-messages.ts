@@ -9,12 +9,13 @@
 
 import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
 import { BrowserStorageSortedSet } from '../common/message-browser/browser-storage/browser-storage-sorted-set.js';
-import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
 import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
 
 export class QueueScheduledMessages extends MessageBrowserAbstract {
+  readonly messageType = EQueueMessageType.SCHEDULED;
+
   protected readonly redisKey = 'keyQueueScheduled';
-  protected type = EQueueMessagesType.SCHEDULED;
 
   protected createDefaultStorage(): IBrowserStorage {
     return new BrowserStorageSortedSet(this.logger);

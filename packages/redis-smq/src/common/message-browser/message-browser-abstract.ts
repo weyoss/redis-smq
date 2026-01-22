@@ -15,7 +15,6 @@ import {
   ILogger,
 } from 'redis-smq-common';
 import { redisKeys } from '../redis/redis-keys/redis-keys.js';
-import { Configuration } from '../../config/index.js';
 import { IMessageTransferable } from '../../message/index.js';
 import { _parseQueueExtendedParams } from '../../queue-manager/_/_parse-queue-extended-params.js';
 import {
@@ -31,9 +30,10 @@ import {
 import { MessageManager } from '../../message-manager/index.js';
 import { withSharedPoolConnection } from '../redis/redis-connection-pool/with-shared-pool-connection.js';
 import { PurgeQueueJobManager } from '../background-job/purge-queue-job-manager.js';
-import { EQueueMessagesType } from '../queue-messages-registry/queue-messages-types.js';
 import { InvalidPurgeQueueJobIdError } from '../../errors/index.js';
 import { IBrowserStorage } from './browser-storage/browser-storage-abstract.js';
+import { EQueueMessageType } from '../queue-messages-registry/types/queue-messages-registry.js';
+import { Configuration } from '../../config/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
@@ -79,28 +79,15 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
   /**
    * Type of queue messages this browser handles.
    */
-  protected abstract readonly type: EQueueMessagesType;
+  abstract readonly messageType: EQueueMessageType;
 
-  constructor(
-    args: {
-      messageManager?: MessageManager;
-      messageStorage?: IBrowserStorage;
-      logger?: ILogger;
-      requireGroupId?: boolean;
-    } = {},
-  ) {
-    const {
-      messageManager,
-      messageStorage,
-      logger,
-      requireGroupId = false,
-    } = args;
-    this.logger = logger
-      ? logger.createLogger(this.constructor.name)
-      : createLogger(Configuration.getConfig().logger, this.constructor.name);
-    this.messageManager = messageManager || new MessageManager();
-    this.messageStorage = messageStorage || this.createDefaultStorage();
-    this.requireGroupId = requireGroupId;
+  constructor() {
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
+      this.constructor.name,
+    );
+    this.messageManager = new MessageManager();
+    this.messageStorage = this.createDefaultStorage();
   }
 
   /**
@@ -181,7 +168,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
           purgeQueueJobManager.create(
             {
               queue: parsedParams,
-              queueType: this.type,
+              messageType: this.messageType,
             },
             {},
             (err, jobId) => {
@@ -220,7 +207,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
           purgeQueueJobManager.getActiveJob(
             {
               queue: parsedParams,
-              queueType: this.type,
+              messageType: this.messageType,
             },
             (err, reply) => {
               if (err) return cb(err);

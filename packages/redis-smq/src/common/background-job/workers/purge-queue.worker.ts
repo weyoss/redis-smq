@@ -106,8 +106,7 @@ export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
         // Perform the actual purge
         (job, next: ICallback<number>) => {
           const messageBrowser = QueueMessagesRegistry.getMessageBrowser(
-            job.target.queueType,
-            this.logger,
+            job.target.messageType,
           );
           this.purgeMessages(job, messageBrowser, next);
         },

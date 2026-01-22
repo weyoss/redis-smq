@@ -7,50 +7,24 @@
  * in the root directory of this source tree.
  */
 
-import {
-  CallbackEmptyReplyError,
-  createLogger,
-  ICallback,
-} from 'redis-smq-common';
-import { Configuration } from '../config/index.js';
+import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable } from '../message/index.js';
-import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
-import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
-import {
-  EQueueType,
-  IQueueParsedParams,
-  TQueueExtendedParams,
-} from '../queue-manager/index.js';
+import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IBrowserPage, IMessageBrowser } from '../common/index.js';
-import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
-import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
+import { withPendingMessages } from './with-pending-messages.js';
+import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
 
 export class QueuePendingMessages implements IMessageBrowser {
-  protected priorityQueueMessages;
-  protected sequentialQueuePendingMessages;
-  protected logger;
-  protected type = EQueueMessagesType.PENDING;
-
-  constructor() {
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
-    );
-    this.priorityQueueMessages = new PriorityQueuePendingMessages();
-    this.sequentialQueuePendingMessages = new SequentialQueuePendingMessages();
-  }
+  readonly messageType = EQueueMessageType.PENDING;
 
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
-    const parsedParams = _parseQueueExtendedParams(queue);
-    if (parsedParams instanceof Error) cb(parsedParams);
-    else {
-      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
-        if (err) cb(err);
-        else pendingMessages?.countMessages(queue, cb);
-      });
-    }
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.countMessages(queue, cb);
+      },
+      cb,
+    );
   }
 
   getMessageIds(
@@ -59,14 +33,13 @@ export class QueuePendingMessages implements IMessageBrowser {
     pageSize: number,
     cb: ICallback<IBrowserPage<string>>,
   ): void {
-    const parsedParams = _parseQueueExtendedParams(queue);
-    if (parsedParams instanceof Error) cb(parsedParams);
-    else {
-      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
-        if (err) cb(err);
-        else pendingMessages?.getMessageIds(queue, page, pageSize, cb);
-      });
-    }
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.getMessageIds(queue, page, pageSize, cb);
+      },
+      cb,
+    );
   }
 
   getMessages(
@@ -75,53 +48,31 @@ export class QueuePendingMessages implements IMessageBrowser {
     pageSize: number,
     cb: ICallback<IBrowserPage<IMessageTransferable>>,
   ): void {
-    const parsedParams = _parseQueueExtendedParams(queue);
-    if (parsedParams instanceof Error) cb(parsedParams);
-    else {
-      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
-        if (err) cb(err);
-        else pendingMessages?.getMessages(queue, page, pageSize, cb);
-      });
-    }
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.getMessages(queue, page, pageSize, cb);
+      },
+      cb,
+    );
   }
 
   purge(queue: TQueueExtendedParams, cb: ICallback<string>): void {
-    const parsedParams = _parseQueueExtendedParams(queue);
-    if (parsedParams instanceof Error) cb(parsedParams);
-    else {
-      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
-        if (err) cb(err);
-        else pendingMessages?.purge(queue, cb);
-      });
-    }
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.purge(queue, cb);
+      },
+      cb,
+    );
   }
 
   cancelPurge(queue: TQueueExtendedParams, jobId: string, cb: ICallback): void {
-    const parsedParams = _parseQueueExtendedParams(queue);
-    if (parsedParams instanceof Error) cb(parsedParams);
-    else {
-      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
-        if (err) cb(err);
-        else pendingMessages?.cancelPurge(queue, jobId, cb);
-      });
-    }
-  }
-
-  protected getQueueImplementation(
-    queue: IQueueParsedParams,
-    cb: ICallback<IMessageBrowser>,
-  ): void {
-    withSharedPoolConnection(
-      (client, cb) =>
-        _getQueueProperties(client, queue.queueParams, (err, properties) => {
-          if (err) cb(err);
-          else if (!properties) cb(new CallbackEmptyReplyError());
-          else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
-            cb(null, this.priorityQueueMessages);
-          } else {
-            cb(null, this.sequentialQueuePendingMessages);
-          }
-        }),
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.cancelPurge(queue, jobId, cb);
+      },
       cb,
     );
   }

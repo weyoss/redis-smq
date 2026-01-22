@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export const enum EQueueMessagesType {
+export const enum EQueueMessageType {
   DEAD_LETTERED,
   ACKNOWLEDGED,
   SCHEDULED,

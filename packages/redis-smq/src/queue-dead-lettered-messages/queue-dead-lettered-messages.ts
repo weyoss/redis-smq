@@ -15,8 +15,8 @@ import { IBrowserPage } from '../common/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { Configuration } from '../config/index.js';
 import { DeadLetteredMessageAuditNotEnabledError } from '../errors/index.js';
-import { EQueueMessagesType } from '../common/queue-messages-registry/queue-messages-types.js';
 import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
 
 /**
  * Manages audited dead-lettered messages in a queue.
@@ -29,7 +29,7 @@ import { IBrowserStorage } from '../common/message-browser/browser-storage/brows
  * @see /packages/redis-smq/docs/configuration.md#message-audit
  */
 export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
-  protected type = EQueueMessagesType.DEAD_LETTERED;
+  readonly messageType = EQueueMessageType.DEAD_LETTERED;
   protected readonly redisKey = 'keyQueueDL';
 
   protected createDefaultStorage(): IBrowserStorage {
