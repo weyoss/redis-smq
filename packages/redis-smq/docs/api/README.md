@@ -8,6 +8,7 @@
 
 ## Enumerations
 
+- [EBackgroundJobStatus](enumerations/EBackgroundJobStatus.md)
 - [EExchangeProperty](enumerations/EExchangeProperty.md)
 - [EExchangeQueuePolicy](enumerations/EExchangeQueuePolicy.md)
 - [EExchangeType](enumerations/EExchangeType.md)
@@ -15,6 +16,7 @@
 - [EMessageProperty](enumerations/EMessageProperty.md)
 - [EMessagePropertyStatus](enumerations/EMessagePropertyStatus.md)
 - [EQueueDeliveryModel](enumerations/EQueueDeliveryModel.md)
+- [EQueueMessageType](enumerations/EQueueMessageType.md)
 - [EQueueProperty](enumerations/EQueueProperty.md)
 - [EQueueType](enumerations/EQueueType.md)
 
@@ -43,6 +45,8 @@
 
 ## Interfaces
 
+- [IBackgroundJob](interfaces/IBackgroundJob.md)
+- [IBackgroundJobConfig](interfaces/IBackgroundJobConfig.md)
 - [IBrowserPage](interfaces/IBrowserPage.md)
 - [IBrowserPageInfo](interfaces/IBrowserPageInfo.md)
 - [IConsumerMessageHandlerParams](interfaces/IConsumerMessageHandlerParams.md)
@@ -87,6 +91,7 @@
 - [TMessageStatePropertyKey](type-aliases/TMessageStatePropertyKey.md)
 - [TMessageStatePropertyType](type-aliases/TMessageStatePropertyType.md)
 - [TProducerEvent](type-aliases/TProducerEvent.md)
+- [TPurgeQueueJobTarget](type-aliases/TPurgeQueueJobTarget.md)
 - [TQueueConsumer](type-aliases/TQueueConsumer.md)
 - [TQueueEvent](type-aliases/TQueueEvent.md)
 - [TQueueExtendedParams](type-aliases/TQueueExtendedParams.md)

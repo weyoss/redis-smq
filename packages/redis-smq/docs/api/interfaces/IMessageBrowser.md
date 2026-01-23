@@ -6,7 +6,7 @@
 
 ### messageType
 
-> `readonly` **messageType**: `EQueueMessageType`
+> `readonly` **messageType**: [`EQueueMessageType`](../enumerations/EQueueMessageType.md)
 
 ## Methods
 
