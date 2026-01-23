@@ -357,8 +357,8 @@ importers:
         specifier: 27.1.0
         version: 27.1.0
       orval:
-        specifier: 8.0.2
-        version: 8.0.2(typescript@5.8.3)
+        specifier: 8.0.3
+        version: 8.0.3(typescript@5.8.3)
       redis-smq:
         specifier: workspace:^
         version: link:../redis-smq
@@ -1940,90 +1940,90 @@ packages:
       }
     engines: { node: ^20.17.0 || >=22.9.0 }
 
-  '@nx/devkit@22.4.0':
+  '@nx/devkit@22.4.1':
     resolution:
       {
-        integrity: sha512-YCDO9/CvmQOuba16j+nmquUnJ4OrvChaUCpeO0CtbrsDOsc/OtyTy8jD6T+JETIURYPuZVvQ4yTHYZUzKpOqfA==,
+        integrity: sha512-A3smUCwB7UOwJps7lkghBtUAmOkdhPrWFM88jFvZ/pUl2RYBi5yLYSRi6qdHPFvUu/1+Ew4I0P0yDhJJiAyL3w==,
       }
     peerDependencies:
       nx: '>= 21 <= 23 || ^22.0.0-0'
 
-  '@nx/nx-darwin-arm64@22.4.0':
+  '@nx/nx-darwin-arm64@22.4.1':
     resolution:
       {
-        integrity: sha512-7Z+0Ume0Xb61QdAl8QS+0yji+goQVkaKfdTjfPIuI3/TgvuFwHjcqz3ZPyPeroutGS5ubHAbAYuxpy0KivQNaQ==,
+        integrity: sha512-hC9XTkYpRXJMpDcUzt/yYBQpyA4IrdUg3m5eVJMPZ8uth1l+KAiv31YQL5I044XO4b3yYVuKW+4vlmS8OCppYQ==,
       }
     cpu: [arm64]
     os: [darwin]
 
-  '@nx/nx-darwin-x64@22.4.0':
+  '@nx/nx-darwin-x64@22.4.1':
     resolution:
       {
-        integrity: sha512-mR802gKGcILzr83BxR9CHNB/ZHnI4Uvv4ZHyh/YzB0EnqpBcsK7S7TQSM5XgvJJA1s4W+Fng3NGxUu6s8vfERQ==,
+        integrity: sha512-yaQFbLowg42qIUc0wTYZ7K5V3G+CIsbcphoQARG01gfjtfGCNs71yJ9Q8XvKH7IVzq0shlSohVzMPBg9+1Dp4Q==,
       }
     cpu: [x64]
     os: [darwin]
 
-  '@nx/nx-freebsd-x64@22.4.0':
+  '@nx/nx-freebsd-x64@22.4.1':
     resolution:
       {
-        integrity: sha512-0U+/mfQtb8WhJKVo3F4LybZEj3Z8BhFCrEVNywd22yMwVxO8zlr3EWxOAbfz8yG9BUffHfRcSHae2lbJInbwrA==,
+        integrity: sha512-n6Y10jSdPPclMyKi4SSkbri3pHHnWVOQuTgWIAlLUAHAp/t5pAU6ky3BPjxwfqjUehFbvvLYeNEKDFP8vFJXOw==,
       }
     cpu: [x64]
     os: [freebsd]
 
-  '@nx/nx-linux-arm-gnueabihf@22.4.0':
+  '@nx/nx-linux-arm-gnueabihf@22.4.1':
     resolution:
       {
-        integrity: sha512-0vZpBRMx7e+TNm+z9jQ/ApHhAVg2KAaZqlsWWaCOAFZx6efusrgu369fYpzO4HFmEIiGtW4gNTL9CuaWIKCfWw==,
+        integrity: sha512-1wx5aEM3DWXPhYUprp8EBwmS5KGemB940iylFRtHBOVW/pD4nU9QfWAApAC/wkn+Ag7UQpgIG1xNI8TUhrpEpA==,
       }
     cpu: [arm]
     os: [linux]
 
-  '@nx/nx-linux-arm64-gnu@22.4.0':
+  '@nx/nx-linux-arm64-gnu@22.4.1':
     resolution:
       {
-        integrity: sha512-J2WehKwXpyWbPyhO0U4Obl8Wm0eoBkBufjVTGFd0m7mE+FKLRT5oQzofS7nO/4/M5yKBtfp6kurHsC69ey4UFg==,
+        integrity: sha512-Q8ZYk/fm/y/Tve5Snw8HnasmCqyKkaz0A6OU00muR5PhcZF104PniW2JDwXOa+14AwJd0tcRug3OSd17DYHZnQ==,
       }
     cpu: [arm64]
     os: [linux]
 
-  '@nx/nx-linux-arm64-musl@22.4.0':
+  '@nx/nx-linux-arm64-musl@22.4.1':
     resolution:
       {
-        integrity: sha512-yAD1NZo2k1sqNWofr92rrsvpQxxfZASkwZQwlNHEOSsqfGTt9Jbr2I0nVCjHyUQ+qxlr7MoWl7W/yZcZcDXzCQ==,
+        integrity: sha512-73QLboxmFxQz3cur8SUrYNdf01SrfECKs8IYfD6kmJuxI+5Mjvd25NxAakqHQPuZt2MW6wD7V6T9H2lhIiRUZQ==,
       }
     cpu: [arm64]
     os: [linux]
 
-  '@nx/nx-linux-x64-gnu@22.4.0':
+  '@nx/nx-linux-x64-gnu@22.4.1':
     resolution:
       {
-        integrity: sha512-+1OAqcV1Tn+HQmU8E2a9oFMrKYLhwED19kh/LsLCU6Yk0DHxRkurR5kvJune1fLofUtys5ZhlY2c5ZRKlod/jA==,
+        integrity: sha512-jUT+Eh44WwwgVFsAMw8ZhSHOENCB9dUfFfMA1dabzCRzPRHGn1cGNROEBwOzcr69yuwrkCk8MBXKcPTEBpgZiQ==,
       }
     cpu: [x64]
     os: [linux]
 
-  '@nx/nx-linux-x64-musl@22.4.0':
+  '@nx/nx-linux-x64-musl@22.4.1':
     resolution:
       {
-        integrity: sha512-kaPHCxlMHXqEn+0b7qr0dGulRoJl5ugmhwztO/UEk5pqLbM5Ip/OxuZDTIAsZVjeHs0Tgs9QMMTYqLkJIuuFfQ==,
+        integrity: sha512-gIchvqNK//74oYuqUs96W+I+ZnOHJzGy/RH5sAnW2JexPGxJNEoWIlyHJ/CedJ/h7WGWZFJpu7TXhqlKWeVFLw==,
       }
     cpu: [x64]
     os: [linux]
 
-  '@nx/nx-win32-arm64-msvc@22.4.0':
+  '@nx/nx-win32-arm64-msvc@22.4.1':
     resolution:
       {
-        integrity: sha512-VYYplfEVVfbsPewxnRZY9QM8JoTe0riQNCajwKTYbYQMP83SSitXTyAuSDmUT7ADb6l2UL0pdE/bz2MgOYO3sA==,
+        integrity: sha512-209BtB0PFqrTT8sCehjI7zWznersXjTLEwa/hy4WKKlRbaiepWebYNJWoSfBz0ZOYBGuLX15M4R7t57fM9gySA==,
       }
     cpu: [arm64]
     os: [win32]
 
-  '@nx/nx-win32-x64-msvc@22.4.0':
+  '@nx/nx-win32-x64-msvc@22.4.1':
     resolution:
       {
-        integrity: sha512-ir0Rt/+sPoe5GM8S1gcWDQEQ1UsleRx1mpjPSIh0Rr9U16kIW9jtNxG58eQ94NpaA6IrDoz5x4QHNfMiMCzTyQ==,
+        integrity: sha512-QRgvgkTBLipoRJGofg5MlzMsWhnjpjQfssuyCSBmm1tjCdatBIDac5l6Z4xaUicPmjLzE3hPfnvX/t+ivRYKpA==,
       }
     cpu: [x64]
     os: [win32]
@@ -2138,70 +2138,70 @@ packages:
     peerDependencies:
       openapi-types: '*'
 
-  '@orval/angular@8.0.2':
+  '@orval/angular@8.0.3':
     resolution:
       {
-        integrity: sha512-4RWMlGOFvsBrIPVZOo6fIRN46aMatgLpX69Zu9JeW/+9uQJ5CyNOtDg4RPYWVYdTFGjhEhf6OkeR0aKoxStAfA==,
+        integrity: sha512-zZyHVunumuxWUQMeNgFSCMKyBGIG1NWqlcctMpfecOYo2MbMaU6WeNws7BcfTXV6EP5gNbVdOjSdZ5N/6iX/kQ==,
       }
 
-  '@orval/axios@8.0.2':
+  '@orval/axios@8.0.3':
     resolution:
       {
-        integrity: sha512-C9Jt0+fc6EmhIhCXosUXffo55QG9FflGEAFw7J7G0w7gGxUHbUkPCSR6tXuH/Y72CRXiBdxlIpBs8UgzgyRf6Q==,
+        integrity: sha512-Cb++1weUwvJ6fJFsMBzqVxUfw9EoyCa0kPieqQ0DDzzzfKWejhmSMlwVsIzQciQZs+W8rGzgg4NCPEMZpkQlqw==,
       }
 
-  '@orval/core@8.0.2':
+  '@orval/core@8.0.3':
     resolution:
       {
-        integrity: sha512-XBKaEE2g378Y2Hs6LY/QZ5uVpffzsmHQR5Uvzr9K13Wb4LDbN3MR5VNWyISnLVAwdLDYyvqtGEcGpJJgsUH4EQ==,
+        integrity: sha512-0UmTR06J4cijFsaKwZ7osC4dbEyghg3OzuMNnkkPGMkObIO3VkIn39loKNz02s0WFEaujycMFfTOhjq7CQF3aQ==,
       }
 
-  '@orval/fetch@8.0.2':
+  '@orval/fetch@8.0.3':
     resolution:
       {
-        integrity: sha512-rJdsYMxP3Q7XFzZ7stPkj31oPxWnXSFUONYxnDnDe8u95lQhtr0ThAKCuJg18Tc3ZlNpkvnufXqMkAKH8cOm1Q==,
+        integrity: sha512-VXAcekE7OpmcIVXxfVSRl4VSOgQIKCsNjlOcrP6tuQii88WlGraOmP3dKRzpzeChlni2alU+1ABgoyQjJ74k+w==,
       }
 
-  '@orval/hono@8.0.2':
+  '@orval/hono@8.0.3':
     resolution:
       {
-        integrity: sha512-P2dxi5MbTNyqQQSxteqa+K0hGTpW4rbxb8GuMaf+ConSucWhknJyhfVe3Q5cvRXodnpRrw801P5HDpwqXsVjAg==,
+        integrity: sha512-eYHgKfaVKDR4pFmLXFmVgB0R+Wf4xgMWrvrGbtLRnwgLfnVn+ewlaXDwhgiKvt7KohIqHIGw+9GD4tzGFp/QOg==,
       }
 
-  '@orval/mcp@8.0.2':
+  '@orval/mcp@8.0.3':
     resolution:
       {
-        integrity: sha512-0asnmvWGbnIiP9mFB0QJ+gFAQfDup+/vjzybPJyTHAOuSfJUKLZIpj7JZpUPbgiSikzAXPLz0Jwna+T4q8ytpg==,
+        integrity: sha512-0ucpqUHgtHSSLKmqlGzlFHs9sUV+gK93vGMtMy2hLz6TXQqVRBulWB9KDC7vcurAw6jn09X/6No54bHNAKCY3A==,
       }
 
-  '@orval/mock@8.0.2':
+  '@orval/mock@8.0.3':
     resolution:
       {
-        integrity: sha512-eDo91SxlKgoStBcXRS/2kb0aO95xopq8/SAncHz7eKGI3TBHbE51D+FR04uBlbq5DuW31KEzb237uaZje5eVPg==,
+        integrity: sha512-X62XNsfKySBUifm+/x6kyPA97RSr3HgBn0HCFvNdgdUE5o/lR8izgnBwHjafmlHCh8dHXWQZGtSjM/lkj5so+Q==,
       }
 
-  '@orval/query@8.0.2':
+  '@orval/query@8.0.3':
     resolution:
       {
-        integrity: sha512-rO+1eKwaWcp0hOA/aez+e2X3f/bVGB1LRakfNaCsqRhhWfi0xeM1QsnIP1BazmZKjGJmsXZDrzHAnkWbIt5aUQ==,
+        integrity: sha512-jai3fZMy40BJ8xb+q4kxSEmn48SfHrY9VWLIOFKb3hE+5aEhiNxcNiPuNX4TeZfWkaLAEUBfI3if2XHJ5emTTA==,
       }
 
-  '@orval/solid-start@8.0.2':
+  '@orval/solid-start@8.0.3':
     resolution:
       {
-        integrity: sha512-Ihho1Haqb/z0blAk/IF87iDvi2BFntbGO+MNOeXXR9YUipYtIQtpfKogBVuSYCErmYQ7r6UUcKtc4s5tdHEfOA==,
+        integrity: sha512-UC9vVcVy4skAzh9WwwBZFjHubVutb5O7urvcIJuBxIy6SGcVd11goVRfw0HYSfhQONiAhTOAUsRB5hQfIiN0lw==,
       }
 
-  '@orval/swr@8.0.2':
+  '@orval/swr@8.0.3':
     resolution:
       {
-        integrity: sha512-H43aOnede3ePPa5YNSLvdmfzHW1HX9LJ0vSMlGj4SQ4QrxRvTfyA03Mk8YQgq5IK/UofubXYEcYrXxQhK5t8Lg==,
+        integrity: sha512-sFlJLf/0/Kt6NAnUTAwMLLWma5GsbbYOftL+abStHMRDzv0qP3OFReek3fz3ZGVi3mENSKWAO9EVwC1FKZ681w==,
       }
 
-  '@orval/zod@8.0.2':
+  '@orval/zod@8.0.3':
     resolution:
       {
-        integrity: sha512-RP+GhsEtXXgteldZAkNt8DhSS37/6IPFr30Hg67YEnxMGgVOWIOjS8R2vHkw7uZEY7E7ZJlieiJh9Tav7Qii6g==,
+        integrity: sha512-mbnFvKp1HPwR9bopQiAlH3GGo9qlwFr4iwWH2zvmLjtRpP1t7Hox0/w94Yn0++HbtXf6jctm/lMUOS2F8C4eQA==,
       }
 
   '@paralleldrive/cuid2@2.3.1':
@@ -8112,10 +8112,10 @@ packages:
         integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==,
       }
 
-  nx@22.4.0:
+  nx@22.4.1:
     resolution:
       {
-        integrity: sha512-NQacpt3Df3+BL2M0gtPeUvoVqA6ze4YRD6AzUU8EQuSJC3Xv9n9BKDJeQd7LiGGCB/9/R3CPdUnYfhBfyscqYw==,
+        integrity: sha512-SSzG5sAKsvQL4Heva65/Y1ABs3HqrzIJhneba9+5qBVkhw7T2mcMjZB421UDR9akTnDB3uunDnf3NKMKpTcB0A==,
       }
     hasBin: true
     peerDependencies:
@@ -8222,10 +8222,10 @@ packages:
       }
     engines: { node: '>=10' }
 
-  orval@8.0.2:
+  orval@8.0.3:
     resolution:
       {
-        integrity: sha512-0MPpNARaTNvE+hXkQC1YT3Os8pkId8B3i07cqn6OksNYfH8f9FYOHHbUSQUyEiOzovfSYIsmcum2pWbA9d4I0A==,
+        integrity: sha512-L8RNV8aeCHy7qDI9Q3TlBIn+lCrCrqs+h83cHhuwz2otsOpDuT2J9BtkS8LxxTJrbjHFvwXbnkdKSfwWezxv3g==,
       }
     engines: { node: '>=22.18.0' }
     hasBin: true
@@ -11983,7 +11983,7 @@ snapshots:
       '@npmcli/arborist': 9.1.6
       '@npmcli/package-json': 7.0.2
       '@npmcli/run-script': 10.0.2
-      '@nx/devkit': 22.4.0(nx@22.4.0)
+      '@nx/devkit': 22.4.1(nx@22.4.1)
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 20.1.2
       aproba: 2.0.0
@@ -12018,7 +12018,7 @@ snapshots:
       npm-package-arg: 13.0.1
       npm-packlist: 10.0.3
       npm-registry-fetch: 19.1.0
-      nx: 22.4.0
+      nx: 22.4.1
       p-map: 4.0.0
       p-map-series: 2.1.0
       p-queue: 6.6.2
@@ -12270,45 +12270,45 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nx/devkit@22.4.0(nx@22.4.0)':
+  '@nx/devkit@22.4.1(nx@22.4.1)':
     dependencies:
       '@zkochan/js-yaml': 0.0.7
       ejs: 3.1.10
       enquirer: 2.3.6
       minimatch: 10.1.1
-      nx: 22.4.0
+      nx: 22.4.1
       semver: 7.7.2
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
-  '@nx/nx-darwin-arm64@22.4.0':
+  '@nx/nx-darwin-arm64@22.4.1':
     optional: true
 
-  '@nx/nx-darwin-x64@22.4.0':
+  '@nx/nx-darwin-x64@22.4.1':
     optional: true
 
-  '@nx/nx-freebsd-x64@22.4.0':
+  '@nx/nx-freebsd-x64@22.4.1':
     optional: true
 
-  '@nx/nx-linux-arm-gnueabihf@22.4.0':
+  '@nx/nx-linux-arm-gnueabihf@22.4.1':
     optional: true
 
-  '@nx/nx-linux-arm64-gnu@22.4.0':
+  '@nx/nx-linux-arm64-gnu@22.4.1':
     optional: true
 
-  '@nx/nx-linux-arm64-musl@22.4.0':
+  '@nx/nx-linux-arm64-musl@22.4.1':
     optional: true
 
-  '@nx/nx-linux-x64-gnu@22.4.0':
+  '@nx/nx-linux-x64-gnu@22.4.1':
     optional: true
 
-  '@nx/nx-linux-x64-musl@22.4.0':
+  '@nx/nx-linux-x64-musl@22.4.1':
     optional: true
 
-  '@nx/nx-win32-arm64-msvc@22.4.0':
+  '@nx/nx-win32-arm64-msvc@22.4.1':
     optional: true
 
-  '@nx/nx-win32-x64-msvc@22.4.0':
+  '@nx/nx-win32-x64-msvc@22.4.1':
     optional: true
 
   '@octokit/auth-token@4.0.0': {}
@@ -12387,21 +12387,21 @@ snapshots:
     transitivePeerDependencies:
       - '@types/json-schema'
 
-  '@orval/angular@8.0.2(typescript@5.8.3)':
+  '@orval/angular@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/axios@8.0.2(typescript@5.8.3)':
+  '@orval/axios@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/core@8.0.2(typescript@5.8.3)':
+  '@orval/core@8.0.3(typescript@5.8.3)':
     dependencies:
       '@scalar/openapi-types': 0.5.3
       acorn: 8.15.0
@@ -12418,68 +12418,68 @@ snapshots:
       - supports-color
       - typescript
 
-  '@orval/fetch@8.0.2(typescript@5.8.3)':
+  '@orval/fetch@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
       '@scalar/openapi-types': 0.5.3
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/hono@8.0.2(typescript@5.8.3)':
+  '@orval/hono@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
-      '@orval/zod': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/zod': 8.0.3(typescript@5.8.3)
       fs-extra: 11.3.3
       remeda: 2.33.4
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/mcp@8.0.2(typescript@5.8.3)':
+  '@orval/mcp@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
-      '@orval/fetch': 8.0.2(typescript@5.8.3)
-      '@orval/zod': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/fetch': 8.0.3(typescript@5.8.3)
+      '@orval/zod': 8.0.3(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/mock@8.0.2(typescript@5.8.3)':
+  '@orval/mock@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/query@8.0.2(typescript@5.8.3)':
+  '@orval/query@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
-      '@orval/fetch': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/fetch': 8.0.3(typescript@5.8.3)
       chalk: 5.6.2
       remeda: 2.33.4
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/solid-start@8.0.2(typescript@5.8.3)':
+  '@orval/solid-start@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/swr@8.0.2(typescript@5.8.3)':
+  '@orval/swr@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
-      '@orval/fetch': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/fetch': 8.0.3(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/zod@8.0.2(typescript@5.8.3)':
+  '@orval/zod@8.0.3(typescript@5.8.3)':
     dependencies:
-      '@orval/core': 8.0.2(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
       remeda: 2.33.4
     transitivePeerDependencies:
       - supports-color
@@ -15688,7 +15688,7 @@ snapshots:
       '@npmcli/arborist': 9.1.6
       '@npmcli/package-json': 7.0.2
       '@npmcli/run-script': 10.0.2
-      '@nx/devkit': 22.4.0(nx@22.4.0)
+      '@nx/devkit': 22.4.1(nx@22.4.1)
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 20.1.2
       aproba: 2.0.0
@@ -15729,7 +15729,7 @@ snapshots:
       npm-package-arg: 13.0.1
       npm-packlist: 10.0.3
       npm-registry-fetch: 19.1.0
-      nx: 22.4.0
+      nx: 22.4.1
       p-map: 4.0.0
       p-map-series: 2.1.0
       p-pipe: 3.1.0
@@ -16392,7 +16392,7 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nx@22.4.0:
+  nx@22.4.1:
     dependencies:
       '@napi-rs/wasm-runtime': 0.2.4
       '@yarnpkg/lockfile': 1.1.0
@@ -16430,16 +16430,16 @@ snapshots:
       yargs: 17.7.2
       yargs-parser: 21.1.1
     optionalDependencies:
-      '@nx/nx-darwin-arm64': 22.4.0
-      '@nx/nx-darwin-x64': 22.4.0
-      '@nx/nx-freebsd-x64': 22.4.0
-      '@nx/nx-linux-arm-gnueabihf': 22.4.0
-      '@nx/nx-linux-arm64-gnu': 22.4.0
-      '@nx/nx-linux-arm64-musl': 22.4.0
-      '@nx/nx-linux-x64-gnu': 22.4.0
-      '@nx/nx-linux-x64-musl': 22.4.0
-      '@nx/nx-win32-arm64-msvc': 22.4.0
-      '@nx/nx-win32-x64-msvc': 22.4.0
+      '@nx/nx-darwin-arm64': 22.4.1
+      '@nx/nx-darwin-x64': 22.4.1
+      '@nx/nx-freebsd-x64': 22.4.1
+      '@nx/nx-linux-arm-gnueabihf': 22.4.1
+      '@nx/nx-linux-arm64-gnu': 22.4.1
+      '@nx/nx-linux-arm64-musl': 22.4.1
+      '@nx/nx-linux-x64-gnu': 22.4.1
+      '@nx/nx-linux-x64-musl': 22.4.1
+      '@nx/nx-win32-arm64-msvc': 22.4.1
+      '@nx/nx-win32-x64-msvc': 22.4.1
     transitivePeerDependencies:
       - debug
 
@@ -16514,20 +16514,20 @@ snapshots:
       strip-ansi: 6.0.1
       wcwidth: 1.0.1
 
-  orval@8.0.2(typescript@5.8.3):
+  orval@8.0.3(typescript@5.8.3):
     dependencies:
       '@commander-js/extra-typings': 14.0.0(commander@14.0.2)
-      '@orval/angular': 8.0.2(typescript@5.8.3)
-      '@orval/axios': 8.0.2(typescript@5.8.3)
-      '@orval/core': 8.0.2(typescript@5.8.3)
-      '@orval/fetch': 8.0.2(typescript@5.8.3)
-      '@orval/hono': 8.0.2(typescript@5.8.3)
-      '@orval/mcp': 8.0.2(typescript@5.8.3)
-      '@orval/mock': 8.0.2(typescript@5.8.3)
-      '@orval/query': 8.0.2(typescript@5.8.3)
-      '@orval/solid-start': 8.0.2(typescript@5.8.3)
-      '@orval/swr': 8.0.2(typescript@5.8.3)
-      '@orval/zod': 8.0.2(typescript@5.8.3)
+      '@orval/angular': 8.0.3(typescript@5.8.3)
+      '@orval/axios': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/fetch': 8.0.3(typescript@5.8.3)
+      '@orval/hono': 8.0.3(typescript@5.8.3)
+      '@orval/mcp': 8.0.3(typescript@5.8.3)
+      '@orval/mock': 8.0.3(typescript@5.8.3)
+      '@orval/query': 8.0.3(typescript@5.8.3)
+      '@orval/solid-start': 8.0.3(typescript@5.8.3)
+      '@orval/swr': 8.0.3(typescript@5.8.3)
+      '@orval/zod': 8.0.3(typescript@5.8.3)
       '@scalar/json-magic': 0.8.10
       '@scalar/openapi-parser': 0.23.13
       '@scalar/openapi-types': 0.5.3
