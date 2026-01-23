@@ -20,7 +20,7 @@
 
 ### messageType
 
-> `readonly` **messageType**: `PENDING` = `EQueueMessageType.PENDING`
+> `readonly` **messageType**: [`PENDING`](../enumerations/EQueueMessageType.md#pending) = `EQueueMessageType.PENDING`
 
 #### Implementation of
 
