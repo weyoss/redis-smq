@@ -7,7 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './types/index.js';
-export * from './queue-messages-registry/types/index.js';
-export * from './background-job/types/index.js';
-export * from './message-browser/types/index.js';
+export * from './queue-messages-registry.js';

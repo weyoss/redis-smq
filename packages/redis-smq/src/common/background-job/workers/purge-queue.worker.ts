@@ -9,17 +9,14 @@
 
 import { BackgroundJobWorkerAbstract } from '../background-job-worker-abstract.js';
 import { async, ICallback, PanicError } from 'redis-smq-common';
-import {
-  PurgeQueueJobManager,
-  TPurgeQueueJobTarget,
-} from '../purge-queue-job-manager.js';
-import { IBackgroundJob } from '../background-job-manager-abstract.js';
+import { PurgeQueueJobManager } from '../purge-queue-job-manager.js';
 import {
   IBrowserPage,
   IMessageBrowser,
 } from '../../message-browser/types/index.js';
 import { _deleteMessage } from '../../../message-manager/_/_delete-message.js';
 import { QueueMessagesRegistry } from '../../queue-messages-registry/queue-messages-registry.js';
+import { IBackgroundJob, TPurgeQueueJobTarget } from '../types/index.js';
 
 export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
   protected jobManager: PurgeQueueJobManager | null = null;

@@ -13,36 +13,11 @@ import {
   BackgroundJobNotFoundError,
   BackgroundJobTargetLockedError,
 } from '../../errors/index.js';
-
-export enum EBackgroundJobStatus {
-  'PENDING',
-  'PROCESSING',
-  'COMPLETED',
-  'FAILED',
-  'CANCELED',
-}
-
-export interface IBackgroundJob<Target> {
-  id: string;
-  target: Target; // What the job operates on (queue name, file path, URL, etc.)
-  status: EBackgroundJobStatus;
-  createdAt: number;
-  updatedAt?: number;
-  startedAt?: number;
-  completedAt?: number;
-
-  // Job-specific fields (for queue purge jobs)
-  batchSize?: number;
-  delay?: number;
-  purged?: number;
-  error?: string;
-}
-
-export interface IBackgroundJobConfig {
-  keyBackgroundJobs: string;
-  keyBackgroundJobsPending: string;
-  keyBackgroundJobsProcessing: string;
-}
+import {
+  EBackgroundJobStatus,
+  IBackgroundJob,
+  IBackgroundJobConfig,
+} from './types/index.js';
 
 export abstract class BackgroundJobManagerAbstract<Target> {
   protected readonly config: IBackgroundJobConfig;
@@ -137,7 +112,9 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   get(jobId: string, cb: ICallback<IBackgroundJob<Target> | null>): void {
     this.redisClient.hget(this.config.keyBackgroundJobs, jobId, (err, data) => {
       if (err) return cb(err);
-      cb(null, data ? JSON.parse(data) : null);
+      if (!data)
+        return cb(new BackgroundJobNotFoundError({ metadata: { jobId } }));
+      cb(null, JSON.parse(data));
     });
   }
 
