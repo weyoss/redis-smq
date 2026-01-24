@@ -110,6 +110,54 @@
 
 ---
 
+### getPurgeJob()
+
+> **getPurgeJob**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`\<[`IBackgroundJob`](IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
+
+#### Returns
+
+`void`
+
+---
+
+### getPurgeJobStatus()
+
+> **getPurgeJobStatus**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`\<[`EBackgroundJobStatus`](../enumerations/EBackgroundJobStatus.md)\>
+
+#### Returns
+
+`void`
+
+---
+
 ### purge()
 
 > **purge**(`queue`, `cb`): `void`

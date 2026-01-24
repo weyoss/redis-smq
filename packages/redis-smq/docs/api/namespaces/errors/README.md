@@ -5,7 +5,13 @@
 ## Classes
 
 - [AcknowledgedMessageAuditNotEnabledError](classes/AcknowledgedMessageAuditNotEnabledError.md)
+- [BackgroundJobAlreadyExistsError](classes/BackgroundJobAlreadyExistsError.md)
+- [BackgroundJobCanceledError](classes/BackgroundJobCanceledError.md)
+- [BackgroundJobNotCancellableError](classes/BackgroundJobNotCancellableError.md)
+- [BackgroundJobNotCompletableError](classes/BackgroundJobNotCompletableError.md)
+- [BackgroundJobNotFailableError](classes/BackgroundJobNotFailableError.md)
 - [BackgroundJobNotFoundError](classes/BackgroundJobNotFoundError.md)
+- [BackgroundJobNotStartableError](classes/BackgroundJobNotStartableError.md)
 - [BackgroundJobTargetLockedError](classes/BackgroundJobTargetLockedError.md)
 - [ConfigurationMessageAuditExpireError](classes/ConfigurationMessageAuditExpireError.md)
 - [ConfigurationMessageAuditQueueSizeError](classes/ConfigurationMessageAuditQueueSizeError.md)
