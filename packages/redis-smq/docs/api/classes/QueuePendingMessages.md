@@ -144,6 +144,62 @@
 
 ---
 
+### getPurgeJob()
+
+> **getPurgeJob**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`\<[`IBackgroundJob`](../interfaces/IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`getPurgeJob`](../interfaces/IMessageBrowser.md#getpurgejob)
+
+---
+
+### getPurgeJobStatus()
+
+> **getPurgeJobStatus**(`queue`, `jobId`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### jobId
+
+`string`
+
+##### cb
+
+`ICallback`\<[`EBackgroundJobStatus`](../enumerations/EBackgroundJobStatus.md)\>
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+[`IMessageBrowser`](../interfaces/IMessageBrowser.md).[`getPurgeJobStatus`](../interfaces/IMessageBrowser.md#getpurgejobstatus)
+
+---
+
 ### purge()
 
 > **purge**(`queue`, `cb`): `void`
