@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../../../common/redis/scripts.js';
 import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessages } from '../../../../message-manager/_/_get-message.js';
 import {
@@ -22,27 +22,6 @@ import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 
 export class RequeueDelayedWorker extends QueueWorkerAbstract {
-  work = (cb: ICallback): void => {
-    this.logger?.debug(
-      'Starting requeue unacknowledged messages with delay cycle.',
-    );
-    this.logger?.debug(
-      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
-    );
-
-    async.waterfall(
-      [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
-      (err) => {
-        if (err) {
-          this.logger?.error('Error in work cycle.', err);
-        } else {
-          this.logger?.debug('Completed work cycle.');
-        }
-        cb(err);
-      },
-    );
-  };
-
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     this.logger?.debug('Fetching delayed message IDs.');
 
@@ -170,7 +149,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
         `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script for ${messages.length} messages.`,
       );
       redisClient.runScript(
-        ELuaScriptName.REQUEUE_DELAYED,
+        ERedisScriptName.REQUEUE_DELAYED,
         keys,
         argv,
         (err, reply) => {
@@ -199,6 +178,27 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
         },
       );
     }, cb);
+  };
+
+  work = (cb: ICallback): void => {
+    this.logger?.debug(
+      'Starting requeue unacknowledged messages with delay cycle.',
+    );
+    this.logger?.debug(
+      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
+    );
+
+    async.waterfall(
+      [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
+      (err) => {
+        if (err) {
+          this.logger?.error('Error in work cycle.', err);
+        } else {
+          this.logger?.debug('Completed work cycle.');
+        }
+        cb(err);
+      },
+    );
   };
 }
 

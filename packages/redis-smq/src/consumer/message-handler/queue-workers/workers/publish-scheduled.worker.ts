@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, PanicError } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../../../common/redis/scripts.js';
 import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
 import { _fromMessage } from '../../../../message-manager/_/_from-message.js';
 import { _getMessages } from '../../../../message-manager/_/_get-message.js';
@@ -23,28 +23,6 @@ import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 
 export class PublishScheduledWorker extends QueueWorkerAbstract {
-  work = (cb: ICallback): void => {
-    this.logger.debug('Starting publish scheduled messages work cycle');
-    this.logger.debug(
-      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
-    );
-
-    async.waterfall(
-      [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
-      (err) => {
-        if (err) {
-          this.logger.error(
-            'Error in publish scheduled messages workflow',
-            err,
-          );
-        } else {
-          this.logger.debug('Completed publish scheduled messages work cycle');
-        }
-        cb(err);
-      },
-    );
-  };
-
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     this.logger.debug('Fetching scheduled message IDs');
 
@@ -274,7 +252,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
             `Executing PUBLISH_SCHEDULED_MESSAGE script for ${messages.length} messages`,
           );
           redisClient.runScript(
-            ELuaScriptName.PUBLISH_SCHEDULED,
+            ERedisScriptName.PUBLISH_SCHEDULED,
             keys,
             argv,
             (err, reply) => {
@@ -315,6 +293,28 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         },
       );
     }, cb);
+  };
+
+  work = (cb: ICallback): void => {
+    this.logger.debug('Starting publish scheduled messages work cycle');
+    this.logger.debug(
+      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
+    );
+
+    async.waterfall(
+      [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
+      (err) => {
+        if (err) {
+          this.logger.error(
+            'Error in publish scheduled messages workflow',
+            err,
+          );
+        } else {
+          this.logger.debug('Completed publish scheduled messages work cycle');
+        }
+        cb(err);
+      },
+    );
   };
 }
 

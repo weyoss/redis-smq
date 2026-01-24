@@ -141,8 +141,9 @@ export interface IMessageParams<TBody = unknown> {
   consumerGroupId: string | null;
 }
 
-export interface IMessageTransferable<TBody = unknown>
-  extends IMessageParams<TBody> {
+export interface IMessageTransferable<
+  TBody = unknown,
+> extends IMessageParams<TBody> {
   id: string;
   messageState: IMessageStateTransferable;
   status: EMessagePropertyStatus;

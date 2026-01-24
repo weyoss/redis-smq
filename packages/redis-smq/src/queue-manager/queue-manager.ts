@@ -8,7 +8,7 @@
  */
 
 import { createLogger, ICallback } from 'redis-smq-common';
-import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../common/redis/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _deleteQueue } from './_/_delete-queue.js';
@@ -126,7 +126,7 @@ export class QueueManager {
       );
 
       client.runScript(
-        ELuaScriptName.CREATE_QUEUE,
+        ERedisScriptName.CREATE_QUEUE,
         keys,
         args,
         (err, reply) => {

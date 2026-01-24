@@ -89,144 +89,6 @@ export class Producer extends Runnable<TProducerEvent> {
   }
 
   /**
-   * Publishes a message to a queue or an exchange.
-   *
-   * This method orchestrates the message publication process and supports two main workflows:
-   * 1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
-   *     the message is sent directly to that queue.
-   * 2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
-   *     this method resolves the exchange to a set of matching queues and publishes a copy
-   *     of the message to each one.
-   *
-   * The method performs the following validations:
-   * - Ensures the producer is running; returns `ProducerNotRunningError` if not.
-   * - Ensures the message specifies either a queue or an exchange; returns
-   *   `MessageExchangeRequiredError` if neither is specified.
-   * - For exchange-based routing, ensures at least one queue matches the exchange;
-   *   returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
-   *
-   * @param msg - The message to be published. Must specify either a destination queue
-   *              or an exchange (or both).
-   * @param cb - A callback function invoked upon completion.
-   *             - On success: `cb(null, messageIds)` where `messageIds` is an array of
-   *               published message IDs (one per queue for exchange routing, or one for
-   *               direct queue routing).
-   *             - On error: `cb(error)` where `error` is one of:
-   *               - `ProducerNotRunningError`: Producer is not running.
-   *               - `MessageExchangeRequiredError`: Message has neither queue nor exchange.
-   *               - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues.
-   *               - Other errors from queue or exchange operations.
-   *
-   * @throws ProducerNotRunningError
-   * @throws MessageExchangeRequiredError
-   * @throws RoutingKeyRequiredError
-   * @throws NoMatchedQueuesForMessageExchangeError
-   * @throws QueueHasNoConsumerGroupsError
-   * @throws QueueNotFoundError
-   * @throws ConsumerGroupNotFoundError
-   * @throws MessagePriorityRequiredError
-   * @throws MessageAlreadyExistsError
-   * @throws PriorityQueuingNotEnabledError
-   * @throws InvalidQueueTypeError
-   * @throws UnexpectedScriptReplyError
-   *
-   * @example
-   * ```typescript
-   * const msg = new ProducibleMessage()
-   *   .setQueue({ name: 'my-queue', ns: 'default' })
-   *   .setBody({ data: 'example' });
-   *
-   * producer.produce(msg, (err, messageIds) => {
-   *   if (err) {
-   *     console.error('Failed to produce message:', err);
-   *   } else {
-   *     console.log('Published message IDs:', messageIds);
-   *   }
-   * });
-   * ```
-   */
-  produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
-    if (!this.isRunning()) {
-      this.logger.error('Cannot produce message. Producer is not running.');
-      return cb(new ProducerNotRunningError());
-    }
-
-    const queueParams = msg.getQueue();
-    if (queueParams) {
-      return this._produceToQueue(msg, queueParams, cb);
-    }
-
-    const exchangeParams = msg.getExchange();
-    if (!exchangeParams) {
-      this.logger.error(
-        'Message can not be produced without a queue or an exchange.',
-      );
-      return cb(new MessageExchangeRequiredError());
-    }
-
-    this.logger.debug(
-      `Looking up queues for exchange [${exchangeParams.name}@${exchangeParams.ns}]...`,
-    );
-    this._matchExchangeQueues(
-      exchangeParams,
-      msg.getExchangeRoutingKey(),
-      (err, queues) => {
-        if (err) {
-          this.logger.error('Failed to match queues for exchange.', err);
-          return cb(err);
-        }
-
-        if (!queues?.length) {
-          this.logger.error(
-            `No queues found for exchange [${exchangeParams.name}@${exchangeParams.ns}].`,
-          );
-          return cb(new NoMatchedQueuesForMessageExchangeError());
-        }
-
-        this.logger.info(
-          `Found [${queues.length}] matching queues for exchange.`,
-        );
-        const messageIds: string[] = [];
-
-        async.eachOf(
-          queues,
-          (queue, index, done) => {
-            this.logger.debug(
-              `Producing message to queue [${queue.name}@${queue.ns}] (${index + 1}/${queues.length}).`,
-            );
-            this._produceToQueue(msg, queue, (err, reply) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to produce message to queue [${queue.name}@${queue.ns}].`,
-                  err,
-                );
-                return done(err);
-              }
-              if (reply) {
-                messageIds.push(...reply);
-              }
-              done();
-            });
-          },
-          (err) => {
-            if (err) {
-              this.logger.error(
-                'An error occurred while producing messages to one or more queues.',
-                err,
-              );
-              return cb(err);
-            }
-            this.logger.info(
-              `Successfully produced [${messageIds.length}] messages across [${queues.length}] queues.`,
-            );
-            cb(null, messageIds);
-          },
-        );
-      },
-    );
-  }
-
-  /**
    * Retrieves the active Redis client used for publishing messages.
    *
    * @returns The active Redis client.
@@ -578,5 +440,143 @@ export class Producer extends Runnable<TProducerEvent> {
       return this.fanoutExchange.matchQueues(exchange, cb);
     }
     cb(new PanicError({ message: 'Unsupported exchange type.' }));
+  }
+
+  /**
+   * Publishes a message to a queue or an exchange.
+   *
+   * This method orchestrates the message publication process and supports two main workflows:
+   * 1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
+   *     the message is sent directly to that queue.
+   * 2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
+   *     this method resolves the exchange to a set of matching queues and publishes a copy
+   *     of the message to each one.
+   *
+   * The method performs the following validations:
+   * - Ensures the producer is running; returns `ProducerNotRunningError` if not.
+   * - Ensures the message specifies either a queue or an exchange; returns
+   *   `MessageExchangeRequiredError` if neither is specified.
+   * - For exchange-based routing, ensures at least one queue matches the exchange;
+   *   returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
+   *
+   * @param msg - The message to be published. Must specify either a destination queue
+   *              or an exchange (or both).
+   * @param cb - A callback function invoked upon completion.
+   *             - On success: `cb(null, messageIds)` where `messageIds` is an array of
+   *               published message IDs (one per queue for exchange routing, or one for
+   *               direct queue routing).
+   *             - On error: `cb(error)` where `error` is one of:
+   *               - `ProducerNotRunningError`: Producer is not running.
+   *               - `MessageExchangeRequiredError`: Message has neither queue nor exchange.
+   *               - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues.
+   *               - Other errors from queue or exchange operations.
+   *
+   * @throws ProducerNotRunningError
+   * @throws MessageExchangeRequiredError
+   * @throws RoutingKeyRequiredError
+   * @throws NoMatchedQueuesForMessageExchangeError
+   * @throws QueueHasNoConsumerGroupsError
+   * @throws QueueNotFoundError
+   * @throws ConsumerGroupNotFoundError
+   * @throws MessagePriorityRequiredError
+   * @throws MessageAlreadyExistsError
+   * @throws PriorityQueuingNotEnabledError
+   * @throws InvalidQueueTypeError
+   * @throws UnexpectedScriptReplyError
+   *
+   * @example
+   * ```typescript
+   * const msg = new ProducibleMessage()
+   *   .setQueue({ name: 'my-queue', ns: 'default' })
+   *   .setBody({ data: 'example' });
+   *
+   * producer.produce(msg, (err, messageIds) => {
+   *   if (err) {
+   *     console.error('Failed to produce message:', err);
+   *   } else {
+   *     console.log('Published message IDs:', messageIds);
+   *   }
+   * });
+   * ```
+   */
+  produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
+    if (!this.isRunning()) {
+      this.logger.error('Cannot produce message. Producer is not running.');
+      return cb(new ProducerNotRunningError());
+    }
+
+    const queueParams = msg.getQueue();
+    if (queueParams) {
+      return this._produceToQueue(msg, queueParams, cb);
+    }
+
+    const exchangeParams = msg.getExchange();
+    if (!exchangeParams) {
+      this.logger.error(
+        'Message can not be produced without a queue or an exchange.',
+      );
+      return cb(new MessageExchangeRequiredError());
+    }
+
+    this.logger.debug(
+      `Looking up queues for exchange [${exchangeParams.name}@${exchangeParams.ns}]...`,
+    );
+    this._matchExchangeQueues(
+      exchangeParams,
+      msg.getExchangeRoutingKey(),
+      (err, queues) => {
+        if (err) {
+          this.logger.error('Failed to match queues for exchange.', err);
+          return cb(err);
+        }
+
+        if (!queues?.length) {
+          this.logger.error(
+            `No queues found for exchange [${exchangeParams.name}@${exchangeParams.ns}].`,
+          );
+          return cb(new NoMatchedQueuesForMessageExchangeError());
+        }
+
+        this.logger.info(
+          `Found [${queues.length}] matching queues for exchange.`,
+        );
+        const messageIds: string[] = [];
+
+        async.eachOf(
+          queues,
+          (queue, index, done) => {
+            this.logger.debug(
+              `Producing message to queue [${queue.name}@${queue.ns}] (${index + 1}/${queues.length}).`,
+            );
+            this._produceToQueue(msg, queue, (err, reply) => {
+              if (err) {
+                this.logger.error(
+                  `Failed to produce message to queue [${queue.name}@${queue.ns}].`,
+                  err,
+                );
+                return done(err);
+              }
+              if (reply) {
+                messageIds.push(...reply);
+              }
+              done();
+            });
+          },
+          (err) => {
+            if (err) {
+              this.logger.error(
+                'An error occurred while producing messages to one or more queues.',
+                err,
+              );
+              return cb(err);
+            }
+            this.logger.info(
+              `Successfully produced [${messageIds.length}] messages across [${queues.length}] queues.`,
+            );
+            cb(null, messageIds);
+          },
+        );
+      },
+    );
   }
 }

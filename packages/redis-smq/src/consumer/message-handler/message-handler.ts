@@ -24,7 +24,7 @@ import {
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
 } from '../../common/index.js';
-import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../config/index.js';
 import { _parseMessage } from '../../message-manager/_/_parse-message.js';
@@ -88,74 +88,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.timer.on('error', (err) => this.handleError(err));
 
     eventPublisher(this);
-  }
-
-  processMessage(messageId: string): void {
-    if (!this.isRunning() || !this.consumeMessage) {
-      return;
-    }
-    const consumeMessage = this.consumeMessage;
-    const redisClient = this.getRedisClient();
-    if (redisClient instanceof Error) {
-      return this.handleError(redisClient);
-    }
-
-    const { keyMessage } = redisKeys.getMessageKeys(messageId);
-    const { keyQueueProperties } = redisKeys.getQueueKeys(
-      this.queue.queueParams.ns,
-      this.queue.queueParams.name,
-      this.queue.groupId,
-    );
-
-    const keys: string[] = [keyMessage, keyQueueProperties];
-    const argv: (string | number)[] = [
-      EMessageProperty.PROCESSING_STARTED_AT,
-      Date.now(),
-      EMessageProperty.STATUS,
-      EMessagePropertyStatus.PROCESSING,
-      EMessagePropertyStatus.PENDING, // Required for atomic check
-      EMessageProperty.ATTEMPTS,
-      EQueueProperty.PROCESSING_MESSAGES_COUNT,
-      EQueueProperty.PENDING_MESSAGES_COUNT,
-    ];
-
-    redisClient.runScript(
-      ELuaScriptName.CHECKOUT_MESSAGE,
-      keys,
-      argv,
-      (err, reply: unknown) => {
-        if (err) return this.handleError(err);
-        if (!reply) {
-          this.logger.warn(
-            `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
-          );
-          // A slot has been freed. Immediately try to get another message.
-          this.next();
-          return;
-        }
-        if (!Array.isArray(reply)) {
-          return this.handleError(new CallbackInvalidReplyError());
-        }
-        const message = _parseMessage(reply);
-        consumeMessage.handleReceivedMessage(message);
-      },
-    );
-  }
-
-  next(): void {
-    if (this.isRunning()) {
-      this.dequeue();
-    }
-  }
-
-  dequeue(): void {
-    if (this.isRunning() && this.dequeueMessage) {
-      this.dequeueMessage.dequeue();
-    }
-  }
-
-  getQueue(): IQueueParsedParams {
-    return this.queue;
   }
 
   protected getRedisClient(): IRedisClient | PanicError {
@@ -402,5 +334,73 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         cb();
       },
     ].concat(super.goingDown());
+  }
+
+  processMessage(messageId: string): void {
+    if (!this.isRunning() || !this.consumeMessage) {
+      return;
+    }
+    const consumeMessage = this.consumeMessage;
+    const redisClient = this.getRedisClient();
+    if (redisClient instanceof Error) {
+      return this.handleError(redisClient);
+    }
+
+    const { keyMessage } = redisKeys.getMessageKeys(messageId);
+    const { keyQueueProperties } = redisKeys.getQueueKeys(
+      this.queue.queueParams.ns,
+      this.queue.queueParams.name,
+      this.queue.groupId,
+    );
+
+    const keys: string[] = [keyMessage, keyQueueProperties];
+    const argv: (string | number)[] = [
+      EMessageProperty.PROCESSING_STARTED_AT,
+      Date.now(),
+      EMessageProperty.STATUS,
+      EMessagePropertyStatus.PROCESSING,
+      EMessagePropertyStatus.PENDING, // Required for atomic check
+      EMessageProperty.ATTEMPTS,
+      EQueueProperty.PROCESSING_MESSAGES_COUNT,
+      EQueueProperty.PENDING_MESSAGES_COUNT,
+    ];
+
+    redisClient.runScript(
+      ERedisScriptName.CHECKOUT_MESSAGE,
+      keys,
+      argv,
+      (err, reply: unknown) => {
+        if (err) return this.handleError(err);
+        if (!reply) {
+          this.logger.warn(
+            `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
+          );
+          // A slot has been freed. Immediately try to get another message.
+          this.next();
+          return;
+        }
+        if (!Array.isArray(reply)) {
+          return this.handleError(new CallbackInvalidReplyError());
+        }
+        const message = _parseMessage(reply);
+        consumeMessage.handleReceivedMessage(message);
+      },
+    );
+  }
+
+  next(): void {
+    if (this.isRunning()) {
+      this.dequeue();
+    }
+  }
+
+  dequeue(): void {
+    if (this.isRunning() && this.dequeueMessage) {
+      this.dequeueMessage.dequeue();
+    }
+  }
+
+  getQueue(): IQueueParsedParams {
+    return this.queue;
   }
 }

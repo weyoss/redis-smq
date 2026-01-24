@@ -14,7 +14,8 @@ rm -rf dist
 
 # esm
 tsc -p ./tsconfig.json
-cp -r src/common/redis/redis-client/scripts/lua dist/esm/src/common/redis/redis-client/scripts/
+cp -r src/common/redis/ dist/esm/src/common/redis/
+cp -r src/common/background-job/redis/ dist/esm/src/common/background-job/redis/
 
 # cjs
 tsc -p ./tsconfig.cjs.json
@@ -23,4 +24,5 @@ cat >dist/cjs/package.json <<!EOF
     "type": "commonjs"
 }
 !EOF
-cp -r src/common/redis/redis-client/scripts/lua dist/cjs/src/common/redis/redis-client/scripts/
+cp -r src/common/redis/ dist/cjs/src/common/redis/
+cp -r src/common/background-job/redis/ dist/cjs/src/common/background-job/redis/

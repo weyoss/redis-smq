@@ -16,45 +16,15 @@ import {
 } from '../../message-browser/types/index.js';
 import { _deleteMessage } from '../../../message-manager/_/_delete-message.js';
 import { QueueMessagesRegistry } from '../../queue-messages-registry/queue-messages-registry.js';
-import { IBackgroundJob, TPurgeQueueJobTarget } from '../types/index.js';
+import {
+  EBackgroundJobStatus,
+  IBackgroundJob,
+  TPurgeQueueJobTarget,
+} from '../types/index.js';
+import { BackgroundJobCanceledError } from '../../../errors/index.js';
 
 export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
   protected jobManager: PurgeQueueJobManager | null = null;
-
-  protected override goingUp(): ((cb: ICallback) => void)[] {
-    return super.goingUp().concat([
-      (cb) => {
-        const redisClient = this.getRedisClient();
-        this.jobManager = new PurgeQueueJobManager(redisClient, this.logger);
-        cb();
-      },
-    ]);
-  }
-
-  protected getJobManager() {
-    if (!this.jobManager)
-      throw new PanicError({
-        message: 'A PurgeQueueJobManager instance is required.',
-      });
-    return this.jobManager;
-  }
-
-  override work(cb: ICallback) {
-    async.series(
-      [
-        // Recover stuck jobs
-        (cb: ICallback) => {
-          this.getJobManager().recoverStuckJobs(cb);
-        },
-
-        // Start processing loop
-        (cb: ICallback) => {
-          this.processNextJob(cb);
-        },
-      ],
-      (err) => cb(err),
-    );
-  }
 
   private processNextJob(cb: ICallback<void>): void {
     // Try to acquire a job
@@ -114,25 +84,35 @@ export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
         },
       ],
       (err) => {
-        // Always remove from processing list, even on failure
-        jobManager.removeFromProcessing(jobId, () => {
-          if (err && err.message !== 'Job was cancelled') {
-            // Mark job as failed if not cancelled
-            jobManager.fail(jobId, err.message, (failErr) => {
-              if (failErr) {
-                this.logger.error(
-                  `Failed to mark job ${jobId} as failed:`,
-                  failErr,
-                );
-              }
-              cb(err);
-            });
-          } else {
-            cb(err);
-          }
-        });
+        if (err) {
+          return jobManager.fail(jobId, err.message, (err) => {
+            if (!err) {
+              this.logger.debug(`Successfully marked job ${jobId} as failed`);
+            }
+            cb();
+          });
+        }
+        cb();
       },
     );
+  }
+
+  protected override goingUp(): ((cb: ICallback) => void)[] {
+    return super.goingUp().concat([
+      (cb) => {
+        const redisClient = this.getRedisClient();
+        this.jobManager = new PurgeQueueJobManager(redisClient, this.logger);
+        this.jobManager.initialize(cb);
+      },
+    ]);
+  }
+
+  protected getJobManager() {
+    if (!this.jobManager)
+      throw new PanicError({
+        message: 'A PurgeQueueJobManager instance is required.',
+      });
+    return this.jobManager;
   }
 
   protected purgeMessages(
@@ -145,43 +125,75 @@ export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
     const batchSize = job.batchSize || 1000;
 
     let totalPurged = 0;
+    let initialTotalItems = 0;
+    let batchCount = 0;
 
     this.logger.debug(
       `Starting batch purge for queue ${parsedParams.queueParams.name}`,
     );
 
     // Recursive function to process batches
-    const purgeBatch = (batchCount = 1): void => {
+    const purgeBatch = (): void => {
+      batchCount += 1;
       this.logger.debug(
         `Processing purge batch ${batchCount} (batch size = ${batchSize}) for queue ${parsedParams.queueParams.name}`,
       );
 
       async.waterfall(
         [
+          // Check for cancellation before each batch
+          (next: ICallback) => {
+            this.getJobManager().get(job.id, (err, currentJob) => {
+              if (err) {
+                return next(err);
+              }
+              if (
+                !currentJob ||
+                currentJob.status === EBackgroundJobStatus.CANCELED
+              ) {
+                return next(
+                  new BackgroundJobCanceledError({
+                    metadata: { jobId: job.id },
+                  }),
+                );
+              }
+              next();
+            });
+          },
+
           // Step 1: Get batch of message IDs
-          (next: ICallback<IBrowserPage<string>>) => {
+          (_, next: ICallback<IBrowserPage<string>>) => {
             messageBrowser.getMessageIds(
               parsedParams,
-              batchCount,
+              1, // always start from page 1
               batchSize,
               next,
             );
           },
 
           // Step 2: Delete the messages and return next page
-          (result: IBrowserPage<string>, next: ICallback<number>) => {
-            const { items } = result;
+          (result: IBrowserPage<string>, next: ICallback<boolean>) => {
+            const { items, totalItems } = result;
+
+            // If this is the first batch remember total items
+            // After each iteration totalItems will be decreased by batchSize
+            if (batchCount === 1) {
+              initialTotalItems = totalItems;
+              this.logger.info(
+                `Queue "${parsedParams.queueParams.name}" has ${initialTotalItems} messages to purge`,
+              );
+            }
 
             // If no items, we're done with this batch
             if (items.length === 0) {
               this.logger.debug(
                 `No messages to purge in this batch for queue ${parsedParams.queueParams.name}`,
               );
-              return next();
+              return next(null, false);
             }
 
             this.logger.debug(
-              `Deleting batch of ${items.length} messages from queue ${parsedParams.queueParams.name}`,
+              `Deleting ${items.length} messages from queue ${parsedParams.queueParams.name}`,
             );
 
             // Delete the batch of messages
@@ -190,50 +202,43 @@ export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
                 this.logger.error(`Error deleting messages: ${err.message}`);
                 return next(err);
               }
-              this.logger.debug(`Purge batch ${batchCount} completed`, reply);
-              totalPurged += reply?.stats.success || 0;
 
-              // Update progress every 10 batches
-              if (batchCount % 10 === 0) {
-                this.getJobManager().update(
-                  job.id,
-                  { purged: totalPurged, updatedAt: Date.now() },
-                  (updateErr) => {
-                    if (updateErr) {
-                      this.logger.error(
-                        `Failed to update progress for job ${job.id}:`,
-                        updateErr,
-                      );
-                    } else {
-                      this.logger.info(
-                        `Job ${job.id}: Purged ${totalPurged} messages so far`,
-                      );
-                    }
-                  },
-                );
-              }
+              const successfullyDeleted = reply?.stats.success || 0;
+              totalPurged += successfullyDeleted;
 
-              next(null, batchCount + 1);
+              this.logger.debug(
+                `Batch ${batchCount}: Deleted ${successfullyDeleted} messages`,
+              );
+
+              // Update progress
+              this.getJobManager().updateProgress(
+                job.id,
+                totalPurged,
+                initialTotalItems,
+              );
+
+              const shouldContinue = items.length === batchSize;
+              next(null, shouldContinue);
             });
           },
         ],
-        (err, nextPage) => {
+        (err, shouldContinue) => {
           if (err) {
             this.logger.error(`Error in purge batch: ${err.message}`);
             return cb(err);
           }
 
           // If there are more messages to process, continue with next batch
-          if (nextPage) {
+          if (shouldContinue) {
             this.logger.debug(
-              `More messages to purge, continuing with page ${nextPage} for queue ${parsedParams.queueParams.name}`,
+              `Got full batch (${batchSize} items), continuing with batch ${batchCount + 1}`,
             );
-            if (delay) setTimeout(() => purgeBatch(nextPage), delay);
-            else purgeBatch(nextPage);
+            if (delay) setTimeout(() => purgeBatch(), delay);
+            else purgeBatch();
           } else {
             // All messages purged
             this.logger.info(
-              `Successfully purged all messages from queue ${parsedParams.queueParams.name}`,
+              `Successfully purged ${totalPurged} messages from queue "${parsedParams.queueParams.name}"`,
             );
             cb(null, totalPurged);
           }
@@ -241,8 +246,25 @@ export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
       );
     };
 
-    // Start purging from the first batch
-    purgeBatch(1);
+    // Start purging
+    purgeBatch();
+  }
+
+  override work(cb: ICallback) {
+    async.series(
+      [
+        // Recover stuck jobs
+        (cb: ICallback) => {
+          this.getJobManager().recoverStuckJobs(cb);
+        },
+
+        // Start processing loop
+        (cb: ICallback) => {
+          this.processNextJob(cb);
+        },
+      ],
+      (err) => cb(err),
+    );
   }
 }
 

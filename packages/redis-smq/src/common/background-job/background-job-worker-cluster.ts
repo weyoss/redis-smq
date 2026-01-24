@@ -39,6 +39,24 @@ export class BackgroundJobWorkerCluster extends Runnable<never> {
     ]);
   }
 
+  static run(cb: ICallback<boolean>) {
+    if (!BackgroundJobWorkerCluster.instance) {
+      BackgroundJobWorkerCluster.instance = new BackgroundJobWorkerCluster();
+    }
+    BackgroundJobWorkerCluster.instance.run(cb);
+  }
+
+  static shutdown(cb: ICallback) {
+    if (BackgroundJobWorkerCluster.instance) {
+      BackgroundJobWorkerCluster.instance.shutdown(() => {
+        BackgroundJobWorkerCluster.instance = null;
+        cb();
+      });
+      return;
+    }
+    cb();
+  }
+
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback) => {
@@ -81,23 +99,5 @@ export class BackgroundJobWorkerCluster extends Runnable<never> {
         else cb();
       },
     ].concat(super.goingDown());
-  }
-
-  static run(cb: ICallback<boolean>) {
-    if (!BackgroundJobWorkerCluster.instance) {
-      BackgroundJobWorkerCluster.instance = new BackgroundJobWorkerCluster();
-    }
-    BackgroundJobWorkerCluster.instance.run(cb);
-  }
-
-  static shutdown(cb: ICallback) {
-    if (BackgroundJobWorkerCluster.instance) {
-      BackgroundJobWorkerCluster.instance.shutdown(() => {
-        BackgroundJobWorkerCluster.instance = null;
-        cb();
-      });
-      return;
-    }
-    cb();
   }
 }

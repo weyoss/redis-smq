@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { IQueueParams, IQueueRateLimit } from '../../queue-manager/index.js';
 
@@ -25,7 +25,7 @@ export function _hasRateLimitExceeded(
     null,
   );
   redisClient.runScript(
-    ELuaScriptName.CHECK_QUEUE_RATE_LIMIT,
+    ERedisScriptName.CHECK_QUEUE_RATE_LIMIT,
     [keyQueueRateLimitCounter],
     [limit, interval],
     (err, reply) => {

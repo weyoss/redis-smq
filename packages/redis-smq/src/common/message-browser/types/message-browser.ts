@@ -10,7 +10,12 @@
 import { TQueueExtendedParams } from '../../../queue-manager/index.js';
 import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable } from '../../../message/index.js';
-import { EQueueMessageType } from '../../queue-messages-registry/types/queue-messages-registry.js';
+import { EQueueMessageType } from '../../queue-messages-registry/types/index.js';
+import {
+  EBackgroundJobStatus,
+  IBackgroundJob,
+  TPurgeQueueJobTarget,
+} from '../../background-job/types/index.js';
 
 export interface IMessageBrowser {
   readonly messageType: EQueueMessageType;
@@ -34,6 +39,18 @@ export interface IMessageBrowser {
   purge(queue: TQueueExtendedParams, cb: ICallback<string>): void;
 
   cancelPurge(queue: TQueueExtendedParams, jobId: string, cb: ICallback): void;
+
+  getPurgeJobStatus(
+    queue: TQueueExtendedParams,
+    jobId: string,
+    cb: ICallback<EBackgroundJobStatus>,
+  ): void;
+
+  getPurgeJob(
+    queue: TQueueExtendedParams,
+    jobId: string,
+    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+  ): void;
 }
 
 export interface IBrowserPage<T> {

@@ -34,18 +34,15 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   protected static readonly heartbeatTTL = 10 * 1000; // 10 sec
   protected static readonly baseBeatIntervalMs = 1000; // nominal cadence
   protected static readonly maxBackoffMs = 10_000; // cap for error backoff
-
+  // Instance-local CPU usage trackers to avoid cross-talk between instances/tests
+  private cpuStatsTime = process.hrtime();
+  private cpuStatsUsage = process.cpuUsage();
+  // Backoff state for resilient rescheduling
+  private currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
   protected readonly consumerContext: IConsumerContext;
   protected timer: Timer;
   protected keyConsumerHeartbeat: string;
   protected logger: ILogger;
-
-  // Instance-local CPU usage trackers to avoid cross-talk between instances/tests
-  private cpuStatsTime = process.hrtime();
-  private cpuStatsUsage = process.cpuUsage();
-
-  // Backoff state for resilient rescheduling
-  private currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
 
   constructor(consumerContext: IConsumerContext) {
     super();
@@ -139,22 +136,6 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     };
   }
 
-  protected getPayload(): IConsumerHeartbeat {
-    // this.logger.debug('Generating heartbeat payload');
-    const timestamp = Date.now();
-    return {
-      timestamp,
-      data: {
-        ram: {
-          usage: process.memoryUsage(),
-          free: os.freemem(),
-          total: os.totalmem(),
-        },
-        cpu: this.getCpuUsage(),
-      },
-    };
-  }
-
   /**
    * Schedule the next beat respecting Timer semantics and current backoff.
    * Ensures we don't schedule while going down.
@@ -177,6 +158,22 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       this.timer.reset();
       this.timer.setTimeout(() => this.beat(), delay);
     }
+  }
+
+  protected getPayload(): IConsumerHeartbeat {
+    // this.logger.debug('Generating heartbeat payload');
+    const timestamp = Date.now();
+    return {
+      timestamp,
+      data: {
+        ram: {
+          usage: process.memoryUsage(),
+          free: os.freemem(),
+          total: os.totalmem(),
+        },
+        cpu: this.getCpuUsage(),
+      },
+    };
   }
 
   protected beat(): void {

@@ -12,16 +12,16 @@ import path from 'path';
 import {
   async,
   AsyncCallbackTimeoutError,
+  CallableWorker,
   CallbackEmptyReplyError,
   ICallback,
   ILogger,
   IRedisClient,
   PanicError,
   Runnable,
-  CallableWorker,
 } from 'redis-smq-common';
 import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
-import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../../common/redis/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { Configuration, IRedisSMQParsedConfig } from '../../../config/index.js';
 import {
@@ -112,32 +112,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     );
   }
 
-  handleReceivedMessage(message: MessageEnvelope): void {
-    const messageId = message.getId();
-    this.logger.debug(`Received message ${messageId}`);
-
-    if (this.isRunning()) {
-      if (message.getSetExpired()) {
-        this.logger.info(
-          `Message ${messageId} has expired, unacknowledging with TTL_EXPIRED reason`,
-        );
-        this.unacknowledgeMessage(
-          message,
-          EMessageUnacknowledgementReason.TTL_EXPIRED,
-        );
-      } else {
-        this.logger.debug(
-          `Message ${messageId} is valid, proceeding with consumption`,
-        );
-        this.consumeMessage(message);
-      }
-    } else {
-      this.logger.warn(
-        `Ignoring received message ${messageId} as consumer is not running`,
-      );
-    }
-  }
-
   protected getRedisClient(): IRedisClient | PanicError {
     if (!this.redisClient)
       return new PanicError({ message: 'A RedisClient instance is required.' });
@@ -180,7 +154,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       `Running ACKNOWLEDGE_MESSAGE script for message ${messageId}`,
     );
     redisClient.runScript(
-      ELuaScriptName.ACKNOWLEDGE_MESSAGE,
+      ERedisScriptName.ACKNOWLEDGE_MESSAGE,
       [
         this.keyQueueProcessing,
         this.keyQueueAcknowledged,
@@ -603,5 +577,31 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     );
     this.logger.debug(`Emitted consumer.consumeMessage.error event`);
     super.handleError(err);
+  }
+
+  handleReceivedMessage(message: MessageEnvelope): void {
+    const messageId = message.getId();
+    this.logger.debug(`Received message ${messageId}`);
+
+    if (this.isRunning()) {
+      if (message.getSetExpired()) {
+        this.logger.info(
+          `Message ${messageId} has expired, unacknowledging with TTL_EXPIRED reason`,
+        );
+        this.unacknowledgeMessage(
+          message,
+          EMessageUnacknowledgementReason.TTL_EXPIRED,
+        );
+      } else {
+        this.logger.debug(
+          `Message ${messageId} is valid, proceeding with consumption`,
+        );
+        this.consumeMessage(message);
+      }
+    } else {
+      this.logger.warn(
+        `Ignoring received message ${messageId} as consumer is not running`,
+      );
+    }
   }
 }

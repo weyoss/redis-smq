@@ -28,14 +28,6 @@ export class MultiplexedMessageHandler extends MessageHandler {
     this.logger.debug('Auto-dequeue disabled for multiplexed handler');
   }
 
-  override next() {
-    this.logger.debug(
-      `MultiplexedMessageHandler.next() called for queue ${this.queue.queueParams.name}`,
-    );
-    this.logger.debug('Delegating to external dequeueNextFn');
-    this.dequeueNextFn();
-  }
-
   protected override createDequeueMessageInstance(): DequeueMessage {
     this.logger.debug(
       'Creating DequeueMessage instance for multiplexed handler with blockUntilMessageReceived=false and autoCloseRedisConnection=false',
@@ -46,5 +38,13 @@ export class MultiplexedMessageHandler extends MessageHandler {
       false, // blockUntilMessageReceived
       false, // autoCloseRedisConnection
     );
+  }
+
+  override next() {
+    this.logger.debug(
+      `MultiplexedMessageHandler.next() called for queue ${this.queue.queueParams.name}`,
+    );
+    this.logger.debug('Delegating to external dequeueNextFn');
+    this.dequeueNextFn();
   }
 }

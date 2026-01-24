@@ -12,6 +12,7 @@ import { Configuration } from '../../../config/index.js';
 
 export interface IBrowserStorage {
   count(redisKey: string, cb: ICallback<number>): void;
+
   fetchItems(
     redisKey: string,
     options: {
@@ -22,6 +23,7 @@ export interface IBrowserStorage {
     },
     cb: ICallback<string[]>,
   ): void;
+
   fetchAllItems(redisKey: string, cb: ICallback<string[]>): void;
 }
 

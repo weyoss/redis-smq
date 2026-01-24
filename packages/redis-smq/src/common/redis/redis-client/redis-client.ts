@@ -14,7 +14,7 @@ import {
   RedisClientFactory,
 } from 'redis-smq-common';
 import { Configuration } from '../../../config/index.js';
-import { scriptFileMap } from './scripts/scripts.js';
+import { scriptFileMap } from '../scripts.js';
 
 export class RedisClient extends RedisClientFactory {
   constructor(cfg?: IRedisConfig) {

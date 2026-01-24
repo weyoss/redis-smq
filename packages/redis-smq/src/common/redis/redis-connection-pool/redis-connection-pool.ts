@@ -286,310 +286,6 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
   }
 
   /**
-   * Acquires a connection from the pool with the specified acquisition mode.
-   *
-   * This method attempts to find an available connection matching the requested mode.
-   * If no connection is available, it will create a new one (if under max limit) or
-   * queue the request with a timeout.
-   *
-   * @param mode - The acquisition mode determining connection sharing behavior
-   * @param cb - Callback function invoked with the acquired connection or error
-   *
-   * @example Exclusive Mode
-   * ```typescript
-   * // Exclusive acquisition - connection is locked until released
-   * pool.acquire(ERedisConnectionAcquisitionMode.EXCLUSIVE, (err, client) => {
-   *   if (err) {
-   *     console.error('Failed to acquire exclusive connection:', err);
-   *     return;
-   *   }
-   *
-   *   // Connection is exclusively yours - no other operations can use it
-   *   client.multi()
-   *     .set('key1', 'value1')
-   *     .set('key2', 'value2')
-   *     .exec((err, results) => {
-   *       pool.release(client); // Must release when done
-   *     });
-   * });
-   * ```
-   *
-   * @example Shared Mode
-   * ```typescript
-   * // Shared acquisition - connection can be used by multiple clients
-   * pool.acquire(ERedisConnectionAcquisitionMode.SHARED, (err, client) => {
-   *   if (err) {
-   *     console.error('Failed to acquire shared connection:', err);
-   *     return;
-   *   }
-   *
-   *   // Connection may be shared with other operations
-   *   client.get('user:123', (err, userData) => {
-   *     pool.release(client); // Optional but recommended
-   *   });
-   * });
-   * ```
-   */
-  acquire(
-    mode: ERedisConnectionAcquisitionMode,
-    cb: ICallback<IRedisClient>,
-  ): void {
-    if (!this.initialized) {
-      return cb(new Error('Connection pool not initialized'));
-    }
-
-    if (this.shuttingDown) {
-      return cb(new Error('Connection pool is shutting down'));
-    }
-
-    // Try to find an available connection based on mode
-    const availableConnection = this.findAvailableConnection(mode);
-    if (availableConnection) {
-      return this.prepareConnection(availableConnection, mode, cb);
-    }
-
-    // No available connections, check if we can create a new one
-    if (this.connections.size < this.poolConfig.max) {
-      return this.createConnection((err, connection) => {
-        if (err) return cb(err);
-        if (!connection) return cb(new Error('Failed to create connection'));
-        this.prepareConnection(connection, mode, cb);
-      });
-    }
-
-    // Pool is at max capacity, add to waiting queue
-    this.waitingQueue.push({
-      callback: cb,
-      timestamp: Date.now(),
-      mode,
-    });
-
-    // Set timeout for waiting requests
-    setTimeout(() => {
-      const index = this.waitingQueue.findIndex((item) => item.callback === cb);
-      if (index !== -1) {
-        this.waitingQueue.splice(index, 1);
-        cb(new Error('Connection acquire timeout'));
-      }
-    }, this.poolConfig.acquireTimeoutMillis);
-  }
-
-  /**
-   * Releases an acquired connection back to the pool for reuse.
-   *
-   * The behavior depends on how the connection was acquired:
-   * - Exclusive connections: Immediately become available for any mode
-   * - Shared connections: Usage count is decremented, becomes available when count reaches zero
-   *
-   * @param client - The Redis client connection to release back to the pool
-   *
-   * @example Releasing Exclusive Connection
-   * ```typescript
-   * pool.acquire(ERedisConnectionAcquisitionMode.EXCLUSIVE, (err, client) => {
-   *   if (err) return;
-   *
-   *   client.set('key', 'value', (err) => {
-   *     // Must release exclusive connections
-   *     pool.release(client);
-   *   });
-   * });
-   * ```
-   *
-   * @example Releasing Shared Connection
-   * ```typescript
-   * pool.acquire(ERedisConnectionAcquisitionMode.SHARED, (err, client) => {
-   *   if (err) return;
-   *
-   *   client.get('key', (err, value) => {
-   *     // Optional for shared connections, but recommended
-   *     pool.release(client);
-   *   });
-   * });
-   * ```
-   */
-  release(client: IRedisClient): void {
-    const connection = this.getConnection(client);
-    if (!connection) return;
-
-    if (connection.exclusivelyAcquired) {
-      return this.releaseExclusiveConnection(connection);
-    }
-
-    this.releaseSharedConnection(connection);
-  }
-
-  /**
-   * Destroys a specific connection and ensures minimum pool size is maintained.
-   *
-   * This method forcibly removes a connection from the pool and creates replacement
-   * connections if necessary to maintain the configured minimum pool size.
-   *
-   * @param client - The Redis client connection to destroy
-   * @param cb - Callback function invoked when destruction is complete
-   *
-   * @example
-   * ```typescript
-   * // Destroy a problematic connection
-   * pool.destroy(client, (err) => {
-   *   if (err) {
-   *     console.error('Failed to destroy connection:', err);
-   *   } else {
-   *     console.log('Connection destroyed, pool rebalanced');
-   *   }
-   * });
-   * ```
-   */
-  destroy(client: IRedisClient, cb: ICallback): void {
-    const connectionId = this.getConnectionId(client);
-    if (!connectionId)
-      return cb(new Error('Attempted to destroy unknown connection'));
-
-    this.destroyConnection(connectionId);
-
-    // Check if we need to maintain minimum pool size
-    const currentPoolSize = this.connections.size;
-    const minConnections = this.poolConfig.min;
-
-    if (currentPoolSize < minConnections) {
-      const connectionsToCreate = minConnections - currentPoolSize;
-
-      // Create new connections to maintain minimum pool size
-      for (let i = 0; i < connectionsToCreate; i++) {
-        this.createConnection((err) => {
-          if (err) {
-            // Log error but don't fail the destroy operation
-            this.emit('connectionError', err);
-          }
-        });
-      }
-    }
-
-    cb();
-  }
-
-  /**
-   * Retrieves comprehensive statistics about the current pool state.
-   *
-   * Provides detailed information about connection usage patterns, including
-   * shared connection metrics and queue status.
-   *
-   * @returns Detailed statistics object with connection counts and usage information
-   *
-   * @example
-   * ```typescript
-   * const stats = pool.getStats();
-   * console.log(`Pool Status:
-   *   Total Connections: ${stats.total}
-   *   Available: ${stats.available}
-   *   In Use: ${stats.inUse}
-   *   Exclusively Acquired: ${stats.exclusively}
-   *   Shared Connections: ${stats.shared}
-   *   Total Shared Users: ${stats.sharedUsers}
-   *   Waiting Requests: ${stats.waiting}
-   * `);
-   * ```
-   */
-  getStats(): {
-    total: number;
-    available: number;
-    inUse: number;
-    exclusively: number;
-    shared: number;
-    sharedUsers: number;
-    waiting: number;
-  } {
-    let exclusively = 0;
-    let shared = 0;
-    let sharedUsers = 0;
-    let inUse = 0;
-
-    for (const connection of this.connections.values()) {
-      if (connection.exclusivelyAcquired) {
-        exclusively++;
-        inUse++;
-      } else if (connection.sharedUsers > 0) {
-        shared++;
-        sharedUsers += connection.sharedUsers;
-        inUse++;
-      }
-    }
-
-    return {
-      total: this.connections.size,
-      available: this.connections.size - inUse,
-      inUse,
-      exclusively,
-      shared,
-      sharedUsers,
-      waiting: this.waitingQueue.length,
-    };
-  }
-
-  /**
-   * Gracefully shuts down the connection pool by closing all connections and clearing resources.
-   *
-   * This method:
-   * 1. Sets the shutting down flag to prevent new acquisitions
-   * 2. Stops the idle connection reaper
-   * 3. Rejects all pending connection requests
-   * 4. Closes all active connections gracefully
-   * 5. Clears internal state
-   *
-   * @param cb - Callback function invoked when shutdown is complete or fails
-   *
-   * @example
-   * ```typescript
-   * pool.shutdown((err) => {
-   *   if (err) {
-   *     console.error('Pool shutdown encountered errors:', err);
-   *   } else {
-   *     console.log('Pool shutdown completed successfully');
-   *   }
-   * });
-   * ```
-   */
-  shutdown(cb: ICallback): void {
-    if (this.shuttingDown) {
-      return cb(new Error('Connection pool already shutting down'));
-    }
-
-    this.shuttingDown = true;
-    this.stopReaper();
-
-    // Reject all waiting requests
-    while (this.waitingQueue.length > 0) {
-      const item = this.waitingQueue.shift();
-      if (item) {
-        item.callback(new Error('Connection pool shutting down'));
-      }
-    }
-
-    // Close all connections
-    const connectionPromises: Promise<void>[] = [];
-    for (const [, connection] of this.connections) {
-      connectionPromises.push(
-        new Promise<void>((resolve) => {
-          connection.client.halt(() => {
-            this.emit('connectionDestroyed', connection);
-            resolve();
-          });
-        }),
-      );
-    }
-
-    Promise.all(connectionPromises)
-      .then(() => {
-        this.connections.clear();
-        this.initialized = false;
-        this.shuttingDown = false;
-        cb();
-      })
-      .catch((err: Error) => {
-        cb(err);
-      });
-  }
-
-  /**
    * Releases an exclusively acquired connection back to the pool.
    *
    * Marks the connection as available and processes any waiting requests.
@@ -930,5 +626,309 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    */
   protected generateConnectionId(): string {
     return `conn_${++this.connectionIdCounter}_${Date.now()}`;
+  }
+
+  /**
+   * Acquires a connection from the pool with the specified acquisition mode.
+   *
+   * This method attempts to find an available connection matching the requested mode.
+   * If no connection is available, it will create a new one (if under max limit) or
+   * queue the request with a timeout.
+   *
+   * @param mode - The acquisition mode determining connection sharing behavior
+   * @param cb - Callback function invoked with the acquired connection or error
+   *
+   * @example Exclusive Mode
+   * ```typescript
+   * // Exclusive acquisition - connection is locked until released
+   * pool.acquire(ERedisConnectionAcquisitionMode.EXCLUSIVE, (err, client) => {
+   *   if (err) {
+   *     console.error('Failed to acquire exclusive connection:', err);
+   *     return;
+   *   }
+   *
+   *   // Connection is exclusively yours - no other operations can use it
+   *   client.multi()
+   *     .set('key1', 'value1')
+   *     .set('key2', 'value2')
+   *     .exec((err, results) => {
+   *       pool.release(client); // Must release when done
+   *     });
+   * });
+   * ```
+   *
+   * @example Shared Mode
+   * ```typescript
+   * // Shared acquisition - connection can be used by multiple clients
+   * pool.acquire(ERedisConnectionAcquisitionMode.SHARED, (err, client) => {
+   *   if (err) {
+   *     console.error('Failed to acquire shared connection:', err);
+   *     return;
+   *   }
+   *
+   *   // Connection may be shared with other operations
+   *   client.get('user:123', (err, userData) => {
+   *     pool.release(client); // Optional but recommended
+   *   });
+   * });
+   * ```
+   */
+  acquire(
+    mode: ERedisConnectionAcquisitionMode,
+    cb: ICallback<IRedisClient>,
+  ): void {
+    if (!this.initialized) {
+      return cb(new Error('Connection pool not initialized'));
+    }
+
+    if (this.shuttingDown) {
+      return cb(new Error('Connection pool is shutting down'));
+    }
+
+    // Try to find an available connection based on mode
+    const availableConnection = this.findAvailableConnection(mode);
+    if (availableConnection) {
+      return this.prepareConnection(availableConnection, mode, cb);
+    }
+
+    // No available connections, check if we can create a new one
+    if (this.connections.size < this.poolConfig.max) {
+      return this.createConnection((err, connection) => {
+        if (err) return cb(err);
+        if (!connection) return cb(new Error('Failed to create connection'));
+        this.prepareConnection(connection, mode, cb);
+      });
+    }
+
+    // Pool is at max capacity, add to waiting queue
+    this.waitingQueue.push({
+      callback: cb,
+      timestamp: Date.now(),
+      mode,
+    });
+
+    // Set timeout for waiting requests
+    setTimeout(() => {
+      const index = this.waitingQueue.findIndex((item) => item.callback === cb);
+      if (index !== -1) {
+        this.waitingQueue.splice(index, 1);
+        cb(new Error('Connection acquire timeout'));
+      }
+    }, this.poolConfig.acquireTimeoutMillis);
+  }
+
+  /**
+   * Releases an acquired connection back to the pool for reuse.
+   *
+   * The behavior depends on how the connection was acquired:
+   * - Exclusive connections: Immediately become available for any mode
+   * - Shared connections: Usage count is decremented, becomes available when count reaches zero
+   *
+   * @param client - The Redis client connection to release back to the pool
+   *
+   * @example Releasing Exclusive Connection
+   * ```typescript
+   * pool.acquire(ERedisConnectionAcquisitionMode.EXCLUSIVE, (err, client) => {
+   *   if (err) return;
+   *
+   *   client.set('key', 'value', (err) => {
+   *     // Must release exclusive connections
+   *     pool.release(client);
+   *   });
+   * });
+   * ```
+   *
+   * @example Releasing Shared Connection
+   * ```typescript
+   * pool.acquire(ERedisConnectionAcquisitionMode.SHARED, (err, client) => {
+   *   if (err) return;
+   *
+   *   client.get('key', (err, value) => {
+   *     // Optional for shared connections, but recommended
+   *     pool.release(client);
+   *   });
+   * });
+   * ```
+   */
+  release(client: IRedisClient): void {
+    const connection = this.getConnection(client);
+    if (!connection) return;
+
+    if (connection.exclusivelyAcquired) {
+      return this.releaseExclusiveConnection(connection);
+    }
+
+    this.releaseSharedConnection(connection);
+  }
+
+  /**
+   * Destroys a specific connection and ensures minimum pool size is maintained.
+   *
+   * This method forcibly removes a connection from the pool and creates replacement
+   * connections if necessary to maintain the configured minimum pool size.
+   *
+   * @param client - The Redis client connection to destroy
+   * @param cb - Callback function invoked when destruction is complete
+   *
+   * @example
+   * ```typescript
+   * // Destroy a problematic connection
+   * pool.destroy(client, (err) => {
+   *   if (err) {
+   *     console.error('Failed to destroy connection:', err);
+   *   } else {
+   *     console.log('Connection destroyed, pool rebalanced');
+   *   }
+   * });
+   * ```
+   */
+  destroy(client: IRedisClient, cb: ICallback): void {
+    const connectionId = this.getConnectionId(client);
+    if (!connectionId)
+      return cb(new Error('Attempted to destroy unknown connection'));
+
+    this.destroyConnection(connectionId);
+
+    // Check if we need to maintain minimum pool size
+    const currentPoolSize = this.connections.size;
+    const minConnections = this.poolConfig.min;
+
+    if (currentPoolSize < minConnections) {
+      const connectionsToCreate = minConnections - currentPoolSize;
+
+      // Create new connections to maintain minimum pool size
+      for (let i = 0; i < connectionsToCreate; i++) {
+        this.createConnection((err) => {
+          if (err) {
+            // Log error but don't fail the destroy operation
+            this.emit('connectionError', err);
+          }
+        });
+      }
+    }
+
+    cb();
+  }
+
+  /**
+   * Retrieves comprehensive statistics about the current pool state.
+   *
+   * Provides detailed information about connection usage patterns, including
+   * shared connection metrics and queue status.
+   *
+   * @returns Detailed statistics object with connection counts and usage information
+   *
+   * @example
+   * ```typescript
+   * const stats = pool.getStats();
+   * console.log(`Pool Status:
+   *   Total Connections: ${stats.total}
+   *   Available: ${stats.available}
+   *   In Use: ${stats.inUse}
+   *   Exclusively Acquired: ${stats.exclusively}
+   *   Shared Connections: ${stats.shared}
+   *   Total Shared Users: ${stats.sharedUsers}
+   *   Waiting Requests: ${stats.waiting}
+   * `);
+   * ```
+   */
+  getStats(): {
+    total: number;
+    available: number;
+    inUse: number;
+    exclusively: number;
+    shared: number;
+    sharedUsers: number;
+    waiting: number;
+  } {
+    let exclusively = 0;
+    let shared = 0;
+    let sharedUsers = 0;
+    let inUse = 0;
+
+    for (const connection of this.connections.values()) {
+      if (connection.exclusivelyAcquired) {
+        exclusively++;
+        inUse++;
+      } else if (connection.sharedUsers > 0) {
+        shared++;
+        sharedUsers += connection.sharedUsers;
+        inUse++;
+      }
+    }
+
+    return {
+      total: this.connections.size,
+      available: this.connections.size - inUse,
+      inUse,
+      exclusively,
+      shared,
+      sharedUsers,
+      waiting: this.waitingQueue.length,
+    };
+  }
+
+  /**
+   * Gracefully shuts down the connection pool by closing all connections and clearing resources.
+   *
+   * This method:
+   * 1. Sets the shutting down flag to prevent new acquisitions
+   * 2. Stops the idle connection reaper
+   * 3. Rejects all pending connection requests
+   * 4. Closes all active connections gracefully
+   * 5. Clears internal state
+   *
+   * @param cb - Callback function invoked when shutdown is complete or fails
+   *
+   * @example
+   * ```typescript
+   * pool.shutdown((err) => {
+   *   if (err) {
+   *     console.error('Pool shutdown encountered errors:', err);
+   *   } else {
+   *     console.log('Pool shutdown completed successfully');
+   *   }
+   * });
+   * ```
+   */
+  shutdown(cb: ICallback): void {
+    if (this.shuttingDown) {
+      return cb(new Error('Connection pool already shutting down'));
+    }
+
+    this.shuttingDown = true;
+    this.stopReaper();
+
+    // Reject all waiting requests
+    while (this.waitingQueue.length > 0) {
+      const item = this.waitingQueue.shift();
+      if (item) {
+        item.callback(new Error('Connection pool shutting down'));
+      }
+    }
+
+    // Close all connections
+    const connectionPromises: Promise<void>[] = [];
+    for (const [, connection] of this.connections) {
+      connectionPromises.push(
+        new Promise<void>((resolve) => {
+          connection.client.halt(() => {
+            this.emit('connectionDestroyed', connection);
+            resolve();
+          });
+        }),
+      );
+    }
+
+    Promise.all(connectionPromises)
+      .then(() => {
+        this.connections.clear();
+        this.initialized = false;
+        this.shuttingDown = false;
+        cb();
+      })
+      .catch((err: Error) => {
+        cb(err);
+      });
   }
 }

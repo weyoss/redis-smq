@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../../common/redis/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
 import {
@@ -27,8 +27,10 @@ import {
   TMessageUnacknowledgementStatus,
 } from './types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { ScriptResultMismatchError } from '../../../errors/index.js';
-import { UnexpectedScriptReplyError } from '../../../errors/index.js';
+import {
+  ScriptResultMismatchError,
+  UnexpectedScriptReplyError,
+} from '../../../errors/index.js';
 
 type TScriptArgs = {
   keys: string[];
@@ -101,89 +103,6 @@ export class MessageUnacknowledgement {
    */
   constructor(logger: ILogger) {
     this.logger = logger.createLogger(this.constructor.name.toLowerCase());
-  }
-
-  /**
-   * Unacknowledges a specific message.
-   *
-   * @param consumerId - The ID of the consumer
-   * @param msg - The message envelope
-   * @param unacknowledgementReason - The reason for unacknowledgement
-   * @param cb - Callback function
-   */
-  public unacknowledgeMessage(
-    consumerId: string,
-    msg: MessageEnvelope,
-    unacknowledgementReason: EMessageUnacknowledgementReason,
-    cb: ICallback<TMessageUnacknowledgementStatus>,
-  ): void {
-    withSharedPoolConnection((client, done) => {
-      const queue = msg.getDestinationQueue();
-      this.executeUnacknowledgementScript(
-        client,
-        consumerId,
-        queue,
-        [msg],
-        unacknowledgementReason,
-        done,
-      );
-    }, cb);
-  }
-
-  /**
-   * Unacknowledges all messages currently being processed by a consumer.
-   *
-   * @param consumerId - The ID of the consumer
-   * @param queues - Optional list of queues to check, or null to check all queues for the consumer
-   * @param unackReason - The reason for unacknowledgement
-   * @param cb - Callback function
-   */
-  public unacknowledgeMessagesInProcess(
-    consumerId: string,
-    queues: IQueueParams[] | null,
-    unackReason: EMessageUnacknowledgementReason,
-    cb: ICallback<TMessageUnacknowledgementStatus>,
-  ): void {
-    withSharedPoolConnection((client, done) => {
-      async.waterfall(
-        [
-          // Step 1: Get the list of queues for this consumer
-          (next: ICallback<IQueueParams[]>) => {
-            if (queues) next(null, queues);
-            else _getConsumerQueues(client, consumerId, next);
-          },
-          // Step 2: Process each queue and collect the results
-          (
-            queues: IQueueParams[],
-            next: ICallback<TMessageUnacknowledgementStatus[]>,
-          ) => {
-            async.map(
-              queues,
-              (queue, finished) =>
-                this.unacknowledgeMessagesFromProcessingQueue(
-                  client,
-                  consumerId,
-                  queue,
-                  unackReason,
-                  finished,
-                ),
-              100,
-              next,
-            );
-          },
-          // Step 3: Combine the results from all queues into a single status object
-          (
-            statuses: TMessageUnacknowledgementStatus[],
-            next: ICallback<TMessageUnacknowledgementStatus>,
-          ) => {
-            const combinedStatus: TMessageUnacknowledgementStatus =
-              Object.assign({}, ...statuses);
-            next(null, combinedStatus);
-          },
-        ],
-        done,
-      );
-    }, cb);
   }
 
   /**
@@ -368,7 +287,7 @@ export class MessageUnacknowledgement {
       unacknowledgementReason,
     );
     client.runScript(
-      ELuaScriptName.UNACKNOWLEDGE_MESSAGE,
+      ERedisScriptName.UNACKNOWLEDGE_MESSAGE,
       keys,
       args,
       (err, reply) => {
@@ -398,5 +317,88 @@ export class MessageUnacknowledgement {
         cb(null, status);
       },
     );
+  }
+
+  /**
+   * Unacknowledges a specific message.
+   *
+   * @param consumerId - The ID of the consumer
+   * @param msg - The message envelope
+   * @param unacknowledgementReason - The reason for unacknowledgement
+   * @param cb - Callback function
+   */
+  public unacknowledgeMessage(
+    consumerId: string,
+    msg: MessageEnvelope,
+    unacknowledgementReason: EMessageUnacknowledgementReason,
+    cb: ICallback<TMessageUnacknowledgementStatus>,
+  ): void {
+    withSharedPoolConnection((client, done) => {
+      const queue = msg.getDestinationQueue();
+      this.executeUnacknowledgementScript(
+        client,
+        consumerId,
+        queue,
+        [msg],
+        unacknowledgementReason,
+        done,
+      );
+    }, cb);
+  }
+
+  /**
+   * Unacknowledges all messages currently being processed by a consumer.
+   *
+   * @param consumerId - The ID of the consumer
+   * @param queues - Optional list of queues to check, or null to check all queues for the consumer
+   * @param unackReason - The reason for unacknowledgement
+   * @param cb - Callback function
+   */
+  public unacknowledgeMessagesInProcess(
+    consumerId: string,
+    queues: IQueueParams[] | null,
+    unackReason: EMessageUnacknowledgementReason,
+    cb: ICallback<TMessageUnacknowledgementStatus>,
+  ): void {
+    withSharedPoolConnection((client, done) => {
+      async.waterfall(
+        [
+          // Step 1: Get the list of queues for this consumer
+          (next: ICallback<IQueueParams[]>) => {
+            if (queues) next(null, queues);
+            else _getConsumerQueues(client, consumerId, next);
+          },
+          // Step 2: Process each queue and collect the results
+          (
+            queues: IQueueParams[],
+            next: ICallback<TMessageUnacknowledgementStatus[]>,
+          ) => {
+            async.map(
+              queues,
+              (queue, finished) =>
+                this.unacknowledgeMessagesFromProcessingQueue(
+                  client,
+                  consumerId,
+                  queue,
+                  unackReason,
+                  finished,
+                ),
+              100,
+              next,
+            );
+          },
+          // Step 3: Combine the results from all queues into a single status object
+          (
+            statuses: TMessageUnacknowledgementStatus[],
+            next: ICallback<TMessageUnacknowledgementStatus>,
+          ) => {
+            const combinedStatus: TMessageUnacknowledgementStatus =
+              Object.assign({}, ...statuses);
+            next(null, combinedStatus);
+          },
+        ],
+        done,
+      );
+    }, cb);
   }
 }
