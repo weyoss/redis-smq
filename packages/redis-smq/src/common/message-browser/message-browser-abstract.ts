@@ -136,6 +136,83 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
     }, cb);
   }
 
+  protected withPurgeQueueJobManager<T>(
+    operation: (
+      purgeQueueJobManager: PurgeQueueJobManager,
+      cb: ICallback<T>,
+    ) => void,
+    cb: ICallback<T>,
+  ) {
+    withSharedPoolConnection((client, cb) => {
+      async.waterfall(
+        [
+          (cb: ICallback<PurgeQueueJobManager>) => {
+            const purgeQueueJobManager = new PurgeQueueJobManager(
+              client,
+              this.logger,
+            );
+            purgeQueueJobManager.initialize((err) => {
+              if (err) return cb(err);
+              cb(null, purgeQueueJobManager);
+            });
+          },
+          operation,
+        ],
+        cb,
+      );
+    }, cb);
+  }
+
+  /**
+   * Computes pagination parameters for a given page.
+   */
+  protected getPaginationParams(
+    page: number,
+    totalItems: number,
+    pageSize: number,
+  ): IBrowserPageInfo {
+    // Ensure valid inputs
+    if (pageSize <= 0) pageSize = 10;
+    if (page < 1) page = 1;
+
+    // Handle edge case: no items
+    if (totalItems <= 0) {
+      return {
+        offsetStart: 0,
+        offsetEnd: -1, // Redis convention: -1 means "no items"
+        currentPage: 1,
+        totalPages: 1,
+        pageSize,
+      };
+    }
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const currentPage = Math.min(page, totalPages);
+
+    // Calculate Redis-style inclusive range
+    const offsetStart = (currentPage - 1) * pageSize;
+    const offsetEnd = Math.min(offsetStart + pageSize, totalItems) - 1;
+
+    return {
+      offsetStart,
+      offsetEnd,
+      currentPage,
+      totalPages,
+      pageSize,
+    };
+  }
+
+  /**
+   * Computes the total number of pages based on the provided page size and total items.
+   */
+  protected getTotalPages(pageSize: number, totalItems: number): number {
+    if (pageSize <= 0 || totalItems === 0) {
+      return 1;
+    }
+    return Math.ceil(totalItems / pageSize);
+  }
+
   /**
    * Purges all messages from the specified queue.
    *
@@ -179,12 +256,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
         this.logger.info(
           `Creating purge job for queue ${parsedParams.queueParams.name}`,
         );
-
-        withSharedPoolConnection((client, cb) => {
-          const purgeQueueJobManager = new PurgeQueueJobManager(
-            client,
-            this.logger,
-          );
+        this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
           purgeQueueJobManager.create(
             {
               queue: parsedParams,
@@ -249,12 +321,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
         this.logger.info(
           `Creating purge job for queue ${parsedParams.queueParams.name}`,
         );
-
-        withSharedPoolConnection((client, cb) => {
-          const purgeQueueJobManager = new PurgeQueueJobManager(
-            client,
-            this.logger,
-          );
+        this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
           purgeQueueJobManager.get(jobId, (err, job) => {
             if (err) return cb(err);
             if (!job) return cb(new CallbackEmptyReplyError());
@@ -348,13 +415,7 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
         this.logger.info(
           `Canceling purge job ${jobId} for queue ${parsedParams.queueParams.name}`,
         );
-
-        withSharedPoolConnection((client, cb) => {
-          const purgeQueueJobManager = new PurgeQueueJobManager(
-            client,
-            this.logger,
-          );
-
+        this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
           purgeQueueJobManager.getActiveJob(
             {
               queue: parsedParams,
@@ -556,44 +617,5 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
         cb(err, result);
       },
     );
-  }
-
-  /**
-   * Computes pagination parameters for a given page.
-   */
-  protected getPaginationParams(
-    page: number,
-    totalItems: number,
-    pageSize: number,
-  ): IBrowserPageInfo {
-    // Ensure valid inputs
-    if (pageSize <= 0) pageSize = 10;
-    if (page < 1) page = 1;
-
-    // Calculate total pages
-    const totalPages = Math.ceil(totalItems / pageSize);
-    const currentPage = Math.min(page, totalPages || 1);
-
-    // Calculate offsets
-    const offsetStart = (currentPage - 1) * pageSize;
-    const offsetEnd = Math.min(offsetStart + pageSize - 1, totalItems - 1);
-
-    return {
-      offsetStart: Math.max(0, offsetStart),
-      offsetEnd: Math.max(0, offsetEnd),
-      currentPage,
-      totalPages: Math.max(1, totalPages),
-      pageSize,
-    };
-  }
-
-  /**
-   * Computes the total number of pages based on the provided page size and total items.
-   */
-  protected getTotalPages(pageSize: number, totalItems: number): number {
-    if (pageSize <= 0 || totalItems === 0) {
-      return 1;
-    }
-    return Math.ceil(totalItems / pageSize);
   }
 }

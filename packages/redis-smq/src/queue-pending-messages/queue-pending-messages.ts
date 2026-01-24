@@ -10,9 +10,15 @@
 import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable } from '../message/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
-import { IBrowserPage, IMessageBrowser } from '../common/index.js';
+import {
+  EBackgroundJobStatus,
+  EQueueMessageType,
+  IBackgroundJob,
+  IBrowserPage,
+  IMessageBrowser,
+  TPurgeQueueJobTarget,
+} from '../common/index.js';
 import { withPendingMessages } from './with-pending-messages.js';
-import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
 
 export class QueuePendingMessages implements IMessageBrowser {
   readonly messageType = EQueueMessageType.PENDING;
@@ -72,6 +78,34 @@ export class QueuePendingMessages implements IMessageBrowser {
       queue,
       (pendingMessages, cb) => {
         pendingMessages.cancelPurge(queue, jobId, cb);
+      },
+      cb,
+    );
+  }
+
+  getPurgeJob(
+    queue: TQueueExtendedParams,
+    jobId: string,
+    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+  ): void {
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.getPurgeJob(queue, jobId, cb);
+      },
+      cb,
+    );
+  }
+
+  getPurgeJobStatus(
+    queue: TQueueExtendedParams,
+    jobId: string,
+    cb: ICallback<EBackgroundJobStatus>,
+  ): void {
+    withPendingMessages(
+      queue,
+      (pendingMessages, cb) => {
+        pendingMessages.getPurgeJobStatus(queue, jobId, cb);
       },
       cb,
     );

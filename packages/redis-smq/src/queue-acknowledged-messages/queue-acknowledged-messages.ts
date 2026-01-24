@@ -16,7 +16,7 @@ import { IMessageTransferable } from '../message/index.js';
 import { Configuration } from '../config/index.js';
 import { AcknowledgedMessageAuditNotEnabledError } from '../errors/index.js';
 import { BrowserStorageAbstract } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
-import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
+import { EQueueMessageType } from '../common/index.js';
 
 /**
  * Manages acknowledged messages in a queue.
@@ -29,8 +29,8 @@ import { EQueueMessageType } from '../common/queue-messages-registry/types/queue
  * @see /packages/redis-smq/docs/configuration.md#message-audit
  */
 export class QueueAcknowledgedMessages extends MessageBrowserAbstract {
-  readonly messageType = EQueueMessageType.ACKNOWLEDGED;
   protected readonly redisKey = 'keyQueueAcknowledged';
+  readonly messageType = EQueueMessageType.ACKNOWLEDGED;
 
   protected createDefaultStorage(): BrowserStorageAbstract {
     return new BrowserStorageList(this.logger);

@@ -12,13 +12,14 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import {
   MessageNotFoundError,
   MessageNotRequeuableError,
   RequeueMessageScriptError,
+  UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 import { _fromMessage } from './_from-message.js';
 import { _getMessage } from './_get-message.js';
@@ -26,7 +27,6 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { UnexpectedScriptReplyError } from '../../errors/index.js';
 
 export function _requeueMessage(
   redisClient: IRedisClient,
@@ -147,7 +147,7 @@ export function _requeueMessage(
     ];
 
     redisClient.runScript(
-      ELuaScriptName.REQUEUE_MESSAGE,
+      ERedisScriptName.REQUEUE_MESSAGE,
       keys,
       argv,
       (err, reply) => {

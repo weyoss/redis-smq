@@ -132,59 +132,6 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     }
   };
 
-  removeMessageHandler(queue: IQueueParsedParams, cb: ICallback<void>): void {
-    const handler = this.getMessageHandler(queue);
-    if (!handler) {
-      return cb();
-    }
-    this.messageHandlers = this.messageHandlers.filter(
-      (h) => !this.isSameQueue(h.queue, queue),
-    );
-    const handlerInstance = this.getMessageHandlerInstance(queue);
-    if (handlerInstance) {
-      this.shutdownMessageHandler(handlerInstance, cb);
-    } else {
-      cb();
-    }
-  }
-
-  /**
-   * Adds a message handler for a queue. If already exists, returns an error.
-   * If runner is running, starts the handler immediately.
-   */
-  addMessageHandler(
-    queue: IQueueParsedParams,
-    messageHandler: TConsumerMessageHandler,
-    cb: ICallback<void>,
-  ): void {
-    if (this.getMessageHandler(queue)) {
-      this.logger.warn(
-        `Message handler for queue ${queue.queueParams.name} already exists`,
-      );
-      return cb(new MessageHandlerAlreadyExistsError());
-    }
-    const handlerParams: IConsumerMessageHandlerParams = {
-      queue,
-      messageHandler,
-    };
-    this.messageHandlers.push(handlerParams);
-    this.logger.info(
-      `Message handler registered for queue: ${queue.queueParams.name}. Total handlers: ${this.messageHandlers.length}`,
-    );
-    if (this.isRunning()) {
-      this.runMessageHandler(handlerParams, cb);
-    } else {
-      cb();
-    }
-  }
-
-  /**
-   * Returns all queues for which message handlers are registered.
-   */
-  getQueues(): IQueueParsedParams[] {
-    return this.messageHandlers.map((i) => i.queue);
-  }
-
   /**
    * Finds a running message handler instance for the given queue.
    */
@@ -328,5 +275,58 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       );
     }
     super.handleError(err);
+  }
+
+  removeMessageHandler(queue: IQueueParsedParams, cb: ICallback<void>): void {
+    const handler = this.getMessageHandler(queue);
+    if (!handler) {
+      return cb();
+    }
+    this.messageHandlers = this.messageHandlers.filter(
+      (h) => !this.isSameQueue(h.queue, queue),
+    );
+    const handlerInstance = this.getMessageHandlerInstance(queue);
+    if (handlerInstance) {
+      this.shutdownMessageHandler(handlerInstance, cb);
+    } else {
+      cb();
+    }
+  }
+
+  /**
+   * Adds a message handler for a queue. If already exists, returns an error.
+   * If runner is running, starts the handler immediately.
+   */
+  addMessageHandler(
+    queue: IQueueParsedParams,
+    messageHandler: TConsumerMessageHandler,
+    cb: ICallback<void>,
+  ): void {
+    if (this.getMessageHandler(queue)) {
+      this.logger.warn(
+        `Message handler for queue ${queue.queueParams.name} already exists`,
+      );
+      return cb(new MessageHandlerAlreadyExistsError());
+    }
+    const handlerParams: IConsumerMessageHandlerParams = {
+      queue,
+      messageHandler,
+    };
+    this.messageHandlers.push(handlerParams);
+    this.logger.info(
+      `Message handler registered for queue: ${queue.queueParams.name}. Total handlers: ${this.messageHandlers.length}`,
+    );
+    if (this.isRunning()) {
+      this.runMessageHandler(handlerParams, cb);
+    } else {
+      cb();
+    }
+  }
+
+  /**
+   * Returns all queues for which message handlers are registered.
+   */
+  getQueues(): IQueueParsedParams[] {
+    return this.messageHandlers.map((i) => i.queue);
   }
 }

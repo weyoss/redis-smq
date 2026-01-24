@@ -8,9 +8,9 @@
  */
 
 import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
-import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
+import { EQueueMessageType } from '../common/index.js';
 
 export abstract class PendingMessagesAbstract extends MessageBrowserAbstract {
-  readonly messageType = EQueueMessageType.PENDING;
   protected override requireGroupId = true;
+  readonly messageType = EQueueMessageType.PENDING;
 }

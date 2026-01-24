@@ -8,7 +8,7 @@
  */
 
 import { ICallback, ILogger, IRedisClient } from 'redis-smq-common';
-import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   EMessageProperty,
@@ -159,7 +159,7 @@ export function _publishMessage(
   ];
 
   redisClient.runScript(
-    ELuaScriptName.PUBLISH_MESSAGE,
+    ERedisScriptName.PUBLISH_MESSAGE,
     [
       keys.keyQueueProperties,
       keys.keyQueuePriorityPending,

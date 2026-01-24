@@ -21,7 +21,7 @@ import {
 import { EQueueProperty, IQueueParams } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
 import { processingQueue } from '../../consumer/message-handler/consume-message/processing-queue.js';
-import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
 
 export function _deleteQueue(
   redisClient: IRedisClient,
@@ -160,7 +160,7 @@ export function _deleteQueue(
       ];
 
       redisClient.runScript(
-        ELuaScriptName.DELETE_QUEUE,
+        ERedisScriptName.DELETE_QUEUE,
         scriptKeys,
         scriptArgs,
         (err, reply) => {

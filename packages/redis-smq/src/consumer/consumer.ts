@@ -88,6 +88,163 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
+   * Sets up the consumer's heartbeat to monitor its health.
+   *
+   * @param {ICallback<void>} cb - Callback function to be called once setup is complete.
+   */
+  protected setUpHeartbeat = (cb: ICallback<void>): void => {
+    this.logger.debug('Setting up consumer heartbeat');
+    this.heartbeat = new ConsumerHeartbeat(this.consumerContext);
+    this.heartbeat.on('consumerHeartbeat.error', (err) => {
+      this.logger.error(`Heartbeat error: ${err.message}`);
+      this.handleError(err);
+    });
+    this.logger.debug('Starting heartbeat');
+    this.heartbeat.run((err) => {
+      if (err) {
+        this.logger.error(`Failed to start heartbeat: ${err.message}`);
+        cb(err);
+      } else {
+        this.logger.debug('Heartbeat started successfully');
+        cb();
+      }
+    });
+  };
+
+  /**
+   * Shuts down the heartbeat process.
+   *
+   * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
+   */
+  protected shutDownHeartbeat = (cb: ICallback<void>): void => {
+    if (this.heartbeat) {
+      this.logger.debug('Shutting down heartbeat');
+      this.heartbeat.shutdown((err) => {
+        if (err) {
+          this.logger.warn(`Error during heartbeat shutdown: ${err.message}`);
+        }
+        this.logger.debug('Heartbeat shut down');
+        this.heartbeat = null;
+        cb();
+      });
+    } else {
+      this.logger.debug('No heartbeat to shut down');
+      cb();
+    }
+  };
+
+  /**
+   * Runs all message handlers.
+   *
+   * @param {ICallback<void>} cb - Callback function to be called once processing is complete.
+   */
+  protected runMessageHandlers = (cb: ICallback<void>): void => {
+    this.logger.debug('Starting message handlers');
+    this.messageHandlerRunner.run((err) => {
+      if (err) {
+        this.logger.error(`Failed to start message handlers: ${err.message}`);
+        cb(err);
+      } else {
+        this.logger.debug('Message handlers started successfully');
+        cb();
+      }
+    });
+  };
+
+  /**
+   * Shuts down the message handlers.
+   *
+   * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
+   */
+  protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
+    this.logger.debug('Shutting down message handlers');
+    this.messageHandlerRunner.shutdown((err) => {
+      if (err) {
+        this.logger.warn(
+          `Error during message handlers shutdown: ${err.message}`,
+        );
+      }
+      this.logger.debug('Message handlers shut down');
+      cb();
+    });
+  };
+
+  /**
+   * Defines the startup sequence for the consumer.
+   *
+   * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during startup.
+   */
+  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+    this.logger.info('Consumer going up');
+    return super.goingUp().concat([
+      (cb) => {
+        this.logger.debug(
+          `Emitting consumer.goingUp event for consumer ${this.id}`,
+        );
+        this.emit('consumer.goingUp', this.id);
+        cb();
+      },
+      this.setUpHeartbeat,
+      this.runMessageHandlers,
+    ]);
+  }
+
+  /**
+   * Defines the shutdown sequence for the consumer.
+   *
+   * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during shutdown.
+   */
+  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    this.logger.info('Consumer going down');
+    this.logger.debug(
+      `Emitting consumer.goingDown event for consumer ${this.id}`,
+    );
+    this.emit('consumer.goingDown', this.id);
+    return [this.shutdownMessageHandlers, this.shutDownHeartbeat].concat(
+      super.goingDown(),
+    );
+  }
+
+  /**
+   * Handles the successful up process of the consumer.
+   *
+   * @param {ICallback<boolean>} cb - Callback function to indicate success.
+   */
+  protected override up(cb: ICallback<boolean>) {
+    this.logger.info('Consumer is up');
+    super.up(() => {
+      this.logger.debug(`Emitting consumer.up event for consumer ${this.id}`);
+      this.emit('consumer.up', this.id);
+      cb(null, true);
+    });
+  }
+
+  /**
+   * Handles the successful down process of the consumer.
+   *
+   * @param {ICallback<boolean>} cb - Callback function to indicate success.
+   */
+  protected override down(cb: ICallback<boolean>) {
+    this.logger.info(`Consumer ${this.getId()} is now down`);
+    super.down(() => {
+      this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
+      this.emit('consumer.down', this.id);
+      cb(null, true);
+    });
+  }
+
+  /**
+   * Handles errors encountered by the consumer.
+   * @param {Error} err - The error to handle.
+   */
+  protected override handleError(err: Error) {
+    this.logger.error(`Consumer error: ${err.message}`, err);
+    this.logger.debug(`Emitting consumer.error event for consumer ${this.id}`);
+    this.emit('consumer.error', err, this.id);
+    super.handleError(err);
+  }
+
+  /**
    * Consumes messages from a specified queue using the provided message handler.
    *
    * @param {TQueueExtendedParams} queue - A queue from which messages will be consumed. Before consuming
@@ -294,162 +451,5 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
     );
     return queues;
-  }
-
-  /**
-   * Sets up the consumer's heartbeat to monitor its health.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once setup is complete.
-   */
-  protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    this.logger.debug('Setting up consumer heartbeat');
-    this.heartbeat = new ConsumerHeartbeat(this.consumerContext);
-    this.heartbeat.on('consumerHeartbeat.error', (err) => {
-      this.logger.error(`Heartbeat error: ${err.message}`);
-      this.handleError(err);
-    });
-    this.logger.debug('Starting heartbeat');
-    this.heartbeat.run((err) => {
-      if (err) {
-        this.logger.error(`Failed to start heartbeat: ${err.message}`);
-        cb(err);
-      } else {
-        this.logger.debug('Heartbeat started successfully');
-        cb();
-      }
-    });
-  };
-
-  /**
-   * Shuts down the heartbeat process.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
-   */
-  protected shutDownHeartbeat = (cb: ICallback<void>): void => {
-    if (this.heartbeat) {
-      this.logger.debug('Shutting down heartbeat');
-      this.heartbeat.shutdown((err) => {
-        if (err) {
-          this.logger.warn(`Error during heartbeat shutdown: ${err.message}`);
-        }
-        this.logger.debug('Heartbeat shut down');
-        this.heartbeat = null;
-        cb();
-      });
-    } else {
-      this.logger.debug('No heartbeat to shut down');
-      cb();
-    }
-  };
-
-  /**
-   * Runs all message handlers.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once processing is complete.
-   */
-  protected runMessageHandlers = (cb: ICallback<void>): void => {
-    this.logger.debug('Starting message handlers');
-    this.messageHandlerRunner.run((err) => {
-      if (err) {
-        this.logger.error(`Failed to start message handlers: ${err.message}`);
-        cb(err);
-      } else {
-        this.logger.debug('Message handlers started successfully');
-        cb();
-      }
-    });
-  };
-
-  /**
-   * Shuts down the message handlers.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
-   */
-  protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
-    this.logger.debug('Shutting down message handlers');
-    this.messageHandlerRunner.shutdown((err) => {
-      if (err) {
-        this.logger.warn(
-          `Error during message handlers shutdown: ${err.message}`,
-        );
-      }
-      this.logger.debug('Message handlers shut down');
-      cb();
-    });
-  };
-
-  /**
-   * Defines the startup sequence for the consumer.
-   *
-   * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during startup.
-   */
-  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info('Consumer going up');
-    return super.goingUp().concat([
-      (cb) => {
-        this.logger.debug(
-          `Emitting consumer.goingUp event for consumer ${this.id}`,
-        );
-        this.emit('consumer.goingUp', this.id);
-        cb();
-      },
-      this.setUpHeartbeat,
-      this.runMessageHandlers,
-    ]);
-  }
-
-  /**
-   * Defines the shutdown sequence for the consumer.
-   *
-   * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during shutdown.
-   */
-  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info('Consumer going down');
-    this.logger.debug(
-      `Emitting consumer.goingDown event for consumer ${this.id}`,
-    );
-    this.emit('consumer.goingDown', this.id);
-    return [this.shutdownMessageHandlers, this.shutDownHeartbeat].concat(
-      super.goingDown(),
-    );
-  }
-
-  /**
-   * Handles the successful up process of the consumer.
-   *
-   * @param {ICallback<boolean>} cb - Callback function to indicate success.
-   */
-  protected override up(cb: ICallback<boolean>) {
-    this.logger.info('Consumer is up');
-    super.up(() => {
-      this.logger.debug(`Emitting consumer.up event for consumer ${this.id}`);
-      this.emit('consumer.up', this.id);
-      cb(null, true);
-    });
-  }
-
-  /**
-   * Handles the successful down process of the consumer.
-   *
-   * @param {ICallback<boolean>} cb - Callback function to indicate success.
-   */
-  protected override down(cb: ICallback<boolean>) {
-    this.logger.info(`Consumer ${this.getId()} is now down`);
-    super.down(() => {
-      this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
-      this.emit('consumer.down', this.id);
-      cb(null, true);
-    });
-  }
-
-  /**
-   * Handles errors encountered by the consumer.
-   * @param {Error} err - The error to handle.
-   */
-  protected override handleError(err: Error) {
-    this.logger.error(`Consumer error: ${err.message}`, err);
-    this.logger.debug(`Emitting consumer.error event for consumer ${this.id}`);
-    this.emit('consumer.error', err, this.id);
-    super.handleError(err);
   }
 }

@@ -7,7 +7,7 @@ import { BrowserStorageSet } from '../common/message-browser/browser-storage/bro
 import { IQueueMessagesCount } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
-import { EQueueMessageType } from '../common/queue-messages-registry/types/queue-messages-registry.js';
+import { EQueueMessageType } from '../common/index.js';
 
 /**
  * QueueMessages class manages message counting and state reporting across queue types.
@@ -15,8 +15,8 @@ import { EQueueMessageType } from '../common/queue-messages-registry/types/queue
  * and leverages a waterfall pattern for processing.
  */
 export class QueueMessages extends MessageBrowserAbstract {
-  readonly messageType = EQueueMessageType.ALL_MESSAGES;
   protected readonly redisKey = 'keyQueueMessages';
+  readonly messageType = EQueueMessageType.ALL_MESSAGES;
 
   protected createDefaultStorage(): IBrowserStorage {
     return new BrowserStorageSet(this.logger);

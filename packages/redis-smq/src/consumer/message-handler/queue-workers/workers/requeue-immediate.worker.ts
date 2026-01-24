@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../../../common/redis/scripts.js';
 import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessages } from '../../../../message-manager/_/_get-message.js';
 import {
@@ -22,27 +22,6 @@ import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 
 export class RequeueImmediateWorker extends QueueWorkerAbstract {
-  work = (cb: ICallback): void => {
-    this.logger.debug('Starting requeue unacknowledged messages work cycle');
-
-    this.logger.debug(
-      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
-    );
-
-    async.waterfall(
-      [this.fetchMessageIds, this.fetchMessages, this.requeueMessages],
-      (err) => {
-        if (err) {
-          this.logger.error(
-            'A fatal error occurred during requeue unacknowledged messages worker cycle.',
-            err,
-          );
-        }
-        cb(err);
-      },
-    );
-  };
-
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     withSharedPoolConnection((redisClient, cb) => {
       const { keyQueueRequeued } = redisKeys.getQueueKeys(
@@ -150,7 +129,7 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
         `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE script with ${messages.length} messages`,
       );
       redisClient.runScript(
-        ELuaScriptName.REQUEUE_IMMEDIATE,
+        ERedisScriptName.REQUEUE_IMMEDIATE,
         keys,
         argv,
         (err, reply) => {
@@ -175,6 +154,27 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
         },
       );
     }, cb);
+  };
+
+  work = (cb: ICallback): void => {
+    this.logger.debug('Starting requeue unacknowledged messages work cycle');
+
+    this.logger.debug(
+      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
+    );
+
+    async.waterfall(
+      [this.fetchMessageIds, this.fetchMessages, this.requeueMessages],
+      (err) => {
+        if (err) {
+          this.logger.error(
+            'A fatal error occurred during requeue unacknowledged messages worker cycle.',
+            err,
+          );
+        }
+        cb(err);
+      },
+    );
   };
 }
 

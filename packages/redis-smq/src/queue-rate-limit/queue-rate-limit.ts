@@ -13,7 +13,7 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../common/redis/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
@@ -79,7 +79,7 @@ export class QueueRateLimit {
         `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
       );
       client.runScript(
-        ELuaScriptName.CLEAR_QUEUE_RATE_LIMIT,
+        ERedisScriptName.CLEAR_QUEUE_RATE_LIMIT,
         [keyQueueProperties, keyQueueRateLimitCounter],
         [String(EQueueProperty.RATE_LIMIT)],
         (err, reply) => {
@@ -165,7 +165,7 @@ export class QueueRateLimit {
       this.logger.debug(`Setting rate limit using key: ${keyQueueProperties}`);
 
       client.runScript(
-        ELuaScriptName.SET_QUEUE_RATE_LIMIT,
+        ERedisScriptName.SET_QUEUE_RATE_LIMIT,
         [keyQueueProperties],
         [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
         (err, reply) => {

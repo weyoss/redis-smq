@@ -22,11 +22,11 @@ import {
 } from './types/index.js';
 
 export class MessageEnvelope {
-  readonly producibleMessage;
   protected messageState: MessageState;
   protected status: EMessagePropertyStatus = EMessagePropertyStatus.NEW;
   protected destinationQueue: IQueueParams | null = null;
   protected consumerGroupId: string | null = null;
+  readonly producibleMessage;
 
   constructor(
     producibleMessage: ProducibleMessage,

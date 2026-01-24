@@ -100,8 +100,9 @@ export interface IRedisSMQConfig {
   eventBus?: IEventBusConfig;
 }
 
-export interface IRedisSMQParsedConfig
-  extends Required<Omit<IRedisSMQConfig, 'messageAudit'>> {
+export interface IRedisSMQParsedConfig extends Required<
+  Omit<IRedisSMQConfig, 'messageAudit'>
+> {
   messageAudit: IMessageAuditParsedConfig;
   eventBus: Required<IEventBusConfig>;
 }

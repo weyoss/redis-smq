@@ -65,38 +65,12 @@ export class PubSubTargetResolver extends Runnable<
   }
 
   /**
-   * Resolves the consumer groups for a given queue.
-   *
-   * This method checks the local cache to determine if a queue is configured
-   * for PUB/SUB delivery and, if so, returns its consumer groups.
-   *
-   * @param queue - The queue to resolve.
-   * @returns An object indicating if the queue is PUB/SUB and a list of its
-   *          consumer group IDs (targets).
+   * Generates a unique string key for a queue.
+   * @param queue - The queue parameters.
+   * @returns A string in the format "name@ns".
    */
-  resolveTargets(queue: IQueueParams): {
-    isPubSub: boolean;
-    targets: string[];
-  } {
-    const queueKey = this.getQueueKey(queue);
-    this.logger.debug(`Resolving targets for queue [${queueKey}]`);
-
-    if (this.pubSubTargets[queueKey]) {
-      const targets = this.pubSubTargets[queueKey];
-      this.logger.debug(
-        `Found queue [${queueKey}] in cache with [${targets.length}] targets.`,
-      );
-      return {
-        isPubSub: true,
-        targets,
-      };
-    }
-
-    this.logger.debug(`Queue [${queueKey}] not found in cache.`);
-    return {
-      isPubSub: false,
-      targets: [],
-    };
+  private getQueueKey(queue: IQueueParams): string {
+    return `${queue.name}@${queue.ns}`;
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
@@ -331,11 +305,37 @@ export class PubSubTargetResolver extends Runnable<
   };
 
   /**
-   * Generates a unique string key for a queue.
-   * @param queue - The queue parameters.
-   * @returns A string in the format "name@ns".
+   * Resolves the consumer groups for a given queue.
+   *
+   * This method checks the local cache to determine if a queue is configured
+   * for PUB/SUB delivery and, if so, returns its consumer groups.
+   *
+   * @param queue - The queue to resolve.
+   * @returns An object indicating if the queue is PUB/SUB and a list of its
+   *          consumer group IDs (targets).
    */
-  private getQueueKey(queue: IQueueParams): string {
-    return `${queue.name}@${queue.ns}`;
+  resolveTargets(queue: IQueueParams): {
+    isPubSub: boolean;
+    targets: string[];
+  } {
+    const queueKey = this.getQueueKey(queue);
+    this.logger.debug(`Resolving targets for queue [${queueKey}]`);
+
+    if (this.pubSubTargets[queueKey]) {
+      const targets = this.pubSubTargets[queueKey];
+      this.logger.debug(
+        `Found queue [${queueKey}] in cache with [${targets.length}] targets.`,
+      );
+      return {
+        isPubSub: true,
+        targets,
+      };
+    }
+
+    this.logger.debug(`Queue [${queueKey}] not found in cache.`);
+    return {
+      isPubSub: false,
+      targets: [],
+    };
   }
 }

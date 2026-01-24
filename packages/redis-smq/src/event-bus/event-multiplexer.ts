@@ -29,6 +29,26 @@ export class EventMultiplexer {
     this.internalBus = InternalEventBus.getInstance();
   }
 
+  static getInstance(): EventMultiplexer {
+    if (!EventMultiplexer.instance) {
+      EventMultiplexer.instance = new EventMultiplexer();
+    }
+    return EventMultiplexer.instance;
+  }
+
+  static publish<Event extends keyof TRedisSMQEvent>(
+    event: Event,
+    ...args: Parameters<TRedisSMQEvent[Event]>
+  ): void {
+    const instance = EventMultiplexer.getInstance();
+    instance.publish(event, ...args);
+  }
+
+  static shutdown(cb: ICallback) {
+    EventMultiplexer.instance = null;
+    cb();
+  }
+
   /**
    * Returns current target for an event based on policy.
    * Unregistered events fall back to EEventTarget.USER.
@@ -54,25 +74,5 @@ export class EventMultiplexer {
     if (target === EEventTarget.SYSTEM || target === EEventTarget.BOTH) {
       this.internalBus.emit(event, ...args);
     }
-  }
-
-  static getInstance(): EventMultiplexer {
-    if (!EventMultiplexer.instance) {
-      EventMultiplexer.instance = new EventMultiplexer();
-    }
-    return EventMultiplexer.instance;
-  }
-
-  static publish<Event extends keyof TRedisSMQEvent>(
-    event: Event,
-    ...args: Parameters<TRedisSMQEvent[Event]>
-  ): void {
-    const instance = EventMultiplexer.getInstance();
-    instance.publish(event, ...args);
-  }
-
-  static shutdown(cb: ICallback) {
-    EventMultiplexer.instance = null;
-    cb();
   }
 }

@@ -190,60 +190,6 @@ export class ProducibleMessage {
   }
 
   /**
-   * Sets default consume options for all future ProducibleMessage instances.
-   *
-   * @static
-   * @param {Partial<TMessageConsumeOptions>} consumeOptions - Partial consume options to override defaults
-   * @param {number} [consumeOptions.ttl] - Default TTL value in milliseconds
-   * @param {number} [consumeOptions.retryThreshold] - Default retry threshold value
-   * @param {number} [consumeOptions.retryDelay] - Default retry delay value in milliseconds
-   * @param {number} [consumeOptions.consumeTimeout] - Default consumption timeout value in milliseconds
-   * @throws MessagePropertyInvalidValueError When any provided value is invalid
-   *
-   * @example
-   * ```typescript
-   * // Set new defaults
-   * ProducibleMessage.setDefaultConsumeOptions({
-   *   ttl: 60000,
-   *   retryThreshold: 5,
-   *   retryDelay: 30000,
-   *   consumeTimeout: 120000
-   * });
-   *
-   * // New instances will use these defaults
-   * const message = new ProducibleMessage();
-   * console.log(message.getTTL()); // 60000
-   * console.log(message.getRetryThreshold()); // 5
-   * ```
-   */
-  static setDefaultConsumeOptions(
-    consumeOptions: Partial<TMessageConsumeOptions>,
-  ): void {
-    const {
-      ttl = null,
-      retryThreshold = null,
-      retryDelay = null,
-      consumeTimeout = null,
-    } = consumeOptions;
-
-    if (ttl !== null)
-      ProducibleMessage.defaultConsumeOptions.ttl =
-        ProducibleMessage.validateTTL(ttl);
-
-    if (retryDelay !== null)
-      ProducibleMessage.defaultConsumeOptions.retryDelay =
-        ProducibleMessage.validateRetryDelay(retryDelay);
-
-    if (retryThreshold !== null)
-      ProducibleMessage.defaultConsumeOptions.retryThreshold =
-        ProducibleMessage.validateRetryThreshold(retryThreshold);
-
-    if (consumeTimeout !== null)
-      ProducibleMessage.defaultConsumeOptions.consumeTimeout =
-        ProducibleMessage.validateConsumeTimeout(consumeTimeout);
-  }
-
-  /**
    * Validates a retry delay value.
    *
    * @static
@@ -329,6 +275,81 @@ export class ProducibleMessage {
       });
     }
     return value;
+  }
+
+  /**
+   * Sets default consume options for all future ProducibleMessage instances.
+   *
+   * @static
+   * @param {Partial<TMessageConsumeOptions>} consumeOptions - Partial consume options to override defaults
+   * @param {number} [consumeOptions.ttl] - Default TTL value in milliseconds
+   * @param {number} [consumeOptions.retryThreshold] - Default retry threshold value
+   * @param {number} [consumeOptions.retryDelay] - Default retry delay value in milliseconds
+   * @param {number} [consumeOptions.consumeTimeout] - Default consumption timeout value in milliseconds
+   * @throws MessagePropertyInvalidValueError When any provided value is invalid
+   *
+   * @example
+   * ```typescript
+   * // Set new defaults
+   * ProducibleMessage.setDefaultConsumeOptions({
+   *   ttl: 60000,
+   *   retryThreshold: 5,
+   *   retryDelay: 30000,
+   *   consumeTimeout: 120000
+   * });
+   *
+   * // New instances will use these defaults
+   * const message = new ProducibleMessage();
+   * console.log(message.getTTL()); // 60000
+   * console.log(message.getRetryThreshold()); // 5
+   * ```
+   */
+  static setDefaultConsumeOptions(
+    consumeOptions: Partial<TMessageConsumeOptions>,
+  ): void {
+    const {
+      ttl = null,
+      retryThreshold = null,
+      retryDelay = null,
+      consumeTimeout = null,
+    } = consumeOptions;
+
+    if (ttl !== null)
+      ProducibleMessage.defaultConsumeOptions.ttl =
+        ProducibleMessage.validateTTL(ttl);
+
+    if (retryDelay !== null)
+      ProducibleMessage.defaultConsumeOptions.retryDelay =
+        ProducibleMessage.validateRetryDelay(retryDelay);
+
+    if (retryThreshold !== null)
+      ProducibleMessage.defaultConsumeOptions.retryThreshold =
+        ProducibleMessage.validateRetryThreshold(retryThreshold);
+
+    if (consumeTimeout !== null)
+      ProducibleMessage.defaultConsumeOptions.consumeTimeout =
+        ProducibleMessage.validateConsumeTimeout(consumeTimeout);
+  }
+
+  /**
+   * Sets an exchange with the specified type.
+   *
+   * @protected
+   * @param {string | IExchangeParams} exchange - Exchange name or parameters
+   * @param {EExchangeType} type - Exchange type
+   * @returns {ProducibleMessage} This instance for method chaining
+   * @throws Error When exchange parameters are invalid
+   */
+  protected setExchange(
+    exchange: string | IExchangeParams,
+    type: EExchangeType,
+  ): ProducibleMessage {
+    const exchangeParams = _parseExchangeParams(exchange, type);
+    if (exchangeParams instanceof Error) throw exchangeParams;
+    this.exchange = exchangeParams;
+    this.queue = null;
+    this.exchangeRoutingKey = null;
+    return this;
   }
 
   /**
@@ -1045,26 +1066,5 @@ export class ProducibleMessage {
    */
   getBody(): unknown {
     return this.body;
-  }
-
-  /**
-   * Sets an exchange with the specified type.
-   *
-   * @protected
-   * @param {string | IExchangeParams} exchange - Exchange name or parameters
-   * @param {EExchangeType} type - Exchange type
-   * @returns {ProducibleMessage} This instance for method chaining
-   * @throws Error When exchange parameters are invalid
-   */
-  protected setExchange(
-    exchange: string | IExchangeParams,
-    type: EExchangeType,
-  ): ProducibleMessage {
-    const exchangeParams = _parseExchangeParams(exchange, type);
-    if (exchangeParams instanceof Error) throw exchangeParams;
-    this.exchange = exchangeParams;
-    this.queue = null;
-    this.exchangeRoutingKey = null;
-    return this;
   }
 }

@@ -23,8 +23,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
     this.timer.on('error', (err: Error) => this.handleError(err));
   }
 
-  abstract work(cb: ICallback<void>): void;
-
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('Worker going up');
     return super.goingUp().concat([
@@ -73,4 +71,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
       throw err;
     }
   };
+
+  abstract work(cb: ICallback<void>): void;
 }

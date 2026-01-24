@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
-import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   EQueueDeliveryModel,
@@ -40,7 +40,7 @@ export function _deleteConsumerGroup(
           keyQueueProperties,
         } = redisKeys.getQueueKeys(queue.ns, queue.name, groupId);
         redisClient.runScript(
-          ELuaScriptName.DELETE_CONSUMER_GROUP,
+          ERedisScriptName.DELETE_CONSUMER_GROUP,
           [
             keyQueueConsumerGroups,
             keyQueuePending,

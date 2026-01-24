@@ -17,7 +17,7 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
-import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { ERedisScriptName } from '../../../common/redis/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../../config/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
@@ -28,12 +28,14 @@ import {
   IQueueRateLimit,
   TQueueConsumer,
 } from '../../../index.js';
-import { QueueNotFoundError } from '../../../errors/index.js';
+import {
+  QueueNotFoundError,
+  UnexpectedScriptReplyError,
+} from '../../../errors/index.js';
 import { eventPublisher } from './event-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
-import { UnexpectedScriptReplyError } from '../../../errors/index.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -112,17 +114,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     this.keyQueueConsumers = keyQueueConsumers;
     this.keyConsumerQueues = keyConsumerQueues;
     this.keyQueueProcessingQueues = keyQueueProcessingQueues;
-  }
-
-  dequeue(): void {
-    if (!this.isRunning()) {
-      return;
-    }
-    const redisClient = this.getRedisClient();
-    if (redisClient instanceof Error) {
-      return this.handleError(redisClient);
-    }
-    this.runDequeue(redisClient);
   }
 
   protected runDequeue(redisClient: IRedisClient): void {
@@ -235,7 +226,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           JSON.stringify(this.queue.queueParams),
         ];
         redisClient.runScript(
-          ELuaScriptName.SUBSCRIBE_CONSUMER,
+          ERedisScriptName.SUBSCRIBE_CONSUMER,
           keys,
           args,
           (err, reply) => {
@@ -303,4 +294,15 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       this.emit('consumer.dequeueMessage.nextMessage');
     }
   };
+
+  dequeue(): void {
+    if (!this.isRunning()) {
+      return;
+    }
+    const redisClient = this.getRedisClient();
+    if (redisClient instanceof Error) {
+      return this.handleError(redisClient);
+    }
+    this.runDequeue(redisClient);
+  }
 }
