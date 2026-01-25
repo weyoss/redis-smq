@@ -22,15 +22,15 @@
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### start()
 
-> **start**(`port?`): `Promise`\<`number`\>
+> **start**(`requestedPort?`): `Promise`\<`number`\>
 
 #### Parameters
 
-##### port?
+##### requestedPort?
 
 `number`
 
