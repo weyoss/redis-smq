@@ -10,12 +10,12 @@
 set -x
 set -e
 
-rm -rf dist
+rm -rf ./dist
 
 # esm
 tsc -p ./tsconfig.json
-cp -r src/common/redis/ dist/esm/src/common/redis/
-cp -r src/common/background-job/redis/ dist/esm/src/common/background-job/redis/
+cp -r ./src/common/redis/scripts ./dist/esm/src/common/redis/
+cp -r ./src/common/background-job/redis ./dist/esm/src/common/background-job/
 
 # cjs
 tsc -p ./tsconfig.cjs.json
@@ -24,5 +24,5 @@ cat >dist/cjs/package.json <<!EOF
     "type": "commonjs"
 }
 !EOF
-cp -r src/common/redis/ dist/cjs/src/common/redis/
-cp -r src/common/background-job/redis/ dist/cjs/src/common/background-job/redis/
+cp -r ./src/common/redis/scripts dist/cjs/src/common/redis/
+cp -r ./src/common/background-job/redis ./dist/cjs/src/common/background-job/
