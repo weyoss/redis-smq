@@ -82,18 +82,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
     this.redisClient = redisClient;
     this.redisClient.on('error', this.handleError);
 
-    this.logger.debug('Loading Redis Lua scripts');
-    this.redisClient.loadScriptFiles(luaScriptMap, (err) => {
-      if (err) {
-        this.logger.error(
-          `Failed to load Redis Lua scripts: ${err.message}`,
-          err,
-        );
-      } else {
-        this.logger.debug('Redis Lua scripts loaded successfully');
-      }
-    });
-
     this.timer = new Timer();
     this.timer.on('error', this.handleError);
 
@@ -324,7 +312,24 @@ export class RedisLock extends Runnable<TLockerEvent> {
   protected override goingUp(): Array<(cb: ICallback<void>) => void> {
     this.logger.debug('RedisLock transitioning to going-up state');
     this.emit('locker.goingUp', this.id);
-    return super.goingUp().concat([this.lock]);
+    return super.goingUp().concat([
+      (cb) => {
+        this.logger.debug('Loading Redis Lua scripts');
+        this.redisClient.loadScriptFiles(luaScriptMap, (err) => {
+          if (err) {
+            this.logger.error(
+              `Failed to load Redis Lua scripts: ${err.message}`,
+              err,
+            );
+            this.handleError(err);
+          } else {
+            this.logger.debug('Redis Lua scripts loaded successfully');
+          }
+          cb(err);
+        });
+      },
+      this.lock,
+    ]);
   }
 
   /**
