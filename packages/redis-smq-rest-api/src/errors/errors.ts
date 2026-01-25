@@ -19,7 +19,13 @@ export const errors = {
     500,
     'AcknowledgedMessageAuditNotEnabledError',
   ],
+  BackgroundJobAlreadyExistsError: [409, 'BackgroundJobAlreadyExistsError'],
+  BackgroundJobCanceledError: [500, 'BackgroundJobCanceledError'],
+  BackgroundJobNotCancellableError: [500, 'BackgroundJobNotCancellableError'],
+  BackgroundJobNotCompletableError: [500, 'BackgroundJobNotCompletableError'],
+  BackgroundJobNotFailableError: [500, 'BackgroundJobNotFailableError'],
   BackgroundJobNotFoundError: [404, 'BackgroundJobNotFoundError'],
+  BackgroundJobNotStartableError: [500, 'BackgroundJobNotStartableError'],
   BackgroundJobTargetLockedError: [500, 'BackgroundJobTargetLockedError'],
   ConfigurationMessageAuditExpireError: [
     400,
