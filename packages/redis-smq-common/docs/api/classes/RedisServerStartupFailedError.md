@@ -1,71 +1,30 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RedisSMQError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RedisServerStartupFailedError
 
-# Abstract Class: RedisSMQError\<Metadata\>
+# Class: RedisServerStartupFailedError
 
 ## Extends
 
-- `Error`
-
-## Extended by
-
-- [`AsyncCallbackTimeoutError`](AsyncCallbackTimeoutError.md)
-- [`CallbackEmptyReplyError`](CallbackEmptyReplyError.md)
-- [`CallbackInvalidReplyError`](CallbackInvalidReplyError.md)
-- [`PanicError`](PanicError.md)
-- [`AbortError`](AbortError.md)
-- [`InvalidArgumentsError`](InvalidArgumentsError.md)
-- [`OperationNotAllowedError`](OperationNotAllowedError.md)
-- [`EventBusNotConnectedError`](EventBusNotConnectedError.md)
-- [`EventBusMessageJSONParseError`](EventBusMessageJSONParseError.md)
-- [`RedisServerBinaryNotFoundError`](RedisServerBinaryNotFoundError.md)
-- [`RedisServerUnsupportedPlatformError`](RedisServerUnsupportedPlatformError.md)
-- [`RedisServerStartupFailedError`](RedisServerStartupFailedError.md)
-- [`AcquireLockError`](AcquireLockError.md)
-- [`ExtendLockError`](ExtendLockError.md)
-- [`AcquireLockNotAllowedError`](AcquireLockNotAllowedError.md)
-- [`LockNotAcquiredError`](LockNotAcquiredError.md)
-- [`LoggerInvalidNamespaceError`](LoggerInvalidNamespaceError.md)
-- [`WatchedKeysChangedError`](WatchedKeysChangedError.md)
-- [`InstanceLockError`](InstanceLockError.md)
-- [`UnsupportedClientError`](UnsupportedClientError.md)
-- [`RedisClientNotInstalledError`](RedisClientNotInstalledError.md)
-- [`CommandNotSupportedError`](CommandNotSupportedError.md)
-- [`UnsupportedRedisServerVersionError`](UnsupportedRedisServerVersionError.md)
-- [`UnknownRedisServerVersionError`](UnknownRedisServerVersionError.md)
-- [`WatchTransactionMaxRetriesExceeded`](WatchTransactionMaxRetriesExceeded.md)
-- [`TimerNotSetError`](TimerNotSetError.md)
-- [`WorkerThreadError`](WorkerThreadError.md)
-- [`WorkerPayloadRequiredError`](WorkerPayloadRequiredError.md)
-- [`WorkerAlreadyRunningError`](WorkerAlreadyRunningError.md)
-- [`WorkerAlreadyDownError`](WorkerAlreadyDownError.md)
-- [`WorkerThreadFailureError`](WorkerThreadFailureError.md)
-- [`WorkerIsShuttingDownError`](WorkerIsShuttingDownError.md)
-
-## Type Parameters
-
-### Metadata
-
-`Metadata` _extends_ `Record`\<`string`, `unknown`\> = `never`
+- [`RedisSMQError`](RedisSMQError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new RedisSMQError**\<`Metadata`\>(...`args`): `RedisSMQError`\<`Metadata`\>
+> **new RedisServerStartupFailedError**(...`args`): `RedisServerStartupFailedError`
 
 #### Parameters
 
 ##### args
 
-...\[`Metadata`\] _extends_ \[`never`\] ? \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\<`Metadata`\>\>\] : \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\]
+...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 
-`RedisSMQError`\<`Metadata`\>
+`RedisServerStartupFailedError`
 
-#### Overrides
+#### Inherited from
 
-`Error.constructor`
+[`RedisSMQError`](RedisSMQError.md).[`constructor`](RedisSMQError.md#constructor)
 
 ## Properties
 
@@ -75,7 +34,7 @@
 
 #### Inherited from
 
-`Error.cause`
+[`RedisSMQError`](RedisSMQError.md).[`cause`](RedisSMQError.md#cause)
 
 ---
 
@@ -85,7 +44,7 @@
 
 #### Inherited from
 
-`Error.message`
+[`RedisSMQError`](RedisSMQError.md).[`message`](RedisSMQError.md#message)
 
 ---
 
@@ -95,7 +54,7 @@
 
 #### Inherited from
 
-`Error.stack`
+[`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
 
 ---
 
@@ -115,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-`Error.stackTraceLimit`
+[`RedisSMQError`](RedisSMQError.md).[`stackTraceLimit`](RedisSMQError.md#stacktracelimit)
 
 ## Accessors
 
@@ -129,9 +88,9 @@ not capture any frames.
 
 `string`
 
-#### Overrides
+#### Inherited from
 
-`Error.name`
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
 
 ---
 
@@ -149,25 +108,45 @@ not capture any frames.
 
 [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
 
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
+
 ## Methods
 
 ### getMetadata()
 
-> **getMetadata**(): `Metadata` \| `null`
+> **getMetadata**(): `null`
 
 #### Returns
 
-`Metadata` \| `null`
+`null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
 
 ---
 
 ### getProps()
 
-> `abstract` **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+> **getProps**(): `object`
 
 #### Returns
 
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisServer.StartupFailed'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'An error occurred during Redis server startup'`
+
+#### Overrides
+
+`RedisSMQError.getProps`
 
 ---
 
@@ -180,6 +159,10 @@ Provides a stable, JSON-friendly representation for logs or network transport.
 #### Returns
 
 `Record`\<`string`, `unknown`\>
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`toJSON`](RedisSMQError.md#tojson)
 
 ---
 
@@ -247,7 +230,7 @@ a();
 
 #### Inherited from
 
-`Error.captureStackTrace`
+[`RedisSMQError`](RedisSMQError.md).[`captureStackTrace`](RedisSMQError.md#capturestacktrace)
 
 ---
 
@@ -269,7 +252,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-`Error.isError`
+[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
 
 ---
 
@@ -297,4 +280,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-`Error.prepareStackTrace`
+[`RedisSMQError`](RedisSMQError.md).[`prepareStackTrace`](RedisSMQError.md#preparestacktrace)

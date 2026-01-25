@@ -49,6 +49,7 @@
 - [PanicError](classes/PanicError.md)
 - [RedisClientNotInstalledError](classes/RedisClientNotInstalledError.md)
 - [RedisServerBinaryNotFoundError](classes/RedisServerBinaryNotFoundError.md)
+- [RedisServerStartupFailedError](classes/RedisServerStartupFailedError.md)
 - [RedisServerUnsupportedPlatformError](classes/RedisServerUnsupportedPlatformError.md)
 - [RedisSMQError](classes/RedisSMQError.md)
 - [TimerNotSetError](classes/TimerNotSetError.md)
