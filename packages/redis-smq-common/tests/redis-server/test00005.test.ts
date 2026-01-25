@@ -22,7 +22,7 @@ it('should reject with a timeout error when Redis server does not start within 1
           getRandomPort: vi.fn().mockResolvedValue(6379),
         },
       },
-      child_process: mockChildProcess({ startServerTimeout: 15000 }),
+      child_process: mockChildProcess({ startServerTimeout: 30000 }),
     },
   );
   const redisServer = new RedisServer();

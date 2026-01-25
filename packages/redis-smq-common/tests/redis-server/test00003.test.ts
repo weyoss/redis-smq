@@ -29,7 +29,7 @@ it('should throw an error when starting a Redis server on an already occupied po
   const redisServer = new RedisServer();
   await redisServer.start(port);
   await expect(redisServer.start()).rejects.toThrow(
-    new Error(`Cannot start Redis server while it is already running.`),
+    new Error(`Already started or going up`),
   );
   await redisServer.shutdown();
 });

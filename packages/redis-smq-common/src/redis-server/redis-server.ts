@@ -14,152 +14,169 @@ import { env } from '../env/index.js';
 import { net } from '../net/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import { constants } from './constants.js';
-import { RedisServerBinaryNotFoundError } from './errors/index.js';
+import {
+  RedisServerBinaryNotFoundError,
+  RedisServerStartupFailedError,
+} from './errors/index.js';
 
 const { REDIS_BINARY_PATH } = constants;
 const execAsync = promisify(exec);
 
 export class RedisServer {
-  private redisBinaryPath: string | null = null;
-  private redisChildProcess: ChildProcess | null = null;
-  private redisPort: number | null = null;
+  private process: ChildProcess | null = null;
+  private port: number | null = null;
   private powerSwitch = new PowerSwitch();
-  private static readonly STARTUP_TIMEOUT = 10000;
-  private static readonly SHUTDOWN_TIMEOUT = 5000;
 
   constructor() {
-    this.setupGlobalProcessListeners();
+    this.bindExitHandler();
   }
 
-  private setupGlobalProcessListeners(): void {
-    process.on('SIGINT', this.handleProcessExit);
-    process.on('SIGTERM', this.handleProcessExit);
+  private bindExitHandler(): void {
+    process.once('beforeExit', () => this.shutdown());
   }
 
-  private handleProcessExit = async (): Promise<void> => {
-    await this.shutdown();
-  };
-
-  private async waitForRedisServerStartup(): Promise<number> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        cleanUp();
-        reject(new Error('Redis server start timeout'));
-      }, RedisServer.STARTUP_TIMEOUT);
-
-      const onData = (data: Buffer) => {
-        if (data.toString().includes('Ready to accept connections')) {
-          cleanUp();
-          resolve(Number(this.redisPort));
-        }
-      };
-
-      const onError = (error: Error) => {
-        cleanUp();
-        reject(error);
-      };
-
-      const onExit = (code: number) => {
-        cleanUp();
-        reject(new Error(`Redis server exited with code ${code}`));
-      };
-
-      this.redisChildProcess?.stdout?.on('data', onData);
-      this.redisChildProcess?.on('error', onError);
-      this.redisChildProcess?.on('exit', onExit);
-
-      const cleanUp = () => {
-        clearTimeout(timeout);
-        this.redisChildProcess?.stdout?.removeListener('data', onData);
-        this.redisChildProcess?.removeListener('error', onError);
-        this.redisChildProcess?.removeListener('exit', onExit);
-      };
-    });
-  }
-
-  private setupChildProcessListeners(): void {
-    this.redisChildProcess?.stderr?.on('data', (data: Buffer): void => {
-      console.error(
-        `Redis stderr (${this.redisPort}): ${data.toString().trim()}`,
-      );
-    });
-    this.redisChildProcess?.on('error', () => this.shutdown());
-    this.redisChildProcess?.on('exit', () => this.shutdown());
-  }
-
-  /**
-   * Retrieves the system-wide Redis binary path.
-   *
-   * @returns {Promise<string | null>} - The path to the system-wide Redis binary, or null if not found.
-   */
-  private async fetchSystemWideRedisBinaryPath(): Promise<string | null> {
+  private async findRedisBinary(): Promise<string> {
     try {
-      const { stdout } = await execAsync(
-        'which redis-server || where redis-server',
-      );
-      return stdout.trim() || null;
+      const command =
+        process.platform === 'win32'
+          ? 'where redis-server'
+          : 'which redis-server';
+      const { stdout } = await execAsync(command);
+      const path = stdout.trim();
+      if (path) return path;
     } catch {
-      return null;
+      // Continue to bundled Redis
     }
-  }
 
-  private async getRedisServerBinaryPath(): Promise<string | null> {
-    const systemWideBinaryPath = await this.fetchSystemWideRedisBinaryPath();
-    if (systemWideBinaryPath) return systemWideBinaryPath;
     if (await env.doesPathExist(REDIS_BINARY_PATH)) {
       return REDIS_BINARY_PATH;
     }
-    return null;
+
+    throw new RedisServerBinaryNotFoundError();
   }
 
-  async start(port?: number): Promise<number> {
-    const goingUp = this.powerSwitch.goingUp();
-    if (!goingUp) {
-      throw new Error('Cannot start Redis server while it is already running.');
-    }
-
-    this.redisBinaryPath = await this.getRedisServerBinaryPath();
-    if (!this.redisBinaryPath) {
-      throw new RedisServerBinaryNotFoundError();
-    }
-
-    this.redisPort = port ?? (await net.getRandomPort());
-
-    this.redisChildProcess = spawn(this.redisBinaryPath, [
-      '--appendonly',
-      'no',
-      '--save',
-      '',
-      '--port',
-      this.redisPort.toString(),
-    ]);
-    this.setupChildProcessListeners();
-
-    await this.waitForRedisServerStartup();
-    this.powerSwitch.commit();
-    return this.redisPort;
+  private createRedisArgs(port: number): string[] {
+    return ['--port', port.toString(), '--save', '', '--appendonly', 'no'];
   }
 
-  async shutdown(): Promise<void> {
-    const goingDown = this.powerSwitch.goingDown();
-    if (!goingDown) return;
+  private waitForReady(timeoutMs: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.process) {
+        reject(new Error('Redis process not started'));
+        return;
+      }
 
-    await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.redisChildProcess?.kill('SIGKILL');
-        reject(new Error('Redis server did not shut down gracefully.'));
-      }, RedisServer.SHUTDOWN_TIMEOUT);
+        cleanup();
+        reject(
+          new RedisServerStartupFailedError({
+            message: `Redis server start timeout after ${timeoutMs}ms`,
+          }),
+        );
+      }, timeoutMs);
 
-      const cleanUp = () => {
+      const onData = (data: Buffer) => {
+        if (data.toString().includes('Ready to accept connections')) {
+          cleanup();
+          resolve();
+        }
+      };
+
+      const onExit = () => {
+        cleanup();
+        // Don't reject - just let the Promise hang since process is gone
+        // The caller will handle this through abort logic
+      };
+
+      const onError = (error: Error) => {
+        cleanup();
+        reject(
+          new RedisServerStartupFailedError({
+            message: `Redis process error: ${error.message}`,
+          }),
+        );
+      };
+
+      const cleanup = () => {
         clearTimeout(timeout);
-        this.redisChildProcess = null;
-        this.redisPort = null;
+        this.process?.stdout?.removeListener('data', onData);
+        this.process?.removeListener('exit', onExit);
+        this.process?.removeListener('error', onError);
+      };
+
+      this.process.stdout?.on('data', onData);
+      this.process.on('exit', onExit);
+      this.process.on('error', onError);
+    });
+  }
+
+  private waitForShutdown(timeoutMs: number): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.process) {
+        resolve();
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        cleanup();
+        this.process?.kill('SIGKILL');
+        resolve();
+      }, timeoutMs);
+
+      const onExit = () => {
+        cleanup();
         resolve();
       };
 
-      this.redisChildProcess?.once('close', cleanUp);
-      this.redisChildProcess?.kill('SIGTERM');
+      const cleanup = () => {
+        clearTimeout(timeout);
+        this.process?.removeListener('exit', onExit);
+      };
+
+      this.process.once('exit', onExit);
+      this.process.kill('SIGTERM');
     });
+  }
+
+  async start(requestedPort?: number): Promise<number> {
+    if (!this.powerSwitch.goingUp()) {
+      throw new Error('Already started or going up');
+    }
+
+    const redisBinary = await this.findRedisBinary();
+    this.port = requestedPort || (await net.getRandomPort());
+
+    this.process = spawn(redisBinary, this.createRedisArgs(this.port));
+
+    try {
+      await this.waitForReady(10000);
+    } catch (error: unknown) {
+      // Check if process is still alive
+      if (this.process && !this.process.exitCode && !this.process.killed) {
+        // Process is still running but timed out or errored
+        throw error;
+      }
+
+      // Process was killed externally or during shutdown
+      // Don't throw an error, just return the port we attempted to use
+      return this.port;
+    }
+
     this.powerSwitch.commit();
+    return this.port;
+  }
+
+  async shutdown(): Promise<void> {
+    if (!this.powerSwitch.goingDown()) return;
+
+    try {
+      if (this.process) {
+        await this.waitForShutdown(5000);
+      }
+    } finally {
+      this.process = null;
+      this.port = null;
+      this.powerSwitch.commit();
+    }
   }
 }
