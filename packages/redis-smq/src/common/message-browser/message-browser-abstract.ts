@@ -38,7 +38,7 @@ import {
   EBackgroundJobStatus,
   IBackgroundJob,
 } from '../background-job/types/index.js';
-import { TPurgeQueueJobTarget } from '../../redis-smq/background-jobs/jobs/purge-queue/types/index.js';
+import { TPurgeQueueJobTarget } from '../../redis-smq/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a

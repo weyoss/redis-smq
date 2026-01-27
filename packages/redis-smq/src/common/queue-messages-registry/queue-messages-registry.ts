@@ -13,7 +13,7 @@ import { QueueDeadLetteredMessages } from '../../queue-dead-lettered-messages/in
 import { QueueScheduledMessages } from '../../queue-scheduled-messages/index.js';
 import { QueuePendingMessages } from '../../queue-pending-messages/index.js';
 import { QueueMessages } from '../../queue-messages/index.js';
-import { EQueueMessageType } from './types/queue-messages-registry.js';
+import { EQueueMessageType } from './types/index.js';
 
 export const registry = [
   [EQueueMessageType.ACKNOWLEDGED, QueueAcknowledgedMessages],
