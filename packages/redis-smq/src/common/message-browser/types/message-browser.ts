@@ -15,7 +15,7 @@ import {
   EBackgroundJobStatus,
   IBackgroundJob,
 } from '../../background-job/types/index.js';
-import { TPurgeQueueJobTarget } from '../../../redis-smq/background-jobs/jobs/purge-queue/types/index.js';
+import { TPurgeQueueJobTarget } from '../../../redis-smq/index.js';
 
 export interface IMessageBrowser {
   readonly messageType: EQueueMessageType;
