@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export * from './redis-smq.js';
+export * from './redis-smq/index.js';
 export * from './consumer/index.js';
 export * from './consumer-groups/index.js';
 export * from './exchange/index.js';

@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { BackgroundJobManagerAbstract } from './background-job-manager-abstract.js';
+import { BackgroundJobManagerAbstract } from '../../../../common/background-job/background-job-manager-abstract.js';
 import { ILogger, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../redis/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
 import { TPurgeQueueJobTarget } from './types/index.js';
 
 export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQueueJobTarget> {

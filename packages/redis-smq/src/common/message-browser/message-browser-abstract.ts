@@ -33,12 +33,12 @@ import { InvalidPurgeQueueJobIdError } from '../../errors/index.js';
 import { IBrowserStorage } from './browser-storage/browser-storage-abstract.js';
 import { EQueueMessageType } from '../queue-messages-registry/types/index.js';
 import { Configuration } from '../../config/index.js';
-import { PurgeQueueJobManager } from '../background-job/purge-queue-job-manager.js';
+import { PurgeQueueJobManager } from '../../redis-smq/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
 import {
   EBackgroundJobStatus,
   IBackgroundJob,
-  TPurgeQueueJobTarget,
 } from '../background-job/types/index.js';
+import { TPurgeQueueJobTarget } from '../../redis-smq/background-jobs/jobs/purge-queue/types/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
