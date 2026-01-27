@@ -13,7 +13,7 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 ### Constructor
 
-> **new WorkerCluster**(`redisClient`, `logger`, `resourceGroupId`): `WorkerCluster`
+> **new WorkerCluster**(`redisClient`, `logger`, `resourceGroupId`, `workerFilenamePattern?`): `WorkerCluster`
 
 #### Parameters
 
@@ -26,6 +26,10 @@ It provides methods for starting, stopping, and handling errors during the execu
 [`ILogger`](../interfaces/ILogger.md)
 
 ##### resourceGroupId
+
+`string`
+
+##### workerFilenamePattern?
 
 `string`
 

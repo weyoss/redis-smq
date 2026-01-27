@@ -62,6 +62,36 @@ The directory path to create.
 
 `Promise`\<`void`\>
 
+### findFilesByPattern()
+
+> **findFilesByPattern**(`directoryPath`, `pattern`, `callback`): `void`
+
+Recursively scan a directory for files ending with a pattern
+
+#### Parameters
+
+##### directoryPath
+
+`string`
+
+The directory to start scanning from
+
+##### pattern
+
+`string`
+
+The pattern to match at the end of filenames (e.g., '.txt', '.ts')
+
+##### callback
+
+[`ICallback`](../interfaces/ICallback.md)\<`string`[]\>
+
+Callback function that receives found files or error
+
+#### Returns
+
+`void`
+
 ### getCacheDir()
 
 > **getCacheDir**(): `string`
