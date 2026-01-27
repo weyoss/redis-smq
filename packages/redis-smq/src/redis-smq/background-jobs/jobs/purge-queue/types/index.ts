@@ -7,4 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './background-job.js';
+export * from './purge-queue-job.js';

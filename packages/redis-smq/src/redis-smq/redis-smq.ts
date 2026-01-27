@@ -15,31 +15,31 @@ import {
   PanicError,
   PowerSwitch,
 } from 'redis-smq-common';
-import { Configuration, IRedisSMQConfig } from './config/index.js';
+import { Configuration, IRedisSMQConfig } from '../config/index.js';
 import {
   ExchangeDirect,
   ExchangeFanout,
   ExchangeTopic,
-} from './exchange/index.js';
-import { Producer } from './producer/producer.js';
-import { Consumer } from './consumer/consumer.js';
-import { QueueManager } from './queue-manager/index.js';
-import { NamespaceManager } from './namespace-manager/index.js';
-import { QueueMessages } from './queue-messages/index.js';
-import { ConsumerGroups } from './consumer-groups/index.js';
-import { QueueAcknowledgedMessages } from './queue-acknowledged-messages/index.js';
-import { QueueDeadLetteredMessages } from './queue-dead-lettered-messages/index.js';
-import { QueueScheduledMessages } from './queue-scheduled-messages/index.js';
-import { QueuePendingMessages } from './queue-pending-messages/index.js';
-import { QueueRateLimit } from './queue-rate-limit/index.js';
-import { MessageManager } from './message-manager/index.js';
-import { Disposable } from './common/types/disposable.js';
-import { EventBus } from './event-bus/index.js';
-import { parseRedisConfig } from './config/parse-redis-config.js';
-import { RedisConnectionPool } from './common/redis/redis-connection-pool/redis-connection-pool.js';
-import { InternalEventBus } from './event-bus/internal-event-bus.js';
-import { EventMultiplexer } from './event-bus/event-multiplexer.js';
-import { BackgroundJobWorkerCluster } from './common/background-job/background-job-worker-cluster.js';
+} from '../exchange/index.js';
+import { Producer } from '../producer/producer.js';
+import { Consumer } from '../consumer/consumer.js';
+import { QueueManager } from '../queue-manager/index.js';
+import { NamespaceManager } from '../namespace-manager/index.js';
+import { QueueMessages } from '../queue-messages/index.js';
+import { ConsumerGroups } from '../consumer-groups/index.js';
+import { QueueAcknowledgedMessages } from '../queue-acknowledged-messages/index.js';
+import { QueueDeadLetteredMessages } from '../queue-dead-lettered-messages/index.js';
+import { QueueScheduledMessages } from '../queue-scheduled-messages/index.js';
+import { QueuePendingMessages } from '../queue-pending-messages/index.js';
+import { QueueRateLimit } from '../queue-rate-limit/index.js';
+import { MessageManager } from '../message-manager/index.js';
+import { Disposable } from '../common/types/disposable.js';
+import { EventBus } from '../event-bus/index.js';
+import { parseRedisConfig } from '../config/parse-redis-config.js';
+import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { InternalEventBus } from '../event-bus/internal-event-bus.js';
+import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
+import { BackgroundJobCluster } from './background-jobs/background-job-cluster.js';
 
 function isDisposable(disposable: unknown): disposable is Disposable {
   return (
@@ -178,7 +178,7 @@ export class RedisSMQ {
           Configuration.initializeWithConfig(redisSMQConfig, cb);
         },
         (cb) => InternalEventBus.getInstance().run((err) => cb(err)),
-        (cb) => BackgroundJobWorkerCluster.run(cb),
+        (cb) => BackgroundJobCluster.run(cb),
         (cb) => {
           const config = Configuration.getConfig();
           if (config.eventBus.enabled) {
@@ -720,7 +720,7 @@ export class RedisSMQ {
 
     async.series(
       [
-        (cb) => BackgroundJobWorkerCluster.shutdown(cb),
+        (cb) => BackgroundJobCluster.shutdown(cb),
         (cb) =>
           RedisSMQ.shutdownComponents((err) => {
             if (err) errors.push(err);

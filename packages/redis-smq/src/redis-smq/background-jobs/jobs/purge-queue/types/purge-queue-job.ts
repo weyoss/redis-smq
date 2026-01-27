@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParsedParams } from '../../../queue-manager/index.js';
-import { EQueueMessageType } from '../../queue-messages-registry/types/index.js';
+import { IQueueParsedParams } from '../../../../../queue-manager/index.js';
+import { EQueueMessageType } from '../../../../../common/index.js';
 
 export type TPurgeQueueJobTarget = {
   queue: IQueueParsedParams;

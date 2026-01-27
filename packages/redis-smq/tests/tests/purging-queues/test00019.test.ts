@@ -18,9 +18,9 @@ import {
   EBackgroundJobStatus,
   IBackgroundJob,
   ProducibleMessage,
-  TPurgeQueueJobTarget,
 } from '../../../src/index.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
+import { TPurgeQueueJobTarget } from '../../../src/redis-smq/index.js';
 
 test('PurgeQueueWorker', async () => {
   const totalMessages = 3007;

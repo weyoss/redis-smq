@@ -16,17 +16,17 @@ import {
   WorkerCluster,
 } from 'redis-smq-common';
 import { Configuration } from '../../config/index.js';
-import { RedisConnectionPool } from '../redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/types/connection-pool.js';
-import { redisKeys } from '../redis/redis-keys/redis-keys.js';
-import { IGlobalWorkerPayload } from '../worker/types/global-worker.js';
+import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { IGlobalWorkerPayload } from '../../common/worker/types/global-worker.js';
 import path from 'path';
 
 const curDir = env.getCurrentDir();
-const workersPath = path.resolve(curDir, 'workers');
+const workersPath = path.resolve(curDir, 'jobs');
 
-export class BackgroundJobWorkerCluster extends Runnable<never> {
-  protected static instance: BackgroundJobWorkerCluster | null = null;
+export class BackgroundJobCluster extends Runnable<never> {
+  protected static instance: BackgroundJobCluster | null = null;
   protected logger;
   protected config;
   protected workerCluster: WorkerCluster | null = null;
@@ -40,16 +40,16 @@ export class BackgroundJobWorkerCluster extends Runnable<never> {
   }
 
   static run(cb: ICallback<boolean>) {
-    if (!BackgroundJobWorkerCluster.instance) {
-      BackgroundJobWorkerCluster.instance = new BackgroundJobWorkerCluster();
+    if (!BackgroundJobCluster.instance) {
+      BackgroundJobCluster.instance = new BackgroundJobCluster();
     }
-    BackgroundJobWorkerCluster.instance.run(cb);
+    BackgroundJobCluster.instance.run(cb);
   }
 
   static shutdown(cb: ICallback) {
-    if (BackgroundJobWorkerCluster.instance) {
-      BackgroundJobWorkerCluster.instance.shutdown(() => {
-        BackgroundJobWorkerCluster.instance = null;
+    if (BackgroundJobCluster.instance) {
+      BackgroundJobCluster.instance.shutdown(() => {
+        BackgroundJobCluster.instance = null;
         cb();
       });
       return;
@@ -70,6 +70,7 @@ export class BackgroundJobWorkerCluster extends Runnable<never> {
               redisClient,
               this.logger,
               keyGlobalWorkerClusterLock,
+              '.job.js',
             );
             this.workerCluster.on('workerCluster.error', (err) => {
               this.logger.error(err);

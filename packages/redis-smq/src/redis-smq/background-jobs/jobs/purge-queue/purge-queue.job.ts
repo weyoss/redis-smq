@@ -7,23 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { BackgroundJobWorkerAbstract } from '../background-job-worker-abstract.js';
+import { BackgroundJobWorkerAbstract } from '../../../../common/background-job/background-job-worker-abstract.js';
 import { async, ICallback, PanicError } from 'redis-smq-common';
-import { PurgeQueueJobManager } from '../purge-queue-job-manager.js';
-import {
-  IBrowserPage,
-  IMessageBrowser,
-} from '../../message-browser/types/index.js';
-import { _deleteMessage } from '../../../message-manager/_/_delete-message.js';
-import { QueueMessagesRegistry } from '../../queue-messages-registry/queue-messages-registry.js';
+import { PurgeQueueJobManager } from './purge-queue-job-manager.js';
+import { IBrowserPage, IMessageBrowser } from '../../../../common/index.js';
+import { _deleteMessage } from '../../../../message-manager/_/_delete-message.js';
+import { QueueMessagesRegistry } from '../../../../common/queue-messages-registry/queue-messages-registry.js';
 import {
   EBackgroundJobStatus,
   IBackgroundJob,
-  TPurgeQueueJobTarget,
-} from '../types/index.js';
-import { BackgroundJobCanceledError } from '../../../errors/index.js';
+} from '../../../../common/index.js';
+import { BackgroundJobCanceledError } from '../../../../errors/index.js';
+import { TPurgeQueueJobTarget } from './types/index.js';
 
-export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
+export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
   protected jobManager: PurgeQueueJobManager | null = null;
 
   private processNextJob(cb: ICallback<void>): void {
@@ -268,4 +265,4 @@ export class PurgeQueueWorker extends BackgroundJobWorkerAbstract {
   }
 }
 
-export default PurgeQueueWorker;
+export default PurgeQueueJob;

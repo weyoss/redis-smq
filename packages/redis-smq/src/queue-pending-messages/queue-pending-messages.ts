@@ -16,9 +16,9 @@ import {
   IBackgroundJob,
   IBrowserPage,
   IMessageBrowser,
-  TPurgeQueueJobTarget,
 } from '../common/index.js';
 import { withPendingMessages } from './with-pending-messages.js';
+import { TPurgeQueueJobTarget } from '../redis-smq/index.js';
 
 export class QueuePendingMessages implements IMessageBrowser {
   readonly messageType = EQueueMessageType.PENDING;

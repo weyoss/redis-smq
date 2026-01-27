@@ -7,4 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export * from './background-job.js';
+export * from './redis-smq.js';
+export * from './background-jobs/jobs/purge-queue/types/index.js';
