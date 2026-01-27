@@ -1,5 +1,12 @@
-import { readdir } from 'fs';
-import path from 'path';
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 import { async } from '../async/index.js';
 import { ICallback } from '../async/index.js';
 import { AbortError } from '../errors/index.js';
@@ -9,6 +16,7 @@ import { PowerSwitch } from '../power-switch/index.js';
 import { IRedisClient } from '../redis-client/index.js';
 import { Runnable } from '../runnable/index.js';
 import { RunnableWorker } from './runnable-worker.js';
+import { findFilesByPattern } from '../env/filesystem.js';
 
 export type TWorkerClusterEvent = {
   'workerCluster.error': (err: Error) => void;
@@ -16,24 +24,30 @@ export type TWorkerClusterEvent = {
 };
 
 export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
+  private runWorkersLocked = false;
   protected readonly powerManager;
   protected readonly locker;
   protected readonly redisClient;
   protected readonly logger;
   protected readonly resourceGroupId: string;
   protected workers: RunnableWorker<unknown>[] = [];
-  private runWorkersLocked = false;
+  protected workerFilenamePattern = '.worker.js';
 
   constructor(
     redisClient: IRedisClient,
     logger: ILogger,
     resourceGroupId: string,
+    workerFilenamePattern?: string,
   ) {
     super();
 
     this.resourceGroupId = resourceGroupId;
     this.powerManager = new PowerSwitch();
     this.logger = logger.createLogger(this.constructor.name);
+
+    if (workerFilenamePattern) {
+      this.workerFilenamePattern = workerFilenamePattern;
+    }
 
     this.redisClient = redisClient;
 
@@ -327,22 +341,22 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
 
     this.logger.info(`Loading workers from directory: ${workersDir}`);
 
-    readdir(workersDir, (err, files) => {
+    findFilesByPattern(workersDir, this.workerFilenamePattern, (err, files) => {
       if (err) {
         this.logger.error(
           `Failed to read directory ${workersDir}: ${err.message}`,
           err,
         );
-        cb(err);
-        return;
+        return cb(err);
       }
 
-      const workerFiles = files.filter((file) => file.endsWith('.worker.js'));
+      const workerFiles = files ?? [];
 
       if (workerFiles.length === 0) {
-        this.logger.warn(`No .worker.js files found in ${workersDir}`);
-        cb();
-        return;
+        this.logger.warn(
+          `No ${this.workerFilenamePattern} files found in ${workersDir}`,
+        );
+        return cb();
       }
 
       this.logger.debug(`Found ${workerFiles.length} worker files`);
@@ -352,10 +366,9 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
 
       async.eachOf(
         workerFiles,
-        (file, index, done) => {
-          const filepath = path.resolve(workersDir, file);
+        (filepath, index, done) => {
           this.logger.debug(
-            `Creating worker ${index + 1}/${workerFiles.length}: ${file}`,
+            `Creating worker ${index + 1}/${workerFiles.length}: ${filepath}`,
           );
 
           try {
@@ -364,7 +377,7 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
             // Set up temporary error handling
             worker.on('worker.error', (err) => {
               this.logger.debug(
-                `Temporary worker error from ${file}: ${err.message}`,
+                `Temporary worker error from ${filepath}: ${err.message}`,
               );
             });
 
@@ -376,7 +389,7 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
                 ? error
                 : new Error('Failed to create worker');
             this.logger.error(
-              `Failed to create worker from ${file}: ${err.message}`,
+              `Failed to create worker from ${filepath}: ${err.message}`,
               err,
             );
             done(err);
