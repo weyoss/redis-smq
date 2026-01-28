@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.12-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.11...v9.0.12-next.0) (2026-01-28)
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.11' into 'next' ([ae8c4fa](https://github.com/weyoss/redis-smq/commit/ae8c4fa3177996fc3b077b30e9af3d3b917f4ea9))
+
+### 📝 Documentation
+
+- **redis-smq-common:** update API reference ([d5590f0](https://github.com/weyoss/redis-smq/commit/d5590f0825b975bf9bcf80373d74d2af4003e30a))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** load workers recursively from a directory ([0497c4a](https://github.com/weyoss/redis-smq/commit/0497c4ab5706eba2da4ba80dd0a97a4927bd08aa))
+- **redis-smq-common:** make RedisServer more resilient to startup and shutdown errors ([b6ee6be](https://github.com/weyoss/redis-smq/commit/b6ee6be5763eea8d4e425cb72780afd1f8032ee9))
+- **redis-smq-common:** mov lua scripts loading to a goingUp() procedure ([bf7d840](https://github.com/weyoss/redis-smq/commit/bf7d840bcde7fabe675f9475ffb33d401937a405))
+- **redis-smq-common:** update API reference ([9956cbd](https://github.com/weyoss/redis-smq/commit/9956cbd90172e6e7f8b98d22acdb674a523fc93b))
+
 ## [9.0.11](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.2...v9.0.11) (2026-01-22)
 
 ### 🚀 Chore

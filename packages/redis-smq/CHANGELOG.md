@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.12-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.11...v9.0.12-next.0) (2026-01-28)
+
+### 🚀 Chore
+
+- **redis-smq:** fix build script to correctly copy lua files ([a1a02ba](https://github.com/weyoss/redis-smq/commit/a1a02ba62af7936950d1b87389236ea5c5af658d))
+- update READMEs after merging 'v9.0.11' into 'next' ([ae8c4fa](https://github.com/weyoss/redis-smq/commit/ae8c4fa3177996fc3b077b30e9af3d3b917f4ea9))
+
+### 📝 Documentation
+
+- **redis-smq:** update API reference ([b30568f](https://github.com/weyoss/redis-smq/commit/b30568faa751ae08b88812406bcfde61fdf76d8a))
+- **redis-smq:** update API reference ([ca77376](https://github.com/weyoss/redis-smq/commit/ca77376e6f9d01da9cdbedc4e2e2bfdcf3d43547))
+- **redis-smq:** update RedisSMQ class API reference ([cb625c7](https://github.com/weyoss/redis-smq/commit/cb625c7def42ee8bc61cb6e7fec1622bb159452f))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** implement data retrieval methods for purge job management ([9ed497b](https://github.com/weyoss/redis-smq/commit/9ed497ba527729650cd91a7f3dc5cea705075c86))
+- **redis-smq:** modularize RedisSMQ class for enhanced clarity and reliability ([2e9bd5b](https://github.com/weyoss/redis-smq/commit/2e9bd5b8448edd45b051c2574baa6ad29a6e3ef5))
+- **redis-smq:** restructure background‑jobs implementation ([7eb058a](https://github.com/weyoss/redis-smq/commit/7eb058adb6821a06937cac3da6a99e99dfda9e9a))
+- **redis-smq:** shorten imports ([b61c574](https://github.com/weyoss/redis-smq/commit/b61c574a821b4c1261acdabd2374a523ee679fc0))
+- **redis-smq:** update job manager to use atomic operations, clean up codebase ([bcb33af](https://github.com/weyoss/redis-smq/commit/bcb33affcf608fc527222156e7e56ed04bea1795))
+
+### ✅ Tests
+
+- **redis-smq:** add edge case coverage for PurgeQueueWorker ([9e56c3e](https://github.com/weyoss/redis-smq/commit/9e56c3efd1420eccc0ee760845f1b951b731146b))
+
 ## [9.0.11](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.2...v9.0.11) (2026-01-22)
 
 ### 🚀 Chore
