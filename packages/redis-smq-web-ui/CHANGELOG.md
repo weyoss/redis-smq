@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.12-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.11...v9.0.12-next.0) (2026-01-28)
+
+### 🚀 Chore
+
+- **redis-smq-web-ui:** update orval to v8.0.3 to address security vulnerability ([8a16acc](https://github.com/weyoss/redis-smq/commit/8a16accaadd9d22ba84973bd9c15cf4b471ccee3))
+- update READMEs after merging 'v9.0.11' into 'next' ([ae8c4fa](https://github.com/weyoss/redis-smq/commit/ae8c4fa3177996fc3b077b30e9af3d3b917f4ea9))
+
 ## [9.0.11](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.2...v9.0.11) (2026-01-22)
 
 ### 🚀 Chore

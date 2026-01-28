@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.12-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.11...v9.0.12-next.0) (2026-01-28)
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.11' into 'next' ([ae8c4fa](https://github.com/weyoss/redis-smq/commit/ae8c4fa3177996fc3b077b30e9af3d3b917f4ea9))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** update error mapping with new error classes ([ff3e2f1](https://github.com/weyoss/redis-smq/commit/ff3e2f14558a82a46f433bc607c19fc61467ce55))
+
 ## [9.0.11](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.2...v9.0.11) (2026-01-22)
 
 ### 🚀 Chore

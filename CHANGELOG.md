@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.12-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.11...v9.0.12-next.0) (2026-01-28)
+
+### 🚀 Chore
+
+- **redis-smq-web-ui:** update orval to v8.0.3 to address security vulnerability ([8a16acc](https://github.com/weyoss/redis-smq/commit/8a16accaadd9d22ba84973bd9c15cf4b471ccee3))
+- **redis-smq:** fix build script to correctly copy lua files ([a1a02ba](https://github.com/weyoss/redis-smq/commit/a1a02ba62af7936950d1b87389236ea5c5af658d))
+- update pnpm-lock.yaml ([3deb4a2](https://github.com/weyoss/redis-smq/commit/3deb4a29b8d22eba5cfb1c38a60ba776a49ecb5b))
+- update READMEs after merging 'v9.0.11' into 'next' ([ae8c4fa](https://github.com/weyoss/redis-smq/commit/ae8c4fa3177996fc3b077b30e9af3d3b917f4ea9))
+
+### 📝 Documentation
+
+- **redis-smq-common:** update API reference ([d5590f0](https://github.com/weyoss/redis-smq/commit/d5590f0825b975bf9bcf80373d74d2af4003e30a))
+- **redis-smq:** update API reference ([b30568f](https://github.com/weyoss/redis-smq/commit/b30568faa751ae08b88812406bcfde61fdf76d8a))
+- **redis-smq:** update API reference ([ca77376](https://github.com/weyoss/redis-smq/commit/ca77376e6f9d01da9cdbedc4e2e2bfdcf3d43547))
+- **redis-smq:** update RedisSMQ class API reference ([cb625c7](https://github.com/weyoss/redis-smq/commit/cb625c7def42ee8bc61cb6e7fec1622bb159452f))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** load workers recursively from a directory ([0497c4a](https://github.com/weyoss/redis-smq/commit/0497c4ab5706eba2da4ba80dd0a97a4927bd08aa))
+- **redis-smq-common:** make RedisServer more resilient to startup and shutdown errors ([b6ee6be](https://github.com/weyoss/redis-smq/commit/b6ee6be5763eea8d4e425cb72780afd1f8032ee9))
+- **redis-smq-common:** mov lua scripts loading to a goingUp() procedure ([bf7d840](https://github.com/weyoss/redis-smq/commit/bf7d840bcde7fabe675f9475ffb33d401937a405))
+- **redis-smq-common:** update API reference ([9956cbd](https://github.com/weyoss/redis-smq/commit/9956cbd90172e6e7f8b98d22acdb674a523fc93b))
+- **redis-smq-rest-api:** update error mapping with new error classes ([ff3e2f1](https://github.com/weyoss/redis-smq/commit/ff3e2f14558a82a46f433bc607c19fc61467ce55))
+- **redis-smq:** implement data retrieval methods for purge job management ([9ed497b](https://github.com/weyoss/redis-smq/commit/9ed497ba527729650cd91a7f3dc5cea705075c86))
+- **redis-smq:** modularize RedisSMQ class for enhanced clarity and reliability ([2e9bd5b](https://github.com/weyoss/redis-smq/commit/2e9bd5b8448edd45b051c2574baa6ad29a6e3ef5))
+- **redis-smq:** restructure background‑jobs implementation ([7eb058a](https://github.com/weyoss/redis-smq/commit/7eb058adb6821a06937cac3da6a99e99dfda9e9a))
+- **redis-smq:** shorten imports ([b61c574](https://github.com/weyoss/redis-smq/commit/b61c574a821b4c1261acdabd2374a523ee679fc0))
+- **redis-smq:** update job manager to use atomic operations, clean up codebase ([bcb33af](https://github.com/weyoss/redis-smq/commit/bcb33affcf608fc527222156e7e56ed04bea1795))
+
+### ✅ Tests
+
+- **redis-smq:** add edge case coverage for PurgeQueueWorker ([9e56c3e](https://github.com/weyoss/redis-smq/commit/9e56c3efd1420eccc0ee760845f1b951b731146b))
+
 ## [9.0.11](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.2...v9.0.11) (2026-01-22)
 
 ### 🚀 Chore
