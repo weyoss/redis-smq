@@ -17,11 +17,11 @@ Must be initialized with Redis configuration before use.
 
 `RedisSMQ`
 
-## Methods
+## Properties
 
 ### createConsumer()
 
-> `static` **createConsumer**(`enableMultiplexing?`): [`Consumer`](Consumer.md)
+> `static` **createConsumer**: (`enableMultiplexing?`) => [`Consumer`](Consumer.md) = `ConsumerFactory.create`
 
 Creates a Consumer instance.
 
@@ -57,7 +57,7 @@ consumer.run((err) => {
 
 ### createConsumerGroups()
 
-> `static` **createConsumerGroups**(): [`ConsumerGroups`](ConsumerGroups.md)
+> `static` **createConsumerGroups**: () => [`ConsumerGroups`](ConsumerGroups.md) = `ConsumerGroupsFactory.create`
 
 Creates a ConsumerGroups instance.
 
@@ -85,7 +85,7 @@ consumerGroups.saveConsumerGroup('my-queue', 'group1', (err, result) => {
 
 ### createDirectExchange()
 
-> `static` **createDirectExchange**(): [`ExchangeDirect`](ExchangeDirect.md)
+> `static` **createDirectExchange**: () => [`ExchangeDirect`](ExchangeDirect.md) = `DirectExchangeFactory.create`
 
 Creates a new direct exchange instance.
 
@@ -136,7 +136,7 @@ RedisSMQ.initialize(
 
 ### createFanoutExchange()
 
-> `static` **createFanoutExchange**(): [`ExchangeFanout`](ExchangeFanout.md)
+> `static` **createFanoutExchange**: () => [`ExchangeFanout`](ExchangeFanout.md) = `FanoutExchangeFactory.create`
 
 Creates a new fanout exchange instance.
 
@@ -180,7 +180,7 @@ RedisSMQ.initialize(
 
 ### createMessageManager()
 
-> `static` **createMessageManager**(): [`MessageManager`](MessageManager.md)
+> `static` **createMessageManager**: () => [`MessageManager`](MessageManager.md) = `MessageManagerFactory.create`
 
 Creates a MessageManager instance.
 
@@ -208,7 +208,7 @@ messageManager.getMessageById('message-id', (err, message) => {
 
 ### createNamespaceManager()
 
-> `static` **createNamespaceManager**(): [`NamespaceManager`](NamespaceManager.md)
+> `static` **createNamespaceManager**: () => [`NamespaceManager`](NamespaceManager.md) = `NamespaceManagerFactory.create`
 
 Creates a NamespaceManager instance.
 
@@ -236,7 +236,7 @@ namespaceManager.getNamespaces((err, namespaces) => {
 
 ### createProducer()
 
-> `static` **createProducer**(): [`Producer`](Producer.md)
+> `static` **createProducer**: () => [`Producer`](Producer.md) = `ProducerFactory.create`
 
 Creates a Producer instance.
 
@@ -264,7 +264,7 @@ producer.run((err) => {
 
 ### createQueueAcknowledgedMessages()
 
-> `static` **createQueueAcknowledgedMessages**(): [`QueueAcknowledgedMessages`](QueueAcknowledgedMessages.md)
+> `static` **createQueueAcknowledgedMessages**: () => [`QueueAcknowledgedMessages`](QueueAcknowledgedMessages.md) = `AcknowledgedMessagesFactory.create`
 
 Creates a QueueAcknowledgedMessages instance.
 
@@ -292,7 +292,7 @@ acknowledgedMessages.countMessages('my-queue', (err, count) => {
 
 ### createQueueDeadLetteredMessages()
 
-> `static` **createQueueDeadLetteredMessages**(): [`QueueDeadLetteredMessages`](QueueDeadLetteredMessages.md)
+> `static` **createQueueDeadLetteredMessages**: () => [`QueueDeadLetteredMessages`](QueueDeadLetteredMessages.md) = `DeadLetteredMessagesFactory.create`
 
 Creates a QueueDeadLetteredMessages instance.
 
@@ -320,7 +320,7 @@ deadLetteredMessages.countMessages('my-queue', (err, count) => {
 
 ### createQueueManager()
 
-> `static` **createQueueManager**(): [`QueueManager`](QueueManager.md)
+> `static` **createQueueManager**: () => [`QueueManager`](QueueManager.md) = `QueueManagerFactory.create`
 
 Creates a QueueManager instance.
 
@@ -355,7 +355,7 @@ queueManager.save(
 
 ### createQueueMessages()
 
-> `static` **createQueueMessages**(): [`QueueMessages`](QueueMessages.md)
+> `static` **createQueueMessages**: () => [`QueueMessages`](QueueMessages.md) = `QueueMessagesFactory.create`
 
 Creates a QueueMessages instance.
 
@@ -383,7 +383,7 @@ queueMessages.countMessagesByStatus('my-queue', (err, count) => {
 
 ### createQueuePendingMessages()
 
-> `static` **createQueuePendingMessages**(): [`QueuePendingMessages`](QueuePendingMessages.md)
+> `static` **createQueuePendingMessages**: () => [`QueuePendingMessages`](QueuePendingMessages.md) = `PendingMessagesFactory.create`
 
 Creates a QueuePendingMessages instance.
 
@@ -411,7 +411,7 @@ pendingMessages.countMessages('my-queue', (err, count) => {
 
 ### createQueueRateLimit()
 
-> `static` **createQueueRateLimit**(): [`QueueRateLimit`](QueueRateLimit.md)
+> `static` **createQueueRateLimit**: () => [`QueueRateLimit`](QueueRateLimit.md) = `RateLimitFactory.create`
 
 Creates a QueueRateLimit instance.
 
@@ -439,7 +439,7 @@ queueRateLimit.set('my-queue', { interval: 1000, limit: 10 }, (err) => {
 
 ### createQueueScheduledMessages()
 
-> `static` **createQueueScheduledMessages**(): [`QueueScheduledMessages`](QueueScheduledMessages.md)
+> `static` **createQueueScheduledMessages**: () => [`QueueScheduledMessages`](QueueScheduledMessages.md) = `ScheduledMessagesFactory.create`
 
 Creates a QueueScheduledMessages instance.
 
@@ -467,7 +467,7 @@ scheduledMessages.countMessages('my-queue', (err, count) => {
 
 ### createTopicExchange()
 
-> `static` **createTopicExchange**(): [`ExchangeTopic`](ExchangeTopic.md)
+> `static` **createTopicExchange**: () => [`ExchangeTopic`](ExchangeTopic.md) = `TopicExchangeFactory.create`
 
 Creates a new topic exchange instance.
 
@@ -516,27 +516,9 @@ RedisSMQ.initialize(
 
 ---
 
-### getConfigurationInstance()
-
-> `static` **getConfigurationInstance**(): [`Configuration`](Configuration.md)
-
-Gets the current Configuration instance.
-
-#### Returns
-
-[`Configuration`](Configuration.md)
-
-The current Configuration instance
-
-#### Throws
-
-Error if RedisSMQ is not initialized
-
----
-
 ### initialize()
 
-> `static` **initialize**(`redisConfig`, `cb`): `void`
+> `static` **initialize**: (`redisConfig`, `cb`) => `void` = `LifecycleManager.initialize`
 
 Initializes RedisSMQ with Redis connection settings.
 This is the simplest way to get started - just provide Redis connection once.
@@ -602,7 +584,7 @@ RedisSMQ.initialize(
 
 ### initializeWithConfig()
 
-> `static` **initializeWithConfig**(`redisSMQConfig`, `cb`): `void`
+> `static` **initializeWithConfig**: (`redisSMQConfig`, `cb`) => `void` = `LifecycleManager.initializeWithConfig`
 
 Initializes RedisSMQ with custom RedisSMQ configuration.
 This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
@@ -662,7 +644,7 @@ RedisSMQ.initializeWithConfig(
 
 ### isInitialized()
 
-> `static` **isInitialized**(): `boolean`
+> `static` **isInitialized**: () => `boolean` = `LifecycleManager.isInitialized`
 
 Checks if RedisSMQ has been initialized.
 
@@ -676,7 +658,7 @@ True if initialized, false otherwise
 
 ### reset()
 
-> `static` **reset**(`cb`): `void`
+> `static` **reset**: (`cb`) => `void` = `LifecycleManager.reset`
 
 Resets RedisSMQ initialization state.
 Useful for testing or reconfiguration.
@@ -695,7 +677,7 @@ Useful for testing or reconfiguration.
 
 ### shutdown()
 
-> `static` **shutdown**(`cb`): `void`
+> `static` **shutdown**: (`cb`) => `void` = `LifecycleManager.shutdown`
 
 Shuts down RedisSMQ and closes shared resources.
 
@@ -725,9 +707,11 @@ Callback invoked when shutdown completes
 
 ### startConsumer()
 
+> `static` **startConsumer**: \{(`enableMultiplexing`, `cb`): [`Consumer`](Consumer.md); (`cb`): [`Consumer`](Consumer.md); \}
+
 #### Call Signature
 
-> `static` **startConsumer**(`enableMultiplexing`, `cb`): [`Consumer`](Consumer.md)
+> (`enableMultiplexing`, `cb`): [`Consumer`](Consumer.md)
 
 Convenience method to create and start a consumer in one call.
 
@@ -773,7 +757,7 @@ const consumer = RedisSMQ.startConsumer(false, (err) => {
 
 #### Call Signature
 
-> `static` **startConsumer**(`cb`): [`Consumer`](Consumer.md)
+> (`cb`): [`Consumer`](Consumer.md)
 
 Convenience method to create and start a consumer in one call.
 
@@ -815,7 +799,7 @@ const consumer = RedisSMQ.startConsumer(false, (err) => {
 
 ### startProducer()
 
-> `static` **startProducer**(`cb`): [`Producer`](Producer.md)
+> `static` **startProducer**: (`cb`) => [`Producer`](Producer.md)
 
 Convenience method to create and start a producer in one call.
 
