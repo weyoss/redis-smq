@@ -414,26 +414,39 @@ InvalidPurgeQueueJobIdError
 
 Purges all audited dead-lettered messages from the specified queue.
 
+This operation is performed asynchronously using a background job. When this method
+is called, it immediately creates and starts a purge job, and returns the ID of
+that job. You can use the returned job ID to track the progress of the purge operation.
+
 #### Parameters
 
 ##### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue to purge. Can be a string, queue parameters object,
-or queue consumer group parameters.
+The queue to purge. Can be a string (queue name),
+queue parameters object, or queue consumer group parameters.
 
 ##### cb
 
 `ICallback`\<`string`\>
 
-Callback function that will be invoked when the operation completes.
-If an error occurs, the first parameter will contain the Error object.
-Otherwise, the first parameter will be the ID of purge job created.
+Callback function that will be invoked when the job is created.
+The callback receives two parameters: - `error` {Error|null} - If an error occurs during job creation,
+this will contain the Error object. If the job is successfully
+created, this will be `null`. - `jobId` {string|undefined} - The ID of the background job created
+to perform the purge operation. This ID can be used to: - Check the job status using `getPurgeJobStatus()` - Monitor progress via `getPurgeJob()` - Cancel the purge job if needed using `cancelPurge()`
+
+                         Note: Receiving a job ID does NOT mean the purge is complete,
+                         only that the purge job has been successfully created and started.
 
 #### Returns
 
 `void`
+
+#### Throws
+
+DeadLetteredMessageAuditNotEnabledError
 
 #### Throws
 
@@ -453,7 +466,7 @@ QueueNotFoundError
 
 #### Throws
 
-DeadLetteredMessageAuditNotEnabledError
+BackgroundJobTargetLockedError
 
 #### Overrides
 
