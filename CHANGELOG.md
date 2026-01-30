@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.13-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.12...v9.0.13-next.0) (2026-01-30)
+
+### 🚀 Chore
+
+- **redis-smq-common:** update tar to v7.5.7 to address security vulnerability ([b478215](https://github.com/weyoss/redis-smq/commit/b4782151822cbcbe1d457139721980bf60652d09))
+- update READMEs after merging 'v9.0.12' into 'next' ([a70906c](https://github.com/weyoss/redis-smq/commit/a70906c1672dfecf9d5c9cce6dc13e4e5230b8b0))
+
+### 📝 Documentation
+
+- **redis-smq:** update API reference ([8a234b5](https://github.com/weyoss/redis-smq/commit/8a234b5450f48caaf1bf38a7d93851f438d3eb35))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** update description for QueueAcknowledgedMessages.purge() method ([ba395bb](https://github.com/weyoss/redis-smq/commit/ba395bb7f11c15a1c101209d2826562e4e9af427))
+- **redis-smq:** update description for QueueDeadLetteredMessages.purge() method ([6e201a7](https://github.com/weyoss/redis-smq/commit/6e201a7f678347b23476b09e5caaa42db00f6341))
+
 ## [9.0.12](https://github.com/weyoss/redis-smq/compare/v9.0.12-next.0...v9.0.12) (2026-01-28)
 
 ### 🚀 Chore

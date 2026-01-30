@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.13-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.12...v9.0.13-next.0) (2026-01-30)
+
+### 🚀 Chore
+
+- **redis-smq-common:** update tar to v7.5.7 to address security vulnerability ([b478215](https://github.com/weyoss/redis-smq/commit/b4782151822cbcbe1d457139721980bf60652d09))
+- update READMEs after merging 'v9.0.12' into 'next' ([a70906c](https://github.com/weyoss/redis-smq/commit/a70906c1672dfecf9d5c9cce6dc13e4e5230b8b0))
+
 ## [9.0.12](https://github.com/weyoss/redis-smq/compare/v9.0.12-next.0...v9.0.12) (2026-01-28)
 
 ### 🚀 Chore
