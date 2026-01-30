@@ -1,10 +1,10 @@
 [![RedisSMQ](./logo.png)](https://github.com/weyoss/redis-smq)
 
-[![Stable](https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=redis-smq%40latest)](https://github.com/weyoss/redis-smq/releases/latest)
-[![Build (master)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=master&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Amaster)
-[![Code Quality (master)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=master&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Amaster)
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/weyoss/redis-smq/releases)
+[![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
+[![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
 
-> 💡 **Note:** You are on the stable `master` branch. For the latest features (including breaking changes), check the [`next` branch](https://github.com/weyoss/redis-smq/tree/next).
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master).
 
 A high-performance Redis message queue for Node.js — simple to use, built for scale.
 
@@ -42,7 +42,7 @@ A high-performance Redis message queue for Node.js — simple to use, built for 
 
 ```bash
 # Core packages
-npm install redis-smq redis-smq-common --save
+npm install redis-smq@next redis-smq-common@next --save
 
 # Pick a Redis client
 npm install ioredis --save
