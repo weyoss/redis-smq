@@ -70,7 +70,7 @@
     "bluebird": "3.7.2",
     "commander": "14.0.2",
     "lodash": "4.17.23",
-    "tar": "7.5.6",
+    "tar": "7.5.7",
     "uuid": "13.0.0"
   },
   "scripts": {
