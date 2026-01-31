@@ -36,6 +36,18 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
     return new BrowserStorageList(this.logger);
   }
 
+  protected withValidatedAuditConfiguration<T>(
+    operation: (cb: ICallback<T>) => void,
+    cb: ICallback<T>,
+  ) {
+    const cfg = Configuration.getConfig();
+    if (!cfg.messageAudit.deadLetteredMessages.enabled) {
+      this.logger.error(`Dead-lettered message audit is not enabled`);
+      return cb(new DeadLetteredMessageAuditNotEnabledError());
+    }
+    operation(cb);
+  }
+
   /**
    * Retrieves audited dead-lettered messages from the specified queue.
    *
@@ -56,10 +68,9 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
     pageSize: number,
     cb: ICallback<IBrowserPage<IMessageTransferable>>,
   ) {
-    const cfg = Configuration.getConfig();
-    if (!cfg.messageAudit.deadLetteredMessages.enabled)
-      return cb(new DeadLetteredMessageAuditNotEnabledError());
-    super.getMessages(queue, page, pageSize, cb);
+    this.withValidatedAuditConfiguration((cb) => {
+      super.getMessages(queue, page, pageSize, cb);
+    }, cb);
   }
 
   /**
@@ -93,10 +104,9 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
    * @throws BackgroundJobTargetLockedError
    */
   override purge(queue: TQueueExtendedParams, cb: ICallback<string>) {
-    const cfg = Configuration.getConfig();
-    if (!cfg.messageAudit.deadLetteredMessages.enabled)
-      return cb(new DeadLetteredMessageAuditNotEnabledError());
-    super.purge(queue, cb);
+    this.withValidatedAuditConfiguration((cb) => {
+      super.purge(queue, cb);
+    }, cb);
   }
 
   /**
@@ -112,9 +122,8 @@ export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
    * @throws DeadLetteredMessageAuditNotEnabledError
    */
   override countMessages(queue: TQueueExtendedParams, cb: ICallback<number>) {
-    const cfg = Configuration.getConfig();
-    if (!cfg.messageAudit.deadLetteredMessages.enabled)
-      return cb(new DeadLetteredMessageAuditNotEnabledError());
-    super.countMessages(queue, cb);
+    this.withValidatedAuditConfiguration((cb) => {
+      super.countMessages(queue, cb);
+    }, cb);
   }
 }
