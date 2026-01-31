@@ -8,8 +8,8 @@
  */
 
 import { IMessageBrowser } from '../common/index.js';
-import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
-import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
+import { PriorityQueuePendingMessages } from './pending-messages/priority-queue-pending-messages.js';
+import { SequentialQueuePendingMessages } from './pending-messages/sequential-queue-pending-messages.js';
 import { EQueueType, TQueueExtendedParams } from '../queue-manager/index.js';
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';

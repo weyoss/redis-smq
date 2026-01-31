@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { TQueueExtendedParams } from '../queue-manager/index.js';
-import { IMessageBrowser } from '../common/index.js';
+import { TQueueExtendedParams } from '../../queue-manager/index.js';
+import { IMessageBrowser } from '../../common/index.js';
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { PendingMessagesFactory } from './pending-mesages-factory.js';
+import { PendingMessagesFactory } from '../pending-mesages-factory.js';
 
 export function withPendingMessages<T>(
   queue: TQueueExtendedParams,

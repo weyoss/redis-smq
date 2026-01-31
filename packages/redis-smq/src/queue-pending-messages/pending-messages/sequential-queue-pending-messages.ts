@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { BrowserStorageList } from '../common/message-browser/browser-storage/browser-storage-list.js';
-import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { BrowserStorageList } from '../../common/message-browser/browser-storage/browser-storage-list.js';
+import { IBrowserStorage } from '../../common/message-browser/browser-storage/browser-storage-abstract.js';
 import { PendingMessagesAbstract } from './pending-messages-abstract.js';
 
 export class SequentialQueuePendingMessages extends PendingMessagesAbstract {

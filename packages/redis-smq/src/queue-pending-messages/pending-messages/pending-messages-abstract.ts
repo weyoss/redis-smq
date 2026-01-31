@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
-import { EQueueMessageType } from '../common/index.js';
+import { MessageBrowserAbstract } from '../../common/message-browser/message-browser-abstract.js';
+import { EQueueMessageType } from '../../common/index.js';
 
 export abstract class PendingMessagesAbstract extends MessageBrowserAbstract {
   protected override requireGroupId = true;
