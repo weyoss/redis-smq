@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { BrowserStorageSortedSet } from '../common/message-browser/browser-storage/browser-storage-sorted-set.js';
-import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
+import { BrowserStorageSortedSet } from '../../common/message-browser/browser-storage/browser-storage-sorted-set.js';
+import { IBrowserStorage } from '../../common/message-browser/browser-storage/browser-storage-abstract.js';
 import { PendingMessagesAbstract } from './pending-messages-abstract.js';
 
 export class PriorityQueuePendingMessages extends PendingMessagesAbstract {
