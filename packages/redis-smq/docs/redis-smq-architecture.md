@@ -180,8 +180,7 @@ The scheduler manages due messages and enqueues them for consumption when approp
 
 ---
 
-This overview should help you reason about how producers, exchanges, queues, delivery models, and consumers interact
-through Redis to provide a reliable and scalable messaging platform. For deeper dives, see:
+For deeper dives, see:
 
 - Messages: [messages.md](messages.md)
 - Producing/Consuming: [producing-messages.md](producing-messages.md), [consuming-messages.md](consuming-messages.md)

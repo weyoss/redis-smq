@@ -2,155 +2,299 @@
 
 # Queue Rate Limiting
 
-In certain scenarios, consuming messages at a high rate can be disadvantageous. Some potential issues include:
+Control how fast messages are consumed from a queue. Useful for protecting services, staying within API limits, or managing resource usage.
 
-- **System Performance:** A high rate of message consumption may overwhelm your application, leading to performance
-  degradation.
-- **Resource Utilization:** Rapid message consumption can result in excessive resource usage, negatively impacting the
-  overall performance of your system.
-- **External API Restrictions:** If your application interacts with an external API that enforces rate limits on client
-  requests, consuming messages too quickly could risk the suspension or permanent ban of your service.
-- **Additional Considerations:** Various other factors may necessitate managing message consumption rates.
+## Quick Start
 
-To address these challenges, RedisSMQ allows you to set and control the rate at which messages are consumed by
-implementing a rate limit for a queue.
-
----
-
-## Quick example
-
-Set a rate limit of 200 messages per minute for the notifications queue.
-
-[RedisSMQ](../README.md) / [Docs](README.md) / Queue Rate Limiting
-
-# Queue Rate Limiting
-
-In certain scenarios, consuming messages at a high rate can be disadvantageous. Common issues include:
-
-- System performance degradation when consumers overwhelm downstream services
-- Excessive resource utilization
-- External API client throttling or bans when exceeding provider rate limits
-- Other environment-specific constraints
-
-To address these challenges, RedisSMQ allows you to control the rate at which messages are consumed by applying a rate limit to a queue.
-
-## Prerequisites
-
-- Initialize RedisSMQ once per process before creating components:
-  - RedisSMQ.initialize(redisConfig, cb), or
-  - RedisSMQ.initializeWithConfig(redisSMQConfig, cb)
-- Create the rate-limiting component via the RedisSMQ factory:
-  - const queueRateLimit = RedisSMQ.createQueueRateLimit()
-- When components are created via RedisSMQ factory methods, you typically do not need to shut them down individually. Prefer calling RedisSMQ.shutdown(cb) at application exit to close shared infrastructure and tracked components.
-
-## Quick example
-
-Set a rate limit of 200 messages per minute for the notifications queue.
+### Set a Rate Limit
 
 ```javascript
-'use strict';
-
 const { RedisSMQ } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
+const queueRateLimit = RedisSMQ.createQueueRateLimit();
 
-// 1) Initialize once per process
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
+// Limit: 100 messages per minute
+queueRateLimit.set(
+  'notifications',
+  { limit: 100, interval: 60000 }, // 100 messages / 60 seconds
   (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    // 2) Create the queue rate limit manager via RedisSMQ
-    const queueRateLimit = RedisSMQ.createQueueRateLimit();
-
-    // 3) Apply a limit: 200 messages per 60_000 ms
-    queueRateLimit.set(
-      'notifications',
-      { limit: 200, interval: 60000 },
-      (setErr) => {
-        if (setErr) return console.error('Error setting rate limit:', setErr);
-        console.log('Rate limit set successfully!');
-      },
-    );
-
-    // Optionally: verify current settings
-    queueRateLimit.get('notifications', (getErr, params) => {
-      if (getErr) return console.error('Error getting rate limit:', getErr);
-      console.log('Current rate limit:', params);
-    });
-
-    // Preferred at app exit:
-    // RedisSMQ.shutdown((e) => e && console.error('Shutdown error:', e));
+    if (err) console.error('Failed:', err);
+    else console.log('Rate limit set');
   },
 );
 ```
 
-## API usage patterns
-
-- Set a rate limit
+### Check Current Limit
 
 ```javascript
-queueRateLimit.set('queue-name', { limit: 100, interval: 1000 }, cb);
-```
-
-Where:
-
-- limit: number of messages
-- interval: time window in milliseconds
-
-- Get the current rate limit
-
-```javascript
-queueRateLimit.get('queue-name', (err, params) => {
-  // params is null if no rate limit is set
+queueRateLimit.get('notifications', (err, limit) => {
+  if (err) console.error('Failed:', err);
+  else console.log('Current limit:', limit);
+  // Returns: { limit: 100, interval: 60000 } or null
 });
 ```
 
-- Clear a rate limit
+### Remove Limit
 
-  ```javascript
-  queueRateLimit.clear('queue-name', (err) => {
-    // removes any configured rate limit for the queue
-  });
-  ```
+```javascript
+queueRateLimit.clear('notifications', (err) => {
+  if (err) console.error('Failed:', err);
+  else console.log('Limit removed');
+});
+```
 
-- Check whether a limit would be exceeded
-  ```javascript
-  queueRateLimit.hasExceeded(
-    'queue-name',
-    { limit: 100, interval: 1000 },
-    (err, exceeded) => {
-      if (err) return console.error(err);
-      console.log('Exceeded?', exceeded);
-    },
+## When to Use Rate Limiting
+
+### 1. Protect External APIs
+
+```javascript
+// Don't exceed 10 requests/second to payment API
+queueRateLimit.set(
+  'payment-requests',
+  { limit: 10, interval: 1000 }, // 10/sec
+  callback,
+);
+```
+
+### 2. Control Resource Usage
+
+```javascript
+// Limit image processing to 5/minute
+queueRateLimit.set(
+  'image-processing',
+  { limit: 5, interval: 60000 }, // 5/min
+  callback,
+);
+```
+
+### 3. Smooth Traffic Spikes
+
+```javascript
+// Process max 1000 messages/hour
+queueRateLimit.set(
+  'data-sync',
+  { limit: 1000, interval: 3600000 }, // 1000/hour
+  callback,
+);
+```
+
+## How It Works
+
+- **Limit**: Maximum messages consumed in the interval
+- **Interval**: Time window in milliseconds
+- **Behavior**: Consumers wait when limit is reached
+
+### Example: 50 messages per 30 seconds
+
+```javascript
+queueRateLimit.set(
+  'my-queue',
+  // Consumer processes max 50 messages every 30 seconds
+  // Additional messages wait until next window
+  { limit: 50, interval: 30000 },
+  callback,
+);
+```
+
+## Common Patterns
+
+### Per-Second Limits
+
+```javascript
+queueRateLimit.set(
+  'my-queue',
+  // 20 messages per second
+  { limit: 20, interval: 1000 },
+
+  // 500 messages per second
+  // { limit: 500, interval: 1000 },
+
+  callback,
+);
+```
+
+### Per-Minute Limits
+
+```javascript
+queueRateLimit.set(
+  'my-queue',
+  // 1000 messages per minute
+  { limit: 1000, interval: 60000 },
+
+  // 60 messages per minute (1/sec)
+  // { limit: 60, interval: 60000 },
+
+  callback,
+);
+```
+
+### Hourly/Daily Limits
+
+```javascript
+queueRateLimit.set(
+  'my-queue',
+  // 10,000 messages per hour
+  { limit: 10000, interval: 3600000 },
+
+  // 100,000 messages per day
+  // { limit: 100000, interval: 86400000 },
+
+  callback,
+);
+```
+
+## Advanced Usage
+
+### Check If Limit Would Be Exceeded
+
+```javascript
+queueRateLimit.hasExceeded(
+  'my-queue',
+  { limit: 100, interval: 60000 },
+  (err, exceeded) => {
+    if (exceeded) {
+      console.log('Would exceed limit - wait');
+    } else {
+      console.log('OK to proceed');
+    }
+  },
+);
+```
+
+### Use With Namespaces
+
+```javascript
+// Different limits per environment
+queueRateLimit.set(
+  { ns: 'production', name: 'emails' },
+  { limit: 1000, interval: 60000 },
+  callback,
+);
+
+queueRateLimit.set(
+  { ns: 'staging', name: 'emails' },
+  { limit: 100, interval: 60000 },
+  callback,
+);
+```
+
+## Best Practices
+
+### 1. Set Realistic Limits
+
+```javascript
+queueRateLimit.set(
+  'my-queue',
+  // ✅ Reasonable
+  { limit: 50, interval: 1000 }, // 50/second
+
+  // 3000/minute
+  // { limit: 3000, interval: 60000 },
+
+  // ❌ Too restrictive
+  // { limit: 1, interval: 1000 }, // 1/second (very slow)
+
+  callback,
+);
+```
+
+### 2. Monitor Queue Backlog
+
+```javascript
+// Check if queue is backing up due to limits
+const pending = RedisSMQ.createQueuePendingMessages();
+pending.countMessages('my-queue', (err, count) => {
+  if (count > 1000) {
+    console.warn('Queue backing up - consider adjusting limit');
+  }
+});
+```
+
+### 3. Adjust Dynamically
+
+```javascript
+// Increase limit during off-peak
+if (isOffPeakHours()) {
+  queueRateLimit.set(
+    'processing',
+    { limit: 1000, interval: 60000 }, // Higher limit
+    callback,
   );
-  ```
-
-Notes:
-
-- You can pass a queue name string or a queue descriptor object (e.g., `{ ns: 'my_app', name: 'notifications' }`) wherever a queue is required.
-
-## Behavior and considerations
-
-- Rate limits control the throughput of message consumption per queue within the specified interval.
-- If you change rate limits at runtime, consumers will reflect the updated constraints without needing a restart.
-- Use per-environment namespaces to avoid collisions and to isolate rate limits between environments or applications.
-
-## Shutdown
-
-- If the `QueueRateLimit` instance was created via RedisSMQ factory methods, you typically do not need to shut it down
-  individually. Prefer a single `RedisSMQ.shutdown(cb)` call at application exit.
-- If you created `QueueRateLimit` outside of RedisSMQ (advanced usage), you may shut it down explicitly if the
-  component exposes a shutdown method.
-
-## See also
-
-- QueueRateLimit class: [API Reference](api/classes/QueueRateLimit.md)
-- Queues overview: [queues.md](queues.md)
-- Consuming messages: [consuming-messages.md](consuming-messages.md)
-
+} else {
+  queueRateLimit.set(
+    'processing',
+    { limit: 100, interval: 60000 }, // Lower limit
+    callback,
+  );
+}
 ```
 
+### 4. Combine With Other Controls
+
+```javascript
+// Rate limit + message TTL
+const msg = new ProducibleMessage()
+  .setQueue('api-calls')
+  .setTTL(30000) // Expire if not processed in 30s
+  .setBody({ request: 'data' });
+
+// Prevents stale messages from backing up
 ```
+
+## Troubleshooting
+
+### "Messages not being consumed"
+
+1. Check rate limit settings
+2. Verify limit isn't too restrictive
+3. Monitor queue length
+4. Test without limits to isolate issue
+
+### "Limit not taking effect"
+
+- Ensure rate limit is set before consumers start
+- Check for namespace mismatches
+- Verify Redis connection is working
+
+### "Queue growing too fast"
+
+```javascript
+// Temporary increase
+queueRateLimit.set(
+  'fast-queue',
+  { limit: 5000, interval: 60000 }, // Higher limit
+  (err) => {
+    if (!err) console.log('Limit increased temporarily');
+  },
+);
+```
+
+## Example: API Gateway Protection
+
+```javascript
+// Protect third-party API
+queueRateLimit.set(
+  'sendgrid-emails',
+  { limit: 100, interval: 60000 }, // SendGrid limit: 100/minute
+  (err) => {
+    if (err) console.error('Failed to set limit:', err);
+    else console.log('API protection active');
+  },
+);
+
+// Consumer respects limit automatically
+consumer.consume(
+  'sendgrid-emails',
+  (msg, done) => {
+    sendEmail(msg.body).then(() => done());
+  },
+  callback,
+);
+```
+
+---
+
+**Related**:
+
+- [QueueRateLimit API](api/classes/QueueRateLimit.md) - Complete method reference
+- [Consuming Messages](consuming-messages.md) - How consumers work
+- [Queues](queues.md) - Queue management
