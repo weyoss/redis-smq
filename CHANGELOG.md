@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.14-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.13...v9.0.14-next.0) (2026-02-02)
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.13' into 'next' ([4f98587](https://github.com/weyoss/redis-smq/commit/4f98587171c14f024cf09f00c4d268f54d486e6e))
+
+### 📝 Documentation
+
+- **redis-smq:** enhance 'Getting Started' page by linking to main README ([27271f7](https://github.com/weyoss/redis-smq/commit/27271f749a26397a1245ccad9431f13450516e3f))
+- **redis-smq:** rewrite user guides to improve clarity and structure ([906135f](https://github.com/weyoss/redis-smq/commit/906135f530f807c1e9d258c297fd7fddd8344e62))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** improve duplicate message audit validation ([4489c25](https://github.com/weyoss/redis-smq/commit/4489c2531c820bcd674f668440adef4cceb16cd0))
+- **redis-smq:** remove redundant debug message ([9ef4cf8](https://github.com/weyoss/redis-smq/commit/9ef4cf857c39d5a58bcaf1e11b7fcde193d19cfd))
+- **redis-smq:** restructure queue pending messages implementation ([be07c2a](https://github.com/weyoss/redis-smq/commit/be07c2a345f86f69fdac16f1fb26d95a55109eaa))
+
 ## [9.0.13](https://github.com/weyoss/redis-smq/compare/v9.0.13-next.0...v9.0.13) (2026-01-30)
 
 ### 🚀 Chore
