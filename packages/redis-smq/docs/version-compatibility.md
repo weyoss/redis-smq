@@ -2,45 +2,56 @@
 
 # Version Compatibility
 
-## Package Version Alignment
+For optimal performance and stability, keep all RedisSMQ packages aligned to the same version number.
 
-It is crucial to maintain version alignment between all RedisSMQ packages to ensure compatibility and prevent potential
-issues. Always install matching versions of:
+## Required Packages
+
+Make sure these packages share the same version:
 
 - `redis-smq`
 - `redis-smq-common`
 - `redis-smq-rest-api`
 - `redis-smq-web-ui`
 - `redis-smq-web-server`
+- `redis-smq-benchmarks`
 
-## Installation Example
+## How to Install
 
-```bash
-# Installing specific version (recommended)
-npm install redis-smq@8.0.2 redis-smq-common@8.0.2 redis-smq-rest-api@8.0.2 redis-smq-web-ui@8.0.2
-
-# Or using the same tag
-npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest redis-smq-web-ui@latest
-```
-
-## Version Check
-
-You can verify package versions in your project:
+### Install Latest Versions (Recommended)
 
 ```bash
-npm list redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui
+npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest redis-smq-web-server@latest redis-smq-web-ui@latest redis-smq-benchmarks@latest
 ```
 
-## Troubleshooting
+### Install Specific Version
 
-If you encounter version mismatch issues, you may see errors like:
+```bash
+npm install redis-smq@9.0.12 redis-smq-common@9.0.12 redis-smq-rest-api@9.0.12 redis-smq-web-server@9.0.12 redis-smq-web-ui@9.0.12 redis-smq-benchmarks@9.0.12
+```
 
-- Incompatible API calls
-- Type mismatches
-- Runtime exceptions
+## Check Your Versions
 
-To resolve:
+Run this command to see installed versions:
 
-1. Check current versions using `npm list`
-2. Update all packages to matching versions
-3. Clear npm cache if needed: `npm cache clean --force`
+```bash
+npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-server redis-smq-web-ui redis-smq-benchmarks
+```
+
+## Solving Version Issues
+
+### Common Problems
+
+If versions don’t match, you might encounter:
+
+- API errors
+- Type errors
+- Unexpected crashes
+
+### How to Fix
+
+1. Check current versions with `npm list`
+2. Update all packages to the same version
+3. Clear npm cache if problems persist:
+   ```bash
+   npm cache clean --force
+   ```

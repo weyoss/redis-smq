@@ -2,122 +2,235 @@
 
 # EventBus
 
-The RedisSMQ EventBus lets your application subscribe to internal system events via a Publish-Subscribe (PubSub)
-mechanism.
+Monitor RedisSMQ's internal activity by subscribing to system events. Track message flow, consumer status, and system
+health in real-time.
 
-- Disabled by default.
-- Enable it in your configuration before initialization.
-- When using the RedisSMQ class and EventBus is enabled, RedisSMQ will start and manage the EventBus for you.
+## Quick Start
 
-For the full API, see the EventBus API and event type definitions:
-
-- EventBus class: [API Reference](api/classes/EventBus.md)
-- Events:
-  - [TConsumerEvent](api/type-aliases/TConsumerEvent.md)
-  - [TConsumerHeartbeatEvent](api/type-aliases/TConsumerHeartbeatEvent.md)
-  - [TConsumerMessageHandlerRunnerEvent](api/type-aliases/TConsumerMessageHandlerRunnerEvent.md)
-  - [TConsumerMessageHandlerEvent](api/type-aliases/TConsumerMessageHandlerEvent.md)
-  - [TConsumerConsumeMessageEvent](api/type-aliases/TConsumerConsumeMessageEvent.md)
-  - [TConsumerDequeueMessageEvent](api/type-aliases/TConsumerDequeueMessageEvent.md)
-  - [TProducerEvent](api/type-aliases/TProducerEvent.md)
-  - [TQueueEvent](api/type-aliases/TQueueEvent.md)
-
-## Enabling the EventBus
-
-Enable EventBus when initializing with a full RedisSMQ configuration:
+### 1. Enable EventBus in Configuration
 
 ```javascript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
-
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'my_app_dev',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: '127.0.0.1', port: 6379 },
-    },
-    logger: {
-      enabled: true,
-      options: { logLevel: EConsoleLoggerLevel.INFO },
-    },
-    messageAudit: false,
-    eventBus: { enabled: true }, // Enable EventBus
+const config = {
+  eventBus: { enabled: true }, // Add this
+  redis: {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
   },
-  (err) => {
-    if (err) return console.error('Initialization failed:', err);
-    console.log('RedisSMQ initialized with EventBus enabled');
+};
+
+// Use initializeWithConfig ONLY for first-time setup or changing RedisSMQ configuration
+RedisSMQ.initializeWithConfig(config, (err) => {
+  if (err) console.error('Failed:', err);
+  else console.log('EventBus enabled');
+});
+```
+
+### 2. Subscribe to Events
+
+```javascript
+const { EventBus } = require('redis-smq');
+
+const eventBus = EventBus.getInstance();
+
+// Track message acknowledgments
+eventBus.on(
+  'consumer.consumeMessage.messageAcknowledged',
+  (messageId, queue, messageHandlerId, consumerId) => {
+    console.log(`✅ Message ${messageId} acknowledged from ${queue.name}`);
+  },
+);
+
+// Track failures
+eventBus.on(
+  'consumer.consumeMessage.messageDeadLettered',
+  (messageId, queue, messageHandlerId, consumerId, deadLetterReason) => {
+    console.log(`💀 Message ${messageId} failed:`, error);
   },
 );
 ```
 
-Notes:
+## Available Events
 
-- Enabling EventBus after initialization via configuration updates will persist the setting, but the EventBus will be
-  started automatically only during initialization. Prefer enabling it before calling
-  `RedisSMQ.initialize/initializeWithConfig`.
-
-## Getting the EventBus instance
-
-When EventBus is enabled, retrieve the singleton instance and subscribe to events. No callback is needed.
+### Sample Consumer Events
 
 ```javascript
-import { EventBus } from 'redis-smq';
-
-// Succeeds after RedisSMQ.initialize*(...) has completed
-const eventBus = EventBus.getInstance();
+// Message flow
+'consumer.consumeMessage.messageAcknowledged';
+'consumer.consumeMessage.messageUnacknowledged';
+'consumer.consumeMessage.messageDeadLettered';
+'consumer.consumeMessage.messageRequeued';
+//...
 ```
 
-## Subscribing to events
-
-Subscribe using the event names defined by the type aliases above.
-
-Example: subscribe to a consumer message acknowledgment event:
+### Sample Producer Events
 
 ```javascript
-import { EventBus } from 'redis-smq';
+'producer.up';
+'producer.down';
+'producer.messagePublished';
+//...
+```
 
-const eventBus = EventBus.getInstance();
+### Queue Events
+
+```javascript
+'queue.queueCreated';
+'queue.queueDeleted';
+//...
+```
+
+## Real-World Examples
+
+### Monitor System Health
+
+```javascript
+eventBus.on(
+  'consumerHeartbeat.heartbeat',
+  (consumerId, timestamp, heartbeatPayload) => {
+    console.log(`❤️  Consumer ${consumerId} alive at ${timestamp}`);
+  },
+);
+
+eventBus.on('consumer.error', (err, consumerId) => {
+  console.warn(`⚠️  Consumer ${consumerId} stopped:`, err);
+});
+```
+
+### Track Message Flow
+
+```javascript
+eventBus.on(
+  'consumer.dequeueMessage.messageReceived',
+  (messageId, queue, consumerId) => {
+    console.log(`📥 Received ${messageId} from ${queue.name}`);
+  },
+);
 
 eventBus.on(
   'consumer.consumeMessage.messageAcknowledged',
   (messageId, queue, messageHandlerId, consumerId) => {
-    console.log(
-      `Message acknowledged: ${messageId} from queue: ${queue.name} handled by: ${messageHandlerId}, consumer: ${consumerId}`,
-    );
+    console.log(`✅ Processed ${messageId} from ${queue.name}`);
   },
 );
 ```
 
-You may subscribe to any supported event (consumer lifecycle, producer lifecycle, queue changes, heartbeats,
-message flow, etc.) using the event names listed in the API links above.
-
-## Shutdown
-
-- If components were created via the `RedisSMQ` class (recommended), prefer calling `RedisSMQ.shutdown(cb)`. It will
-  close shared infrastructure and the EventBus automatically when enabled; you do not need to shut down EventBus
-  separately.
-- If you explicitly need to stop the EventBus (for example, outside of a full RedisSMQ shutdown), call:
+### Debug Failures
 
 ```javascript
-import { EventBus } from 'redis-smq';
+eventBus.on(
+  'consumer.consumeMessage.messageRetrying',
+  (messageId, queue, retryCount, error) => {
+    console.log(`🔄 Retry ${retryCount} for ${messageId}:`, error.message);
+  },
+);
 
-EventBus.shutdown((err) => {
-  if (err) console.error('EventBus shutdown error:', err);
-  else console.log('EventBus shut down');
+eventBus.on(
+  'consumer.consumeMessage.messageDeadLettered',
+  (messageId, queue, messageHandlerId, consumerId, deadLetterReason) => {
+    console.error(`💀 Dead lettered ${messageId}:`, {
+      queue: queue.name,
+      reason: EMessageUnacknowledgementDeadLetterReason[deadLetterReason],
+      timestamp: new Date(),
+    });
+  },
+);
+```
+
+## Best Practices
+
+### 1. Enable Only When Needed
+
+```javascript
+// Development/Staging
+eventBus: {
+  enabled: true;
+}
+
+// Production (monitoring only)
+eventBus: {
+  enabled: process.env.NODE_ENV === 'production';
+}
+```
+
+### 2. Keep Handlers Fast
+
+```javascript
+// ✅ Good - async logging
+eventBus.on(
+  'consumer.consumeMessage.messageAcknowledged',
+  async (messageId) => {
+    await logToExternalService(messageId);
+  },
+);
+
+// ❌ Avoid - blocking operations
+eventBus.on('consumer.consumeMessage.messageAcknowledged', (messageId) => {
+  heavySyncOperation(); // Blocks other events
 });
 ```
 
-## Troubleshooting
+### 3. Clean Up Subscriptions
 
-- Ensure RedisSMQ has been initialized before accessing EventBus:
-  - Call `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)` at startup.
-  - Access EventBus via `EventBus.getInstance()` after initialization completes.
-- No events received:
-  - Confirm `eventBus.enabled` is true in the configuration you initialized with.
-  - Verify you are subscribing to correct event names (see API type alias pages).
-- Graceful shutdown:
-  - Prefer a single `RedisSMQ.shutdown(cb)` call to close all tracked components and the EventBus at application exit.
+```javascript
+// Store reference to remove later
+const handler = (messageId) => console.log(messageId);
+eventBus.on('consumer.consumeMessage.messageAcknowledged', handler);
 
-By enabling the EventBus and subscribing to the desired channels, you can observe internal activity across producers,
-consumers, and queues with minimal code.
+// Remove when done
+eventBus.removeListener('consumer.consumeMessage.messageAcknowledged', handler);
+```
+
+## Setup Requirements
+
+### 1. Must Enable Before Initialization
+
+```javascript
+// ✅ Correct
+RedisSMQ.initializeWithConfig({ eventBus: { enabled: true } });
+
+// ❌ Wrong (won't work)
+RedisSMQ.initializeWithConfig(config);
+// Later...
+config.eventBus = { enabled: true }; // Too late!
+```
+
+### 2. Get Instance After Initialization
+
+```javascript
+RedisSMQ.initialize(redisConfig, (err) => {
+  if (err) throw err;
+
+  // ✅ Now it's safe
+  const eventBus = EventBus.getInstance();
+
+  // Subscribe to events...
+});
+```
+
+## Shutdown
+
+### Recommended: Let RedisSMQ Handle It
+
+```javascript
+// Clean shutdown of everything
+RedisSMQ.shutdown((err) => {
+  if (err) console.error('Shutdown error:', err);
+});
+```
+
+### Manual Shutdown (Advanced)
+
+```javascript
+// Only if not using RedisSMQ.shutdown()
+EventBus.shutdown((err) => {
+  if (err) console.error('EventBus shutdown error:', err);
+});
+```
+
+---
+
+**Related**:
+
+- [EventBus API](api/classes/EventBus.md) - Compete API details.
+- [TRedisSMQEvent](api/type-aliases/TRedisSMQEvent.md) - Complete event list.
+- [Configuration](configuration.md) - Setup options

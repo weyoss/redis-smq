@@ -2,130 +2,245 @@
 
 # Message Handler Worker Threads
 
-Message handler worker threads, also known as "sandboxing," are a technique that isolates message handler code from the
-main application process. This isolation ensures that the message handler code does not affect the performance or
-functionality of the main application process.
+Run CPU-heavy message handlers in separate threads to keep your main app responsive.
 
-In Node.js, all message handlers of a given consumer run from the same process due to JavaScript's single-threaded
-nature. While this is beneficial for Input/Output asynchronous operations, such as reading data from the database or
-sending network requests, it can become a bottleneck when message handlers perform mostly synchronous operations or
-CPU-intensive tasks.
+## Why Use Worker Threads?
 
-## Using Worker Threads
+|               | Main Thread Handler | Worker Thread Handler   |
+| ------------- | ------------------- | ----------------------- |
+| **CPU Tasks** | Blocks main thread  | Runs in separate thread |
+| **I/O Tasks** | Fine (async)        | No benefit              |
+| **Use When**  | Simple processing   | Heavy calculations      |
 
-RedisSMQ allows you to utilize system threads to parallelize CPU-intensive tasks and run them in an isolated thread
-outside the main thread. This is achieved through the use of Node.js Worker Threads, which provide a true
-multithreaded environment with each worker thread running its own event loop.
+## Quick Start
 
-Each worker thread can be executed by a separate CPU core, making it ideal for intensive computations. However, for
-regular I/O tasks, running a message handler in a separate thread may not provide any significant benefits.
+### 1. Create Your Handler File
 
-### Running a Message Handler Worker Thread
+```javascript
+// handlers/image-processor.js
+module.exports = function imageProcessor(msg, done) {
+  console.log('Processing:', msg.body);
 
-#### Creating a Message Handler File
+  // CPU-intensive work here (won't block main thread)
+  const result = heavyCalculation(msg.body);
 
-```typescript
-// ./my/application/path/message-handlers/my-handler.js
-
-/**
- * Message handler function.
- *
- * This function is the entry point for a message handler.
- * It should contain the code that processes the message.
- *
- * @param {Object} msg - The message object.
- * @param {Function} cb - The callback function.
- */
-module.exports = function myHandler(msg, cb) {
-  console.log(msg.body);
-  // Perform any heavy operation here
+  done(); // Acknowledge
 };
+
+function heavyCalculation(data) {
+  // Example: image processing, data analysis, etc.
+  let total = 0;
+  for (let i = 0; i < 10000000; i++) {
+    total += Math.sqrt(i);
+  }
+  return total;
+}
 ```
 
-#### Consuming Messages
+### 2. Use the Handler
 
-```typescript
+```javascript
 const path = require('path');
+const { RedisSMQ } = require('redis-smq');
 
-const { Consumer } = require('redis-smq');
+const consumer = RedisSMQ.createConsumer();
 
-/**
- * Creates a new consumer instance.
- */
-const consumer = new Consumer();
+// Provide ABSOLUTE path to handler
+const handlerPath = path.resolve(__dirname, 'handlers/image-processor.js');
 
-/**
- * Registers a message handler.
- *
- * The message handler file path should be an absolute path.
- *
- * If you're using TypeScript, create and save the message handler file with a `.ts` extension.
- * However, when registering the message handler, use a `.js` or `.cjs` extension depending on your project settings.
- */
-const messageHandlerFilename = path.resolve(
-  __dirname,
-  './my/application/path/message-handlers/my-handler.js',
-);
-consumer.consume('my_queue', messageHandlerFilename, (err) =>
-  console.error(err),
-);
+consumer.consume('image-queue', handlerPath, (err) => {
+  if (err) console.error('Failed to register:', err);
+  else console.log('Handler registered in worker thread');
+});
 
-/**
- * Starts the consumer.
- *
- * Calls the callback function with any errors that occur.
- */
 consumer.run((err) => {
-  if (err) console.error(err);
+  if (err) console.error('Failed to start:', err);
+  else console.log('Consumer running');
 });
 ```
 
-##### Note
+## When to Use Worker Threads
 
-When registering a message handler, the file path should always be an absolute path. If you are using TypeScript, make
-sure to use the correct file extension (.ts, .js, or .cjs) depending on your project settings. See the
-[Consumer.consume()](api/classes/Consumer.md#consume) documentation for more details.
+### ✅ Good for CPU Tasks:
 
-### Example Use Case
+- Image/video processing
+- Data analysis
+- Complex calculations
+- PDF generation
+- Machine learning inference
 
-Here's an example use case where we have a message handler that performs a CPU-intensive task:
+### ⚠️ Not Needed for I/O Tasks:
+
+- Database queries
+- API calls
+- File reading/writing
+- Network requests
+
+## File Requirements
+
+### Path Must Be Absolute
 
 ```javascript
-// ./my/application/path/message-handlers/my-cpu-intensive-handler.ts
+// ✅ Correct
+path.resolve(__dirname, 'handlers/my-handler.js');
 
-// Perform a CPU-intensive task
-function performCpuIntensiveTask() {
-  // Simulate a CPU-intensive task
-  for (let i = 0; i < 10000000; i++) {
-    console.log(i);
-  }
+// ❌ Wrong (relative path)
+('./handlers/my-handler.js');
+```
+
+### File Extension
+
+- Use `.js` or `.cjs` for JavaScript
+- Use `.ts` for TypeScript (transpile first)
+- Must export a function: `module.exports = function(msg, done) {...}`
+
+## TypeScript Support
+
+### Handler File (.ts)
+
+```typescript
+// handlers/data-processor.ts
+export default function dataProcessor(
+  msg: IMessageTransferable,
+  done: ICallback,
+) {
+  console.log('Processing TypeScript handler:', msg.body);
+
+  // Your TypeScript code here
+  const processed = processData(msg.body);
+
+  done();
 }
 
-module.exports = function myCpuIntensiveHandler(msg, cb) {
-  console.log('Starting CPU-intensive task');
-  performCpuIntensiveTask();
-  console.log('CPU-intensive task completed');
-  cb();
+function processData(data: any) {
+  // Type-safe processing
+  return data;
+}
+```
+
+### Registering TypeScript Handlers
+
+```javascript
+// Your main app (.js or .ts)
+const handlerPath = path.resolve(
+  __dirname,
+  'handlers/data-processor.js', // Use .js even if source is .ts
+);
+
+consumer.consume('data-queue', handlerPath, callback);
+```
+
+**Note**: TypeScript files must be compiled to JavaScript before running.
+
+## Performance Tips
+
+### Keep Worker Threads Light
+
+```javascript
+// ✅ Good - CPU work stays in worker
+module.exports = function handler(msg, done) {
+  const result = calculate(msg.data); // CPU work
+  done();
+};
+
+// ❌ Avoid - Moving data between threads is expensive
+module.exports = function handler(msg, done) {
+  // Large data transfer between threads
+  const hugeData = fetchHugeData(); // I/O - do in main thread instead
+  process(hugeData);
+  done();
 };
 ```
 
+### Use Multiple Handlers for Different Queues
+
 ```javascript
-// ./my/application/index.ts
-
-const Consumer = require('redis-smq');
-
-const consumer = new Consumer();
-const messageHandlerFilename = require.resolve(
-  './message-handlers/my-cpu-intensive-handler.js',
+// CPU-intensive queue uses worker thread
+consumer.consume(
+  'cpu-queue',
+  path.resolve(__dirname, 'handlers/cpu-worker.js'),
+  callback,
 );
-consumer.consume('my_queue', messageHandlerFilename, (err) =>
-  console.error(err),
+
+// I/O queue uses regular handler
+consumer.consume(
+  'io-queue',
+  (msg, done) => {
+    // Async I/O is fine in main thread
+    database.query(msg.body).then(() => done());
+  },
+  callback,
 );
+```
+
+## Example: Image Processing Service
+
+### Handler (worker thread)
+
+```javascript
+// handlers/resize-image.js
+const sharp = require('sharp');
+
+module.exports = function resizeImage(msg, done) {
+  const { imagePath, width, height } = msg.body;
+
+  // CPU-intensive image processing
+  sharp(imagePath)
+    .resize(width, height)
+    .toBuffer()
+    .then((output) => {
+      // Store result or send elsewhere
+      done();
+    })
+    .catch((err) => {
+      done(err); // Will trigger retry
+    });
+};
+```
+
+### Main Application
+
+```javascript
+const consumer = RedisSMQ.createConsumer();
+
+consumer.consume(
+  'image-resize',
+  path.resolve(__dirname, 'handlers/resize-image.js'),
+  (err) => {
+    if (err) console.error('Image handler failed:', err);
+  },
+);
+
 consumer.run((err) => {
-  if (err) console.error(err);
+  if (err) console.error('Consumer failed:', err);
+  else console.log('Image processor ready');
 });
 ```
 
-In this example, we have a message handler that performs a CPU-intensive task. We create a worker thread for this
-message handler using RedisSMQ, which allows it to run in parallel with the main thread. This helps to improve the
-overall performance of our application.
+## Common Issues
+
+### "Handler not found"
+
+- Ensure absolute path
+- Check file exists
+- Verify file exports a default function
+
+### "Worker thread crashing"
+
+- Handle errors in handler: `try/catch`
+- Don't block event loop in worker
+- Keep message payloads reasonable size
+
+### "No performance improvement"
+
+- Worker threads only help with CPU work
+- For I/O, use async/await or callbacks in main thread
+- Consider if task is truly CPU-bound
+
+---
+
+**Related**:
+
+- [Consumer API](api/classes/Consumer.md) - `consume()` method details
+- [Node.js Worker Threads](https://nodejs.org/api/worker_threads.html) - Official documentation
+- [Consuming Messages](consuming-messages.md) - Basic message handling

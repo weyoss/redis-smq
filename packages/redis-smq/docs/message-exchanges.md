@@ -2,420 +2,193 @@
 
 # Message Exchanges
 
-RedisSMQ exchanges provide intelligent message routing to deliver messages to one or multiple queues based on routing
-strategies.
+Exchanges route messages to queues based on rules. Instead of sending directly to a queue, you publish to an exchange which handles the routing.
 
-## Overview
+## When to Use Exchanges
 
-Instead of sending messages directly to specific queues, you can publish messages to exchanges, which route them to
-appropriate queues based on routing rules.
+| Use Case                             | Best Choice                     |
+| ------------------------------------ | ------------------------------- |
+| Send to one specific queue           | **Direct queue** (`setQueue()`) |
+| Route to queues by exact key         | Direct exchange                 |
+| Route by patterns (user.\*, order.#) | Topic exchange                  |
+| Broadcast to multiple queues         | Fanout exchange                 |
 
-Performance note
+**Performance Tip**: `setQueue()` is fastest. Use exchanges only when you need their routing features.
 
-- Fastest: Direct Queue Publishing (no exchange). If you know the destination queue, `setQueue('...')` and do not set
-  an exchange. This avoids exchange lookups and is faster than using a direct exchange.
-- Next-best: Direct exchange (exact-match routing).
-- Heavier: Topic exchange (wildcard matching).
-- Fanout: Broadcast to all bound queues (multiplies work).
-
-### Exchange Types
-
-| Type   | Routing Strategy                | Use Case                                     |
-| ------ | ------------------------------- | -------------------------------------------- |
-| Direct | Exact routing key match         | Point-to-point messaging, task queues        |
-| Topic  | Pattern matching with wildcards | Event-driven architecture, selective routing |
-| Fanout | Broadcast to all bound queues   | Notifications, logging, broadcasting         |
-
-### Key Benefits
-
-- Flexible routing: Send messages to multiple queues simultaneously
-- Decoupling: Producers don't need to know specific queue names
-- Scalability: Add new consumers without changing producer code
-
-## Quick Start
-
-### Direct Queue Publishing (No Exchange)
-
-For simple point-to-point messaging with the highest performance, publish directly to a queue. This is faster than
-using a direct exchange.
-
-```javascript
-'use strict';
-
-const { ProducibleMessage } = require('redis-smq');
-
-const message = new ProducibleMessage()
-  .setQueue('user.notifications') // direct queue publishing (fastest path)
-  .setBody({ userId: 123, message: 'Welcome!' });
-```
-
-### Exchange-Based Routing
-
-For advanced routing, use exchanges:
-
-```javascript
-'use strict';
-
-const { ProducibleMessage } = require('redis-smq');
-
-// Direct Exchange - exact routing key match
-const directMessage = new ProducibleMessage()
-  .setDirectExchange('orders')
-  .setExchangeRoutingKey('order.created')
-  .setBody({ orderId: 'ORD-001', status: 'created' });
-
-// Topic Exchange - pattern matching
-const topicMessage = new ProducibleMessage()
-  .setTopicExchange('events')
-  .setExchangeRoutingKey('user.profile.updated')
-  .setBody({ userId: 123, field: 'email' });
-
-// Fanout Exchange - broadcast to all
-const fanoutMessage = new ProducibleMessage()
-  .setFanoutExchange('notifications')
-  .setBody({ alert: 'System maintenance in 10 minutes' });
-```
-
-## Exchange Setup
-
-Important
-
-- Exchanges are created automatically when you first bind a queue to them. No explicit creation step is required.
-
-### Binding Queues to Exchanges
-
-```javascript
-'use strict';
-
-const { RedisSMQ } = require('redis-smq');
-
-// Direct Exchange
-const directExchange = RedisSMQ.createDirectExchange();
-directExchange.bindQueue(
-  'order-processor',
-  'orders',
-  'order.created',
-  (err) => {
-    if (err) console.error('Binding failed:', err);
-    else console.log('Queue bound to direct exchange');
-  },
-);
-
-// Topic Exchange
-const topicExchange = RedisSMQ.createTopicExchange();
-topicExchange.bindQueue('user-notifications', 'events', 'user.*', (err) => {
-  if (err) console.error('Binding failed:', err);
-  else console.log('Queue bound to topic exchange');
-});
-
-// Fanout Exchange
-const fanoutExchange = RedisSMQ.createFanoutExchange();
-fanoutExchange.bindQueue('email-service', 'notifications', (err) => {
-  if (err) console.error('Binding failed:', err);
-  else console.log('Queue bound to fanout exchange');
-});
-```
-
-## Exchange Types in Detail
+## Exchange Types
 
 ### 1. Direct Exchange
 
-Routes messages to queues with exact routing key matches.
+Routes to queues with exact routing key matches.
 
 ```javascript
-'use strict';
-
-// Setup binding
-directExchange.bindQueue(
-  'payment-processor',
-  'payments',
-  'payment.process',
-  callback,
-);
-
-// Send message
-const { ProducibleMessage } = require('redis-smq');
-
-const message = new ProducibleMessage()
+const msg = new ProducibleMessage()
   .setDirectExchange('payments')
-  .setExchangeRoutingKey('payment.process') // Must match exactly
-  .setBody({ amount: 99.99, currency: 'USD' });
+  .setExchangeRoutingKey('payment.processed') // Must match exactly
+  .setBody({ amount: 99.99 });
 ```
 
 ### 2. Topic Exchange
 
-Routes messages using AMQP-style wildcard patterns:
+Routes using pattern matching:
 
-- '\*' matches exactly one word
-- '#' matches zero or more words
-- Words are separated by dots (.)
+- `*` = one word
+- `#` = zero or more words
+- Words separated by dots
 
 ```javascript
-'use strict';
-
-// Setup bindings with patterns
-topicExchange.bindQueue('order-notifications', 'events', 'order.*', callback);
-topicExchange.bindQueue('user-analytics', 'events', 'user.#', callback);
-topicExchange.bindQueue('audit-log', 'events', '*.created', callback);
-
-// Send message - will match multiple patterns
-const { ProducibleMessage } = require('redis-smq');
-
-const message = new ProducibleMessage()
+const msg = new ProducibleMessage()
   .setTopicExchange('events')
-  .setExchangeRoutingKey('order.created') // Matches 'order.*' and '*.created'
-  .setBody({ orderId: 'ORD-001', customerId: 'CUST-123' });
+  .setExchangeRoutingKey('user.login.success')
+  .setBody({ userId: 123 });
+
+// Patterns that would match:
+// 'user.login.success' → 'user.*.success', 'user.#', '*.login.*'
 ```
-
-Pattern examples:
-
-| Pattern    | Matches                                       | Does Not Match                 |
-| ---------- | --------------------------------------------- | ------------------------------ |
-| order.\*   | order.created, order.updated                  | order, order.payment.completed |
-| order.#    | order, order.created, order.payment.completed | user.created                   |
-| \*.created | order.created, user.created                   | order.updated                  |
 
 ### 3. Fanout Exchange
 
-Broadcasts messages to all bound queues, ignoring routing keys.
+Broadcasts to all bound queues.
 
 ```javascript
-'use strict';
-
-// Setup bindings
-fanoutExchange.bindQueue('email-service', 'alerts', callback);
-fanoutExchange.bindQueue('sms-service', 'alerts', callback);
-fanoutExchange.bindQueue('push-service', 'alerts', callback);
-
-// Send message - goes to all bound queues
-const { ProducibleMessage } = require('redis-smq');
-
-const message = new ProducibleMessage()
-  .setFanoutExchange('alerts')
-  .setBody({ level: 'critical', message: 'System overload detected' });
+const msg = new ProducibleMessage()
+  .setFanoutExchange('alerts') // No routing key needed
+  .setBody({ alert: 'System down!' });
 ```
 
-## Producer Integration
+## Setup
+
+### Bind Queues to Exchanges
 
 ```javascript
-'use strict';
+const { RedisSMQ } = require('redis-smq');
 
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+// Direct exchange (exact match)
+const direct = RedisSMQ.createDirectExchange();
+direct.bindQueue('email-queue', 'notifications', 'welcome.email', (err) => {
+  if (err) console.error('Bind failed:', err);
+});
 
-const producer = RedisSMQ.createProducer();
+// Topic exchange (pattern match)
+const topic = RedisSMQ.createTopicExchange();
+topic.bindQueue('audit-queue', 'events', 'user.*', (err) => {
+  if (err) console.error('Bind failed:', err);
+});
 
-producer.run((err) => {
-  if (err) throw err;
-
-  const message = new ProducibleMessage()
-    .setTopicExchange('events')
-    .setExchangeRoutingKey('user.login')
-    .setBody({ userId: 123, timestamp: new Date() });
-
-  producer.produce(message, (produceErr, messageIds) => {
-    if (produceErr) {
-      if (
-        produceErr.message &&
-        produceErr.message.includes('No matching queues')
-      ) {
-        console.warn('No queues matched routing criteria');
-      } else {
-        console.error('Failed to produce message:', produceErr);
-      }
-      return;
-    }
-    console.log(`Message sent to ${messageIds.length} queue(s):`, messageIds);
-  });
+// Fanout exchange (broadcast)
+const fanout = RedisSMQ.createFanoutExchange();
+fanout.bindQueue('sms-queue', 'alerts', (err) => {
+  if (err) console.error('Bind failed:', err);
 });
 ```
 
-## Exchange Management
+**Note**: Exchanges are created automatically when first bound.
 
-### Deleting Exchanges
+## Sending Messages
 
-Important
-
-- An exchange cannot be deleted if it has bound queues. Unbind all queues first.
+### Direct to Queue (Fastest)
 
 ```javascript
-'use strict';
-
-// Check what's bound before deleting
-directExchange.getRoutingKeys('orders', (err, keys) => {
-  if (err) throw err;
-
-  if (keys.length === 0) {
-    // Safe to delete
-    directExchange.delete('orders', (delErr) => {
-      if (delErr) console.error('Delete failed:', delErr);
-      else console.log('Exchange deleted');
-    });
-  } else {
-    console.log('Cannot delete: exchange has bound queues');
-    // Unbind queues first, then delete
-  }
-});
+const msg = new ProducibleMessage()
+  .setQueue('orders') // Direct delivery
+  .setBody({ item: 'Book' });
 ```
 
-### Unbinding Queues
+### Through Exchange
 
 ```javascript
-'use strict';
+const msg = new ProducibleMessage()
+  .setTopicExchange('events')
+  .setExchangeRoutingKey('order.created') // REQUIRED for direct/topic
+  .setBody({ orderId: 456 });
 
-// Direct Exchange
-directExchange.unbindQueue(
-  'queue-name',
-  'exchange-name',
-  'routing.key',
-  callback,
-);
-
-// Topic Exchange
-topicExchange.unbindQueue('queue-name', 'exchange-name', 'pattern.*', callback);
-
-// Fanout Exchange
-fanoutExchange.unbindQueue('queue-name', 'exchange-name', callback);
-```
-
-## Best Practices
-
-### 1. When to Use Each Approach
-
-Direct Queue (`setQueue()`) — use for:
-
-- Simple point-to-point messaging
-- Known destination queues
-- Minimal routing overhead and best performance
-
-Exchanges — use for:
-
-- Multiple destination queues
-- Dynamic routing based on content, patterns, or topology that changes without touching producers
-- Decoupling producers from consumers
-
-### 2. Naming Conventions
-
-Use hierarchical naming for better routing:
-
-```javascript
-// Good: Clear hierarchy
-'user.account.created';
-'order.payment.completed';
-'system.alert.critical';
-
-// Avoid: Flat naming
-'user_created';
-'payment_done';
-'critical_alert';
-```
-
-### 3. Setup Strategy
-
-Configure bindings during application startup:
-
-```javascript
-'use strict';
-
-async function setupExchanges() {
-  const { RedisSMQ } = require('redis-smq');
-  const topicExchange = RedisSMQ.createTopicExchange();
-
-  // Setup all bindings
-  await bindQueue(topicExchange, 'user-service', 'events', 'user.*');
-  await bindQueue(topicExchange, 'order-service', 'events', 'order.*');
-  await bindQueue(topicExchange, 'audit-service', 'events', '#');
-
-  console.log('Exchanges configured');
-}
-
-function bindQueue(exchange, queue, exchangeName, pattern) {
-  return new Promise((resolve, reject) => {
-    exchange.bindQueue(queue, exchangeName, pattern, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-}
-```
-
-### 4. Error Handling
-
-```javascript
-'use strict';
-
-producer.produce(message, (err, messageIds) => {
+producer.produce(msg, (err, messageIds) => {
   if (err) {
-    if (err.message && err.message.includes('No matching queues')) {
-      console.warn('No queues matched routing criteria');
-    } else {
-      console.error('Production failed:', err);
+    if (err.message.includes('No matching queues')) {
+      console.log('No queues bound to this routing key');
     }
-    return;
+  } else {
+    console.log(`Sent to ${messageIds.length} queue(s)`);
   }
+});
+```
 
-  console.log(`Message delivered to ${messageIds.length} queue(s)`);
+## Managing Exchanges
+
+### Check Bindings
+
+```javascript
+direct.getRoutingKeys('notifications', (err, keys) => {
+  console.log('Bound routing keys:', keys);
+  // Returns: ['welcome.email', 'password.reset', ...]
+});
+```
+
+### Unbind Queues
+
+```javascript
+// Direct/Topic exchange
+direct.unbindQueue('email-queue', 'notifications', 'welcome.email', (err) => {
+  if (!err) console.log('Queue unbound');
+});
+
+// Fanout exchange
+fanout.unbindQueue('sms-queue', 'alerts', (err) => {
+  if (!err) console.log('Queue unbound');
+});
+```
+
+### Delete Exchange
+
+```javascript
+// Only works when no queues are bound
+direct.delete('notifications', (err) => {
+  if (err) console.error('Delete failed:', err);
+  else console.log('Exchange deleted');
 });
 ```
 
 ## Common Patterns
 
-### Event-Driven Architecture
+### Event System
 
 ```javascript
-'use strict';
+// Publisher
+msg.setTopicExchange('app-events');
+msg.setExchangeRoutingKey('user.profile.updated');
 
-// Publisher service
-const { ProducibleMessage } = require('redis-smq');
-
-const event = new ProducibleMessage()
-  .setTopicExchange('domain-events')
-  .setExchangeRoutingKey('user.registered')
-  .setBody({
-    userId: 123,
-    email: 'user@example.com',
-    timestamp: new Date(),
-  });
-
-// Multiple subscribers can bind to:
-// - 'user.*' (all user events)
-// - '*.registered' (all registration events)
-// - '#' (all events)
+// Subscribers bind with patterns:
+// 'user.*'       - All user events
+// '*.updated'    - All update events
+// 'user.profile.*' - Profile-related events
 ```
 
 ### Multi-Channel Notifications
 
 ```javascript
-'use strict';
+// Bind multiple queues
+fanout.bindQueue('email-service', 'notifications', callback);
+fanout.bindQueue('sms-service', 'notifications', callback);
+fanout.bindQueue('push-service', 'notifications', callback);
 
-// Setup fanout for broadcasting
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-
-const fanout = RedisSMQ.createFanoutExchange();
-fanout.bindQueue('email-queue', 'user-notifications', callback);
-fanout.bindQueue('sms-queue', 'user-notifications', callback);
-fanout.bindQueue('push-queue', 'user-notifications', callback);
-
-// Broadcast to all channels
-const notification = new ProducibleMessage()
-  .setFanoutExchange('user-notifications')
-  .setBody({
-    userId: 123,
-    message: 'Your order has shipped!',
-    priority: 'high',
-  });
+// Send once, delivers to all
+msg.setFanoutExchange('notifications');
+msg.setBody({ message: 'Sale starts now!' });
 ```
 
-## API Reference
+## Best Practices
 
-- [ExchangeDirect](api/classes/ExchangeDirect.md) - Direct exchange operations
-- [ExchangeTopic](api/classes/ExchangeTopic.md) - Topic exchange operations
-- [ExchangeFanout](api/classes/ExchangeFanout.md) - Fanout exchange operations
-- [ProducibleMessage](api/classes/ProducibleMessage.md) - Message creation and routing
-- [Producer](api/classes/Producer.md) - Message production
+1. **Use `setQueue()` for simple cases** - It's faster and simpler
+2. **Plan your routing key structure** - Use dots for hierarchy: `domain.entity.action`
+3. **Check for matching queues** - Handle "No matching queues" errors gracefully
+4. **Set up bindings at startup** - Configure routing before sending messages
+5. **Monitor exchange usage** - Too many patterns can impact performance
 
-## Related Documentation
+---
 
-- [Producing Messages](producing-messages.md) - Message production guide
-- [Consuming Messages](consuming-messages.md) - Message consumption guide
+**Related Documentation**:
+
+- [Producing Messages](producing-messages.md) - How to send messages
+- [Consuming Messages](consuming-messages.md) - How to receive messages
 - [Queues](queues.md) - Queue management
-- [Performance](performance.md) - Performance tips (direct queue publishing is the fastest routing path)
+- [Exchange API](api/classes/ExchangeDirect.md) - Detailed exchange methods

@@ -2,241 +2,183 @@
 
 # Scheduling Messages
 
-RedisSMQ lets you schedule one-time or recurring message deliveries using per-message options on the ProducibleMessage class:
+Schedule messages to be delivered once or repeatedly. RedisSMQ supports delayed delivery, CRON schedules, and recurring patterns.
 
-- `setScheduledDelay(delayMs)` — deliver once after a fixed delay
-- `setScheduledCRON(cron)` — deliver on a CRON schedule
-- `setScheduledRepeat(n)` — repeat N times after the initial delivery
-- `setScheduledRepeatPeriod(periodMs)` — time between repeats
-- `resetScheduledParams()` — clear all scheduling options
+## Quick Start
 
-You produce scheduled messages like any other message using `Producer.produce()`.
-
-## Choosing a target
-
-Each scheduled message must target exactly one destination:
-
-- Queue: `ProducibleMessage.setQueue('queue-name')` — fastest routing path (direct queue publishing, no exchange)
-- Exchange:
-  - Direct: `setDirectExchange('name')` + `setExchangeRoutingKey('key')`
-  - Topic: `setTopicExchange('name')` + `setExchangeRoutingKey('pattern')`
-  - Fanout: `setFanoutExchange('name')`
-
-If neither a queue nor an exchange is set, producing will fail.
-
-## Examples
-
-### 1) Schedule once with a fixed delay
+### Schedule a Delayed Message
 
 ```javascript
-'use strict';
-
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
-
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const producer = RedisSMQ.createProducer();
-    producer.run((runErr) => {
-      if (runErr) return console.error('Producer start failed:', runErr);
-
-      const msg = new ProducibleMessage()
-        .setBody({ hello: 'world' })
-        .setQueue('test_queue') // direct queue publishing (fastest)
-        .setScheduledDelay(30_000); // deliver once after 30 seconds
-
-      producer.produce(msg, (e, ids) => {
-        if (e) return console.error('Produce failed:', e);
-        console.log('Scheduled message IDs:', ids);
-      });
-    });
-  },
-);
-```
-
-### 2) CRON schedule (daily at 10:00), then repeat 3 times every 10 minutes
-
-```javascript
-'use strict';
-
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
-
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const producer = RedisSMQ.createProducer();
-    producer.run((runErr) => {
-      if (runErr) return console.error('Producer start failed:', runErr);
-
-      // CRON format uses six fields: sec min hour day month weekday
-      const msg = new ProducibleMessage()
-        .setQueue('reports_queue')
-        .setBody({ report: 'daily-stats' })
-        .setScheduledCRON('0 0 10 * * *') // at 10:00:00 every day
-        .setScheduledRepeat(3) // repeat 3 times after the initial run
-        .setScheduledRepeatPeriod(600_000); // every 10 minutes
-
-      producer.produce(msg, (e, ids) => {
-        if (e) return console.error('Produce failed:', e);
-        console.log('CRON-scheduled message IDs:', ids);
-      });
-    });
-  },
-);
-```
-
-### 3) Repeat N times every X milliseconds (no CRON)
-
-```javascript
-'use strict';
-
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
-
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const producer = RedisSMQ.createProducer();
-    producer.run((runErr) => {
-      if (runErr) return console.error('Producer start failed:', runErr);
-
-      const msg = new ProducibleMessage()
-        .setQueue('heartbeat_queue')
-        .setBody({ type: 'heartbeat' })
-        .setScheduledDelay(5_000) // initial delivery after 5 seconds
-        .setScheduledRepeat(5) // then 5 repeats
-        .setScheduledRepeatPeriod(60_000); // every minute
-
-      producer.produce(msg, (e, ids) => {
-        if (e) return console.error('Produce failed:', e);
-        console.log('Repeat-scheduled message IDs:', ids);
-      });
-    });
-  },
-);
-```
-
-### 4) Clearing scheduling options on a reusable message
-
-```javascript
-'use strict';
-
 const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage()
-  .setScheduledDelay(10_000)
-  .setScheduledRepeat(2);
+  .setQueue('notifications') // Direct to queue
+  .setBody({ alert: 'Reminder' })
+  .setScheduledDelay(30000); // Deliver after 30 seconds
 
-msg.resetScheduledParams(); // clears CRON, delay, repeat, and repeat period
+producer.produce(msg, (err, messageIds) => {
+  if (err) console.error('Failed:', err);
+  else console.log('Scheduled ID:', messageIds[0]);
+});
 ```
+
+### Set Up a CRON Schedule
+
+```javascript
+const msg = new ProducibleMessage()
+  .setQueue('reports')
+  .setBody({ report: 'daily' })
+  .setScheduledCRON('0 0 10 * * *'); // Daily at 10:00 AM
+```
+
+## Scheduling Options
+
+### One-Time Delay
+
+```javascript
+msg.setScheduledDelay(5000); // Deliver after 5 seconds
+```
+
+### CRON Schedule
+
+```javascript
+msg.setScheduledCRON('0 30 9 * * 1-5'); // Weekdays at 9:30 AM
+```
+
+### Recurring Delivery
+
+```javascript
+msg.setScheduledDelay(10000); // First delivery after 10s
+msg.setScheduledRepeat(5); // Repeat 5 times
+msg.setScheduledRepeatPeriod(60000); // Every 60 seconds
+```
+
+### Clear Scheduling
+
+```javascript
+msg.resetScheduledParams(); // Remove all scheduling
+```
+
+## Destination
+
+Each scheduled message needs one destination:
+
+### Option 1: Direct to Queue (Fastest)
+
+```javascript
+msg.setQueue('orders'); // No routing key needed
+```
+
+### Option 2: Through an Exchange (Requires Routing Key)
+
+```javascript
+// Direct Exchange - exact routing key match
+msg.setDirectExchange('tasks');
+msg.setExchangeRoutingKey('high-priority'); // REQUIRED
+
+// Topic Exchange - pattern matching
+msg.setTopicExchange('events');
+msg.setExchangeRoutingKey('order.created'); // REQUIRED
+
+// Fanout Exchange - broadcast (no routing key)
+msg.setFanoutExchange('notifications'); // Routing key ignored
+```
+
+**Important**: When using `setDirectExchange()` or `setTopicExchange()`, you must also call `setExchangeRoutingKey()` before producing.
 
 ## Managing Scheduled Messages
 
-Use `QueueScheduledMessages` to inspect or purge scheduled messages. Use MessageManager to retrieve or delete a
-specific message by ID.
-
-### Count and list scheduled messages
+### View Scheduled Messages
 
 ```javascript
-'use strict';
-
-const { RedisSMQ } = require('redis-smq');
-
 const scheduled = RedisSMQ.createQueueScheduledMessages();
 
 // Count scheduled messages
-scheduled.countMessages('test_queue', (err, count) => {
-  if (err) return console.error('Count failed:', err);
-  console.log('Scheduled count:', count);
+scheduled.countMessages('my_queue', (err, count) => {
+  console.log(`Scheduled: ${count} messages`);
 });
 
-// Paginate scheduled messages (page numbers start at 1)
-scheduled.getMessages('test_queue', 1, 50, (e, page) => {
-  if (e) return console.error('Get messages failed:', e);
-  console.log('Page:', page); // { total, items: IMessageTransferable[], ... }
+// List messages (page 1, 50 per page)
+scheduled.getMessages('my_queue', 1, 50, (err, page) => {
+  console.log(page.items); // Array of scheduled messages
 });
 ```
 
-### Purge scheduled messages for a queue
+### Remove Scheduled Messages
+
+#### Purge All Scheduled Messages for a Queue
 
 ```javascript
-'use strict';
-
-const { RedisSMQ } = require('redis-smq');
-
 const scheduled = RedisSMQ.createQueueScheduledMessages();
-scheduled.purge('test_queue', (err) => {
-  if (err) return console.error('Purge failed:', err);
-  console.log('Scheduled messages purged for test_queue');
+scheduled.purge('my_queue', (err) => {
+  if (!err) console.log('All scheduled messages removed');
 });
 ```
 
-### Retrieve, delete, or requeue a specific message
+#### Delete Specific Messages by ID
 
 ```javascript
-'use strict';
-
-const { RedisSMQ } = require('redis-smq');
-
 const mm = RedisSMQ.createMessageManager();
 
-// Get message by ID
-mm.getMessageById('message-id', (err, msg) => {
-  if (err) return console.error('getMessageById failed:', err);
-  console.log('Message:', msg);
+// Delete single message
+mm.deleteMessageById('message-id-123', (err) => {
+  if (!err) console.log('Message deleted');
 });
 
-// Delete by ID
-mm.deleteMessageById('message-id', (err) => {
-  if (err) return console.error('deleteMessageById failed:', err);
-  console.log('Message deleted');
-});
-
-// Requeue by ID (creates a new message, original is marked as requeued)
-mm.requeueMessageById('message-id', (err, newId) => {
-  if (err) return console.error('requeueMessageById failed:', err);
-  console.log('Requeued as:', newId);
+// Delete multiple messages
+mm.deleteMessagesByIds(['id-1', 'id-2', 'id-3'], (err) => {
+  if (!err) console.log('Messages deleted');
 });
 ```
 
-## Validation and tips
+## Important Notes
 
-- Units are milliseconds for delays and repeat periods.
-- CRON uses six fields: second, minute, hour, day, month, weekday (e.g., `0 0 10 * * *`).
-- Repeat and repeat period:
-  - `setScheduledRepeat(n)` specifies how many times to deliver after the initial delivery (n >= 0).
-  - `setScheduledRepeatPeriod(ms)` specifies the interval between repeats (ms >= 0).
-- `setScheduledDelay(ms)` must be a non-negative number.
-- Invalid values throw errors during setter calls or when producing; validate input where appropriate.
-- TTL interaction: If you set TTL, ensure it doesn’t expire before scheduled deliveries occur.
-- Performance: If you know the target queue, prefer direct queue publishing (`setQueue`) over exchanges for lower latency.
+1. **Scheduled messages cannot be requeued** - The `requeueMessageById()` method is not available for scheduled messages
+2. **Use delete instead** - To cancel a scheduled delivery, delete the message by ID
+3. **Check message status** - Use `getMessageStatus()` or `getMessageById()` to verify a message is still scheduled before deletion
 
-## API References
+## Best Practices
 
-- [ProducibleMessage](api/classes/ProducibleMessage.md):
-  - [setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)
-  - [setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)
-  - [setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
-  - [setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
-  - [resetScheduledParams()](api/classes/ProducibleMessage.md#resetscheduledparams)
+1. **Use Direct Queues** when possible for better performance
+2. **Always Set Routing Key** when using direct or topic exchanges
+3. **Set Appropriate TTL** to ensure messages don't expire before delivery
+4. **Validate CRON Expressions** before scheduling
+5. **Monitor Scheduled Counts** to prevent queue buildup
+6. **Delete, Don't Requeue** - Remove unwanted scheduled messages instead of trying to requeue them
 
-- [Producer.produce()](api/classes/Producer.md#produce)
-- [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)
-- [MessageManager](api/classes/MessageManager.md)
+## Common Patterns
+
+### Daily Digest via Direct Queue
+
+```javascript
+msg.setQueue('email-digests');
+msg.setScheduledCRON('0 0 18 * * *'); // 6 PM daily
+msg.setBody({ type: 'daily-summary' });
+```
+
+### Event Notification via Topic Exchange
+
+```javascript
+msg.setTopicExchange('user-events');
+msg.setExchangeRoutingKey('profile.updated'); // Routing key required!
+msg.setScheduledDelay(5000);
+msg.setBody({ userId: 123, action: 'update' });
+```
+
+### Periodic Health Check
+
+```javascript
+msg.setQueue('health-checks');
+msg.setScheduledDelay(0);
+msg.setScheduledRepeat(999); // Repeat indefinitely
+msg.setScheduledRepeatPeriod(60000); // Every minute
+```
+
+---
+
+**Related Documentation**:
+
+- [ProducibleMessage API](api/classes/ProducibleMessage.md) - All scheduling methods
+- [Producer Guide](producing-messages.md) - Basic message production
+- [Message Exchanges](message-exchanges.md) - Exchange types and routing
+- [MessageManager API](api/classes/MessageManager.md) - Message deletion methods

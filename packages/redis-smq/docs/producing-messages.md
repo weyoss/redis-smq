@@ -2,190 +2,140 @@
 
 # Producing Messages
 
-The Producer publishes messages to a target queue or via exchanges (direct, topic, fanout). A single Producer instance
-can efficiently send messages—including priority or scheduled ones—to one or multiple queues.
+A Producer sends messages to a queue or through an exchange. One Producer instance can send
+messages—including priority, scheduled, or retry-enabled ones—to multiple destinations.
 
-## Targeting a queue or an exchange
+## Quick Start
 
-Before producing, you must set exactly one target on the message:
-
-- Queue
-  - ProducibleMessage.setQueue('queue-name')
-- Direct exchange (requires routing key)
-  - ProducibleMessage.setDirectExchange('exchange-name')
-  - ProducibleMessage.setExchangeRoutingKey('routing.key')
-- Topic exchange (requires routing key/pattern)
-  - ProducibleMessage.setTopicExchange('exchange-name')
-  - ProducibleMessage.setExchangeRoutingKey('user.created' | 'user.\*' | 'user.#' ...)
-- Fanout exchange (no routing key)
-  - ProducibleMessage.setFanoutExchange('exchange-name')
-
-If you don’t set a queue or an exchange, producing will fail.
-
-## Quick start: produce to a queue
+### 1. Create and Start a Producer
 
 ```javascript
-'use strict';
+const { RedisSMQ } = require('redis-smq');
 
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
+const producer = RedisSMQ.createProducer();
 
-// 1) Initialize once
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS, // or ERedisConfigClient.REDIS
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
-  (err) => {
-    if (err) {
-      console.error('Failed to initialize RedisSMQ:', err);
-      return;
-    }
-
-    // 2) Create and start a producer
-    const producer = RedisSMQ.createProducer();
-    producer.run((startErr) => {
-      if (startErr) {
-        console.error('Error starting producer:', startErr);
-        return;
-      }
-
-      // 3) Build a message targeting a queue
-      const msg = new ProducibleMessage()
-        .setBody({ hello: 'world' }) // payload
-        .setTTL(3600000) // TTL in ms (optional)
-        .setQueue('test_queue'); // target a queue
-
-      producer.produce(msg, (produceErr, messageIds) => {
-        if (produceErr) {
-          console.error('Error producing message:', produceErr);
-        } else {
-          console.log('Produced message IDs:', messageIds);
-        }
-
-        // 4) Preferred shutdown: close everything at app exit with RedisSMQ.shutdown(...)
-        // RedisSMQ.shutdown((e) => e && console.error('Shutdown error:', e));
-      });
-    });
-  },
-);
+producer.run((err, started) => {
+  if (err) console.error('Failed to start producer:', err);
+  else console.log(`Producer ${producer.getId()} started: ${started}`);
+});
 ```
 
-## Produce via a topic exchange
+### 2. Send a Message to a Queue
 
 ```javascript
-'use strict';
+const { ProducibleMessage } = require('redis-smq');
 
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
+const msg = new ProducibleMessage()
+  .setBody({ hello: 'world' }) // JSON payload
+  .setQueue('test_queue'); // Target queue
 
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) throw err;
-
-    const producer = RedisSMQ.createProducer();
-    producer.run((runErr) => {
-      if (runErr) throw runErr;
-
-      // Publish to a topic exchange; consumers bind queues using wildcard patterns
-      const msg = new ProducibleMessage()
-        .setTopicExchange('events')
-        .setExchangeRoutingKey('user.created')
-        .setBody({ userId: 123, ts: Date.now() });
-
-      producer.produce(msg, (e, ids) => {
-        if (e) return console.error('Produce failed:', e);
-        console.log(`Delivered to ${ids.length} queue(s):`, ids);
-      });
-    });
-  },
-);
+producer.produce(msg, (err, messageIds) => {
+  if (err) console.error('Send failed:', err);
+  else console.log('Message ID:', messageIds[0]);
+});
 ```
 
-## Produce via a direct exchange
+See [Direct Queue Publishing](message-exchanges.md#direct-to-queue-fastest) for more details.
+
+### 3. Shutdown
 
 ```javascript
-'use strict';
-
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
-
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) throw err;
-
-    const producer = RedisSMQ.createProducer();
-    producer.run((runErr) => {
-      if (runErr) throw runErr;
-
-      const msg = new ProducibleMessage()
-        .setDirectExchange('orders')
-        .setExchangeRoutingKey('order.created') // exact match required by bound queues
-        .setBody({ orderId: 'ORD-001' });
-
-      producer.produce(msg, (e, ids) => {
-        if (e) return console.error('Produce failed:', e);
-        console.log('Produced to queues:', ids);
-      });
-    });
-  },
-);
+producer.shutdown(() => {
+  console.log('Producer stopped');
+});
 ```
 
-## Produce via a fanout exchange
+## Message Destinations
+
+You must set exactly one target on a message:
+
+| Target Type     | Method                       | Routing Key? |
+| --------------- | ---------------------------- | ------------ |
+| Queue           | `.setQueue('name')`          | No           |
+| Direct Exchange | `.setDirectExchange('name')` | Required     |
+| Topic Exchange  | `.setTopicExchange('name')`  | Required     |
+| Fanout Exchange | `.setFanoutExchange('name')` | Ignored      |
+
+### Direct Exchange
 
 ```javascript
-'use strict';
-
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
-
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) throw err;
-
-    const producer = RedisSMQ.createProducer();
-    producer.run((runErr) => {
-      if (runErr) throw runErr;
-
-      // Fanout ignores routing keys; message goes to all bound queues
-      const msg = new ProducibleMessage()
-        .setFanoutExchange('notifications')
-        .setBody({ message: 'System maintenance in 10 minutes' });
-
-      producer.produce(msg, (e, ids) => {
-        if (e) return console.error('Produce failed:', e);
-        console.log('Broadcast to queues:', ids);
-      });
-    });
-  },
-);
+const msg = new ProducibleMessage()
+  .setDirectExchange('orders')
+  .setExchangeRoutingKey('order.created')
+  .setBody({ orderId: '123' });
 ```
 
-## Tips
+See [Direct Exchange](message-exchanges.md#1-direct-exchange) for more details.
 
-- Priority: Set with `ProducibleMessage.setPriority(...)` when producing to a priority queue.
-- Retries: Configure retry behavior with `setRetryThreshold(...)` and `setRetryDelay(...)`.
-- Scheduling: Use `setScheduledDelay(...)`, `setScheduledCRON(...)`, and `setScheduledRepeat(...)` for delayed/recurring
-  delivery.
-- Timeout: Use `setConsumeTimeout(...)` to fail a message if the consumer exceeds the processing window.
+### Topic Exchange
 
-## Further Reading
+```javascript
+const msg = new ProducibleMessage()
+  .setTopicExchange('events')
+  .setExchangeRoutingKey('user.created')
+  .setBody({ userId: 456 });
+```
 
-- Initialization: [configuration.md](configuration.md)
-- Producer API: [api/classes/Producer.md](api/classes/Producer.md)
-- ProducibleMessage API: [api/classes/ProducibleMessage.md](api/classes/ProducibleMessage.md)
-- Exchanges overview: [message-exchanges.md](message-exchanges.md)
-- Message Exchanges: [message-exchanges.md](message-exchanges.md)
+See [Topic Exchange](message-exchanges.md#2-topic-exchange) for more details.
+
+### Fanout Exchange
+
+```javascript
+const msg = new ProducibleMessage()
+  .setFanoutExchange('notifications')
+  .setBody({ alert: 'System update' });
+```
+
+See [Fanout Exchange](message-exchanges.md#3-fanout-exchange) for more details.
+
+## Message Options
+
+Configure messages with optional settings using the [ProducibleMessage](api/classes/ProducibleMessage.md) class:
+
+### Basic Configuration
+
+```javascript
+const msg = new ProducibleMessage()
+  .setQueue('my_queue')
+  .setBody({ userId: 123, action: 'process' })
+  .setTTL(3600000) // Expire after 1 hour (0 = no expiration)
+  .setPriority(EMessagePriority.HIGH) // Use only for priority queues
+  .setConsumeTimeout(30000); // Fail if not processed within 30s
+```
+
+### Retry Behavior
+
+```javascript
+msg
+  .setRetryThreshold(3) // Max retry attempts (0 = no retries)
+  .setRetryDelay(5000); // Wait 5 seconds between retries
+```
+
+### Scheduled Delivery
+
+```javascript
+// Delayed delivery
+msg.setScheduledDelay(10000); // Deliver after 10 seconds
+
+// Recurring delivery with fixed interval
+msg
+  .setScheduledRepeat(5) // Repeat 5 times
+  .setScheduledRepeatPeriod(60000); // Every 60 seconds
+
+// CRON-based scheduling
+msg.setScheduledCRON('0 0 10 * * *'); // Daily at 10 AM
+```
+
+### Priority Management
+
+```javascript
+msg.setPriority(EMessagePriority.HIGH); // Set priority level
+msg.hasPriority(); // Check if priority is set
+msg.disablePriority(); // Remove priority setting
+```
+
+Use `.setPriority()` with queues configured for priority handling.
+
+---
+
+For complete API details, see the [Producer Class documentation](api/classes/Producer.md).

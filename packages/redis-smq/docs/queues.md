@@ -2,174 +2,297 @@
 
 # Queues
 
-In RedisSMQ, a queue plays a crucial role in managing messages produced by producers and consumed by consumers.
-The system supports three distinct types of queues: LIFO (Last In, First Out), FIFO (First In, First Out), and
-Priority queues.
+Queues store messages until consumers process them. RedisSMQ offers three queue types with different behaviors.
 
----
+## Queue Types
 
-## Reliability
-
-All RedisSMQ queue types are designed to be reliable. Reliability ensures that messages are not lost, even in the
-event of failures, such as a consumer crash. The system can recover from failure scenarios, maintaining message
-integrity throughout the process.
-
-## Queue Mechanics
-
-In a typical LIFO or FIFO queue setup, RedisSMQ uses the `brpoplpush` command to
-block the connection to the Redis server until a message is available. Conversely, priority queues employ pooling and
-Lua scripting, which may introduce additional overhead and result in slightly reduced performance compared to LIFO and
-FIFO queues.
-
-For simplicity in the upcoming examples, we will utilize the `EQueueDeliveryModel.POINT_TO_POINT` delivery model across
-all queue types. However, you can customize your application by choosing any combination of `EQueueType` and
-`EQueueDeliveryModel` that suits your needs.
-
-## LIFO (Last In, First Out) Queues
-
-![RedisSMQ LIFO Queuing](redis-smq-lifo-queuing.png)
-
-In a LIFO queue, the most recently published messages are delivered first, while the oldest messages are delivered last.
-
-```javascript
-'use strict';
-
-const { RedisSMQ, EQueueType, EQueueDeliveryModel } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
-
-// Initialize once per process
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const queueManager = RedisSMQ.createQueueManager();
-    queueManager.save(
-      'my_queue',
-      EQueueType.LIFO_QUEUE,
-      EQueueDeliveryModel.POINT_TO_POINT,
-      (saveErr) => {
-        if (saveErr) return console.error('Queue creation failed:', saveErr);
-        console.log('LIFO queue created');
-        // No need to shutdown queueManager individually if created via RedisSMQ
-        // Prefer a single RedisSMQ.shutdown(cb) at application exit
-      },
-    );
-  },
-);
-```
-
-For additional details, please refer to the [`QueueManager.save()`](api/classes/QueueManager.md#save) documentation.
-
-## FIFO (First In, First Out) Queues
+### 1. FIFO (First In, First Out)
 
 ![RedisSMQ FIFO Queuing](redis-smq-fifo-queuing.png)
 
-In a FIFO queue, messages are processed in the order they are received: the first published messages are delivered
-first, followed by later entries.
+Messages processed in the order they arrive.
 
 ```javascript
-// Assuming RedisSMQ is already initialized and you have:
-const queueManager = RedisSMQ.createQueueManager();
-
 queueManager.save(
-  'my_queue',
+  'tasks',
   EQueueType.FIFO_QUEUE,
   EQueueDeliveryModel.POINT_TO_POINT,
   (err) => {
-    if (err) console.error(err);
+    if (err) console.error('Failed:', err);
     else console.log('FIFO queue created');
   },
 );
 ```
 
-Refer to [`QueueManager.save()`](api/classes/QueueManager.md#save) for more information.
+**Best for**: Order processing, job queues, sequential workflows.
 
-## Priority Queues
+### 2. LIFO (Last In, First Out)
+
+![RedisSMQ LIFO Queuing](redis-smq-lifo-queuing.png)
+
+Most recent messages processed first.
+
+```javascript
+queueManager.save(
+  'logs',
+  EQueueType.LIFO_QUEUE,
+  EQueueDeliveryModel.POINT_TO_POINT,
+  callback,
+);
+```
+
+**Best for**: Real-time updates, latest-first processing.
+
+### 3. Priority Queue
 
 ![RedisSMQ Priority Queuing](redis-smq-priority-queuing.png)
 
-Priority queues deliver messages based on their assigned priority, ensuring that those with higher priority are
-processed before lower-priority messages.
+Messages processed by priority level (0-7).
 
 ```javascript
-// Assuming RedisSMQ is already initialized and you have:
-const queueManager = RedisSMQ.createQueueManager();
-
 queueManager.save(
-  'my_queue',
+  'alerts',
   EQueueType.PRIORITY_QUEUE,
   EQueueDeliveryModel.POINT_TO_POINT,
-  (err) => {
-    if (err) console.error(err);
-    else console.log('Priority queue created');
+  callback,
+);
+```
+
+Set priority on messages:
+
+```javascript
+const msg = new ProducibleMessage()
+  .setQueue('alerts')
+  .setPriority(EMessagePriority.HIGH) // 0-7 scale
+  .setBody({ alert: 'Urgent!' });
+```
+
+**Priority Levels**:
+
+- `LOWEST` (7) - Lowest priority
+- `VERY_LOW` (6)
+- `LOW` (5)
+- `NORMAL` (4)
+- `ABOVE_NORMAL` (3)
+- `HIGH` (2)
+- `VERY_HIGH` (1)
+- `HIGHEST` (0) - Highest priority
+
+## Performance Comparison
+
+| Queue Type    | Speed                       | Best Use              |
+| ------------- | --------------------------- | --------------------- |
+| **FIFO/LIFO** | 🚀 Fastest                  | High throughput       |
+| **Priority**  | 🐢 Slower (30-50% overhead) | Need message ordering |
+
+## Queue Names
+
+### Valid Names
+
+```text
+✅ 'orders'
+✅ 'email-queue'
+✅ 'user_events'
+✅ 'app.notifications'
+✅ 'queue-123'
+```
+
+### Invalid Names
+
+```text
+❌ '3queue'          // Can't start with number
+❌ 'my queue'        // No spaces
+❌ 'queue$'          // No special chars
+❌ 'my-queue-'       // Can't end with hyphen
+```
+
+### Namespacing
+
+Organize queues by environment or app:
+
+```text
+// Production queues
+{ ns: 'prod', name: 'orders' }
+
+// Development queues
+{ ns: 'dev', name: 'orders' }
+
+// Default namespace (from config)
+'orders'  // Uses default namespace
+```
+
+## Managing Queues
+
+### Create Queue Manager
+
+```javascript
+const queueManager = RedisSMQ.createQueueManager();
+```
+
+### List All Queues
+
+```javascript
+queueManager.getQueues((err, queues) => {
+  console.log('Queues:', queues);
+});
+```
+
+### Delete a Queue
+
+```javascript
+queueManager.delete('old-queue', (err) => {
+  if (err) console.error('Failed:', err);
+  else console.log('Queue deleted');
+});
+```
+
+### Check Queue Exists
+
+```javascript
+queueManager.exists('my-queue', (err, exists) => {
+  console.log('Queue exists:', exists);
+});
+```
+
+## Message Management
+
+### Different Message Types
+
+```javascript
+// All messages in queue
+const allMessages = RedisSMQ.createQueueMessages();
+
+// Waiting to be processed
+const pendingMessages = RedisSMQ.createQueuePendingMessages();
+
+// Successfully processed (requires audit enabled)
+const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
+
+// Failed messages (requires audit enabled)
+const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
+
+// Scheduled for future delivery
+const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
+```
+
+### Example: Count Pending Messages
+
+```javascript
+pendingMessages.countMessages('orders', (err, count) => {
+  console.log(`Pending orders: ${count}`);
+});
+```
+
+## Delivery Models
+
+Each queue can use either:
+
+### Point-to-Point
+
+One consumer per message.
+
+```javascript
+EQueueDeliveryModel.POINT_TO_POINT;
+```
+
+### Pub/Sub
+
+Broadcast to consumer groups.
+
+```javascript
+EQueueDeliveryModel.PUB_SUB;
+```
+
+## Best Practices
+
+### 1. Choose the Right Queue Type
+
+- **FIFO**: Job processing, ordered tasks
+- **LIFO**: Real-time updates, latest data first
+- **Priority**: Critical alerts, VIP users
+
+### 2. Use Meaningful Names
+
+```javascript
+// ✅ Clear hierarchy
+'app.notifications.email';
+'orders.processing.payment';
+
+// ❌ Unclear
+'queue1';
+'data2';
+'temp';
+```
+
+### 3. Monitor Queue Health
+
+```javascript
+// Regular checks
+pendingMessages.countMessages('critical-queue', (err, count) => {
+  if (count > 1000) {
+    console.warn('Queue backing up!');
+  }
+});
+```
+
+### 4. Clean Up Unused Queues
+
+```javascript
+// Remove old test queues
+queueManager.delete('test-queue-2024', callback);
+```
+
+## Example: Complete Setup
+
+```javascript
+const { RedisSMQ, EQueueType, EQueueDeliveryModel } = require('redis-smq');
+
+// Create queue manager
+const queueManager = RedisSMQ.createQueueManager();
+
+async.series(
+  [
+    // Create different queue types
+    (next) =>
+      queueManager.save(
+        'orders',
+        EQueueType.FIFO_QUEUE,
+        EQueueDeliveryModel.POINT_TO_POINT,
+        next,
+      ),
+    (next) =>
+      queueManager.save(
+        'alerts',
+        EQueueType.PRIORITY_QUEUE,
+        EQueueDeliveryModel.PUB_SUB,
+        next,
+      ),
+    (next) =>
+      queueManager.save(
+        'logs',
+        EQueueType.LIFO_QUEUE,
+        EQueueDeliveryModel.POINT_TO_POINT,
+        next,
+      ),
+  ],
+  () => {
+    // List all queues
+    queueManager.getQueues((err, queues) => {
+      console.log(
+        'Available queues:',
+        queues.map((q) => q.name),
+      );
+    });
   },
 );
 ```
 
-For further details, consult [QueueManager.save()](api/classes/QueueManager.md#save).
+---
 
-### Setting Up Message Priorities
+**Related**:
 
-To configure message priorities within your application, the [ProducibleMessage Class](api/classes/ProducibleMessage.md)
-offers the following methods:
-
-- [ProducibleMessage.setPriority()](api/classes/ProducibleMessage.md#setpriority)
-- [ProducibleMessage.getPriority()](api/classes/ProducibleMessage.md#getpriority)
-
-Valid priority values include:
-
-- EMessagePriority.LOWEST
-- EMessagePriority.VERY_LOW
-- EMessagePriority.LOW
-- EMessagePriority.NORMAL
-- EMessagePriority.ABOVE_NORMAL
-- EMessagePriority.HIGH
-- EMessagePriority.VERY_HIGH
-- EMessagePriority.HIGHEST
-
-Please refer to the [EMessagePriority](api/enumerations/EMessagePriority.md) documentation for more information.
-
-## Queue Namespacing
-
-RedisSMQ uses namespacing to manage queues effectively. Each namespace acts as a scope, ensuring unique queue names and
-preventing name collisions across multiple queues that may share the same name.
-
-A queue can be identified by its name (e.g., `orders`) or by its name and namespace
-(e.g., `{ ns: 'my-app', name: 'orders' }`). If no namespace is specified, the queue defaults to the default
-namespace. This default can be configured through your configuration object. For more details,
-see [Configuration](configuration.md).
-
-## Queue Naming Requirements
-
-Queue names must adhere to the following criteria:
-
-- Composed solely of alphanumeric characters` [a-z0-9]` (e.g., queue$ is invalid).
-- May include `-` and `_` characters (e.g., `my-queue` and `my_queue` are valid).
-- Must start with an alphabetic character `[a-z]` and end with an alphanumeric character `[a-z0-9]` (e.g., `3queue` and
-  `my_queue`\_ are invalid).
-- Can include dots (`.`) for hierarchical naming (e.g., `sports.football`). Refer
-  to [Topic Exchange](message-exchanges.md#2-topic-exchange) for further details.
-
-## Managing Queues and Namespaces
-
-For effective queue and namespace management:
-
-- Use `RedisSMQ.createNamespaceManager()` to obtain a [NamespaceManager](api/classes/NamespaceManager.md).
-- Use `RedisSMQ.createQueueManager()` to obtain a [QueueManager](api/classes/QueueManager.md).
-
-## Managing Queue Messages
-
-For queue message management, use the following via RedisSMQ factory methods:
-
-- `RedisSMQ.createQueueMessages()` → [QueueMessages](api/classes/QueueMessages.md)
-- `RedisSMQ.createQueuePendingMessages()` → [QueuePendingMessages](api/classes/QueuePendingMessages.md)
-- `RedisSMQ.createQueueAcknowledgedMessages()` → [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md)
-- `RedisSMQ.createQueueDeadLetteredMessages()` → [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md)
-- `RedisSMQ.createQueueScheduledMessages()` → [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)
-
-Please note that by default, acknowledged messages and dead-lettered messages are not saved. To enable storage for
-acknowledged and dead-lettered messages, you must configure your [RedisSMQ Configuration](configuration.md) accordingly.
+- [QueueManager API](api/classes/QueueManager.md) - Complete queue management
+- [Producing Messages](producing-messages.md) - How to send to queues
+- [Consuming Messages](consuming-messages.md) - How to receive from queues
+- [Queue Delivery Models](queue-delivery-models.md) - Point-to-Point vs Pub/Sub
+- [Configuration](configuration.md) - Namespace setup

@@ -2,34 +2,16 @@
 
 # Configuration
 
-RedisSMQ must be initialized once per process before creating any producers, consumers, or managers.
+Set up RedisSMQ with your Redis connection and optional features. Initialize once when your app starts.
 
-Required initialization options:
+## Quick Start
 
-- `RedisSMQ.initialize(redisConfig, cb)`
-- `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
+### Basic Setup (Most Common)
 
-After global initialization, using the Configuration class is optional. You can read or update the persisted
-configuration if needed, but you do not need to call `Configuration.initialize` directly; it is handled internally by
-`RedisSMQ.initialize` or `RedisSMQ.initializeWithConfig`.
+```javascript
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-This guide covers:
-
-- Global initialization (required)
-- Optional configuration persistence and management
-- Example configuration shapes and best practices
-
-## Global Initialization (required)
-
-Initialize RedisSMQ once at startup.
-
-### Option A: Initialize with Redis connection (recommended for most)
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
-
-// Initialize once with Redis connection details
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
@@ -39,23 +21,18 @@ RedisSMQ.initialize(
     },
   },
   (err) => {
-    if (err) console.error('Failed to initialize RedisSMQ:', err);
+    if (err) console.error('Failed:', err);
+    else console.log('RedisSMQ ready');
   },
 );
 ```
 
-### Option B: Initialize with full RedisSMQ configuration (persisted in Redis)
+### With Optional Features
 
-Use when you want configuration to be persisted and shared across processes. On first run, the configuration is saved
-to Redis. Subsequent processes can simply call `RedisSMQ.initialize(...)` or `initializeWithConfig(...)` to reuse it.
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
-
+```javascript
 RedisSMQ.initializeWithConfig(
   {
-    namespace: 'my_project_name',
+    namespace: 'myapp',
     redis: {
       client: ERedisConfigClient.IOREDIS,
       options: {
@@ -63,278 +40,229 @@ RedisSMQ.initializeWithConfig(
         port: 6379,
       },
     },
-    logger: {
-      enabled: true,
-      options: {
-        logLevel: EConsoleLoggerLevel.INFO,
-      },
-    },
+    logger: { enabled: true },
     messageAudit: false,
-    eventBus: {
-      enabled: false,
-    },
+    eventBus: { enabled: true },
   },
   (err) => {
-    if (err) {
-      console.error('Failed to initialize with config:', err);
-      return;
-    }
-    console.log('RedisSMQ initialized (configuration persisted in Redis)');
+    if (err) console.error('Failed:', err);
+    else console.log('Setup complete');
   },
 );
 ```
 
-Note
+**Note**: Use `initializeWithConfig` for first-time setup only. After configuration is saved, use `initialize()`.
 
-- Do not call `Configuration.initialize` in application code. `RedisSMQ.initialize` or `RedisSMQ.initializeWithConfig`
-  will load or persist configuration and prepare the singleton for you.
+## Configuration Options
 
-## Optional: Inspecting and Managing Configuration
+### Core Settings
 
-After RedisSMQ has been initialized, you may read or update the configuration via the Configuration class.
-
-### Read current configuration
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { Configuration } from 'redis-smq';
-
-RedisSMQ.initialize(
-  {
-    /* redis config */
-  } as any,
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const cfg = Configuration.getConfig(); // parsed, validated config
-    console.log('Namespace:', cfg.namespace);
-    console.log('Redis host:', cfg.redis.options.host);
-    console.log('EventBus enabled:', cfg.eventBus.enabled);
-  },
-);
-```
-
-### Update selected fields and persist
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { Configuration } from 'redis-smq';
-
-RedisSMQ.initialize(
-  {
-    /* redis config */
-  } as any,
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const cfg = Configuration.getInstance();
-    cfg.updateConfig(
-      {
-        logger: { enabled: true },
-        messageAudit: {
-          acknowledged: { queueSize: 2000 },
-        },
-      },
-      (updateErr) => {
-        if (updateErr) return console.error('Update failed:', updateErr);
-        console.log('Configuration updated and saved to Redis');
-      },
-    );
-  },
-);
-```
-
-### Save a new configuration object
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { Configuration } from 'redis-smq';
-
-RedisSMQ.initialize(
-  {
-    /* redis config */
-  } as any,
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const cfg = Configuration.getInstance();
-    cfg.save(
-      {
-        logger: { enabled: false },
-      },
-      (err) => {
-        if (err) return console.error('Save failed:', err);
-        console.log('Configuration saved to Redis');
-      },
-    );
-  },
-);
-```
-
-### Check if configuration exists in Redis
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { Configuration } from 'redis-smq';
-
-RedisSMQ.initialize(
-  {
-    /* redis config */
-  } as any,
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const cfg = Configuration.getInstance();
-    cfg.exists((err, exists) => {
-      if (err) return console.error('Exists check failed:', err);
-      console.log(
-        exists
-          ? 'Configuration exists in Redis'
-          : 'No configuration found in Redis',
-      );
-    });
-  },
-);
-```
-
-### Reset to defaults and persist
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { Configuration } from 'redis-smq';
-
-RedisSMQ.initialize(
-  {
-    /* redis config */
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const cfg = Configuration.getInstance();
-    cfg.reset((err) => {
-      if (err) return console.error('Reset failed:', err);
-      console.log('Configuration reset to defaults and persisted to Redis');
-    });
-  },
-);
-```
-
-## Configuration parameters
-
-Here’s an example of a complete RedisSMQ configuration:
-
-```typescript
-import { IRedisSMQConfig } from 'redis-smq';
-import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
-
-const config: IRedisSMQConfig = {
-  namespace: 'my_project_name',
+```javascript
+const config = {
+  namespace: 'myapp',
   redis: {
     client: ERedisConfigClient.IOREDIS,
     options: {
       host: '127.0.0.1',
       port: 6379,
-      connect_timeout: 3600000, // 1 hour
     },
   },
-  logger: {
-    enabled: true,
+};
+```
+
+### Optional Features
+
+```javascript
+const config = {
+  logger: { enabled: true }, // Console logging
+  messageAudit: false, // Track processed messages
+  eventBus: { enabled: false }, // System event monitoring
+};
+```
+
+## Message Audit Configuration
+
+### Enable All Tracking
+
+```javascript
+const config = {
+  messageAudit: true, // Track both successful and failed messages
+};
+```
+
+### Selective Tracking
+
+```javascript
+const config = {
+  messageAudit: {
+    acknowledgedMessages: true, // Track successful messages
+    deadLetteredMessages: {
+      // Track failed messages with limits
+      queueSize: 1000, // Keep last 1000 failed messages
+      expire: 86400, // Delete after 24 hours (seconds)
+    },
+  },
+};
+```
+
+### Advanced Configuration
+
+```javascript
+const config = {
+  messageAudit: {
+    acknowledgedMessages: {
+      queueSize: 5000, // Keep last 5000 successful messages
+      expire: 43200, // Delete after 12 hours
+    },
+    deadLetteredMessages: {
+      queueSize: 10000, // Keep last 10000 failed messages
+      expire: 604800, // Delete after 7 days
+    },
+  },
+};
+```
+
+## When to Use Each Method
+
+### `RedisSMQ.initialize(redisConfig, callback)`
+
+- **Use for**: Normal application startup
+- **When**: Configuration already exists in Redis
+- **Example**: Daily restarts, deployment updates
+
+```javascript
+// After initial setup, use this:
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
     options: {
-      logLevel: EConsoleLoggerLevel.INFO,
-      // ...
+      host: '127.0.0.1',
+      port: 6379,
     },
   },
-  messageAudit: false, // Set to true to enable message audit
-  eventBus: {
-    enabled: false, // Set to true to enable the event bus
+  callback,
+);
+```
+
+### `RedisSMQ.initializeWithConfig(fullConfig, callback)`
+
+- **Use for**: First-time setup or configuration changes
+- **When**: Setting up new environment/application or changing Redis settings
+- **Example**: Initial deployment, changing namespace
+
+```javascript
+// First time or when changing config:
+RedisSMQ.initializeWithConfig(
+  {
+    namespace: 'new-app',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: {
+        host: '127.0.0.1',
+        port: 6379,
+      },
+    },
+    // ... other settings
   },
+  callback,
+);
+```
+
+## Managing Configuration
+
+### Check Current Settings
+
+```javascript
+const { Configuration } = require('redis-smq');
+const config = Configuration.getConfig();
+
+console.log('Namespace:', config.namespace);
+console.log('Redis host:', config.redis.options.host);
+```
+
+### Update Settings
+
+```javascript
+const cfg = Configuration.getInstance();
+cfg.updateConfig(
+  {
+    logger: { enabled: false },
+    messageAudit: true,
+  },
+  (err) => {
+    if (err) console.error('Update failed:', err);
+    else console.log('Configuration updated');
+  },
+);
+```
+
+### Reset to Defaults
+
+```javascript
+cfg.reset((err) => {
+  if (err) console.error('Reset failed:', err);
+  else console.log('Back to defaults');
+});
+```
+
+## Best Practices
+
+### 1. Namespace by Environment/Application
+
+```javascript
+// Application
+namespace: 'myapp';
+
+// Environment
+namespace: 'myapp-staging';
+```
+
+### 2. Enable Features Only When Needed
+
+```javascript
+// Development - full visibility
+const config = {
+  logger: { enabled: true },
+  messageAudit: true,
+  eventBus: { enabled: true },
+};
+
+// Production - minimal overhead
+const config = {
+  logger: { enabled: false },
+  messageAudit: false,
+  eventBus: { enabled: false },
 };
 ```
 
-### Message Audit Configuration
+### 3. Set Reasonable Audit Limits
 
-RedisSMQ supports flexible message audit configuration for acknowledged and dead-lettered messages.
-
-- Simple boolean
-
-```typescript
-import { IRedisSMQConfig } from 'redis-smq';
-
-const config: IRedisSMQConfig = {
-  // ... other config
-  messageAudit: true, // Enables storage for all message types with default settings
-};
-```
-
-- Advanced configuration
-
-```typescript
-import { IRedisSMQConfig } from 'redis-smq';
-
-const config: IRedisSMQConfig = {
-  // ... other config
+```javascript
+const config = {
   messageAudit: {
-    acknowledgedMesssages: {
-      queueSize: 1000, // Maximum number of messages to store
-      expire: 3600, // Message expiration time in seconds (1 hour)
-    },
-    deadLetteredMessages: {
-      queueSize: 500, // Store up to 500 dead-lettered messages
-      expire: 86400, // Keep for 24 hours
+    acknowledgedMessages: {
+      queueSize: 10000, // Enough for debugging
+      expire: 86400, // Clean up daily
     },
   },
 };
 ```
 
-- Mixed configuration
+### 4. Store Configuration in Redis
 
-```typescript
-import { IRedisSMQConfig } from 'redis-smq';
+```javascript
+// First deploy: save config to Redis
+RedisSMQ.initializeWithConfig(fullConfig, callback);
 
-const config: IRedisSMQConfig = {
-  // ... other config
-  messageAudit: {
-    acknowledgedMessages: true, // Enable with default settings
-    deadLetteredMessages: {
-      queueSize: 100,
-      expire: 7200, // 2 hours
-    },
-  },
-};
+// Subsequent starts: load from Redis
+RedisSMQ.initialize(redisConfig, callback);
 ```
 
-- Selective configuration
+---
 
-```typescript
-import { IRedisSMQConfig } from 'redis-smq';
+**Related**:
 
-const config: IRedisSMQConfig = {
-  // ... other config
-  messageAudit: {
-    acknowledgedMessages: false, // Disable acknowledged message audit
-    deadLetteredMessages: {
-      // Enable only dead-lettered message audit
-      queueSize: 200,
-      expire: 604800, // 7 days
-    },
-  },
-};
-```
-
-## Configuration Best Practices
-
-1. Initialize once per process using RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...). This is required.
-2. Use Redis-backed configuration (initializeWithConfig) when:
-   - Multiple processes must share the same settings
-   - You want configuration to persist across restarts
-3. Use clear, environment-specific namespaces to avoid collisions (e.g., my_app_dev, my_app_staging, my_app_prod).
-4. Plan message audit carefully:
-   - Enable in development/staging when you need visibility
-   - Set retention and queue sizes appropriate for production load
-5. Treat the object returned by Configuration.getConfig() as read-only. Use updateConfig or save to persist changes safely.
-
-For detailed API, see:
-
-- Configuration class: [api/classes/Configuration.md](api/classes/Configuration.md)
-- IRedisSMQConfig: [api/interfaces/IRedisSMQConfig.md](api/interfaces/IRedisSMQConfig.md)
-- Message audit: [message-audit.md](message-audit.md)
+- [Message Audit](message-audit.md) - Tracking processed messages
+- [EventBus](event-bus.md) - System event monitoring
+- [Performance](performance.md) - Optimization tips
+- [API Reference](api/classes/Configuration.md) - Complete configuration options
