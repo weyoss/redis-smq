@@ -24,7 +24,7 @@ export type TConsumerHeartbeatEvent = {
     timestamp: number,
     heartbeatPayload: IConsumerHeartbeat,
   ) => void;
-  'consumerHeartbeat.error': (err: Error) => void;
+  'consumerHeartbeat.error': (err: Error, consumerId: string) => void;
 };
 
 export type TConsumerConsumeMessageEvent = {

@@ -65,7 +65,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     this.timer = new Timer();
     this.timer.on('error', (err) => {
       this.logger.error(`Timer error: ${err.message}`);
-      this.emit('consumerHeartbeat.error', err);
+      this.emit('consumerHeartbeat.error', err, consumerContext.consumerId);
     });
 
     this.logger.info(`ConsumerHeartbeat initialized`);
@@ -228,7 +228,11 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       (err) => {
         if (err) {
           this.logger.error(`Failed to set heartbeat in Redis: ${err.message}`);
-          this.emit('consumerHeartbeat.error', err);
+          this.emit(
+            'consumerHeartbeat.error',
+            err,
+            this.consumerContext.consumerId,
+          );
 
           // Back off exponentially on error (up to cap)
           this.currentDelayMs = Math.min(
