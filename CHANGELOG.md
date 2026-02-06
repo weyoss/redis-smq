@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.14-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.0...v9.0.14-next.1) (2026-02-06)
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** include consumer ID when emitting heartbeat errors ([1b19ff2](https://github.com/weyoss/redis-smq/commit/1b19ff22d9fffa472ca01ed1789c7d8fdb8c171e))
+
 ## [9.0.14-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.13...v9.0.14-next.0) (2026-02-02)
 
 ### 🚀 Chore
