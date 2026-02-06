@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-web-server",
-  "version": "9.0.14-next.1",
+  "version": "9.0.14-next.2",
   "description": "Web server for RedisSMQ Web UI: serves the SPA and hosts or proxies the RedisSMQ REST API.",
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",

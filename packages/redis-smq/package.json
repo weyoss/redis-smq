@@ -1,6 +1,6 @@
 {
   "name": "redis-smq",
-  "version": "9.0.14-next.1",
+  "version": "9.0.14-next.2",
   "description": "A high-performance, reliable, and scalable message queue for Node.js.",
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
