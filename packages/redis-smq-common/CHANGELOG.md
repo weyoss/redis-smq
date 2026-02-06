@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.14](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.2...v9.0.14) (2026-02-06)
+
+### 🚀 Chore
+
+- update READMEs after merging 'origin/next' into 'master' ([6702cc6](https://github.com/weyoss/redis-smq/commit/6702cc6e9a2bb89786eaa85e57bd719053699337))
+
 ## [9.0.14-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.1...v9.0.14-next.2) (2026-02-06)
 
 **Note:** Version bump only for package redis-smq-common
