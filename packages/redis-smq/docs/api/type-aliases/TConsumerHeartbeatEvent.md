@@ -8,7 +8,7 @@
 
 ### consumerHeartbeat.error()
 
-> **consumerHeartbeat.error**: (`err`) => `void`
+> **consumerHeartbeat.error**: (`err`, `consumerId`) => `void`
 
 #### Parameters
 
@@ -16,11 +16,15 @@
 
 `Error`
 
+##### consumerId
+
+`string`
+
 #### Returns
 
 `void`
 
-***
+---
 
 ### consumerHeartbeat.heartbeat()
 
