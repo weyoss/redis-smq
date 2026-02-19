@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { EQueueOperationalState } from '../../queue-manager/types/index.js';
+import { EQueueOperationalState } from '../../queue-manager/index.js';
 import { STATE_TRANSITION_RULES } from '../state-transition-rules.js';
 
 /**
