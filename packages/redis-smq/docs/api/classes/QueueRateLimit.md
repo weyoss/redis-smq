@@ -52,6 +52,10 @@ InvalidQueueParametersError
 
 QueueNotFoundError
 
+#### Throws
+
+QueueLockedError
+
 ---
 
 ### get()
@@ -182,3 +186,7 @@ UnexpectedScriptReplyError
 #### Throws
 
 QueueNotFoundError
+
+#### Throws
+
+QueueLockedError

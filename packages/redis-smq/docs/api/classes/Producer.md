@@ -74,15 +74,15 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ---
 
-### ensureIsRunning()
+### ensureIsOperational()
 
-> **ensureIsRunning**(`cb`): `void`
+> **ensureIsOperational**(`cb`): `void`
 
 #### Parameters
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`
 
 #### Returns
 
@@ -90,7 +90,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 #### Inherited from
 
-`Runnable.ensureIsRunning`
+`Runnable.ensureIsOperational`
 
 ---
 
@@ -147,6 +147,20 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 #### Inherited from
 
 `Runnable.isGoingUp`
+
+---
+
+### isOperational()
+
+> **isOperational**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+`Runnable.isOperational`
 
 ---
 
@@ -411,7 +425,7 @@ producer.produce(msg, (err, messageIds) => {
 
 ##### cb
 
-`ICallback`\<`boolean`\>
+`ICallback`
 
 #### Returns
 
@@ -431,7 +445,7 @@ producer.produce(msg, (err, messageIds) => {
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`
 
 #### Returns
 

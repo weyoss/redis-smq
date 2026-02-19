@@ -24,7 +24,7 @@
 
 `void`
 
-***
+---
 
 ### queue.consumerGroupDeleted()
 
@@ -44,7 +44,7 @@
 
 `void`
 
-***
+---
 
 ### queue.queueCreated()
 
@@ -64,7 +64,7 @@
 
 `void`
 
-***
+---
 
 ### queue.queueDeleted()
 
@@ -75,6 +75,26 @@
 ##### queue
 
 [`IQueueParams`](../interfaces/IQueueParams.md)
+
+#### Returns
+
+`void`
+
+---
+
+### queue.stateChanged()
+
+> **queue.stateChanged**: (`queue`, `transition`) => `void`
+
+#### Parameters
+
+##### queue
+
+[`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### transition
+
+[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)
 
 #### Returns
 

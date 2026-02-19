@@ -17,7 +17,11 @@
 - [EMessagePropertyStatus](enumerations/EMessagePropertyStatus.md)
 - [EQueueDeliveryModel](enumerations/EQueueDeliveryModel.md)
 - [EQueueMessageType](enumerations/EQueueMessageType.md)
+- [EQueueOperation](enumerations/EQueueOperation.md)
+- [EQueueOperationalState](enumerations/EQueueOperationalState.md)
 - [EQueueProperty](enumerations/EQueueProperty.md)
+- [EQueueStateLockOwner](enumerations/EQueueStateLockOwner.md)
+- [EQueueStateTransitionReason](enumerations/EQueueStateTransitionReason.md)
 - [EQueueType](enumerations/EQueueType.md)
 
 ## Classes
@@ -38,9 +42,11 @@
 - [QueueDeadLetteredMessages](classes/QueueDeadLetteredMessages.md)
 - [QueueManager](classes/QueueManager.md)
 - [QueueMessages](classes/QueueMessages.md)
+- [QueueOperationValidator](classes/QueueOperationValidator.md)
 - [QueuePendingMessages](classes/QueuePendingMessages.md)
 - [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueScheduledMessages](classes/QueueScheduledMessages.md)
+- [QueueStateManager](classes/QueueStateManager.md)
 - [RedisSMQ](classes/RedisSMQ.md)
 
 ## Interfaces
@@ -69,6 +75,7 @@
 - [IQueueParsedParams](interfaces/IQueueParsedParams.md)
 - [IQueueProperties](interfaces/IQueueProperties.md)
 - [IQueueRateLimit](interfaces/IQueueRateLimit.md)
+- [IQueueStateTransition](interfaces/IQueueStateTransition.md)
 - [IRedisSMQConfig](interfaces/IRedisSMQConfig.md)
 - [IRedisSMQDefaultConfig](interfaces/IRedisSMQDefaultConfig.md)
 - [IRedisSMQParsedConfig](interfaces/IRedisSMQParsedConfig.md)
@@ -90,17 +97,21 @@
 - [TMessageStateProperty](type-aliases/TMessageStateProperty.md)
 - [TMessageStatePropertyKey](type-aliases/TMessageStatePropertyKey.md)
 - [TMessageStatePropertyType](type-aliases/TMessageStatePropertyType.md)
+- [TOperationBitmask](type-aliases/TOperationBitmask.md)
 - [TProducerEvent](type-aliases/TProducerEvent.md)
 - [TPurgeQueueJobTarget](type-aliases/TPurgeQueueJobTarget.md)
 - [TQueueConsumer](type-aliases/TQueueConsumer.md)
 - [TQueueEvent](type-aliases/TQueueEvent.md)
 - [TQueueExtendedParams](type-aliases/TQueueExtendedParams.md)
+- [TQueueStateCommonOptions](type-aliases/TQueueStateCommonOptions.md)
+- [TQueueStateFullOptions](type-aliases/TQueueStateFullOptions.md)
 - [TRedisSMQEvent](type-aliases/TRedisSMQEvent.md)
 
 ## Variables
 
 - [defaultConfig](variables/defaultConfig.md)
 - [MessageStatePropertyMap](variables/MessageStatePropertyMap.md)
+- [OperationBitmask](variables/OperationBitmask.md)
 
 ## Functions
 

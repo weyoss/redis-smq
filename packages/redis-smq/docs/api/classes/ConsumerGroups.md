@@ -68,6 +68,10 @@ ConsumerGroupsNotSupportedError
 
 #### Throws
 
+QueueOperationForbiddenError
+
+#### Throws
+
 UnexpectedScriptReplyError
 
 ---

@@ -725,7 +725,7 @@ Optional flag to enable multiplexing
 
 ###### cb
 
-`ICallback`\<`boolean`\>
+`ICallback`\<`void`\>
 
 Callback function called when consumer is ready
 
@@ -765,7 +765,7 @@ Convenience method to create and start a consumer in one call.
 
 ###### cb
 
-`ICallback`\<`boolean`\>
+`ICallback`\<`void`\>
 
 Callback function called when consumer is ready
 
@@ -807,7 +807,7 @@ Convenience method to create and start a producer in one call.
 
 ##### cb
 
-`ICallback`\<`boolean`\>
+`ICallback`
 
 Callback function called when producer is ready
 
