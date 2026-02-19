@@ -11,4 +11,4 @@ export * from './types/index.js';
 export * from './errors/index.js';
 export * from './callable-worker.js';
 export * from './runnable-worker.js';
-export * from './worker-cluster.js';
+export * from './worker-cluster/worker-cluster.js';
