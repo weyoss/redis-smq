@@ -236,15 +236,15 @@ consumer.consume(
 
 ---
 
-### ensureIsRunning()
+### ensureIsOperational()
 
-> **ensureIsRunning**(`cb`): `void`
+> **ensureIsOperational**(`cb`): `void`
 
 #### Parameters
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`
 
 #### Returns
 
@@ -252,7 +252,7 @@ consumer.consume(
 
 #### Inherited from
 
-`Runnable.ensureIsRunning`
+`Runnable.ensureIsOperational`
 
 ---
 
@@ -354,6 +354,20 @@ console.log('Queues:', queues);
 #### Inherited from
 
 `Runnable.isGoingUp`
+
+---
+
+### isOperational()
+
+> **isOperational**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+`Runnable.isOperational`
 
 ---
 
@@ -509,7 +523,7 @@ console.log('Queues:', queues);
 
 ##### cb
 
-`ICallback`\<`boolean`\>
+`ICallback`
 
 #### Returns
 
@@ -529,7 +543,7 @@ console.log('Queues:', queues);
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`
 
 #### Returns
 

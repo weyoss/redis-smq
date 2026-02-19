@@ -44,58 +44,29 @@ Type of queue messages this browser handles.
 
 Cancels an active purge job that is currently in progress.
 
-This method attempts to cancel a running purge job identified by the provided job ID.
-Note that cancellation is not guaranteed - it depends on the current state and progress
-of the purge operation. Once a purge job reaches certain stages, it may not be cancellable.
-
 #### Parameters
 
 ##### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue parameters identifying the queue
-where the purge job is running.
+The queue where the purge job is running.
 
 ##### jobId
 
 `string`
 
-The ID of the purge job to cancel. This is the job ID
-returned by the `purge()` method when the purge was initiated.
+The ID of the purge job to cancel.
 
 ##### cb
 
 `ICallback`
 
-Callback function invoked when the cancellation
-request is processed. - `error` {Error|null} - If an error occurs during
-cancellation request, this contains the Error object.
-Common errors include: - Job not found - Job already completed - Job cannot be cancelled in its current state - `result` {void} - No result is returned on success.
+Callback when cancellation is processed.
 
 #### Returns
 
 `void`
-
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-InvalidPurgeQueueJobIdError
 
 #### Inherited from
 
@@ -126,22 +97,6 @@ Callback returning the count
 #### Returns
 
 `void`
-
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
 
 #### Inherited from
 
@@ -261,22 +216,6 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 `void`
 
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
 #### Inherited from
 
 `MessageBrowserAbstract.getMessages`
@@ -289,70 +228,29 @@ QueueNotFoundError
 
 Retrieves comprehensive details about a specific purge job.
 
-This method returns the complete job object containing all metadata, configuration,
-and execution details for a purge operation. Unlike [getPurgeJobStatus](#getpurgejobstatus) which
-returns only status information, this method provides the full job object including:
-
-- Job creation timestamp
-- Job parameters and configuration
-- Target queue and message types being purged
-- Progress metrics and statistics
-- Error details (if the job failed)
-- Result summary (if the job completed)
-
 #### Parameters
 
 ##### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue parameters identifying the queue
-associated with the purge job.
+The queue associated with the purge job.
 
 ##### jobId
 
 `string`
 
-The ID of the purge job to retrieve. This is the job ID
-returned by the [purge](#purge) method when the purge was initiated.
+The ID of the purge job to retrieve.
 
 ##### cb
 
 `ICallback`\<[`IBackgroundJob`](../interfaces/IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
 
-Callback function invoked
-with the complete job object. - `error` {Error|null} - If an error occurs,
-this contains the Error object. - `job` {IBackgroundJob<TPurgeQueueJobTarget>|undefined} -
-The complete purge job object containing
-all metadata and execution details.
+Callback with the job object.
 
 #### Returns
 
 `void`
-
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-BackgroundJobNotFoundError
-
-#### Throws
-
-InvalidPurgeQueueJobIdError
 
 #### Inherited from
 
@@ -366,61 +264,29 @@ InvalidPurgeQueueJobIdError
 
 Retrieves the current status of a purge job.
 
-This method provides detailed status information about an asynchronous purge operation
-initiated via the [purge](#purge) method. The status includes progress, current state,
-and any error information if the job has failed.
-
 #### Parameters
 
 ##### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue parameters identifying the queue
-where the purge job is running.
+The queue where the purge job is running.
 
 ##### jobId
 
 `string`
 
-The ID of the purge job to check. This is the job ID
-returned by the [purge](#purge) method when the purge was initiated.
+The ID of the purge job to check.
 
 ##### cb
 
 `ICallback`\<[`EBackgroundJobStatus`](../enumerations/EBackgroundJobStatus.md)\>
 
-Callback function invoked with the job status. - `error` {Error|null} - If an error occurs,
-this contains the Error object. - `status` {EBackgroundJobStatus|undefined} -
-The current status of the purge job.
+Callback with the job status.
 
 #### Returns
 
 `void`
-
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-BackgroundJobNotFoundError
-
-#### Throws
-
-InvalidPurgeQueueJobIdError
 
 #### Inherited from
 
@@ -438,59 +304,23 @@ This operation is performed asynchronously using a background job. When this met
 is called, it immediately creates and starts a purge job, and returns the ID of
 that job. You can use the returned job ID to track the progress of the purge operation.
 
-Different message types can be purged using specific classes:
-
-- QueueMessages - Delete all queue messages
-- [QueueAcknowledgedMessages](QueueAcknowledgedMessages.md) - Delete acknowledged messages (if configured to be stored)
-- [QueueDeadLetteredMessages](QueueDeadLetteredMessages.md) - Delete dead-lettered messages (if configured to be stored)
-- [QueueScheduledMessages](QueueScheduledMessages.md) - Delete scheduled messages
-- [QueuePendingMessages](QueuePendingMessages.md) - Delete pending messages
-
 #### Parameters
 
 ##### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue to purge. Can be a string (queue name),
-queue parameters object, or queue consumer group parameters.
+The queue to purge.
 
 ##### cb
 
 `ICallback`\<`string`\>
 
-Callback function that will be invoked when the job is created.
-The callback receives two parameters: - `error` {Error|null} - If an error occurs during job creation,
-this will contain the Error object. If the job is successfully
-created, this will be `null`. - `jobId` {string|undefined} - The ID of the background job created
-to perform the purge operation. This ID can be used to: - Check the job status using `getPurgeJobStatus()` - Monitor progress via `getPurgeJob()` - Cancel the purge job if needed using `cancelPurge()`
-
-                         Note: Receiving a job ID does NOT mean the purge is complete,
-                         only that the purge job has been successfully created and started.
+Callback function that receives the job ID.
 
 #### Returns
 
 `void`
-
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-BackgroundJobTargetLockedError
 
 #### Inherited from
 
