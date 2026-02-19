@@ -19,7 +19,7 @@ it('Locker: extendLock() -> LockAbortError', async () => {
   const lock = bluebird.promisifyAll(
     new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false),
   );
-  await expect(lock.acquireLockAsync()).resolves.toBe(true);
+  await lock.acquireLockAsync();
   await expect(
     Promise.all([lock.extendLockAsync(), lock.shutdownAsync()]),
   ).rejects.toThrow(AbortError);

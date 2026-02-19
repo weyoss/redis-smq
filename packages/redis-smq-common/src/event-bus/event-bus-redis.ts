@@ -41,7 +41,7 @@ export class EventBusRedis<
     if (event === 'error') {
       return super.emit(event, ...args);
     }
-    if (!this.isRunning()) {
+    if (!this.isOperational()) {
       this.eventEmitter.emit('error', new EventBusNotConnectedError());
       return false;
     }
@@ -100,7 +100,7 @@ export class EventBusRedis<
   private ensureSubscribed(eventName: string): void {
     if (
       eventName !== 'error' &&
-      this.isRunning() &&
+      this.isOperational() &&
       !this.subscribedEvents.has(eventName)
     ) {
       this.subClient.getInstance().subscribe(eventName);
@@ -127,7 +127,7 @@ export class EventBusRedis<
 
   private syncSubscriptionsWithListeners(): void {
     // Subscribe to all existing non-error listener event names on startup
-    if (!this.isRunning()) return;
+    if (!this.isOperational()) return;
     for (const name of this.getListenerEventNames()) {
       this.ensureSubscribed(name);
     }
