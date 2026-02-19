@@ -92,6 +92,10 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.ltrim(key, start, stop, cb);
   }
 
+  override lindex(key: string, index: number, cb: ICallback<string | null>) {
+    this.client.lindex(key, index, cb);
+  }
+
   zcount(
     key: string,
     min: string | number,

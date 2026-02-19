@@ -356,6 +356,13 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
+  override lindex(key: string, index: number, cb: ICallback<string | null>) {
+    this.client
+      .lIndex(key, index)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
   publish(channel: string, message: string, cb: ICallback<number>): void {
     this.client
       .publish(channel, message)
