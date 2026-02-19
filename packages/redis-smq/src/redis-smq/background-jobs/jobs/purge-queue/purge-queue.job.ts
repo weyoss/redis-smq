@@ -10,7 +10,7 @@
 import { BackgroundJobWorkerAbstract } from '../../../../common/background-job/background-job-worker-abstract.js';
 import { async, ICallback, PanicError } from 'redis-smq-common';
 import { PurgeQueueJobManager } from './purge-queue-job-manager.js';
-import { IBrowserPage, IMessageBrowser } from '../../../../common/index.js';
+import { IBrowserPage } from '../../../../common/index.js';
 import { _deleteMessage } from '../../../../message-manager/_/_delete-message.js';
 import { QueueMessagesRegistry } from '../../../../common/queue-messages-registry/queue-messages-registry.js';
 import {
@@ -24,60 +24,57 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
   protected jobManager: PurgeQueueJobManager | null = null;
 
   private processNextJob(cb: ICallback<void>): void {
-    // Try to acquire a job
-    this.getJobManager().acquireNextJob((err, jobId) => {
-      if (err) return cb(err);
-      if (!jobId) {
-        // No job available
-        this.logger.info(`No job available.`);
-        return cb(null);
-      }
-      this.logger.info(`Worker ${this.id} acquired job: ${jobId}`);
+    async.waterfall(
+      [
+        // Try to acquire a job
+        (cb: ICallback<string>) => {
+          this.getJobManager().acquireNextJob((err, jobId) => {
+            if (err) return cb(err);
+            if (!jobId) {
+              // No job available
+              this.logger.info(`No job available.`);
+              return cb(null);
+            }
+            this.logger.info(`Worker ${this.id} acquired job: ${jobId}`);
+            cb(null, jobId);
+          });
+        },
 
-      // Process the job
-      this.executeJob(jobId, (jobErr) => {
-        if (jobErr) {
-          this.logger.error(`Job ${jobId} failed:`, jobErr);
-        } else {
-          this.logger.info(`Job ${jobId} completed successfully`);
-        }
-        cb(jobErr);
-      });
-    });
+        // Process the job
+        (jobId, cb) => {
+          this.executeJob(jobId, (err) => {
+            if (err) {
+              this.logger.error(`Job ${jobId} failed:`, err);
+            } else {
+              this.logger.info(`Job ${jobId} completed successfully`);
+            }
+            cb(err);
+          });
+        },
+      ],
+      cb,
+    );
   }
 
   private executeJob(jobId: string, cb: ICallback<void>): void {
     const jobManager = this.getJobManager();
     async.waterfall(
       [
-        // Get job details
-        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
-          jobManager.get(jobId, (err, job) => {
-            if (err) return next(err);
-            if (!job) return next(new Error(`Job ${jobId} not found`));
-            next(null, job);
-          });
-        },
-
         // Update job status to processing
-        (job, next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
-          jobManager.start(jobId, (err) => {
-            if (err) return next(err);
-            next(null, job);
-          });
+        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
+          jobManager.start(jobId, next);
         },
 
         // Perform the actual purge
         (job, next: ICallback<number>) => {
-          const messageBrowser = QueueMessagesRegistry.getMessageBrowser(
-            job.target.messageType,
-          );
-          this.purgeMessages(job, messageBrowser, next);
+          this.purgeMessages(job, next);
         },
 
         // Mark job as completed
         (purgedCount: number, next: ICallback<void>) => {
-          jobManager.complete(jobId, { purged: purgedCount }, next);
+          jobManager.complete(jobId, { purged: purgedCount }, (err) =>
+            next(err),
+          );
         },
       ],
       (err) => {
@@ -114,12 +111,15 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
 
   protected purgeMessages(
     job: IBackgroundJob<TPurgeQueueJobTarget>,
-    messageBrowser: IMessageBrowser,
     cb: ICallback<number>,
   ): void {
     const parsedParams = job.target.queue;
     const delay = job.delay || 5000;
     const batchSize = job.batchSize || 1000;
+
+    const messageBrowser = QueueMessagesRegistry.getMessageBrowser(
+      job.target.messageType,
+    );
 
     let totalPurged = 0;
     let initialTotalItems = 0;
@@ -194,29 +194,34 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
             );
 
             // Delete the batch of messages
-            _deleteMessage(this.getRedisClient(), items, (err, reply) => {
-              if (err) {
-                this.logger.error(`Error deleting messages: ${err.message}`);
-                return next(err);
-              }
+            _deleteMessage(
+              this.getRedisClient(),
+              items,
+              job.id,
+              (err, reply) => {
+                if (err) {
+                  this.logger.error(`Error deleting messages: ${err.message}`);
+                  return next(err);
+                }
 
-              const successfullyDeleted = reply?.stats.success || 0;
-              totalPurged += successfullyDeleted;
+                const successfullyDeleted = reply?.stats.success || 0;
+                totalPurged += successfullyDeleted;
 
-              this.logger.debug(
-                `Batch ${batchCount}: Deleted ${successfullyDeleted} messages`,
-              );
+                this.logger.debug(
+                  `Batch ${batchCount}: Deleted ${successfullyDeleted} messages`,
+                );
 
-              // Update progress
-              this.getJobManager().updateProgress(
-                job.id,
-                totalPurged,
-                initialTotalItems,
-              );
+                // Update progress
+                this.getJobManager().updateProgress(
+                  job.id,
+                  totalPurged,
+                  initialTotalItems,
+                );
 
-              const shouldContinue = items.length === batchSize;
-              next(null, shouldContinue);
-            });
+                const shouldContinue = items.length === batchSize;
+                next(null, shouldContinue);
+              },
+            );
           },
         ],
         (err, shouldContinue) => {

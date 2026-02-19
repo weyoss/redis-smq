@@ -7,6 +7,68 @@
  * in the root directory of this source tree.
  */
 
+/**
+ * Queue operational states representing the current mode of queue processing.
+ * These states are mutually exclusive - a queue can only be in one state at a time.
+ */
+export enum EQueueOperationalState {
+  /**
+   * Queue is operating normally.
+   * - Consuming messages
+   * - Accepting new messages
+   * - All operations enabled
+   */
+  ACTIVE,
+
+  /**
+   * Queue processing is temporarily paused.
+   * - **NOT** consuming messages
+   * - **CAN** accept new messages (messages buffer)
+   * - Message handler remain subscribed
+   * - In-flight messages complete or timeout
+   * - Quick resume capability
+   *
+   * @example
+   * // Use cases:
+   * // - Rolling deployments
+   * // - Downstream service issues
+   * // - Temporary maintenance
+   * // - Debugging/inspection
+   */
+  PAUSED,
+
+  /**
+   * Queue is completely shut down.
+   * - **NOT** consuming messages
+   * - **NOT** accepting new messages
+   * - All message handler are disconnected
+   *
+   * @example
+   * // Use cases:
+   * // - Major maintenance
+   * // - Resource reclamation
+   * // - Long-term disabling
+   * // - Emergency intervention
+   */
+  STOPPED,
+
+  /**
+   * Queue has an exclusive lock for operations.
+   * - **NOT** consuming messages (except lock holder)
+   * - **NOT** accepting new messages
+   * - External operations blocked
+   * - Lock holder has exclusive access
+   *
+   * @example
+   * // Use cases:
+   * // - Administrative operations
+   * // - Bulk data operations
+   * // - Schema migrations
+   * // - Critical repairs
+   */
+  LOCKED,
+}
+
 export enum EQueueType {
   LIFO_QUEUE,
   FIFO_QUEUE,
@@ -54,6 +116,9 @@ export interface IQueueProperties {
   deadLetteredMessagesCount: number;
   delayedMessagesCount: number;
   requeuedMessagesCount: number;
+  operationalState: EQueueOperationalState;
+  lastStateChangeAt: number | null;
+  lockId: string | null;
 }
 
 export enum EQueueProperty {
@@ -68,4 +133,7 @@ export enum EQueueProperty {
   DEAD_LETTERED_MESSAGES_COUNT,
   DELAYED_MESSAGES_COUNT,
   REQUEUED_MESSAGES_COUNT,
+  OPERATIONAL_STATE,
+  LAST_STATE_CHANGE_AT,
+  LOCK_ID,
 }

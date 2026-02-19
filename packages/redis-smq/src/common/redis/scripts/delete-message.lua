@@ -9,17 +9,19 @@
 -- Description:
 -- Deletes one or more messages from a queue.
 -- This script is optimized for batch operations and ensures all queue counters are correctly updated.
+-- Respects queue operational state - requires valid lock ID when queue is LOCKED.
 --
 -- KEYS:
 --   Static Keys (1-9): All queue-related keys.
 --   Dynamic Keys (10...): A list of message keys (keyMessage) to be deleted.
 --
 -- ARGV:
---   Static ARGV (1-19): All constants and queue property names.
---   Dynamic ARGV (20...): A list of message IDs to be deleted.
+--   Static ARGV (1-24): All constants and queue property names.
+--   Dynamic ARGV (25...): A list of message IDs to be deleted.
 --
 -- Returns:
 --   A table with counts: {processedCount, successCount, notFoundCount, inProcessCount}
+--   Or an error string: 'QUEUE_LOCKED' or 'INVALID_LOCK'
 
 -- Static Keys
 local keyQueueProperties = KEYS[1]
@@ -52,12 +54,34 @@ local EMessageStatusScheduled = ARGV[16]
 local EMessageStatusDeadLettered = ARGV[17]
 local EMessageStatusDelayed = ARGV[18]
 local EMessageStatusRequeued = ARGV[19]
+-- Operational state constants (new)
+local EQueuePropertyOperationalState = ARGV[20]
+local EQueueOperationalStateLocked = ARGV[21]
+local EQueuePropertyLockId = ARGV[22]
+local operationLockId = ARGV[23]
 
 -- Constants
 local INITIAL_KEY_OFFSET = 9
-local INITIAL_ARGV_OFFSET = 19
+local INITIAL_ARGV_OFFSET = 23
 local PARAMS_PER_MESSAGE = 1
 local KEYS_PER_MESSAGE = 1
+
+-- Check operational state for LOCKED queue
+local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)
+local currentLockId = redis.call("HGET", keyQueueProperties, EQueuePropertyLockId)
+currentLockId = currentLockId or ''
+
+if currentState == EQueueOperationalStateLocked then
+    -- Queue is locked, need valid lock ID to proceed with message deletion
+    if not operationLockId or operationLockId == '' then
+        return 'QUEUE_LOCKED'
+    end
+
+    -- Validate the provided lock ID matches current lock
+    if currentLockId == '' or currentLockId ~= operationLockId then
+        return 'INVALID_LOCK'
+    end
+end
 
 -- Validation
 if ((#KEYS - INITIAL_KEY_OFFSET) * PARAMS_PER_MESSAGE) ~= ((#ARGV - INITIAL_ARGV_OFFSET) * KEYS_PER_MESSAGE) then

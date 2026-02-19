@@ -175,15 +175,11 @@ export class Producer extends Runnable<TProducerEvent> {
   /**
    * A hook that runs after the producer has successfully started. It finalizes
    * the "up" state and emits the `producer.up` event.
-   *
-   * @param cb - A callback function.
    */
-  protected override up(cb: ICallback<boolean>) {
-    super.up(() => {
-      this.logger.info(`Producer is up.`);
-      this.emit('producer.up', this.id);
-      cb(null, true);
-    });
+  protected override finalizeUp() {
+    super.finalizeUp();
+    this.logger.info(`Producer is up.`);
+    this.emit('producer.up', this.id);
   }
 
   /**
@@ -213,16 +209,11 @@ export class Producer extends Runnable<TProducerEvent> {
    * This method finalizes the "down" state by:
    * - Logging the successful shutdown.
    * - Emitting the `producer.down` event to notify listeners.
-   *
-   * @param cb - A callback function invoked upon completion.
-   *             - Always called with: `cb(null, true)`.
    */
-  protected override down(cb: ICallback<boolean>): void {
-    super.down(() => {
-      this.logger.info(`Producer is down.`);
-      this.emit('producer.down', this.id);
-      cb(null, true);
-    });
+  protected override finalizeDown(): void {
+    super.finalizeDown();
+    this.logger.info(`Producer is down.`);
+    this.emit('producer.down', this.id);
   }
 
   /**
@@ -500,7 +491,7 @@ export class Producer extends Runnable<TProducerEvent> {
    * ```
    */
   produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
-    if (!this.isRunning()) {
+    if (!this.isOperational()) {
       this.logger.error('Cannot produce message. Producer is not running.');
       return cb(new ProducerNotRunningError());
     }

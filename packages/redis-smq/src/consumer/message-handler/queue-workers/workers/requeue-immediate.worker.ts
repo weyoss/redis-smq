@@ -16,7 +16,11 @@ import {
   EMessagePropertyStatus,
 } from '../../../../message/index.js';
 import { MessageEnvelope } from '../../../../message/message-envelope.js';
-import { EQueueProperty, EQueueType } from '../../../../queue-manager/index.js';
+import {
+  EQueueProperty,
+  EQueueType,
+  EQueueOperationalState,
+} from '../../../../queue-manager/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
@@ -96,6 +100,12 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
       EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
       EQueueType.LIFO_QUEUE,
       EQueueType.FIFO_QUEUE,
+      // Operational state constants
+      EQueueProperty.OPERATIONAL_STATE,
+      EQueueOperationalState.ACTIVE,
+      EQueueOperationalState.PAUSED,
+      EQueueOperationalState.STOPPED,
+      EQueueOperationalState.LOCKED,
       timestamp,
     ];
 
@@ -126,7 +136,7 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
 
     withSharedPoolConnection((redisClient, cb) => {
       this.logger.debug(
-        `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE script with ${messages.length} messages`,
+        `Executing REQUEUE_IMMEDIATE script with ${messages.length} messages`,
       );
       redisClient.runScript(
         ERedisScriptName.REQUEUE_IMMEDIATE,
@@ -147,6 +157,10 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
               );
             }
             this.logger.info(`Successfully requeued ${reply} messages.`);
+            return cb();
+          }
+          if (typeof reply === 'string') {
+            this.logger.warn(`Script returned queue state: ${reply}`);
             return cb();
           }
           // Catch script-level errors and report them.

@@ -207,30 +207,22 @@ export class Consumer extends Runnable<TConsumerEvent> {
 
   /**
    * Handles the successful up process of the consumer.
-   *
-   * @param {ICallback<boolean>} cb - Callback function to indicate success.
    */
-  protected override up(cb: ICallback<boolean>) {
+  protected override finalizeUp() {
+    super.finalizeUp();
     this.logger.info('Consumer is up');
-    super.up(() => {
-      this.logger.debug(`Emitting consumer.up event for consumer ${this.id}`);
-      this.emit('consumer.up', this.id);
-      cb(null, true);
-    });
+    this.logger.debug(`Emitting consumer.up event for consumer ${this.id}`);
+    this.emit('consumer.up', this.id);
   }
 
   /**
    * Handles the successful down process of the consumer.
-   *
-   * @param {ICallback<boolean>} cb - Callback function to indicate success.
    */
-  protected override down(cb: ICallback<boolean>) {
+  protected override finalizeDown() {
+    super.finalizeDown();
     this.logger.info(`Consumer ${this.getId()} is now down`);
-    super.down(() => {
-      this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
-      this.emit('consumer.down', this.id);
-      cb(null, true);
-    });
+    this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
+    this.emit('consumer.down', this.id);
   }
 
   /**

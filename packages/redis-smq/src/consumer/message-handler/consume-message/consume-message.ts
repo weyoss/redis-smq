@@ -31,6 +31,7 @@ import {
 } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import {
+  EQueueOperationalState,
   EQueueProperty,
   IQueueParsedParams,
 } from '../../../queue-manager/index.js';
@@ -148,6 +149,11 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       expire,
       queueSize * -1,
       Date.now(),
+      EQueueProperty.OPERATIONAL_STATE,
+      EQueueOperationalState.ACTIVE,
+      EQueueOperationalState.PAUSED,
+      EQueueOperationalState.STOPPED,
+      EQueueOperationalState.LOCKED,
     ];
 
     this.logger.debug(
@@ -169,6 +175,44 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           );
           return this.handleError(err);
         }
+
+        // Handle queue state specific errors
+        if (reply === 'QUEUE_STOPPED') {
+          this.logger.warn(
+            `Cannot acknowledge message ${messageId}: Queue is in STOPPED state`,
+          );
+          // Unacknowledge the message since we can't acknowledge it
+          this.unacknowledgeMessage(
+            message,
+            EMessageUnacknowledgementReason.QUEUE_STOPPED,
+          );
+          return;
+        }
+
+        if (reply === 'QUEUE_LOCKED') {
+          this.logger.warn(
+            `Cannot acknowledge message ${messageId}: Queue is in LOCKED state`,
+          );
+          // Unacknowledge the message since we can't acknowledge it
+          this.unacknowledgeMessage(
+            message,
+            EMessageUnacknowledgementReason.QUEUE_LOCKED,
+          );
+          return;
+        }
+
+        if (reply === 'QUEUE_INVALID_STATE') {
+          this.logger.warn(
+            `Cannot acknowledge message ${messageId}: Queue is in invalid state`,
+          );
+          // Unacknowledge the message since we can't acknowledge it
+          this.unacknowledgeMessage(
+            message,
+            EMessageUnacknowledgementReason.QUEUE_INVALID_STATE,
+          );
+          return;
+        }
+
         if (reply === 1) {
           this.logger.info(`Message ${messageId} acknowledged successfully`);
           this.emit(
@@ -183,6 +227,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           );
           return;
         }
+
         if (reply === 0) {
           // This case should never happen
           return this.handleError(
@@ -191,6 +236,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
             }),
           );
         }
+
         this.handleError(
           new PanicError({
             message: `Unexpected reply from ACKNOWLEDGE_MESSAGE script: ${reply}`,
@@ -368,7 +414,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           return;
         }
         isCallbackHandled = true;
-        if (this.isRunning()) {
+        if (this.isOperational()) {
           if (err) {
             this.logger.error(
               `Error consuming message ${messageId}: ${err.message}`,
@@ -583,7 +629,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     const messageId = message.getId();
     this.logger.debug(`Received message ${messageId}`);
 
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       if (message.getSetExpired()) {
         this.logger.info(
           `Message ${messageId} has expired, unacknowledging with TTL_EXPIRED reason`,

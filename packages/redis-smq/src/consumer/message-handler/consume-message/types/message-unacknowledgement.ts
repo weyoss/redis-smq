@@ -26,6 +26,9 @@ export enum EMessageUnacknowledgementReason {
   OFFLINE_CONSUMER,
   OFFLINE_MESSAGE_HANDLER,
   TTL_EXPIRED,
+  QUEUE_STOPPED,
+  QUEUE_INVALID_STATE,
+  QUEUE_LOCKED,
 }
 
 export type TMessageUnacknowledgementAction =

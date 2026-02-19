@@ -27,9 +27,12 @@ import {
   IQueueParsedParams,
   IQueueRateLimit,
   TQueueConsumer,
+  EQueueOperationalState,
+  EQueueProperty,
 } from '../../../index.js';
 import {
   QueueNotFoundError,
+  QueueNotActiveError,
   UnexpectedScriptReplyError,
 } from '../../../errors/index.js';
 import { eventPublisher } from './event-publisher.js';
@@ -64,6 +67,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected keyQueueProcessing;
   protected keyQueuePending;
   protected keyQueuePriorityPending;
+  protected keyQueueProperties;
   protected blockUntilMessageReceived;
   protected autoCloseRedisConnection;
 
@@ -101,12 +105,14 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       keyQueuePending,
       keyQueuePriorityPending,
       keyQueueConsumers,
+      keyQueueProperties,
     } = redisKeys.getQueueKeys(
       this.queue.queueParams.ns,
       this.queue.queueParams.name,
       this.queue.groupId,
     );
 
+    this.keyQueueProperties = keyQueueProperties;
     this.keyQueuePriorityPending = keyQueuePriorityPending;
     this.keyQueuePending = keyQueuePending;
     this.keyQueueProcessing = keyQueueProcessing;
@@ -174,7 +180,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   }
 
   protected override handleError(err: Error) {
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       this.logger.error(`DequeueMessage error: ${err.message}`, err);
       this.emit(
         'consumer.dequeueMessage.error',
@@ -219,11 +225,15 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           this.keyConsumerQueues,
           this.keyQueueProcessingQueues,
           this.keyQueueProcessing,
+          this.keyQueueProperties,
         ];
         const args = [
           this.consumerContext.consumerId,
           JSON.stringify(consumerInfo),
           JSON.stringify(this.queue.queueParams),
+          // Operational state constants (ARGV[4-5])
+          EQueueProperty.OPERATIONAL_STATE,
+          EQueueOperationalState.ACTIVE,
         ];
         redisClient.runScript(
           ERedisScriptName.SUBSCRIBE_CONSUMER,
@@ -233,6 +243,12 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
             if (err) return cb(err);
             if (reply === 'QUEUE_NOT_FOUND')
               return cb(new QueueNotFoundError());
+            if (reply === 'QUEUE_NOT_ACTIVE')
+              return cb(
+                new QueueNotActiveError({
+                  metadata: { queue: this.queue.queueParams },
+                }),
+              );
             if (reply === 'OK') return cb();
             cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
           },
@@ -296,7 +312,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   };
 
   dequeue(): void {
-    if (!this.isRunning()) {
+    if (!this.isOperational()) {
       return;
     }
     const redisClient = this.getRedisClient();

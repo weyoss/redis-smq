@@ -39,6 +39,8 @@ import {
 } from '../types/index.js';
 import { _getDirectExchangeRoutingKeyQueues } from './_/_get-direct-exchange-routing-key-queues.js';
 import { _getDirectExchangeRoutingKeys } from './_/_get-direct-exchange-routing-keys.js';
+import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
 /**
  * Direct Exchange implementation for RedisSMQ.
@@ -451,107 +453,126 @@ export class ExchangeDirect {
     );
 
     withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        (client, watch, done) => {
-          let exchangeQueuePolicy: EExchangeQueuePolicy | null = null;
+      async.series(
+        [
+          (cb) =>
+            _validateOperation(
+              client,
+              queueParams,
+              EQueueOperation.BIND_EXCHANGE,
+              cb,
+            ),
+          (cb) =>
+            withWatchTransaction(
+              client,
+              (client, watch, done) => {
+                let exchangeQueuePolicy: EExchangeQueuePolicy | null = null;
 
-          async.waterfall(
-            [
-              // 1) WATCH base keys BEFORE any reads that inform writes
-              (cb1: ICallback<void>) =>
-                watch(
+                async.waterfall(
                   [
-                    keyExchange,
-                    keyQueueProperties,
-                    keyExchangeRoutingKeys,
-                    keyRoutingKeyQueues,
-                    keyQueueExchangeBindings,
-                    keyExchanges,
-                    keyNamespaceExchanges,
+                    // 1) WATCH base keys BEFORE any reads that inform writes
+                    (cb1: ICallback<void>) =>
+                      watch(
+                        [
+                          keyExchange,
+                          keyQueueProperties,
+                          keyExchangeRoutingKeys,
+                          keyRoutingKeyQueues,
+                          keyQueueExchangeBindings,
+                          keyExchanges,
+                          keyNamespaceExchanges,
+                        ],
+                        cb1,
+                      ),
+
+                    // 2) Validate queue/exchange binding and compute exchange policy (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      _validateQueueBinding(
+                        client,
+                        exchangeParams,
+                        queueParams,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          if (!reply) return cb1(new CallbackEmptyReplyError());
+                          const [queueProperties] = reply;
+                          exchangeQueuePolicy =
+                            queueProperties.queueType ===
+                            EQueueType.PRIORITY_QUEUE
+                              ? EExchangeQueuePolicy.PRIORITY
+                              : EExchangeQueuePolicy.STANDARD;
+                          cb1();
+                        },
+                      ),
+
+                    // 3) Ensure not already bound (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      client.sismember(
+                        keyRoutingKeyQueues,
+                        queueStr,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          const already = reply === 1;
+                          if (already) {
+                            this.logger.debug('bindQueue: already bound');
+                            return cb1(new QueueAlreadyBound());
+                          }
+                          cb1();
+                        },
+                      ),
+
+                    // 4) Build MULTI to persist meta, indexes, and the binding atomically
+                    (
+                      _: void,
+                      cb1: ICallback<IWatchTransactionAttemptResult>,
+                    ) => {
+                      const typeField = String(EExchangeProperty.TYPE);
+                      const queuePolicyField = String(
+                        EExchangeProperty.QUEUE_POLICY,
+                      );
+
+                      const multi = client.multi();
+
+                      // Persist exchange meta as a hash
+                      multi.hset(keyExchange, typeField, EExchangeType.DIRECT);
+                      multi.hset(
+                        keyExchange,
+                        queuePolicyField,
+                        Number(exchangeQueuePolicy),
+                      );
+
+                      // Register exchange in global and namespace indexes
+                      multi.sadd(keyExchanges, exchangeStr);
+                      multi.sadd(keyNamespaceExchanges, exchangeStr);
+
+                      // Maintain routing keys index for the exchange
+                      multi.sadd(keyExchangeRoutingKeys, validatedRoutingKey);
+
+                      // Add queue to the routing key queues set
+                      multi.sadd(keyRoutingKeyQueues, queueStr);
+
+                      // Maintain reverse index: record that this queue is bound to this exchange
+                      multi.sadd(keyQueueExchangeBindings, exchangeStr);
+
+                      cb1(null, { multi });
+                    },
                   ],
-                  cb1,
-                ),
-
-              // 2) Validate queue/exchange binding and compute exchange policy (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                _validateQueueBinding(
-                  client,
-                  exchangeParams,
-                  queueParams,
-                  (err, reply) => {
-                    if (err) return cb1(err);
-                    if (!reply) return cb1(new CallbackEmptyReplyError());
-                    const [queueProperties] = reply;
-                    exchangeQueuePolicy =
-                      queueProperties.queueType === EQueueType.PRIORITY_QUEUE
-                        ? EExchangeQueuePolicy.PRIORITY
-                        : EExchangeQueuePolicy.STANDARD;
-                    cb1();
-                  },
-                ),
-
-              // 3) Ensure not already bound (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                client.sismember(
-                  keyRoutingKeyQueues,
-                  queueStr,
-                  (err, reply) => {
-                    if (err) return cb1(err);
-                    const already = reply === 1;
-                    if (already) {
-                      this.logger.debug('bindQueue: already bound');
-                      return cb1(new QueueAlreadyBound());
-                    }
-                    cb1();
-                  },
-                ),
-
-              // 4) Build MULTI to persist meta, indexes, and the binding atomically
-              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
-                const typeField = String(EExchangeProperty.TYPE);
-                const queuePolicyField = String(EExchangeProperty.QUEUE_POLICY);
-
-                const multi = client.multi();
-
-                // Persist exchange meta as a hash
-                multi.hset(keyExchange, typeField, EExchangeType.DIRECT);
-                multi.hset(
-                  keyExchange,
-                  queuePolicyField,
-                  Number(exchangeQueuePolicy),
+                  done,
                 );
-
-                // Register exchange in global and namespace indexes
-                multi.sadd(keyExchanges, exchangeStr);
-                multi.sadd(keyNamespaceExchanges, exchangeStr);
-
-                // Maintain routing keys index for the exchange
-                multi.sadd(keyExchangeRoutingKeys, validatedRoutingKey);
-
-                // Add queue to the routing key queues set
-                multi.sadd(keyRoutingKeyQueues, queueStr);
-
-                // Maintain reverse index: record that this queue is bound to this exchange
-                multi.sadd(keyQueueExchangeBindings, exchangeStr);
-
-                cb1(null, { multi });
               },
-            ],
-            done,
-          );
-        },
-        (err) => {
-          if (err) {
-            // Idempotent: treat already-bound as success
-            if (err instanceof QueueAlreadyBound) return outerCb();
-            return outerCb(err);
-          }
-          this.logger.info(
-            `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} rk=${validatedRoutingKey}`,
-          );
-          outerCb();
-        },
+              (err) => {
+                if (err) {
+                  // Idempotent: treat already-bound as success
+                  if (err instanceof QueueAlreadyBound) return cb();
+                  return cb(err);
+                }
+                this.logger.info(
+                  `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} rk=${validatedRoutingKey}`,
+                );
+                cb();
+              },
+            ),
+        ],
+        (err) => outerCb(err),
       );
     }, cb);
   }
@@ -696,138 +717,151 @@ export class ExchangeDirect {
     );
 
     withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        // Attempt function: perform WATCHed reads, validations, and build MULTI
-        (client, watch, done) => {
-          let routingKeysAll: string[] = [];
-          let otherRoutingKeySets: string[] = [];
-          let currentCount = 0;
-          let stillBoundViaOtherRK = false;
+      async.series(
+        [
+          (cb) =>
+            _validateOperation(
+              client,
+              queueParams,
+              EQueueOperation.UNBIND_EXCHANGE,
+              cb,
+            ),
+          (cb) =>
+            withWatchTransaction(
+              client,
+              // Attempt function: perform WATCHed reads, validations, and build MULTI
+              (client, watch, done) => {
+                let routingKeysAll: string[] = [];
+                let otherRoutingKeySets: string[] = [];
+                let currentCount = 0;
+                let stillBoundViaOtherRK = false;
 
-          async.waterfall(
-            [
-              // 1) WATCH base keys before any reads
-              (cb1: ICallback<void>) => {
-                const baseWatchKeys = [
-                  keyExchange,
-                  keyExchangeRoutingKeys,
-                  keyRoutingKeyQueues,
-                  keyQueueExchangeBindings,
-                ];
-                watch(baseWatchKeys, cb1);
-              },
-
-              // 2) Validate exchange (type) under WATCH
-              (_: void, cb1: ICallback<void>) =>
-                _validateExchange(client, exchangeParams, true, cb1),
-
-              // 3) Ensure the queue is currently bound to this routing key (under WATCH)
-              (_: void, cb1: ICallback<void>) => {
-                client.sismember(
-                  keyRoutingKeyQueues,
-                  queueStr,
-                  (err, reply) => {
-                    if (err) return cb1(err);
-                    if (reply !== 1) {
-                      this.logger.warn('unbindQueue: queue not bound');
-                      return cb1(new QueueNotBoundError());
-                    }
-                    cb1();
-                  },
-                );
-              },
-
-              // 4) Read all routing keys of the exchange (under WATCH)
-              (_: void, cb1: ICallback<void>) => {
-                client.smembers(keyExchangeRoutingKeys, (err, keys) => {
-                  if (err) return cb1(err);
-                  routingKeysAll = keys ?? [];
-                  cb1();
-                });
-              },
-
-              // 5) WATCH derived per-routing-key queue sets for still-bound detection
-              (_: void, cb1: ICallback<void>) => {
-                const others = routingKeysAll.filter(
-                  (rk) => rk !== validatedRoutingKey,
-                );
-                otherRoutingKeySets = others.map((rk) => {
-                  const { keyRoutingKeyQueues: k } =
-                    redisKeys.getExchangeDirectRoutingKeyKeys(
-                      exchangeParams.ns,
-                      exchangeParams.name,
-                      rk,
-                    );
-                  return k;
-                });
-
-                if (otherRoutingKeySets.length === 0) return cb1();
-                watch(otherRoutingKeySets, cb1);
-              },
-
-              // 6) Compute current counts/flags (all reads happen under WATCH)
-              (_: void, cb1: ICallback<void>) => {
-                async.series(
+                async.waterfall(
                   [
-                    // Count how many queues remain on this routing key
-                    (cbx: ICallback<void>) =>
-                      client.scard(keyRoutingKeyQueues, (err, count) => {
-                        if (err) return cbx(err);
-                        currentCount = count || 0;
-                        cbx();
-                      }),
+                    // 1) WATCH base keys before any reads
+                    (cb1: ICallback<void>) => {
+                      const baseWatchKeys = [
+                        keyExchange,
+                        keyExchangeRoutingKeys,
+                        keyRoutingKeyQueues,
+                        keyQueueExchangeBindings,
+                      ];
+                      watch(baseWatchKeys, cb1);
+                    },
 
-                    // Check if queue is still bound via any other routing key
-                    (cbx: ICallback<void>) => {
-                      if (otherRoutingKeySets.length === 0) return cbx();
-                      async.eachOf(
-                        otherRoutingKeySets,
-                        (k, _i, next) => {
-                          if (stillBoundViaOtherRK) return next();
-                          client.sismember(k, queueStr, (e, rep) => {
-                            if (e) return next(e);
-                            if (rep === 1) stillBoundViaOtherRK = true;
-                            next();
-                          });
+                    // 2) Validate exchange (type) under WATCH
+                    (_: void, cb1: ICallback<void>) =>
+                      _validateExchange(client, exchangeParams, true, cb1),
+
+                    // 3) Ensure the queue is currently bound to this routing key (under WATCH)
+                    (_: void, cb1: ICallback<void>) => {
+                      client.sismember(
+                        keyRoutingKeyQueues,
+                        queueStr,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          if (reply !== 1) {
+                            this.logger.warn('unbindQueue: queue not bound');
+                            return cb1(new QueueNotBoundError());
+                          }
+                          cb1();
                         },
-                        (e) => cbx(e || null),
                       );
                     },
+
+                    // 4) Read all routing keys of the exchange (under WATCH)
+                    (_: void, cb1: ICallback<void>) => {
+                      client.smembers(keyExchangeRoutingKeys, (err, keys) => {
+                        if (err) return cb1(err);
+                        routingKeysAll = keys ?? [];
+                        cb1();
+                      });
+                    },
+
+                    // 5) WATCH derived per-routing-key queue sets for still-bound detection
+                    (_: void, cb1: ICallback<void>) => {
+                      const others = routingKeysAll.filter(
+                        (rk) => rk !== validatedRoutingKey,
+                      );
+                      otherRoutingKeySets = others.map((rk) => {
+                        const { keyRoutingKeyQueues: k } =
+                          redisKeys.getExchangeDirectRoutingKeyKeys(
+                            exchangeParams.ns,
+                            exchangeParams.name,
+                            rk,
+                          );
+                        return k;
+                      });
+
+                      if (otherRoutingKeySets.length === 0) return cb1();
+                      watch(otherRoutingKeySets, cb1);
+                    },
+
+                    // 6) Compute current counts/flags (all reads happen under WATCH)
+                    (_: void, cb1: ICallback<void>) => {
+                      async.series(
+                        [
+                          // Count how many queues remain on this routing key
+                          (cbx: ICallback<void>) =>
+                            client.scard(keyRoutingKeyQueues, (err, count) => {
+                              if (err) return cbx(err);
+                              currentCount = count || 0;
+                              cbx();
+                            }),
+
+                          // Check if queue is still bound via any other routing key
+                          (cbx: ICallback<void>) => {
+                            if (otherRoutingKeySets.length === 0) return cbx();
+                            async.eachOf(
+                              otherRoutingKeySets,
+                              (k, _i, next) => {
+                                if (stillBoundViaOtherRK) return next();
+                                client.sismember(k, queueStr, (e, rep) => {
+                                  if (e) return next(e);
+                                  if (rep === 1) stillBoundViaOtherRK = true;
+                                  next();
+                                });
+                              },
+                              (e) => cbx(e || null),
+                            );
+                          },
+                        ],
+                        (err) => cb1(err),
+                      );
+                    },
+
+                    // 7) Build MULTI to be executed by the helper
+                    (_: void, cb1) => {
+                      const multi = client.multi();
+
+                      // Always remove the queue from the current routing key set
+                      multi.srem(keyRoutingKeyQueues, queueStr);
+
+                      // If this was the last queue for this routing key, remove the routing key from the exchange index
+                      if (currentCount === 1) {
+                        multi.srem(keyExchangeRoutingKeys, validatedRoutingKey);
+                      }
+
+                      // If queue is no longer bound to this exchange via any routing key, remove reverse index entry
+                      if (!stillBoundViaOtherRK) {
+                        multi.srem(keyQueueExchangeBindings, exchangeStr);
+                      }
+
+                      cb1(null, { multi });
+                    },
                   ],
-                  (err) => cb1(err),
+                  done,
                 );
               },
-
-              // 7) Build MULTI to be executed by the helper
-              (_: void, cb1) => {
-                const multi = client.multi();
-
-                // Always remove the queue from the current routing key set
-                multi.srem(keyRoutingKeyQueues, queueStr);
-
-                // If this was the last queue for this routing key, remove the routing key from the exchange index
-                if (currentCount === 1) {
-                  multi.srem(keyExchangeRoutingKeys, validatedRoutingKey);
-                }
-
-                // If queue is no longer bound to this exchange via any routing key, remove reverse index entry
-                if (!stillBoundViaOtherRK) {
-                  multi.srem(keyQueueExchangeBindings, exchangeStr);
-                }
-
-                cb1(null, { multi });
+              // Final callback after successful EXEC (or error)
+              (err) => {
+                if (err) return cb(err);
+                this.logger.info('unbindQueue: unbound');
+                cb();
               },
-            ],
-            done,
-          );
-        },
-        // Final callback after successful EXEC (or error)
-        (err) => {
-          if (err) return outerCb(err);
-          this.logger.info('unbindQueue: unbound');
-          outerCb();
-        },
+            ),
+        ],
+        (err) => outerCb(err),
       );
     }, cb);
   }

@@ -122,9 +122,9 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   create(
     target: Target,
     options: Partial<IBackgroundJob<Target>> = {},
-    cb: ICallback<string>,
+    cb: ICallback<IBackgroundJob<Target>>,
   ): void {
-    const jobId = randomUUID();
+    const jobId = options.id ?? randomUUID();
     const now = Date.now();
 
     const backgroundJob: IBackgroundJob<Target> = {
@@ -164,7 +164,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
             this.logger.info(
               `Created job ${jobId} for target "${JSON.stringify(target)}"`,
             );
-            return cb(null, jobId);
+            return cb(null, backgroundJob);
           default:
             return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
         }
@@ -173,7 +173,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Get job by ID
-  get(jobId: string, cb: ICallback<IBackgroundJob<Target> | null>): void {
+  get(jobId: string, cb: ICallback<IBackgroundJob<Target>>): void {
     this.redisClient.hget(this.config.keyBackgroundJobs, jobId, (err, data) => {
       if (err) return cb(err);
       if (!data)
@@ -270,7 +270,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Cancel a job
-  cancel(jobId: string, cb: ICallback<void>): void {
+  cancel(jobId: string, cb: ICallback<IBackgroundJob<Target>>): void {
     async.waterfall(
       [
         // Get job to get target and current status
@@ -286,7 +286,10 @@ export abstract class BackgroundJobManagerAbstract<Target> {
         },
 
         // Execute cancel script
-        (backgroundJob: IBackgroundJob<Target>, next: ICallback) => {
+        (
+          backgroundJob: IBackgroundJob<Target>,
+          next: ICallback<IBackgroundJob<Target>>,
+        ) => {
           const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
@@ -317,7 +320,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               switch (result) {
                 case 1:
                   this.logger.info(`Cancelled job ${jobId}`);
-                  return next(null);
+                  return next(null, updatedJob);
                 case 2:
                   this.logger.warn(`Job ${jobId} was already cancelled`);
                   return next(null);
@@ -353,7 +356,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Mark job as processing
-  start(jobId: string, cb: ICallback<void>): void {
+  start(jobId: string, cb: ICallback<IBackgroundJob<Target>>): void {
     this.get(jobId, (err, backgroundJob) => {
       if (err) return cb(err);
       if (!backgroundJob)
@@ -387,7 +390,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
           switch (reply) {
             case 1:
               this.logger.info(`Started processing job ${jobId}`);
-              return cb(null);
+              return cb(null, updatedJob);
             case 2:
               this.logger.warn(`Job ${jobId} was already processing`);
               return cb(null);
@@ -438,7 +441,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   complete(
     jobId: string,
     result: { purged: number },
-    cb: ICallback<void>,
+    cb: ICallback<IBackgroundJob<Target>>,
   ): void {
     async.waterfall(
       [
@@ -455,7 +458,10 @@ export abstract class BackgroundJobManagerAbstract<Target> {
         },
 
         // Execute completion script
-        (backgroundJob: IBackgroundJob<Target>, next: ICallback) => {
+        (
+          backgroundJob: IBackgroundJob<Target>,
+          next: ICallback<IBackgroundJob<Target>>,
+        ) => {
           const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
@@ -487,7 +493,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               switch (reply) {
                 case 1:
                   this.logger.info(`Completed job ${jobId}`);
-                  return next(null);
+                  return next(null, updatedJob);
                 case 2:
                   this.logger.warn(`Job ${jobId} was already completed`);
                   return next(null);
@@ -521,7 +527,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Mark job as failed
-  fail(jobId: string, error: string, cb: ICallback<void>): void {
+  fail(
+    jobId: string,
+    error: string,
+    cb: ICallback<IBackgroundJob<Target>>,
+  ): void {
     async.waterfall(
       [
         // Get job to get target and current status
@@ -537,7 +547,10 @@ export abstract class BackgroundJobManagerAbstract<Target> {
         },
 
         // Execute fail script
-        (backgroundJob: IBackgroundJob<Target>, next: ICallback) => {
+        (
+          backgroundJob: IBackgroundJob<Target>,
+          next: ICallback<IBackgroundJob<Target>>,
+        ) => {
           const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
@@ -568,7 +581,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               switch (reply) {
                 case 1:
                   this.logger.error(`Job ${jobId} failed: ${error}`);
-                  return next(null);
+                  return next(null, updatedJob);
                 case 2:
                   this.logger.warn(`Job ${jobId} was already failed`);
                   return next(null);

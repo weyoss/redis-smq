@@ -14,6 +14,7 @@ import {
   IRedisClient,
 } from 'redis-smq-common';
 import {
+  EQueueOperationalState,
   EQueueProperty,
   EQueueType,
   IQueueParams,
@@ -26,12 +27,17 @@ import {
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import { _getMessage } from './_get-message.js';
-import { MessageNotFoundError } from '../../errors/index.js';
+import {
+  MessageNotFoundError,
+  UnexpectedScriptReplyError,
+  QueueLockedError,
+} from '../../errors/index.js';
 import { IMessageManagerDeleteResponse } from '../types/index.js';
 
 export function _deleteMessage(
   redisClient: IRedisClient,
   messageId: string | string[],
+  lockId: string | null,
   cb: ICallback<IMessageManagerDeleteResponse>,
 ): void {
   const deleteResponse: IMessageManagerDeleteResponse = {
@@ -150,6 +156,10 @@ export function _deleteMessage(
                 EMessagePropertyStatus.DEAD_LETTERED,
                 EMessagePropertyStatus.UNACK_DELAYING,
                 EMessagePropertyStatus.UNACK_REQUEUING,
+                EQueueProperty.OPERATIONAL_STATE,
+                EQueueOperationalState.LOCKED,
+                EQueueProperty.LOCK_ID,
+                lockId ?? '', // lock ID
               ];
 
               const dynamicKeys = batchMessages.map(
@@ -166,10 +176,36 @@ export function _deleteMessage(
                 argv,
                 (err, reply) => {
                   if (err) return done(err);
+
+                  // Handle queue state errors
+                  if (reply === 'QUEUE_LOCKED') {
+                    return done(
+                      new QueueLockedError({
+                        message: `Cannot delete messages from queue ${queue.name}: Queue is locked`,
+                        metadata: {
+                          queue: queue,
+                        },
+                      }),
+                    );
+                  }
+
+                  if (reply === 'INVALID_ARGS_ERROR') {
+                    return done(
+                      new UnexpectedScriptReplyError({
+                        message:
+                          'Invalid arguments error in DELETE_MESSAGE script',
+                        metadata: {
+                          reply,
+                        },
+                      }),
+                    );
+                  }
+
                   // type-coverage:ignore-next-line
                   if (!Array.isArray(reply) || reply.length !== 4) {
                     return done(new CallbackInvalidReplyError());
                   }
+
                   // type-coverage:ignore-next-line
                   const [processed, success, notFound, inProcess] = reply as [
                     number,

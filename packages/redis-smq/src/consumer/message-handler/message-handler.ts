@@ -33,6 +33,7 @@ import {
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import {
+  EQueueOperationalState,
   EQueueProperty,
   IQueueParsedParams,
 } from '../../queue-manager/index.js';
@@ -123,13 +124,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     };
 
   protected onError = (err: Error) => {
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       this.handleError(err);
     }
   };
 
   protected override handleError(err: Error) {
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       this.logger.error(`MessageHandler error: ${err.message}`, err);
       this.emit(
         'consumer.messageHandler.error',
@@ -239,7 +240,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           'consumer.consumeMessage.messageAcknowledged',
           this.onMessageAcknowledged,
         );
-        this.consumeMessage.run((err) => cb(err));
+        this.consumeMessage.run(cb);
       },
       (cb: ICallback) => {
         this.dequeueMessage = this.createDequeueMessageInstance();
@@ -252,7 +253,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           'consumer.dequeueMessage.nextMessage',
           this.onMessageNext,
         );
-        this.dequeueMessage.run((err) => cb(err));
+        this.dequeueMessage.run(cb);
       },
       this.runWorkerCluster,
       (cb: ICallback) => {
@@ -337,7 +338,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   }
 
   processMessage(messageId: string): void {
-    if (!this.isRunning() || !this.consumeMessage) {
+    if (!this.isOperational() || !this.consumeMessage) {
       return;
     }
     const consumeMessage = this.consumeMessage;
@@ -363,6 +364,11 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       EMessageProperty.ATTEMPTS,
       EQueueProperty.PROCESSING_MESSAGES_COUNT,
       EQueueProperty.PENDING_MESSAGES_COUNT,
+      EQueueProperty.OPERATIONAL_STATE,
+      EQueueOperationalState.ACTIVE,
+      EQueueOperationalState.PAUSED,
+      EQueueOperationalState.STOPPED,
+      EQueueOperationalState.LOCKED,
     ];
 
     redisClient.runScript(
@@ -371,6 +377,65 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       argv,
       (err, reply: unknown) => {
         if (err) return this.handleError(err);
+
+        // Handle queue state specific errors
+        if (reply === 'QUEUE_STOPPED') {
+          this.logger.warn(
+            `Cannot checkout message ${messageId}: Queue is in STOPPED state. Consumer will stop processing from this queue.`,
+          );
+          // Shutdown this message handler as queue is stopped
+          this.shutdown(() => {
+            this.logger.info(
+              `MessageHandler for queue ${this.queue.queueParams.name} shut down due to STOPPED state`,
+            );
+          });
+          return;
+        }
+
+        if (reply === 'QUEUE_LOCKED') {
+          this.logger.warn(
+            `Cannot checkout message ${messageId}: Queue is in LOCKED state. Consumer will stop processing from this queue.`,
+          );
+          // Shutdown this message handler as queue is locked
+          this.shutdown(() => {
+            this.logger.info(
+              `MessageHandler for queue ${this.queue.queueParams.name} shut down due to LOCKED state`,
+            );
+          });
+          return;
+        }
+
+        if (reply === 'QUEUE_INVALID_STATE') {
+          this.logger.warn(
+            `Cannot checkout message ${messageId}: Queue is in invalid state. Consumer will stop processing from this queue.`,
+          );
+          // Shutdown this message handler as queue is in invalid state
+          this.shutdown(() => {
+            this.logger.info(
+              `MessageHandler for queue ${this.queue.queueParams.name} shut down due to invalid state`,
+            );
+          });
+          return;
+        }
+
+        if (reply === 'MESSAGE_NOT_FOUND') {
+          this.logger.warn(
+            `Message [${messageId}] not found. It may have been deleted or expired.`,
+          );
+          // A slot has been freed. Immediately try to get another message.
+          this.next();
+          return;
+        }
+
+        if (reply === 'MESSAGE_NOT_PENDING') {
+          this.logger.warn(
+            `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
+          );
+          // A slot has been freed. Immediately try to get another message.
+          this.next();
+          return;
+        }
+
         if (!reply) {
           this.logger.warn(
             `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
@@ -389,13 +454,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   }
 
   next(): void {
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       this.dequeue();
     }
   }
 
   dequeue(): void {
-    if (this.isRunning() && this.dequeueMessage) {
+    if (this.isOperational() && this.dequeueMessage) {
       this.dequeueMessage.dequeue();
     }
   }

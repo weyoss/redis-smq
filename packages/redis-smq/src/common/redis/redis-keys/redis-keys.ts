@@ -90,6 +90,9 @@ enum ERedisKey {
 
   // Purge queue background jobs
   PURGE_QUEUE_TARGET_LOCK,
+
+  //
+  QUEUE_STATE_HISTORY,
 }
 
 /**
@@ -230,6 +233,7 @@ export const redisKeys = {
       keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS, // SET
       keyQueueWorkerClusterLock: ERedisKey.QUEUE_WORKERS_LOCK, // STRING
       keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS, // SET
+      keyQueueStateHistory: ERedisKey.QUEUE_STATE_HISTORY, // LIST
     };
 
     const pendingKeys = {

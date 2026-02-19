@@ -38,6 +38,8 @@ import {
   IExchangeParams,
 } from '../types/index.js';
 import { _getExchangeFanoutBoundQueues } from './_/_get-exchange-fanout-bound-queues.js';
+import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
 /**
  * Fanout Exchange implementation for RedisSMQ.
@@ -376,101 +378,124 @@ export class ExchangeFanout {
     const queueStr = JSON.stringify(queueParams);
 
     withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        (c, watch, done) => {
-          let exchangeQueuePolicy: EExchangeQueuePolicy;
-
-          async.waterfall(
-            [
-              // 1) WATCH base keys BEFORE any reads that inform writes
-              (cb1: ICallback<void>) =>
-                watch(
-                  [
-                    keyExchange,
-                    keyQueueProperties,
-                    keyFanoutQueues,
-                    keyQueueExchangeBindings,
-                    keyExchanges,
-                    keyNamespaceExchanges,
-                  ],
-                  cb1,
-                ),
-
-              // 2) Validate queue/exchange binding and compute exchange policy (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                _validateQueueBinding(
-                  c,
-                  exchangeParams,
-                  queueParams,
-                  (err, reply) => {
-                    if (err) return cb1(err);
-                    if (!reply) return cb1(new CallbackEmptyReplyError());
-                    const [queueProperties] = reply;
-                    exchangeQueuePolicy =
-                      queueProperties.queueType === EQueueType.PRIORITY_QUEUE
-                        ? EExchangeQueuePolicy.PRIORITY
-                        : EExchangeQueuePolicy.STANDARD;
-                    cb1();
-                  },
-                ),
-
-              // 3) Check if already bound (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                c.sismember(keyFanoutQueues, queueStr, (err, reply) => {
-                  if (err) return cb1(err);
-                  if (reply === 1) {
-                    this.logger.debug('bindQueue: already bound');
-                    return cb1(new QueueAlreadyBound());
-                  }
-                  cb1();
-                }),
-
-              // 4) Build MULTI to persist meta, indexes, and the binding atomically
-              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
-                const typeField = String(EExchangeProperty.TYPE);
-                const queuePolicyField = String(EExchangeProperty.QUEUE_POLICY);
-
-                const multi = c.multi();
-
-                // Persist exchange meta as a hash
-                multi.hset(keyExchange, typeField, EExchangeType.FANOUT);
-                multi.hset(keyExchange, queuePolicyField, exchangeQueuePolicy);
-
-                // Register exchange in global and namespace indexes
-                multi.sadd(keyExchanges, exchangeStr);
-                multi.sadd(keyNamespaceExchanges, exchangeStr);
-
-                // Forward binding: add queue to the fanout set
-                multi.sadd(keyFanoutQueues, queueStr);
-
-                // Reverse index: record that this queue is bound to this exchange
-                multi.sadd(keyQueueExchangeBindings, exchangeStr);
-
-                cb1(null, { multi });
-              },
-            ],
-            done,
-          );
-        },
-        (err) => {
-          if (err) {
-            // Treat already-bound as success (idempotent)
-            if (err instanceof QueueAlreadyBound) return outerCb();
-            return outerCb(err);
-          }
-          this.logger.info(
-            `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
-          );
-          outerCb();
-        },
-        {
-          maxAttempts: 5,
-          onRetry: (attemptNo, maxAttempts) =>
-            this.logger.warn(
-              `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+      async.series(
+        [
+          (cb) =>
+            _validateOperation(
+              client,
+              queueParams,
+              EQueueOperation.BIND_EXCHANGE,
+              cb,
             ),
-        },
+          (cb) =>
+            withWatchTransaction(
+              client,
+              (c, watch, done) => {
+                let exchangeQueuePolicy: EExchangeQueuePolicy;
+
+                async.waterfall(
+                  [
+                    // 1) WATCH base keys BEFORE any reads that inform writes
+                    (cb1: ICallback<void>) =>
+                      watch(
+                        [
+                          keyExchange,
+                          keyQueueProperties,
+                          keyFanoutQueues,
+                          keyQueueExchangeBindings,
+                          keyExchanges,
+                          keyNamespaceExchanges,
+                        ],
+                        cb1,
+                      ),
+
+                    // 2) Validate queue/exchange binding and compute exchange policy (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      _validateQueueBinding(
+                        c,
+                        exchangeParams,
+                        queueParams,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          if (!reply) return cb1(new CallbackEmptyReplyError());
+                          const [queueProperties] = reply;
+                          exchangeQueuePolicy =
+                            queueProperties.queueType ===
+                            EQueueType.PRIORITY_QUEUE
+                              ? EExchangeQueuePolicy.PRIORITY
+                              : EExchangeQueuePolicy.STANDARD;
+                          cb1();
+                        },
+                      ),
+
+                    // 3) Check if already bound (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      c.sismember(keyFanoutQueues, queueStr, (err, reply) => {
+                        if (err) return cb1(err);
+                        if (reply === 1) {
+                          this.logger.debug('bindQueue: already bound');
+                          return cb1(new QueueAlreadyBound());
+                        }
+                        cb1();
+                      }),
+
+                    // 4) Build MULTI to persist meta, indexes, and the binding atomically
+                    (
+                      _: void,
+                      cb1: ICallback<IWatchTransactionAttemptResult>,
+                    ) => {
+                      const typeField = String(EExchangeProperty.TYPE);
+                      const queuePolicyField = String(
+                        EExchangeProperty.QUEUE_POLICY,
+                      );
+
+                      const multi = c.multi();
+
+                      // Persist exchange meta as a hash
+                      multi.hset(keyExchange, typeField, EExchangeType.FANOUT);
+                      multi.hset(
+                        keyExchange,
+                        queuePolicyField,
+                        exchangeQueuePolicy,
+                      );
+
+                      // Register exchange in global and namespace indexes
+                      multi.sadd(keyExchanges, exchangeStr);
+                      multi.sadd(keyNamespaceExchanges, exchangeStr);
+
+                      // Forward binding: add queue to the fanout set
+                      multi.sadd(keyFanoutQueues, queueStr);
+
+                      // Reverse index: record that this queue is bound to this exchange
+                      multi.sadd(keyQueueExchangeBindings, exchangeStr);
+
+                      cb1(null, { multi });
+                    },
+                  ],
+                  done,
+                );
+              },
+              (err) => {
+                if (err) {
+                  // Treat already-bound as success (idempotent)
+                  if (err instanceof QueueAlreadyBound) return cb();
+                  return cb(err);
+                }
+                this.logger.info(
+                  `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
+                );
+                cb();
+              },
+              {
+                maxAttempts: 5,
+                onRetry: (attemptNo, maxAttempts) =>
+                  this.logger.warn(
+                    `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+                  ),
+              },
+            ),
+        ],
+        (err) => outerCb(err),
       );
     }, cb);
   }
@@ -562,65 +587,81 @@ export class ExchangeFanout {
     const exchangeStr = JSON.stringify(exchangeParams);
 
     withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        (c, watch, done) => {
-          async.waterfall(
-            [
-              // 1) WATCH base keys BEFORE reads
-              (cb1: ICallback<void>) =>
-                watch(
-                  [
-                    keyExchange,
-                    keyQueueProperties,
-                    keyFanoutQueues,
-                    keyQueueExchangeBindings,
-                  ],
-                  cb1,
-                ),
-
-              // 2) Validate exchange type (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                _validateExchange(c, exchangeParams, true, cb1),
-
-              // 3) Ensure the queue is currently bound (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                c.sismember(keyFanoutQueues, queueStr, (err, reply) => {
-                  if (err) return cb1(err);
-                  if (reply !== 1) return cb1(new QueueNotBoundError());
-                  cb1();
-                }),
-
-              // 4) Build MULTI to unbind atomically
-              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
-                const multi = c.multi();
-
-                // Remove queue from fanout set
-                multi.srem(keyFanoutQueues, queueStr);
-
-                // Reverse index: remove exchange from queue's bindings
-                multi.srem(keyQueueExchangeBindings, exchangeStr);
-
-                cb1(null, { multi });
-              },
-            ],
-            done,
-          );
-        },
-        (err) => {
-          if (err) return outerCb(err);
-          this.logger.info(
-            `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
-          );
-          outerCb();
-        },
-        {
-          maxAttempts: 5,
-          onRetry: (attemptNo, maxAttempts) =>
-            this.logger.warn(
-              `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+      async.series(
+        [
+          (cb) =>
+            _validateOperation(
+              client,
+              queueParams,
+              EQueueOperation.UNBIND_EXCHANGE,
+              cb,
             ),
-        },
+          (cb) =>
+            withWatchTransaction(
+              client,
+              (c, watch, done) => {
+                async.waterfall(
+                  [
+                    // 1) WATCH base keys BEFORE reads
+                    (cb1: ICallback<void>) =>
+                      watch(
+                        [
+                          keyExchange,
+                          keyQueueProperties,
+                          keyFanoutQueues,
+                          keyQueueExchangeBindings,
+                        ],
+                        cb1,
+                      ),
+
+                    // 2) Validate exchange type (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      _validateExchange(c, exchangeParams, true, cb1),
+
+                    // 3) Ensure the queue is currently bound (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      c.sismember(keyFanoutQueues, queueStr, (err, reply) => {
+                        if (err) return cb1(err);
+                        if (reply !== 1) return cb1(new QueueNotBoundError());
+                        cb1();
+                      }),
+
+                    // 4) Build MULTI to unbind atomically
+                    (
+                      _: void,
+                      cb1: ICallback<IWatchTransactionAttemptResult>,
+                    ) => {
+                      const multi = c.multi();
+
+                      // Remove queue from fanout set
+                      multi.srem(keyFanoutQueues, queueStr);
+
+                      // Reverse index: remove exchange from queue's bindings
+                      multi.srem(keyQueueExchangeBindings, exchangeStr);
+
+                      cb1(null, { multi });
+                    },
+                  ],
+                  done,
+                );
+              },
+              (err) => {
+                if (err) return cb(err);
+                this.logger.info(
+                  `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
+                );
+                cb();
+              },
+              {
+                maxAttempts: 5,
+                onRetry: (attemptNo, maxAttempts) =>
+                  this.logger.warn(
+                    `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+                  ),
+              },
+            ),
+        ],
+        (err) => outerCb(err),
       );
     }, cb);
   }

@@ -16,7 +16,11 @@ import {
   EMessagePropertyStatus,
 } from '../../../../message/index.js';
 import { MessageEnvelope } from '../../../../message/message-envelope.js';
-import { EQueueProperty, EQueueType } from '../../../../queue-manager/index.js';
+import {
+  EQueueProperty,
+  EQueueType,
+  EQueueOperationalState,
+} from '../../../../queue-manager/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
@@ -123,6 +127,12 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
         EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
         EQueueType.LIFO_QUEUE,
         EQueueType.FIFO_QUEUE,
+        // Operational state constants
+        EQueueProperty.OPERATIONAL_STATE,
+        EQueueOperationalState.ACTIVE,
+        EQueueOperationalState.PAUSED,
+        EQueueOperationalState.STOPPED,
+        EQueueOperationalState.LOCKED,
         Date.now(),
       ];
 
@@ -146,7 +156,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
       }
 
       this.logger.debug(
-        `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script for ${messages.length} messages.`,
+        `Executing REQUEUE_DELAYED script for ${messages.length} messages.`,
       );
       redisClient.runScript(
         ERedisScriptName.REQUEUE_DELAYED,
@@ -154,10 +164,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
         argv,
         (err, reply) => {
           if (err) {
-            this.logger.error(
-              'Error executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script.',
-              err,
-            );
+            this.logger.error('Error executing REQUEUE_DELAYED script.', err);
             return cb(err);
           }
           if (typeof reply === 'number') {
@@ -171,6 +178,10 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
             );
             return cb();
           }
+          if (typeof reply === 'string') {
+            this.logger.warn(`Script returned queue state: ${reply}`);
+            return cb();
+          }
           this.logger.error(
             `Script execution returned unexpected response: ${reply}`,
           );
@@ -181,9 +192,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
   };
 
   work = (cb: ICallback): void => {
-    this.logger?.debug(
-      'Starting requeue unacknowledged messages with delay cycle.',
-    );
+    this.logger?.debug('Starting requeue delayed messages cycle.');
     this.logger?.debug(
       `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
     );
