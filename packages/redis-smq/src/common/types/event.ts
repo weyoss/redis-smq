@@ -17,7 +17,7 @@ import {
   EMessageUnacknowledgementDeadLetterReason,
   EMessageUnacknowledgementReason,
 } from '../../consumer/message-handler/consume-message/types/index.js';
-import { IQueueStateTransition } from '../../queue-state-manager/types/queue-state.js';
+import { IQueueStateTransition } from '../../queue-state-manager/index.js';
 
 export type TConsumerHeartbeatEvent = {
   'consumerHeartbeat.heartbeat': (
