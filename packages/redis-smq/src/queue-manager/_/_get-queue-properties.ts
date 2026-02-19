@@ -82,7 +82,7 @@ function parseProperties(
         properties.lastStateChangeAt = Number(value);
         break;
       case EQueueProperty.LOCK_ID:
-        properties.lockId = value;
+        properties.lockId = value ? value : null;
         break;
       default:
         return new PanicError({
