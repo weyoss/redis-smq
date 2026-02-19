@@ -158,6 +158,7 @@ export interface IRedisClient extends EventEmitter<TRedisClientEvent> {
   rpop(key: string, cb: ICallback<string | null>): void;
   ltrim(key: string, start: number, stop: number, cb: ICallback<string>): void;
   llen(key: string, cb: ICallback<number>): void;
+  lindex(key: string, index: number, cb: ICallback<string | null>): void;
 
   // Set Operations
   sismember(key: string, member: string, cb: ICallback<number>): void;

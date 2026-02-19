@@ -9,8 +9,7 @@
 
 import fs from 'fs';
 import { resolve } from 'path';
-import { async } from '../../async/index.js';
-import { ICallback } from '../../async/index.js';
+import { async, ICallback } from '../../async/index.js';
 import { env } from '../../env/index.js';
 import { CallbackEmptyReplyError, PanicError } from '../../errors/index.js';
 import { EventEmitter } from '../../event/index.js';
@@ -287,6 +286,12 @@ export abstract class RedisClientAbstract
     start: number,
     stop: number,
     cb: ICallback<string[]>,
+  ): void;
+
+  abstract lindex(
+    key: string,
+    index: number,
+    cb: ICallback<string | null>,
   ): void;
 
   abstract hkeys(key: string, cb: ICallback<string[]>): void;

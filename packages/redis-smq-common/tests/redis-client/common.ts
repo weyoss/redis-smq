@@ -175,6 +175,7 @@ export async function standardCommands(config: IRedisConfig) {
 
   await client.rpushAsync('list1', ['a', 'b', 'c']);
   expect(await client.llenAsync('list1')).toBe(3);
+  expect(await client.lindexAsync('list1', 0)).toBe('a');
 
   const rLpop = await client.lpopAsync('list1');
   expect(rLpop).toBe('a');
