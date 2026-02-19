@@ -58,10 +58,10 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 Attempts to acquire a lock for the current instance.
 
 This method attempts to acquire a lock for the current instance using the Redis client.
-If the lock is successfully acquired, the callback is invoked with `true`.
-If the lock acquisition fails due to a lock already being held by another instance,
-the callback is invoked with `false`. If an error occurs during the lock acquisition process,
-the callback is invoked with the corresponding error.
+
+- If the lock is successfully acquired, the callback is invoked without arguments.
+- If the lock acquisition fails due to a lock already being held by another instance, the callback is invoked with `AcquireLockError` error.
+- If an error occurs during the lock acquisition process, the callback is invoked with the corresponding error.
 
 If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
 
@@ -69,7 +69,7 @@ If auto-extension is enabled, the lock's TTL will be extended automatically at r
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 A callback function that will be invoked with a boolean indicating the lock acquisition result,
 or an error (if any) upon successful execution.
@@ -110,20 +110,21 @@ or an error (if any) upon successful execution.
 
 ---
 
-### ensureIsRunning()
+### ensureIsOperational()
 
-> **ensureIsRunning**(`cb`): `void`
+> **ensureIsOperational**(`cb`): `void`
 
-Ensures the Runnable instance is running. If it's not running or going up, starts it.
-Calls the callback when the instance is fully up and running.
+Ensures the Runnable instance is operational (either starting up or fully running).
+If it's not operational, starts it.
+Calls the callback when the instance is operational.
 
 #### Parameters
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
-Callback function to be called when the instance is up and running.
+Callback function to be called when the instance is operational.
 
 #### Returns
 
@@ -131,7 +132,7 @@ Callback function to be called when the instance is up and running.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`ensureIsRunning`](Runnable.md#ensureisrunning)
+[`Runnable`](Runnable.md).[`ensureIsOperational`](Runnable.md#ensureisoperational)
 
 ---
 
@@ -148,7 +149,7 @@ If auto-extension is enabled, an error is returned. If the lock is not currently
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
 
@@ -254,6 +255,31 @@ This method returns a boolean indicating whether the lock is currently held by t
 
 ---
 
+### isOperational()
+
+> **isOperational**(): `boolean`
+
+Checks if the Runnable is in an operational state where it can process work or start up.
+Operational states:
+
+- DOWN and GOING_UP (starting up)
+- UP and not GOING_DOWN (fully operational)
+
+Non-operational states:
+
+- UP and GOING_DOWN (shutting down)
+- DOWN and not GOING_UP (fully stopped)
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`isOperational`](Runnable.md#isoperational)
+
+---
+
 ### isReleased()
 
 > **isReleased**(): `boolean`
@@ -274,13 +300,13 @@ This method returns a boolean indicating whether the lock is currently released.
 
 > **isRunning**(): `boolean`
 
-Checks if the Runnable instance is currently running or going up.
+Checks if the Runnable instance is currently running (fully up with no pending transitions).
 
 #### Returns
 
 `boolean`
 
-- Returns `true` if the Runnable instance is running or going up, `false` otherwise.
+- Returns `true` if the Runnable instance is fully up and running.
 
 #### Inherited from
 
@@ -380,7 +406,7 @@ If an error occurs during the release process, the callback is invoked with the 
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
 
@@ -456,7 +482,7 @@ Overrides the `run` method from the `Runnable` class to handle the lock acquisit
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 A callback function that will be invoked with a boolean indicating the lock acquisition result,
 or an error (if any) upon successful execution.
@@ -468,10 +494,11 @@ or an error (if any) upon successful execution.
 #### Remarks
 
 This method attempts to acquire a lock for the current instance using the Redis client.
-If the lock is successfully acquired, the callback is invoked with `true`.
-If the lock acquisition fails due to a lock already being held by another instance,
-the callback is invoked with `false`. If an error occurs during the lock acquisition process,
-the callback is invoked with the corresponding error.
+
+- If the lock is successfully acquired, the callback is invoked without arguments.
+- If the lock acquisition fails due to a lock already being held by another instance,
+  the callback is invoked with `AcquireLockError` error.
+- If an error occurs during the lock acquisition process, the callback is invoked with the corresponding error.
 
 If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
 
@@ -498,7 +525,7 @@ The shutdown behavior depends on the current state of the Runnable instance:
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 A callback function that will be called after the shutdown process is completed.
 If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
