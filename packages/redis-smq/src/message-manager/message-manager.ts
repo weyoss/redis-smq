@@ -194,7 +194,7 @@ export class MessageManager {
       (client, cb) => {
         async.withCallback(
           (cb: ICallback<IMessageManagerDeleteResponse>) =>
-            _deleteMessage(client, ids, cb),
+            _deleteMessage(client, ids, null, cb),
           (reply, cb) => {
             this.logger.debug('MessageList deletion completed', reply);
             cb(null, reply);

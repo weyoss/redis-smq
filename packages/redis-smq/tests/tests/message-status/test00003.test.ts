@@ -21,6 +21,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
+import bluebird from 'bluebird';
 
 test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> UNACK_DELAYING -> ACKNOWLEDGED', async () => {
   const defaultQueue = getDefaultQueue();
@@ -57,7 +58,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
   const status = await message.getMessageStatusAsync(id);
   expect(status).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+  await bluebird.delay(10000);
 
   const status1 = await message.getMessageStatusAsync(id);
   expect(status1).toBe(EMessagePropertyStatus.UNACK_DELAYING);

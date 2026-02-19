@@ -15,7 +15,11 @@ import {
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
-import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
+import {
+  EQueueOperationalState,
+  EQueueProperty,
+  EQueueType,
+} from '../../queue-manager/index.js';
 import {
   ConsumerGroupNotFoundError,
   InvalidQueueTypeError,
@@ -24,6 +28,9 @@ import {
   PriorityQueuingNotEnabledError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
+  InvalidQueueStateError,
+  QueueStoppedError,
+  QueueLockedError,
 } from '../../errors/index.js';
 
 /**
@@ -74,13 +81,15 @@ export function _publishMessage(
     ? EMessagePropertyStatus.SCHEDULED
     : EMessagePropertyStatus.PENDING;
 
-  // ARGV layout for the publish-message.lua script:
-  // ARGV[1-7]: Queue property keys
-  // ARGV[8-11]: Message priority and scheduling values
-  // ARGV[12-34]: Message property keys (23 keys)
-  // ARGV[35-57]: Message property values (23 values)
+  // ARGV layout for the publish-message.lua script (updated):
+  // ARGV[1-13]: Queue property keys and state values (13 values)
+  // ARGV[14-17]: Message priority and scheduling values (4 values)
+  // ARGV[18-40]: Message property keys (23 keys)
+  // ARGV[41-63]: Message property values (23 values)
+  // ARGV[64]: consumerGroupId
+  // ARGV[65]: operationLockId (optional, for locked queues)
 
-  const queuePropertyKeys = [
+  const queuePropertyValues = [
     EQueueProperty.QUEUE_TYPE,
     EQueueProperty.MESSAGES_COUNT,
     EQueueProperty.PENDING_MESSAGES_COUNT,
@@ -88,6 +97,12 @@ export function _publishMessage(
     EQueueType.PRIORITY_QUEUE,
     EQueueType.LIFO_QUEUE,
     EQueueType.FIFO_QUEUE,
+    EQueueProperty.OPERATIONAL_STATE,
+    EQueueProperty.LOCK_ID,
+    EQueueOperationalState.ACTIVE,
+    EQueueOperationalState.PAUSED,
+    EQueueOperationalState.STOPPED,
+    EQueueOperationalState.LOCKED,
   ];
 
   const schedulingValues = [
@@ -144,18 +159,19 @@ export function _publishMessage(
     messageState.getAttempts(), // ATTEMPTS
     messageState.getScheduledRepeatCount(), // SCHEDULED_REPEAT_COUNT
     Number(messageState.getExpired()), // EXPIRED
-    messageState.getEffectiveScheduledDelay(), // NEXT_SCHEDULED_DELAY
+    messageState.getEffectiveScheduledDelay(), // EFFECTIVE_SCHEDULED_DELAY
     messageState.getScheduledTimes(), // SCHEDULED_TIMES
     messageState.getScheduledMessageParentId() ?? '', // SCHEDULED_MESSAGE_PARENT_ID
     messageState.getRequeuedMessageParentId() ?? '', // REQUEUED_MESSAGE_PARENT_ID
   ];
 
   const scriptArgs = [
-    ...queuePropertyKeys,
+    ...queuePropertyValues,
     ...schedulingValues,
     ...messagePropertyKeys,
     ...messagePropertyValues,
     consumerGroupId ?? '',
+    '', // operationLockId - empty string for normal publishing (no lock required)
   ];
 
   redisClient.runScript(
@@ -204,6 +220,31 @@ export function _publishMessage(
         case 'UNKNOWN_QUEUE_TYPE':
           logger.error(`Unknown queue type for queue ${queueName}`);
           return cb(new InvalidQueueTypeError());
+        case 'QUEUE_STOPPED':
+          logger.error(
+            `Queue ${queueName} is in STOPPED state, cannot publish message ${messageId}`,
+          );
+          return cb(
+            new QueueStoppedError({ metadata: { queue: destinationQueue } }),
+          );
+        case 'QUEUE_LOCKED':
+          logger.error(
+            `Queue ${queueName} is in LOCKED state, cannot publish message ${messageId}. Provide a valid lock ID to publish.`,
+          );
+          return cb(
+            new QueueLockedError({ metadata: { queue: destinationQueue } }),
+          );
+        case 'QUEUE_INVALID_STATE':
+          logger.error(
+            `Queue ${queueName} is in invalid state, cannot publish message ${messageId}`,
+          );
+          return cb(
+            new InvalidQueueStateError({
+              metadata: {
+                queue: destinationQueue,
+              },
+            }),
+          );
         default:
           logger.error(
             `Unknown error while publishing message ${messageId}: ${reply}`,

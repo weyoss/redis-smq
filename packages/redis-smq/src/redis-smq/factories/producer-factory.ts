@@ -50,7 +50,7 @@ export class ProducerFactory extends FactoryAbstract {
    * ```
    */
   static startProducer(
-    cb: ICallback<boolean>,
+    cb: ICallback,
   ): ReturnType<typeof ProducerFactory.create> {
     const producer = ProducerFactory.create();
     producer.run(cb);

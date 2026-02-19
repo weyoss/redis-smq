@@ -74,8 +74,7 @@ test('Consume message from different queues using a single consumer instance: ca
     { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  const res = await consumer.runAsync();
-  expect(res).toBe(true);
+  await consumer.runAsync();
 
   expect(
     consumer.consumeAsync(

@@ -17,11 +17,18 @@ import {
   QueueNotEmptyError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
+  QueueLockedError,
 } from '../../errors/index.js';
-import { EQueueProperty, IQueueParams } from '../types/index.js';
+import {
+  EQueueOperationalState,
+  EQueueProperty,
+  IQueueParams,
+} from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
 import { processingQueue } from '../../consumer/message-handler/consume-message/processing-queue.js';
 import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
 export function _deleteQueue(
   redisClient: IRedisClient,
@@ -34,6 +41,16 @@ export function _deleteQueue(
 
   async.series(
     [
+      // Step 0: Validate queue operation
+      (cb: ICallback<void>) => {
+        _validateOperation(
+          redisClient,
+          queueParams,
+          EQueueOperation.DELETE,
+          cb,
+        );
+      },
+
       // Step 1: Get consumer IDs for the queue.
       (cb: ICallback<void>) => {
         _getQueueConsumerIds(redisClient, queueParams, (err, reply) => {
@@ -156,6 +173,10 @@ export function _deleteQueue(
         queueParamsStr,
         EQueueProperty.MESSAGES_COUNT,
         String(heartbeatKeys.length),
+        EQueueProperty.OPERATIONAL_STATE,
+        EQueueOperationalState.LOCKED,
+        EQueueProperty.LOCK_ID,
+        '', // lockID
         ...consumerIds,
       ];
 
@@ -166,7 +187,19 @@ export function _deleteQueue(
         (err, reply) => {
           if (err) cb(err);
           else if (reply !== 'OK') {
-            if (reply === 'QUEUE_NOT_FOUND') cb(new QueueNotFoundError());
+            // Handle queue state errors
+            if (reply === 'QUEUE_LOCKED') {
+              cb(
+                new QueueLockedError({
+                  metadata: {
+                    queue: queueParams,
+                  },
+                  message: `Cannot delete queue ${queueParams.name}: Queue is locked.`,
+                }),
+              );
+            }
+            // Handle other error cases
+            else if (reply === 'QUEUE_NOT_FOUND') cb(new QueueNotFoundError());
             else if (reply === 'QUEUE_NOT_EMPTY') cb(new QueueNotEmptyError());
             else if (reply === 'QUEUE_HAS_ACTIVE_CONSUMERS')
               cb(new QueueManagerActiveConsumersError());

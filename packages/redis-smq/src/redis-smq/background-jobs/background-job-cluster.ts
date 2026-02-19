@@ -39,7 +39,7 @@ export class BackgroundJobCluster extends Runnable<never> {
     ]);
   }
 
-  static run(cb: ICallback<boolean>) {
+  static run(cb: ICallback<void>) {
     if (!BackgroundJobCluster.instance) {
       BackgroundJobCluster.instance = new BackgroundJobCluster();
     }

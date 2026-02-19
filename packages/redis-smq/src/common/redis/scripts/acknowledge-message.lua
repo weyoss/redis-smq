@@ -10,6 +10,7 @@
 -- Atomically acknowledges a message. It removes the message from the processing
 -- queue, updates its status, and adjusts queue counters.
 -- This script is safe from race conditions.
+-- Respects queue operational state - returns specific error codes when queue state prevents acknowledgement.
 --
 -- KEYS[1]: keyQueueProcessing
 -- KEYS[2]: keyQueueAcknowledged
@@ -26,10 +27,18 @@
 -- ARGV[8]: expireStoredMessages (expiration time in ms, or '0')
 -- ARGV[9]: storedMessagesSize (max size of acknowledged queue, or '0')
 -- ARGV[10]: messageAcknowledgedAt (acknowledgement time in ms)
+-- ARGV[11]: EQueuePropertyOperationalState (field name for operational state)
+-- ARGV[12]: EQueueOperationalStateActive (ACTIVE state enum value)
+-- ARGV[13]: EQueueOperationalStatePaused (PAUSED state enum value)
+-- ARGV[14]: EQueueOperationalStateStopped (STOPPED state enum value)
+-- ARGV[15]: EQueueOperationalStateLocked (LOCKED state enum value)
 --
 -- Returns:
 --   1: If the message was successfully acknowledged.
 --   0: If the message was not found in the processing queue (already processed or moved).
+--   'QUEUE_STOPPED': Queue is in STOPPED state.
+--   'QUEUE_LOCKED': Queue is in LOCKED state.
+--   'QUEUE_INVALID_STATE': Queue is in an unknown state.
 
 -- Static Keys
 local keyQueueProcessing = KEYS[1]
@@ -48,6 +57,34 @@ local storeMessages = ARGV[7]
 local expireStoredMessages = ARGV[8]
 local storedMessagesSize = ARGV[9]
 local messageAcknowledgedAt = ARGV[10]
+-- Operational state constants (new)
+local EQueuePropertyOperationalState = ARGV[11]
+local EQueueOperationalStateActive = ARGV[12]
+local EQueueOperationalStatePaused = ARGV[13]
+local EQueueOperationalStateStopped = ARGV[14]
+local EQueueOperationalStateLocked = ARGV[15]
+
+-- Get current operational state
+local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)
+if currentState == false then
+    -- Default to ACTIVE if operational state is not set
+    currentState = EQueueOperationalStateActive
+end
+
+-- Validate queue operational state for message acknowledgement
+if currentState == EQueueOperationalStateStopped then
+    -- Queue is completely stopped, no processing allowed
+    return 'QUEUE_STOPPED'
+elseif currentState == EQueueOperationalStateLocked then
+    -- Queue is locked, message processing operations cannot be performed
+    return 'QUEUE_LOCKED'
+elseif currentState == EQueueOperationalStatePaused or currentState == EQueueOperationalStateActive then
+    -- Queue is paused or active, message acknowledgements are allowed
+    -- Continue with the acknowledgement logic
+else
+    -- Unknown state, skip processing as a safety measure
+    return 'QUEUE_INVALID_STATE'
+end
 
 -- Atomically remove the message from the processing queue.
 -- LREM returns the number of elements removed. If it's 0, the message was not found.

@@ -39,6 +39,10 @@ import {
   IBackgroundJob,
 } from '../background-job/types/index.js';
 import { TPurgeQueueJobTarget } from '../../redis-smq/index.js';
+import {
+  EQueueOperation,
+  QueueOperationValidator,
+} from '../../queue-operation-validator/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
@@ -136,13 +140,16 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
     }, cb);
   }
 
+  /**
+   * Helper method to get a purge queue job manager instance
+   */
   protected withPurgeQueueJobManager<T>(
     operation: (
       purgeQueueJobManager: PurgeQueueJobManager,
       cb: ICallback<T>,
     ) => void,
     cb: ICallback<T>,
-  ) {
+  ): void {
     withSharedPoolConnection((client, cb) => {
       async.waterfall(
         [
@@ -220,61 +227,48 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    * is called, it immediately creates and starts a purge job, and returns the ID of
    * that job. You can use the returned job ID to track the progress of the purge operation.
    *
-   * Different message types can be purged using specific classes:
-   * - {@link QueueMessages} - Delete all queue messages
-   * - {@link QueueAcknowledgedMessages} - Delete acknowledged messages (if configured to be stored)
-   * - {@link QueueDeadLetteredMessages} - Delete dead-lettered messages (if configured to be stored)
-   * - {@link QueueScheduledMessages} - Delete scheduled messages
-   * - {@link QueuePendingMessages} - Delete pending messages
-   *
-   * @param {string|Object} queue - The queue to purge. Can be a string (queue name),
-   *                                queue parameters object, or queue consumer group parameters.
-   * @param {Function} cb - Callback function that will be invoked when the job is created.
-   *                        The callback receives two parameters:
-   *                        - `error` {Error|null} - If an error occurs during job creation,
-   *                          this will contain the Error object. If the job is successfully
-   *                          created, this will be `null`.
-   *                        - `jobId` {string|undefined} - The ID of the background job created
-   *                          to perform the purge operation. This ID can be used to:
-   *                          - Check the job status using `getPurgeJobStatus()`
-   *                          - Monitor progress via `getPurgeJob()`
-   *                          - Cancel the purge job if needed using `cancelPurge()`
-   *
-   *                          Note: Receiving a job ID does NOT mean the purge is complete,
-   *                          only that the purge job has been successfully created and started.
-   *
-   * @throws InvalidQueueParametersError
-   * @throws ConsumerGroupRequiredError
-   * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueNotFoundError
-   * @throws BackgroundJobTargetLockedError
+   * @param {TQueueExtendedParams} queue - The queue to purge.
+   * @param {Function} cb - Callback function that receives the job ID.
    */
   purge(queue: TQueueExtendedParams, cb: ICallback<string>): void {
-    this.withValidatedQueue(
-      queue,
-      (parsedParams, cb) => {
-        this.logger.info(
-          `Creating purge job for queue ${parsedParams.queueParams.name}`,
-        );
-        this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
-          purgeQueueJobManager.create(
-            {
+    async.waterfall(
+      [
+        // Step 1: Validate queue operation
+        (cb: ICallback<IQueueParsedParams>) => {
+          this.withValidatedQueue(
+            queue,
+            (parsedParams, cb) => {
+              QueueOperationValidator.validateOperation(
+                parsedParams.queueParams,
+                EQueueOperation.PURGE,
+                (err) => {
+                  if (err) return cb(err);
+                  cb(null, parsedParams);
+                },
+              );
+            },
+            cb,
+          );
+        },
+
+        // Step 2: Create purge job (handles locking automatically)
+        (parsedParams: IQueueParsedParams, cb: ICallback<string>) => {
+          this.logger.info(
+            `Creating purge job for queue ${parsedParams.queueParams.name}`,
+          );
+
+          this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
+            const target: TPurgeQueueJobTarget = {
               queue: parsedParams,
               messageType: this.messageType,
-            },
-            {},
-            (err, jobId) => {
-              if (err) return cb(err);
-              if (!jobId) return cb(new CallbackEmptyReplyError());
+            };
 
-              this.logger.info(
-                `Created purge job ${jobId} for queue ${parsedParams.queueParams.name}`,
-              );
-              cb(null, jobId);
-            },
-          );
-        }, cb);
-      },
+            purgeQueueJobManager.create(target, {}, (err, job) => {
+              cb(err, job?.id);
+            });
+          }, cb);
+        },
+      ],
       cb,
     );
   }
@@ -282,33 +276,9 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
   /**
    * Retrieves comprehensive details about a specific purge job.
    *
-   * This method returns the complete job object containing all metadata, configuration,
-   * and execution details for a purge operation. Unlike {@link getPurgeJobStatus} which
-   * returns only status information, this method provides the full job object including:
-   * - Job creation timestamp
-   * - Job parameters and configuration
-   * - Target queue and message types being purged
-   * - Progress metrics and statistics
-   * - Error details (if the job failed)
-   * - Result summary (if the job completed)
-   *
-   * @param {TQueueExtendedParams} queue - The queue parameters identifying the queue
-   *                                       associated with the purge job.
-   * @param {string} jobId - The ID of the purge job to retrieve. This is the job ID
-   *                         returned by the {@link purge} method when the purge was initiated.
-   * @param {ICallback<IBackgroundJob<TPurgeQueueJobTarget>>} cb - Callback function invoked
-   *                                                              with the complete job object.
-   *                                                              - `error` {Error|null} - If an error occurs,
-   *                                                                this contains the Error object.
-   *                                                              - `job` {IBackgroundJob<TPurgeQueueJobTarget>|undefined} -
-   *                                                                The complete purge job object containing
-   *                                                                all metadata and execution details.
-   * @throws InvalidQueueParametersError
-   * @throws ConsumerGroupRequiredError
-   * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueNotFoundError
-   * @throws BackgroundJobNotFoundError
-   * @throws InvalidPurgeQueueJobIdError
+   * @param {TQueueExtendedParams} queue - The queue associated with the purge job.
+   * @param {string} jobId - The ID of the purge job to retrieve.
+   * @param {ICallback<IBackgroundJob<TPurgeQueueJobTarget>>} cb - Callback with the job object.
    */
   getPurgeJob(
     queue: TQueueExtendedParams,
@@ -319,18 +289,20 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
       queue,
       (parsedParams, cb) => {
         this.logger.info(
-          `Creating purge job for queue ${parsedParams.queueParams.name}`,
+          `Getting purge job ${jobId} for queue ${parsedParams.queueParams.name}`,
         );
+
         this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
           purgeQueueJobManager.get(jobId, (err, job) => {
             if (err) return cb(err);
             if (!job) return cb(new CallbackEmptyReplyError());
 
+            // Verify this job belongs to this queue and message type
             if (
               job.target.queue.queueParams.name !==
-                parsedParams.queueParams.name &&
-              job.target.queue.queueParams.ns !== parsedParams.queueParams.ns &&
-              job.target.queue.groupId !== parsedParams.groupId &&
+                parsedParams.queueParams.name ||
+              job.target.queue.queueParams.ns !== parsedParams.queueParams.ns ||
+              job.target.queue.groupId !== parsedParams.groupId ||
               job.target.messageType !== this.messageType
             ) {
               return cb(
@@ -348,26 +320,9 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
   /**
    * Retrieves the current status of a purge job.
    *
-   * This method provides detailed status information about an asynchronous purge operation
-   * initiated via the {@link purge} method. The status includes progress, current state,
-   * and any error information if the job has failed.
-   *
-   * @param {TQueueExtendedParams} queue - The queue parameters identifying the queue
-   *                                       where the purge job is running.
-   * @param {string} jobId - The ID of the purge job to check. This is the job ID
-   *                         returned by the {@link purge} method when the purge was initiated.
-   * @param {ICallback<EBackgroundJobStatus>} cb - Callback function invoked with the job status.
-   *                                               - `error` {Error|null} - If an error occurs,
-   *                                                 this contains the Error object.
-   *                                               - `status` {EBackgroundJobStatus|undefined} -
-   *                                                 The current status of the purge job.
-   *
-   * @throws InvalidQueueParametersError
-   * @throws ConsumerGroupRequiredError
-   * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueNotFoundError
-   * @throws BackgroundJobNotFoundError
-   * @throws InvalidPurgeQueueJobIdError
+   * @param {TQueueExtendedParams} queue - The queue where the purge job is running.
+   * @param {string} jobId - The ID of the purge job to check.
+   * @param {ICallback<EBackgroundJobStatus>} cb - Callback with the job status.
    */
   getPurgeJobStatus(
     queue: TQueueExtendedParams,
@@ -384,64 +339,29 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
   /**
    * Cancels an active purge job that is currently in progress.
    *
-   * This method attempts to cancel a running purge job identified by the provided job ID.
-   * Note that cancellation is not guaranteed - it depends on the current state and progress
-   * of the purge operation. Once a purge job reaches certain stages, it may not be cancellable.
-   *
-   * @param {TQueueExtendedParams} queue - The queue parameters identifying the queue
-   *                                       where the purge job is running.
-   * @param {string} jobId - The ID of the purge job to cancel. This is the job ID
-   *                         returned by the `purge()` method when the purge was initiated.
-   * @param {ICallback<void>} cb - Callback function invoked when the cancellation
-   *                               request is processed.
-   *                               - `error` {Error|null} - If an error occurs during
-   *                                 cancellation request, this contains the Error object.
-   *                                 Common errors include:
-   *                                 - Job not found
-   *                                 - Job already completed
-   *                                 - Job cannot be cancelled in its current state
-   *                               - `result` {void} - No result is returned on success.
-   *
-   * @throws InvalidQueueParametersError
-   * @throws ConsumerGroupRequiredError
-   * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueNotFoundError
-   * @throws InvalidPurgeQueueJobIdError
+   * @param {TQueueExtendedParams} queue - The queue where the purge job is running.
+   * @param {string} jobId - The ID of the purge job to cancel.
+   * @param {ICallback<void>} cb - Callback when cancellation is processed.
    */
   cancelPurge(queue: TQueueExtendedParams, jobId: string, cb: ICallback): void {
     this.withValidatedQueue(
       queue,
       (parsedParams, cb) => {
-        this.logger.info(
-          `Canceling purge job ${jobId} for queue ${parsedParams.queueParams.name}`,
-        );
         this.withPurgeQueueJobManager((purgeQueueJobManager, cb) => {
           purgeQueueJobManager.getActiveJob(
             {
               queue: parsedParams,
               messageType: this.messageType,
             },
-            (err, reply) => {
+            (err, activeJob) => {
               if (err) return cb(err);
-              if (!reply) {
-                this.logger.error(
-                  `No active purge job found for queue ${parsedParams.queueParams.name}`,
-                );
+              if (!activeJob || activeJob.id !== jobId) {
                 return cb(
                   new InvalidPurgeQueueJobIdError({ metadata: { jobId } }),
                 );
               }
 
-              if (reply.id !== jobId) {
-                this.logger.error(
-                  `Active job mismatch: expected ${jobId}, found ${reply.id}`,
-                );
-                return cb(
-                  new InvalidPurgeQueueJobIdError({ metadata: { jobId } }),
-                );
-              }
-
-              purgeQueueJobManager.cancel(jobId, cb);
+              purgeQueueJobManager.cancel(jobId, (err) => cb(err));
             },
           );
         }, cb);
@@ -457,11 +377,6 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    * @param page - Page number
    * @param pageSize - Number of items per page
    * @param cb - Callback returning an IQueueMessagesPage of IMessageTransferable
-   *
-   * @throws InvalidQueueParametersError
-   * @throws ConsumerGroupRequiredError
-   * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueNotFoundError
    */
   getMessages(
     queue: TQueueExtendedParams,
@@ -510,11 +425,6 @@ export abstract class MessageBrowserAbstract implements IMessageBrowser {
    *
    * @param queue - Extended queue parameters
    * @param cb - Callback returning the count
-   *
-   * @throws InvalidQueueParametersError
-   * @throws ConsumerGroupRequiredError
-   * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueNotFoundError
    */
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
     this.withValidatedQueue(

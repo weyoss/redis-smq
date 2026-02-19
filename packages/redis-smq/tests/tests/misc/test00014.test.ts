@@ -22,13 +22,13 @@ test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
     });
   }
   await shutDownBaseInstance(mProducer);
-  expect(mProducer.isRunning()).toBe(false);
+  expect(mProducer.isOperational()).toBe(false);
   expect(mProducer.isGoingUp()).toBe(false);
   expect(mProducer.isGoingDown()).toBe(false);
   expect(mProducer.isUp()).toBe(false);
   expect(mProducer.isDown()).toBe(true);
   await mProducer.runAsync();
-  expect(mProducer.isRunning()).toBe(true);
+  expect(mProducer.isOperational()).toBe(true);
   expect(mProducer.isGoingUp()).toBe(false);
   expect(mProducer.isGoingDown()).toBe(false);
   expect(mProducer.isUp()).toBe(true);

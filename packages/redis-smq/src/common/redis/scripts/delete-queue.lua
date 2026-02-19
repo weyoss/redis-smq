@@ -10,6 +10,7 @@
 --   Atomically deletes a queue and all of its associated data structures.
 --   This script is Redis Cluster compatible and expects all keys to be provided
 --   by the calling client. It performs all safety checks before deletion.
+--   Respects queue operational state - requires valid lock ID when queue is LOCKED.
 --
 -- KEYS[1]: Global queues set key.
 -- KEYS[2]: Namespace queues set key.
@@ -22,7 +23,11 @@
 -- ARGV[1]: Stringified queue parameters JSON.
 -- ARGV[2]: EQueuePropertyMessagesCount
 -- ARGV[3]: The number of heartbeat keys being passed in the KEYS array.
--- ARGV[4...k]: The list of expected consumer IDs from the client.
+-- ARGV[4]: EQueuePropertyOperationalState (field name for operational state)
+-- ARGV[5]: EQueueOperationalStateLocked (LOCKED state enum value)
+-- ARGV[6]: EQueuePropertyLockId (field name for lock ID)
+-- ARGV[7]: operationLockId (lock ID for the current operation, or empty string if not applicable)
+-- ARGV[8...k]: The list of expected consumer IDs from the client.
 --
 -- Returns:
 --   OK: Success
@@ -31,11 +36,17 @@
 --   QUEUE_HAS_ACTIVE_CONSUMERS: Queue has active consumers
 --   QUEUE_HAS_BOUND_EXCHANGE: Queue has bound exchanges
 --   CONSUMER_SET_MISMATCH: Consumer set has changed (stale data)
+--   QUEUE_LOCKED: Queue is locked and no valid lock ID is provided
+--   INVALID_LOCK: Provided lock ID does not match the current lock
 --
 
 local queueParamsStr = ARGV[1]
 local EQueuePropertyMessagesCount = ARGV[2]
 local heartbeatKeysCount = tonumber(ARGV[3])
+local EQueuePropertyOperationalState = ARGV[4]
+local EQueueOperationalStateLocked = ARGV[5]
+local EQueuePropertyLockId = ARGV[6]
+local operationLockId = ARGV[7]
 
 -- Return codes
 local E_SUCCESS = 'OK'
@@ -44,6 +55,8 @@ local E_QUEUE_NOT_EMPTY = 'QUEUE_NOT_EMPTY'
 local E_QUEUE_HAS_ACTIVE_CONSUMERS = 'QUEUE_HAS_ACTIVE_CONSUMERS'
 local E_QUEUE_HAS_BOUND_EXCHANGES = 'QUEUE_HAS_BOUND_EXCHANGE'
 local E_CONSUMER_SET_MISMATCH = 'CONSUMER_SET_MISMATCH'
+local E_QUEUE_LOCKED = 'QUEUE_LOCKED'
+local E_INVALID_LOCK = 'INVALID_LOCK'
 
 -- Fixed key indices from the KEYS array
 local KEY_QUEUES = 1
@@ -65,20 +78,36 @@ for i = 1, #props, 2 do
   queueProperties[props[i]] = props[i+1]
 end
 
--- 2. Check for messages
+-- 2. Check operational state for LOCKED queue
+local currentState = queueProperties[EQueuePropertyOperationalState]
+local currentLockId = queueProperties[EQueuePropertyLockId] or ''
+
+if currentState == EQueueOperationalStateLocked then
+    -- Queue is locked, need valid lock ID to proceed with deletion
+    if not operationLockId or operationLockId == '' then
+        return E_QUEUE_LOCKED
+    end
+
+    -- Validate the provided lock ID matches current lock
+    if currentLockId == '' or currentLockId ~= operationLockId then
+        return E_INVALID_LOCK
+    end
+end
+
+-- 3. Check for messages
 if queueProperties[EQueuePropertyMessagesCount] ~= '0' then
   return E_QUEUE_NOT_EMPTY
 end
 
--- 3. Check for bound exchanges
+-- 4. Check for bound exchanges
 local boundExchangesCount = redis.call('SCARD', KEYS[KEY_EXCHANGE_BINDINGS])
 if boundExchangesCount > 0 then
   return E_QUEUE_HAS_BOUND_EXCHANGES
 end
 
--- 4. Verify consumer set to prevent race conditions
+-- 5. Verify consumer set to prevent race conditions
 local expectedConsumerIds = {}
-for i = 4, #ARGV do
+for i = 8, #ARGV do
     table.insert(expectedConsumerIds, ARGV[i])
 end
 local actualConsumerIds = redis.call('HKEYS', KEYS[KEY_QUEUE_CONSUMERS])
@@ -99,7 +128,7 @@ if #expectedConsumerIds > 0 then
   end
 end
 
--- 5. Check for active consumers
+-- 6. Check for active consumers
 if heartbeatKeysCount > 0 then
   local heartbeatKeys = {}
   local lastHeartbeatKeyIndex = HEARTBEAT_KEYS_START_INDEX + heartbeatKeysCount - 1
@@ -116,11 +145,11 @@ end
 
 -- All checks passed. Proceed with deletion.
 
--- 6. Remove queue from global and namespace sets
+-- 7. Remove queue from global and namespace sets
 redis.call('SREM', KEYS[KEY_QUEUES], queueParamsStr)
 redis.call('SREM', KEYS[KEY_NS_QUEUES], queueParamsStr)
 
--- 7. Delete all other keys
+-- 8. Delete all other keys
 -- All keys from the properties key onwards are to be deleted.
 local keysToDelete = {}
 for i = KEY_PROPERTIES, #KEYS do

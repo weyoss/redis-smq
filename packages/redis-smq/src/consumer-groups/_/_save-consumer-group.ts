@@ -24,6 +24,8 @@ import {
   InvalidConsumerGroupIdError,
 } from '../../errors/index.js';
 import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
+import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,
@@ -34,8 +36,15 @@ export function _saveConsumerGroup(
   const gid = redisKeys.validateRedisKey(groupId);
   if (gid instanceof Error) cb(new InvalidConsumerGroupIdError());
   else {
-    async.waterfall(
+    async.series(
       [
+        (cb: ICallback<void>) =>
+          _validateOperation(
+            redisClient,
+            queue,
+            EQueueOperation.CREATE_CONSUMER_GROUP,
+            cb,
+          ),
         (cb: ICallback<void>) =>
           _getQueueProperties(redisClient, queue, (err, properties) => {
             if (err) cb(err);
@@ -44,7 +53,7 @@ export function _saveConsumerGroup(
               cb(new ConsumerGroupsNotSupportedError());
             else cb();
           }),
-        (_, cb: ICallback<number>) => {
+        (cb: ICallback<number>) => {
           const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(
             queue.ns,
             queue.name,
@@ -64,7 +73,7 @@ export function _saveConsumerGroup(
           });
         },
       ],
-      cb,
+      (err, result) => cb(err, result?.[2]),
     );
   }
 }

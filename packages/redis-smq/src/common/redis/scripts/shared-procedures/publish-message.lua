@@ -20,7 +20,7 @@ local function publish_message(keys, args)
     local keyMessage = keys[7]
 
     -- ARGV
-    -- Queue properties (1-7)
+    -- Queue properties (1-12)
     local EQueuePropertyQueueType = args[1]
     local EQueuePropertyMessagesCount = args[2]
     local EQueuePropertyPendingMessagesCount = args[3]
@@ -28,72 +28,117 @@ local function publish_message(keys, args)
     local EQueuePropertyQueueTypePriorityQueue = args[5]
     local EQueuePropertyQueueTypeLIFOQueue = args[6]
     local EQueuePropertyQueueTypeFIFOQueue = args[7]
+    local EQueuePropertyOperationalState = args[8]
+    local EQueuePropertyLockId = args[9]
+    local EQueueOperationalStateActive = args[10]
+    local EQueueOperationalStatePaused = args[11]
+    local EQueueOperationalStateStopped = args[12]
+    local EQueueOperationalStateLocked = args[13]
 
-    -- Message priority and scheduling (8-11)
-    local messagePriority = args[8]
-    local scheduledTimestamp = args[9]
-    local EMessagePropertyStatusScheduled = args[10]
-    local EMessagePropertyStatusPending = args[11]
+    -- Message priority and scheduling (14-17)
+    local messagePriority = args[14]
+    local scheduledTimestamp = args[15]
+    local EMessagePropertyStatusScheduled = args[16]
+    local EMessagePropertyStatusPending = args[17]
 
-    -- Message Property Keys (12-34)
-    local EMessagePropertyId = args[12]
-    local EMessagePropertyStatus = args[13]
-    local EMessagePropertyMessage = args[14]
-    local EMessagePropertyScheduledAt = args[15]
-    local EMessagePropertyPublishedAt = args[16]
-    local EMessagePropertyProcessingStartedAt = args[17]
-    local EMessagePropertyDeadLetteredAt = args[18]
-    local EMessagePropertyAcknowledgedAt = args[19]
-    local EMessagePropertyUnacknowledgedAt = args[20]
-    local EMessagePropertyLastUnacknowledgedAt = args[21]
-    local EMessagePropertyLastScheduledAt = args[22]
-    local EMessagePropertyRequeuedAt = args[23]
-    local EMessagePropertyRequeueCount = args[24]
-    local EMessagePropertyLastRequeuedAt = args[25]
-    local EMessagePropertyLastRetriedAttemptAt = args[26]
-    local EMessagePropertyScheduledCronFired = args[27]
-    local EMessagePropertyAttempts = args[28]
-    local EMessagePropertyScheduledRepeatCount = args[29]
-    local EMessagePropertyExpired = args[30]
-    local EMessagePropertyEffectiveScheduledDelay = args[31]
-    local EMessagePropertyScheduledTimes = args[32]
-    local EMessagePropertyScheduledMessageParentId = args[33]
-    local EMessagePropertyRequeuedMessageParentId = args[34]
+    -- Message Property Keys (18-40)
+    local EMessagePropertyId = args[18]
+    local EMessagePropertyStatus = args[19]
+    local EMessagePropertyMessage = args[20]
+    local EMessagePropertyScheduledAt = args[21]
+    local EMessagePropertyPublishedAt = args[22]
+    local EMessagePropertyProcessingStartedAt = args[23]
+    local EMessagePropertyDeadLetteredAt = args[24]
+    local EMessagePropertyAcknowledgedAt = args[25]
+    local EMessagePropertyUnacknowledgedAt = args[26]
+    local EMessagePropertyLastUnacknowledgedAt = args[27]
+    local EMessagePropertyLastScheduledAt = args[28]
+    local EMessagePropertyRequeuedAt = args[29]
+    local EMessagePropertyRequeueCount = args[30]
+    local EMessagePropertyLastRequeuedAt = args[31]
+    local EMessagePropertyLastRetriedAttemptAt = args[32]
+    local EMessagePropertyScheduledCronFired = args[33]
+    local EMessagePropertyAttempts = args[34]
+    local EMessagePropertyScheduledRepeatCount = args[35]
+    local EMessagePropertyExpired = args[36]
+    local EMessagePropertyEffectiveScheduledDelay = args[37]
+    local EMessagePropertyScheduledTimes = args[38]
+    local EMessagePropertyScheduledMessageParentId = args[39]
+    local EMessagePropertyRequeuedMessageParentId = args[40]
 
-    -- Message Property Values (35-57)
-    local messageId = args[35]
-    local messageStatus = args[36]
-    local message = args[37]
-    local messageScheduledAt = args[38]
-    local messagePublishedAt = args[39]
-    local messageProcessingStartedAt = args[40]
-    local messageDeadLetteredAt = args[41]
-    local messageAcknowledgedAt = args[42]
-    local messageUnacknowledgedAt = args[43]
-    local messageLastUnacknowledgedAt = args[44]
-    local messageLastScheduledAt = args[45]
-    local messageRequeuedAt = args[46]
-    local messageRequeueCount = args[47]
-    local messageLastRequeuedAt = args[48]
-    local messageLastRetriedAttemptAt = args[49]
-    local messageScheduledCronFired = args[50]
-    local messageAttempts = args[51]
-    local messageScheduledRepeatCount = args[52]
-    local messageExpired = args[53]
-    local messageEffectiveScheduledDelay = args[54]
-    local messageScheduledTimes = args[55]
-    local messageScheduledMessageParentId = args[56]
-    local messageRequeuedMessageParentId = args[57]
+    -- Message Property Values (41-63)
+    local messageId = args[41]
+    local messageStatus = args[42]
+    local message = args[43]
+    local messageScheduledAt = args[44]
+    local messagePublishedAt = args[45]
+    local messageProcessingStartedAt = args[46]
+    local messageDeadLetteredAt = args[47]
+    local messageAcknowledgedAt = args[48]
+    local messageUnacknowledgedAt = args[49]
+    local messageLastUnacknowledgedAt = args[50]
+    local messageLastScheduledAt = args[51]
+    local messageRequeuedAt = args[52]
+    local messageRequeueCount = args[53]
+    local messageLastRequeuedAt = args[54]
+    local messageLastRetriedAttemptAt = args[55]
+    local messageScheduledCronFired = args[56]
+    local messageAttempts = args[57]
+    local messageScheduledRepeatCount = args[58]
+    local messageExpired = args[59]
+    local messageEffectiveScheduledDelay = args[60]
+    local messageScheduledTimes = args[61]
+    local messageScheduledMessageParentId = args[62]
+    local messageRequeuedMessageParentId = args[63]
 
-    -- Consumer Group ID (58)
-    local consumerGroupId = args[58]
+    -- Consumer Group ID (64)
+    local consumerGroupId = args[64]
 
-    -- Get queue type with a single field fetch
-    local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
+    -- Lock ID for locked queue access (65) - New: optional lock ID for publishing to locked queues
+    local operationLockId = args[65]
+
+    -- Get queue type and operational state with a single multi-get call
+    local queueProps = redis.call("HMGET", keyQueueProperties,
+        EQueuePropertyQueueType,
+        EQueuePropertyOperationalState,
+        EQueuePropertyLockId)
+
+    local queueType = queueProps[1]
+    local operationalState = queueProps[2]
+    local currentLockId = queueProps[3]
 
     -- Early return if queue doesn't exist
     if queueType == false then
         return 'QUEUE_NOT_FOUND'
+    end
+
+    -- Check queue operational state
+    if operationalState == false then
+        -- Default to ACTIVE if operational state is not set
+        operationalState = EQueueOperationalStateActive
+    end
+
+    -- Validate queue state for publishing
+    if operationalState == EQueueOperationalStateStopped then
+        -- Queue is completely stopped, no publishing allowed
+        return 'QUEUE_STOPPED'
+    elseif operationalState == EQueueOperationalStateLocked then
+        -- Queue is locked, check if operationLockId matches
+        if not operationLockId or operationLockId == '' or
+           not currentLockId or currentLockId == '' or
+           operationLockId ~= currentLockId then
+            return 'QUEUE_LOCKED'
+        end
+        -- Lock ID matches, allow publishing
+    elseif operationalState == EQueueOperationalStatePaused then
+        -- Queue is paused, publishing is allowed (only consumption is blocked)
+        -- This is allowed, so continue
+    elseif operationalState == EQueueOperationalStateActive then
+        -- Queue is active, publishing is allowed
+        -- This is allowed, so continue
+    else
+        -- Unknown state, reject as a safety measure
+        return 'QUEUE_INVALID_STATE'
     end
 
     -- If a consumer group ID is provided, verify it exists.

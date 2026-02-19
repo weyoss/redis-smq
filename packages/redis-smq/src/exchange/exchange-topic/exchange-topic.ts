@@ -42,6 +42,8 @@ import {
 import { _validateTopicExchangeBindingPattern } from './_/_validate-topic-exchange-binding-pattern.js';
 import { _matchTopicExchangeBindingPattern } from './_/_match-topic-exchange-binding-pattern.js';
 import { _validateExchange } from '../_/_validate-exchange.js';
+import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
 /**
  * Topic exchange operations.
@@ -354,104 +356,127 @@ export class ExchangeTopic {
     const exchangeStr = JSON.stringify(exchangeParams);
 
     withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        (c, watch, done) => {
-          let exchangeQueuePolicy: EExchangeQueuePolicy | null = null;
-
-          async.waterfall(
-            [
-              // WATCH base keys BEFORE any reads
-              (cb1: ICallback<void>) =>
-                watch(
-                  [
-                    keyExchange,
-                    keyQueueProperties,
-                    keyExchangeBindingPatterns,
-                    keyBindingPatternQueues,
-                    keyQueueExchangeBindings,
-                    keyExchanges,
-                    keyNamespaceExchanges,
-                  ],
-                  cb1,
-                ),
-
-              // Validate queue/exchange under WATCH and compute policy
-              (_: void, cb1: ICallback<void>) =>
-                _validateQueueBinding(
-                  c,
-                  exchangeParams,
-                  queueParams,
-                  (err, reply) => {
-                    if (err) return cb1(err);
-                    if (!reply) return cb1(new CallbackEmptyReplyError());
-                    const [queueProperties] = reply;
-                    exchangeQueuePolicy =
-                      queueProperties.queueType === EQueueType.PRIORITY_QUEUE
-                        ? EExchangeQueuePolicy.PRIORITY
-                        : EExchangeQueuePolicy.STANDARD;
-                    cb1();
-                  },
-                ),
-
-              // Check if already bound (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                c.sismember(keyBindingPatternQueues, queueStr, (err, reply) => {
-                  if (err) return cb1(err);
-                  if (reply === 1) {
-                    this.logger.debug('bindQueue: already bound');
-                    return cb1(new QueueAlreadyBound());
-                  }
-                  cb1();
-                }),
-
-              // Build MULTI atomically
-              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
-                const typeField = String(EExchangeProperty.TYPE);
-                const queuePolicyField = String(EExchangeProperty.QUEUE_POLICY);
-
-                const multi = c.multi();
-
-                // Exchange meta
-                multi.hset(keyExchange, typeField, EExchangeType.TOPIC);
-                multi.hset(
-                  keyExchange,
-                  queuePolicyField,
-                  Number(exchangeQueuePolicy),
-                );
-
-                // Indexes
-                multi.sadd(keyExchanges, exchangeStr);
-                multi.sadd(keyNamespaceExchanges, exchangeStr);
-
-                // Bindings
-                multi.sadd(keyExchangeBindingPatterns, routingPattern);
-                multi.sadd(keyBindingPatternQueues, queueStr);
-                multi.sadd(keyQueueExchangeBindings, exchangeStr);
-
-                cb1(null, { multi });
-              },
-            ],
-            done,
-          );
-        },
-        (err) => {
-          if (err) {
-            if (err instanceof QueueAlreadyBound) return outerCb();
-            return outerCb(err);
-          }
-          this.logger.info(
-            `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} pat=${routingPattern}`,
-          );
-          outerCb();
-        },
-        {
-          maxAttempts: 5,
-          onRetry: (attemptNo, maxAttempts) =>
-            this.logger.warn(
-              `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+      async.series(
+        [
+          (cb) =>
+            _validateOperation(
+              client,
+              queueParams,
+              EQueueOperation.BIND_EXCHANGE,
+              cb,
             ),
-        },
+          (cb) =>
+            withWatchTransaction(
+              client,
+              (c, watch, done) => {
+                let exchangeQueuePolicy: EExchangeQueuePolicy | null = null;
+
+                async.waterfall(
+                  [
+                    // WATCH base keys BEFORE any reads
+                    (cb1: ICallback<void>) =>
+                      watch(
+                        [
+                          keyExchange,
+                          keyQueueProperties,
+                          keyExchangeBindingPatterns,
+                          keyBindingPatternQueues,
+                          keyQueueExchangeBindings,
+                          keyExchanges,
+                          keyNamespaceExchanges,
+                        ],
+                        cb1,
+                      ),
+
+                    // Validate queue/exchange under WATCH and compute policy
+                    (_: void, cb1: ICallback<void>) =>
+                      _validateQueueBinding(
+                        c,
+                        exchangeParams,
+                        queueParams,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          if (!reply) return cb1(new CallbackEmptyReplyError());
+                          const [queueProperties] = reply;
+                          exchangeQueuePolicy =
+                            queueProperties.queueType ===
+                            EQueueType.PRIORITY_QUEUE
+                              ? EExchangeQueuePolicy.PRIORITY
+                              : EExchangeQueuePolicy.STANDARD;
+                          cb1();
+                        },
+                      ),
+
+                    // Check if already bound (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      c.sismember(
+                        keyBindingPatternQueues,
+                        queueStr,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          if (reply === 1) {
+                            this.logger.debug('bindQueue: already bound');
+                            return cb1(new QueueAlreadyBound());
+                          }
+                          cb1();
+                        },
+                      ),
+
+                    // Build MULTI atomically
+                    (
+                      _: void,
+                      cb1: ICallback<IWatchTransactionAttemptResult>,
+                    ) => {
+                      const typeField = String(EExchangeProperty.TYPE);
+                      const queuePolicyField = String(
+                        EExchangeProperty.QUEUE_POLICY,
+                      );
+
+                      const multi = c.multi();
+
+                      // Exchange meta
+                      multi.hset(keyExchange, typeField, EExchangeType.TOPIC);
+                      multi.hset(
+                        keyExchange,
+                        queuePolicyField,
+                        Number(exchangeQueuePolicy),
+                      );
+
+                      // Indexes
+                      multi.sadd(keyExchanges, exchangeStr);
+                      multi.sadd(keyNamespaceExchanges, exchangeStr);
+
+                      // Bindings
+                      multi.sadd(keyExchangeBindingPatterns, routingPattern);
+                      multi.sadd(keyBindingPatternQueues, queueStr);
+                      multi.sadd(keyQueueExchangeBindings, exchangeStr);
+
+                      cb1(null, { multi });
+                    },
+                  ],
+                  done,
+                );
+              },
+              (err) => {
+                if (err) {
+                  if (err instanceof QueueAlreadyBound) return cb();
+                  return cb(err);
+                }
+                this.logger.info(
+                  `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} pat=${routingPattern}`,
+                );
+                cb();
+              },
+              {
+                maxAttempts: 5,
+                onRetry: (attemptNo, maxAttempts) =>
+                  this.logger.warn(
+                    `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+                  ),
+              },
+            ),
+        ],
+        (err) => outerCb(err),
       );
     }, cb);
   }
@@ -534,142 +559,163 @@ export class ExchangeTopic {
     const exchangeStr = JSON.stringify(exchangeParams);
 
     withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        (c, watch, done) => {
-          let allPatterns: string[] = [];
-          let currentPatternCount = 0;
-          let stillBoundViaOtherPattern = false;
-
-          async.waterfall(
-            [
-              // WATCH base keys BEFORE reads
-              (cb1: ICallback<void>) =>
-                watch(
-                  [
-                    keyExchange,
-                    keyExchangeBindingPatterns,
-                    keyBindingPatternQueues,
-                    keyQueueExchangeBindings,
-                  ],
-                  cb1,
-                ),
-
-              // Validate exchange type under WATCH
-              (_: void, cb1: ICallback<void>) =>
-                _validateExchange(c, exchangeParams, true, cb1),
-
-              // Ensure this queue is currently bound to the pattern (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                c.sismember(keyBindingPatternQueues, queueStr, (err, reply) => {
-                  if (err) return cb1(err);
-                  if (reply !== 1) return cb1(new QueueNotBoundError());
-                  cb1();
-                }),
-
-              // Read all patterns under WATCH
-              (_: void, cb1: ICallback<void>) =>
-                c.smembers(keyExchangeBindingPatterns, (err, pats) => {
-                  if (err) return cb1(err);
-                  allPatterns = (pats ?? []).filter((p) => p && p.length);
-                  cb1();
-                }),
-
-              // WATCH derived keys for other patterns and compute flags
-              (_: void, cb1: ICallback<void>) => {
-                const otherPatterns = allPatterns.filter(
-                  (p) => p !== routingPattern,
-                );
-
-                const otherPatternSets = otherPatterns.map((p) => {
-                  const { keyBindingPatternQueues: k } =
-                    redisKeys.getExchangeTopicBindingPatternKeys(
-                      exchangeParams.ns,
-                      exchangeParams.name,
-                      p,
-                    );
-                  return k;
-                });
-
-                // Extend WATCH set with derived keys
-                const doWatch = (next: ICallback<void>) =>
-                  otherPatternSets.length
-                    ? watch(otherPatternSets, next)
-                    : next();
-
-                doWatch((err) => {
-                  if (err) return cb1(err);
-
-                  // Compute counts and cross-pattern binding status
-                  async.series(
-                    [
-                      // Count members in current pattern set
-                      (cbx: ICallback<void>) =>
-                        c.scard(keyBindingPatternQueues, (e, count) => {
-                          if (e) return cbx(e);
-                          currentPatternCount = count || 0;
-                          cbx();
-                        }),
-
-                      // Check if queue is bound via any other pattern
-                      (cbx: ICallback<void>) => {
-                        if (otherPatternSets.length === 0) return cbx();
-                        async.eachOf(
-                          otherPatternSets,
-                          (setKey, _i, next) => {
-                            if (stillBoundViaOtherPattern) return next();
-                            c.sismember(setKey, queueStr, (e2, rep) => {
-                              if (e2) return next(e2);
-                              if (rep === 1) stillBoundViaOtherPattern = true;
-                              next();
-                            });
-                          },
-                          (e3) => cbx(e3 || null),
-                        );
-                      },
-                    ],
-                    (err) => cb1(err),
-                  );
-                });
-              },
-
-              // Build MULTI to unbind and perform conditional cleanups atomically
-              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
-                const multi = c.multi();
-
-                // Always remove the queue from the current pattern set
-                multi.srem(keyBindingPatternQueues, queueStr);
-
-                // If this was the last queue for this pattern, remove the pattern from the exchange index
-                if (currentPatternCount === 1) {
-                  multi.srem(keyExchangeBindingPatterns, routingPattern);
-                }
-
-                // If the queue is no longer bound to this exchange via any other pattern, remove reverse index
-                if (!stillBoundViaOtherPattern) {
-                  multi.srem(keyQueueExchangeBindings, exchangeStr);
-                }
-
-                cb1(null, { multi });
-              },
-            ],
-            done,
-          );
-        },
-        (err) => {
-          if (err) return outerCb(err);
-          this.logger.info(
-            `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns} pat=${routingPattern}`,
-          );
-          outerCb();
-        },
-        {
-          maxAttempts: 5,
-          onRetry: (attemptNo, maxAttempts) =>
-            this.logger.warn(
-              `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+      async.series(
+        [
+          (cb) =>
+            _validateOperation(
+              client,
+              queueParams,
+              EQueueOperation.UNBIND_EXCHANGE,
+              cb,
             ),
-        },
+          (cb) =>
+            withWatchTransaction(
+              client,
+              (c, watch, done) => {
+                let allPatterns: string[] = [];
+                let currentPatternCount = 0;
+                let stillBoundViaOtherPattern = false;
+
+                async.waterfall(
+                  [
+                    // WATCH base keys BEFORE reads
+                    (cb1: ICallback<void>) =>
+                      watch(
+                        [
+                          keyExchange,
+                          keyExchangeBindingPatterns,
+                          keyBindingPatternQueues,
+                          keyQueueExchangeBindings,
+                        ],
+                        cb1,
+                      ),
+
+                    // Validate exchange type under WATCH
+                    (_: void, cb1: ICallback<void>) =>
+                      _validateExchange(c, exchangeParams, true, cb1),
+
+                    // Ensure this queue is currently bound to the pattern (under WATCH)
+                    (_: void, cb1: ICallback<void>) =>
+                      c.sismember(
+                        keyBindingPatternQueues,
+                        queueStr,
+                        (err, reply) => {
+                          if (err) return cb1(err);
+                          if (reply !== 1) return cb1(new QueueNotBoundError());
+                          cb1();
+                        },
+                      ),
+
+                    // Read all patterns under WATCH
+                    (_: void, cb1: ICallback<void>) =>
+                      c.smembers(keyExchangeBindingPatterns, (err, pats) => {
+                        if (err) return cb1(err);
+                        allPatterns = (pats ?? []).filter((p) => p && p.length);
+                        cb1();
+                      }),
+
+                    // WATCH derived keys for other patterns and compute flags
+                    (_: void, cb1: ICallback<void>) => {
+                      const otherPatterns = allPatterns.filter(
+                        (p) => p !== routingPattern,
+                      );
+
+                      const otherPatternSets = otherPatterns.map((p) => {
+                        const { keyBindingPatternQueues: k } =
+                          redisKeys.getExchangeTopicBindingPatternKeys(
+                            exchangeParams.ns,
+                            exchangeParams.name,
+                            p,
+                          );
+                        return k;
+                      });
+
+                      // Extend WATCH set with derived keys
+                      const doWatch = (next: ICallback<void>) =>
+                        otherPatternSets.length
+                          ? watch(otherPatternSets, next)
+                          : next();
+
+                      doWatch((err) => {
+                        if (err) return cb1(err);
+
+                        // Compute counts and cross-pattern binding status
+                        async.series(
+                          [
+                            // Count members in current pattern set
+                            (cbx: ICallback<void>) =>
+                              c.scard(keyBindingPatternQueues, (e, count) => {
+                                if (e) return cbx(e);
+                                currentPatternCount = count || 0;
+                                cbx();
+                              }),
+
+                            // Check if queue is bound via any other pattern
+                            (cbx: ICallback<void>) => {
+                              if (otherPatternSets.length === 0) return cbx();
+                              async.eachOf(
+                                otherPatternSets,
+                                (setKey, _i, next) => {
+                                  if (stillBoundViaOtherPattern) return next();
+                                  c.sismember(setKey, queueStr, (e2, rep) => {
+                                    if (e2) return next(e2);
+                                    if (rep === 1)
+                                      stillBoundViaOtherPattern = true;
+                                    next();
+                                  });
+                                },
+                                (e3) => cbx(e3 || null),
+                              );
+                            },
+                          ],
+                          (err) => cb1(err),
+                        );
+                      });
+                    },
+
+                    // Build MULTI to unbind and perform conditional cleanups atomically
+                    (
+                      _: void,
+                      cb1: ICallback<IWatchTransactionAttemptResult>,
+                    ) => {
+                      const multi = c.multi();
+
+                      // Always remove the queue from the current pattern set
+                      multi.srem(keyBindingPatternQueues, queueStr);
+
+                      // If this was the last queue for this pattern, remove the pattern from the exchange index
+                      if (currentPatternCount === 1) {
+                        multi.srem(keyExchangeBindingPatterns, routingPattern);
+                      }
+
+                      // If the queue is no longer bound to this exchange via any other pattern, remove reverse index
+                      if (!stillBoundViaOtherPattern) {
+                        multi.srem(keyQueueExchangeBindings, exchangeStr);
+                      }
+
+                      cb1(null, { multi });
+                    },
+                  ],
+                  done,
+                );
+              },
+              (err) => {
+                if (err) return cb(err);
+                this.logger.info(
+                  `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns} pat=${routingPattern}`,
+                );
+                cb();
+              },
+              {
+                maxAttempts: 5,
+                onRetry: (attemptNo, maxAttempts) =>
+                  this.logger.warn(
+                    `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+                  ),
+              },
+            ),
+        ],
+        (err) => outerCb(err),
       );
     }, cb);
   }

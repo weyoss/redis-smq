@@ -182,7 +182,7 @@ export class NamespaceManager {
 
       async.waterfall(
         [
-          (cb: ICallback<void>) => {
+          (cb: ICallback) => {
             client.sismember(keyNamespaces, ns, (err, isMember) => {
               if (err) {
                 this.logger.error('Failed to check namespace existence', {
@@ -203,23 +203,26 @@ export class NamespaceManager {
               cb();
             });
           },
-        ],
-        (err) => {
-          if (err) return cb(err);
 
-          this.logger.debug('Getting all queues for deletion', {
-            namespace: ns,
-          });
-          _getNamespaceQueues(client, ns, (err, reply) => {
-            if (err) {
-              this.logger.error('Failed to get namespace queues for deletion', {
-                namespace: ns,
-                error: err.message,
-              });
-              return cb(err);
-            }
+          (_, cb: ICallback<IQueueParams[]>) => {
+            this.logger.debug('Getting all queues for deletion', {
+              namespace: ns,
+            });
+            _getNamespaceQueues(client, ns, (err, reply) => {
+              if (err) {
+                this.logger.error(
+                  'Failed to get namespace queues for deletion',
+                  {
+                    namespace: ns,
+                    error: err.message,
+                  },
+                );
+              }
+              cb(err, reply);
+            });
+          },
 
-            const queues = reply ?? [];
+          (queues: IQueueParams[], cb: ICallback) => {
             this.logger.debug('Preparing to delete namespace and its queues', {
               namespace: ns,
               queueCount: queues.length,
@@ -267,8 +270,9 @@ export class NamespaceManager {
                 });
               },
             );
-          });
-        },
+          },
+        ],
+        (err) => cb(err),
       );
     }, cb);
   }

@@ -18,7 +18,7 @@ export async function shutDownBaseInstance(
       else i.on('consumer.up', () => resolve());
     });
   }
-  if (i.isRunning()) {
+  if (i.isOperational()) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise<void>((resolve) => {
       i.shutdown(() => resolve());

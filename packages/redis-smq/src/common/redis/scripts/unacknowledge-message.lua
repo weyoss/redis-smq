@@ -11,14 +11,15 @@
 -- deciding whether to requeue them for another attempt or move them to the dead-letter queue.
 -- It also cleans up resources associated with the dead consumer and is optimized for
 -- safe, atomic batch operations.
+-- Respects queue operational state - returns specific error codes when queue state prevents unacknowledgement.
 --
 -- KEYS:
 --   Static Keys (1-5): All queue-related keys except consumer-specific ones.
 --   Dynamic Keys (6...): A repeating triplet of [keyQueueProcessing, keyMessage, keyConsumerQueues] for each message.
 --
 -- ARGV:
---   Static ARGV (1-18): All constants.
---   Dynamic ARGV (19...): A flat list of parameters for each message.
+--   Static ARGV (1-23): All constants.
+--   Dynamic ARGV (24...): A flat list of parameters for each message.
 --
 -- ARGV structure per message (9 parameters):
 --   1. queue (JSON string)
@@ -33,6 +34,9 @@
 --
 -- Returns:
 --   The number of messages that were successfully unacknowledged.
+--   'QUEUE_STOPPED': Queue is in STOPPED state.
+--   'QUEUE_LOCKED': Queue is in LOCKED state.
+--   'QUEUE_INVALID_STATE': Queue is in an unknown state.
 
 -- Static Keys
 local keyQueueRequeued = KEYS[1]
@@ -60,13 +64,41 @@ local EMessagePropertyDeadLetteredAt = ARGV[15]
 local EMessagePropertyUnacknowledgedAt = ARGV[16]
 local EMessagePropertyLastUnacknowledgedAt = ARGV[17]
 local EMessagePropertyExpired = ARGV[18]
+-- Operational state constants (new)
+local EQueuePropertyOperationalState = ARGV[19]
+local EQueueOperationalStateActive = ARGV[20]
+local EQueueOperationalStatePaused = ARGV[21]
+local EQueueOperationalStateStopped = ARGV[22]
+local EQueueOperationalStateLocked = ARGV[23]
 
 -- Loop constants
 local INITIAL_KEY_OFFSET = 5
-local INITIAL_ARGV_OFFSET = 18
+local INITIAL_ARGV_OFFSET = 23
 local PARAMS_PER_MESSAGE = 9
 local KEYS_PER_MESSAGE = 3 -- keyQueueProcessing + keyMessage + keyConsumerQueues
 local E_INVALID_ARGS_ERROR_REPLY = "Mismatch between the number of keys and arguments provided."
+
+-- Get current operational state (check once for the entire batch)
+local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)
+if currentState == false then
+    -- Default to ACTIVE if operational state is not set
+    currentState = EQueueOperationalStateActive
+end
+
+-- Validate queue operational state for message unacknowledgement
+if currentState == EQueueOperationalStateStopped then
+    -- Queue is completely stopped, no processing allowed
+    return 'QUEUE_STOPPED'
+elseif currentState == EQueueOperationalStateLocked then
+    -- Queue is locked, message processing operations cannot be performed
+    return 'QUEUE_LOCKED'
+elseif currentState == EQueueOperationalStatePaused or currentState == EQueueOperationalStateActive then
+    -- Queue is paused or active, message unacknowledgements are allowed
+    -- Continue with the unacknowledgement logic
+else
+    -- Unknown state, skip processing as a safety measure
+    return 'QUEUE_INVALID_STATE'
+end
 
 -- Validation: Ensure the number of dynamic keys and args are proportional.
 if ((#KEYS - INITIAL_KEY_OFFSET) * PARAMS_PER_MESSAGE) ~= ((#ARGV - INITIAL_ARGV_OFFSET) * KEYS_PER_MESSAGE) then
@@ -126,12 +158,12 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
             end
 
             redis.call(
-                    "HSET", keyMessage,
-                    EMessagePropertyStatus, status,
-                    EMessagePropertyUnacknowledgedAt, unacknowledgedAt,
-                    EMessagePropertyLastUnacknowledgedAt, lastUnacknowledgedAt,
-                    EMessagePropertyDeadLetteredAt, deadLetteredAt,
-                    EMessagePropertyExpired, messageExpired
+                "HSET", keyMessage,
+                EMessagePropertyStatus, status,
+                EMessagePropertyUnacknowledgedAt, unacknowledgedAt,
+                EMessagePropertyLastUnacknowledgedAt, lastUnacknowledgedAt,
+                EMessagePropertyDeadLetteredAt, deadLetteredAt,
+                EMessagePropertyExpired, messageExpired
             )
             processedCount = processedCount + 1
         end

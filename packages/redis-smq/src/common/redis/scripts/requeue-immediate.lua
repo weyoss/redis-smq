@@ -18,6 +18,7 @@
 --     moved to the dead-letter queue instead.
 --
 -- All queue counters are updated once at the end of the script for maximum efficiency.
+-- Respects queue operational state - returns specific error codes when queue state prevents requeue.
 --
 -- KEYS:
 --   Static Keys (1-5):
@@ -35,10 +36,10 @@
 --     3. keyQueuePriorityPending (for Priority)
 --
 -- ARGV:
---   Static ARGV (1-14):
+--   Static ARGV (1-19):
 --     A list of all EQueueProperty and EMessageProperty constants.
---     ARGV[14]: Current timestamp.
---   Dynamic ARGV (15...):
+--     ARGV[19]: Current timestamp.
+--   Dynamic ARGV (20...):
 --     A flat list of repeating parameters for each message.
 --
 -- ARGV structure per message (5 parameters):
@@ -50,6 +51,9 @@
 --
 -- Returns:
 --   - The total number of messages successfully processed.
+--   - 'QUEUE_STOPPED': Queue is in STOPPED state.
+--   - 'QUEUE_LOCKED': Queue is in LOCKED state.
+--   - 'QUEUE_INVALID_STATE': Queue is in an unknown state.
 
 -- Static Keys
 local keyQueueProperties = KEYS[1]
@@ -72,17 +76,52 @@ local EMessagePropertyStatusUnackDelaying = ARGV[10]
 local EMessagePropertyLastRetriedAttemptAt = ARGV[11]
 local EQueuePropertyQueueTypeLIFOQueue = ARGV[12]
 local EQueuePropertyQueueTypeFIFOQueue = ARGV[13]
-local timestamp = ARGV[14]
+-- Operational state constants (new)
+local EQueuePropertyOperationalState = ARGV[14]
+local EQueueOperationalStateActive = ARGV[15]
+local EQueueOperationalStatePaused = ARGV[16]
+local EQueueOperationalStateStopped = ARGV[17]
+local EQueueOperationalStateLocked = ARGV[18]
+local timestamp = ARGV[19]
 
 -- Early exit if the queue does not exist.
-local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
+local queueProps = redis.call("HMGET", keyQueueProperties,
+    EQueuePropertyQueueType,
+    EQueuePropertyOperationalState)
+
+local queueType = queueProps[1]
+local operationalState = queueProps[2]
+
 if queueType == false then
     return 0
 end
 
+if operationalState == false then
+    -- Default to ACTIVE if operational state is not set
+    operationalState = EQueueOperationalStateActive
+end
+
+-- Validate queue operational state
+if operationalState == EQueueOperationalStateStopped then
+    -- Queue is completely stopped, no processing allowed
+    return 'QUEUE_STOPPED'
+elseif operationalState == EQueueOperationalStateLocked then
+    -- Queue is locked, requeue operations cannot be processed
+    return 'QUEUE_LOCKED'
+elseif operationalState == EQueueOperationalStatePaused then
+    -- Queue is paused, messages can be moved to pending/delayed but won't be consumed
+    -- This is allowed, so continue
+elseif operationalState == EQueueOperationalStateActive then
+    -- Queue is active, messages can be processed
+    -- This is allowed, so continue
+else
+    -- Unknown state, skip processing as a safety measure
+    return 'QUEUE_INVALID_STATE'
+end
+
 -- Constants for parameter counts
 local INITIAL_KEY_OFFSET = 5
-local INITIAL_ARGV_OFFSET = 14
+local INITIAL_ARGV_OFFSET = 19
 local PARAMS_PER_MESSAGE_ARGV = 5
 local PARAMS_PER_MESSAGE_KEYS = 3
 
@@ -128,16 +167,16 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE_ARGV do
                 end
 
                 redis.call("HSET", keyMessage,
-                        EMessagePropertyStatus, EMessagePropertyStatusPending,
-                        EMessagePropertyLastRetriedAttemptAt, timestamp
+                    EMessagePropertyStatus, EMessagePropertyStatusPending,
+                    EMessagePropertyLastRetriedAttemptAt, timestamp
                 )
                 processedPendingCount = processedPendingCount + 1
             else
                 -- Consumer group is gone. Dead-letter the message.
                 redis.call("RPUSH", keyQueueDeadLettered, messageId)
                 redis.call("HSET", keyMessage,
-                        EMessagePropertyStatus, EMessagePropertyStatusDeadLettered,
-                        EMessagePropertyDeadLetteredAt, timestamp
+                    EMessagePropertyStatus, EMessagePropertyStatusDeadLettered,
+                    EMessagePropertyDeadLetteredAt, timestamp
                 )
                 processedDeadLetteredCount = processedDeadLetteredCount + 1
             end

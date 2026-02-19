@@ -141,7 +141,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
    * Ensures we don't schedule while going down.
    */
   private scheduleNextBeat(): void {
-    if (!this.isRunning()) {
+    if (!this.isOperational()) {
       this.logger.debug(
         'Skipping scheduling next heartbeat because the instance is not running or is going down',
       );
@@ -177,7 +177,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   }
 
   protected beat(): void {
-    if (!this.isRunning() || this.isGoingDown()) {
+    if (!this.isOperational()) {
       // Do not perform beats while not running/shutting down
       this.logger.debug(
         'Skipping heartbeat beat() because the instance is not running or is going down',

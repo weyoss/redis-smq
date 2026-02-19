@@ -10,6 +10,7 @@
 -- Publishes a message to a queue. This script is optimized for maximum performance
 -- by using a static HSET command, passing all properties directly.
 -- It includes an idempotency check to prevent duplicate messages.
+-- It validates queue operational state before publishing.
 --
 -- KEYS[1]: keyQueueProperties
 -- KEYS[2]: keyPriorityQueue
@@ -20,10 +21,24 @@
 -- KEYS[7]: keyMessage
 --
 -- ARGV layout:
--- ARGV[1-11]: Queue property keys and scheduling values
--- ARGV[12-34]: Message property keys (23 keys)
--- ARGV[35-57]: Message property values (23 values)
--- ARGV[58]: consumerGroupId
+-- ARGV[1-13]: Queue property keys and state values (13 values)
+-- ARGV[14-17]: Message priority and scheduling values (4 values)
+-- ARGV[18-40]: Message property keys (23 keys)
+-- ARGV[41-63]: Message property values (23 values)
+-- ARGV[64]: consumerGroupId
+-- ARGV[65]: operationLockId (optional, for locked queues)
+--
+-- Return codes:
+--   'OK' - Success
+--   'QUEUE_NOT_FOUND' - Queue does not exist
+--   'CONSUMER_GROUP_NOT_FOUND' - Specified consumer group does not exist
+--   'MESSAGE_ALREADY_EXISTS' - Message with same ID already exists
+--   'MESSAGE_PRIORITY_REQUIRED' - Priority queue requires priority
+--   'PRIORITY_QUEUING_NOT_ENABLED' - Non-priority queue received priority
+--   'UNKNOWN_QUEUE_TYPE' - Invalid queue type
+--   'QUEUE_STOPPED' - Queue is in STOPPED state
+--   'QUEUE_LOCKED' - Queue is locked and no valid lock ID provided
+--   'QUEUE_INVALID_STATE' - Queue is in unknown state
 --
 -- This script depends on 'shared-procedures/publish-message.lua'.
 -- The content of 'shared-procedures/publish-message.lua' must be prepended to this script before loading it into Redis.

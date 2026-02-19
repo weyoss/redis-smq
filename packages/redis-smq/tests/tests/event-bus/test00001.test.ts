@@ -10,13 +10,13 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import {
+  Consumer,
   IQueueParams,
   IQueueParsedParams,
   ProducibleMessage,
   TRedisSMQEvent,
 } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
-import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   createQueue,
@@ -95,8 +95,11 @@ test('Event bus: case 1', async () => {
 
   await shutDownBaseInstance(c2);
 
-  const c3 = getConsumer({ queue: anotherQueue });
+  const c3 = bluebird.promisifyAll(new Consumer());
   await c3.runAsync();
+  await c3.consumeAsync(anotherQueue, (msg, cb) => {
+    setTimeout(cb, 1000);
+  });
 
   const m3 = new ProducibleMessage().setQueue(anotherQueue).setBody('MMM');
   const [id3] = await p2.produceAsync(m3);
@@ -140,4 +143,6 @@ test('Event bus: case 1', async () => {
     event: 'consumer.consumeMessage.messageAcknowledged',
     messageId: id4,
   });
+
+  await c3.shutdownAsync();
 });

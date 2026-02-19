@@ -17,7 +17,11 @@ import {
 } from '../../../message/index.js';
 import { _getMessages } from '../../../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { EQueueProperty, IQueueParams } from '../../../queue-manager/index.js';
+import {
+  EQueueProperty,
+  IQueueParams,
+  EQueueOperationalState,
+} from '../../../queue-manager/index.js';
 import { _getConsumerQueues } from '../../_/_get-consumer-queues.js';
 import {
   EMessageUnacknowledgementAction,
@@ -83,6 +87,12 @@ const UNACK_STATIC_ARGS = (): (string | number)[] => {
     EMessageProperty.UNACKNOWLEDGED_AT,
     EMessageProperty.LAST_UNACKNOWLEDGED_AT,
     EMessageProperty.EXPIRED,
+    // Operational state constants (ARGV[19-23])
+    EQueueProperty.OPERATIONAL_STATE,
+    EQueueOperationalState.ACTIVE,
+    EQueueOperationalState.PAUSED,
+    EQueueOperationalState.STOPPED,
+    EQueueOperationalState.LOCKED,
   ];
 };
 
@@ -292,12 +302,30 @@ export class MessageUnacknowledgement {
       args,
       (err, reply) => {
         if (err) return cb(err);
+
+        // Handle string responses from the script (queue state errors)
+        if (typeof reply === 'string') {
+          this.logger.warn(`Script returned queue state: ${reply}`);
+          return cb(
+            new UnexpectedScriptReplyError({
+              metadata: {
+                reply,
+              },
+            }),
+          );
+        }
+
         const processedCount = Number(reply);
         if (isNaN(processedCount)) {
           return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
         }
         const expectedCount = messages.length;
         if (processedCount !== expectedCount) {
+          // This is a warning, not an error, as messages may have been already processed
+          this.logger.warn(
+            `Script reported processing ${processedCount} entries, but expected ${expectedCount}. ` +
+              `This may be due to messages being already processed or removed.`,
+          );
           return cb(
             new ScriptResultMismatchError({
               message: `Script reported processing ${processedCount} entries, but expected ${expectedCount}`,

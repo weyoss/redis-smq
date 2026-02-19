@@ -94,6 +94,7 @@ export class ConsumerGroups {
    * @throws QueueNotFoundError
    * @throws ConsumerGroupNotEmptyError
    * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueOperationForbiddenError
    * @throws UnexpectedScriptReplyError
    *
    * @param {string | IQueueParams} queue - The queue from which to delete the consumer group.

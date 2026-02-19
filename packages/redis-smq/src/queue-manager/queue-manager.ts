@@ -24,6 +24,7 @@ import {
 } from '../errors/index.js';
 import {
   EQueueDeliveryModel,
+  EQueueOperationalState,
   EQueueProperty,
   EQueueType,
   IQueueParams,
@@ -32,6 +33,11 @@ import {
 } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
+import { maxQueueStateHistorySize } from '../queue-state-manager/helpers/_set-queue-state.js';
+import {
+  EQueueStateTransitionReason,
+  IQueueStateTransition,
+} from '../queue-state-manager/index.js';
 
 /**
  * The QueueManager class represents an interface that interacts with Redis for storing
@@ -87,11 +93,8 @@ export class QueueManager {
     this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
     withSharedPoolConnection((client, done) => {
-      const { keyQueueProperties } = redisKeys.getQueueKeys(
-        queueParams.ns,
-        queueParams.name,
-        null,
-      );
+      const { keyQueueProperties, keyQueueStateHistory } =
+        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
       const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
       const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
 
@@ -100,7 +103,24 @@ export class QueueManager {
         keyNamespaceQueues,
         keyQueues,
         keyQueueProperties,
+        keyQueueStateHistory, // New key for state history
       ];
+
+      // Get current timestamp for state change
+      const now = Date.now();
+
+      // Create initial state transition data
+      const initialState: IQueueStateTransition = {
+        timestamp: now,
+        from: null, // No previous state for initial transition
+        to: EQueueOperationalState.ACTIVE,
+        reason: EQueueStateTransitionReason.SYSTEM_INIT,
+        metadata: {
+          queueType,
+          deliveryModel,
+        },
+      };
+      const initialTransitionData = JSON.stringify(initialState);
 
       const args: (string | number)[] = [
         queueParams.ns,
@@ -119,6 +139,14 @@ export class QueueManager {
         EQueueProperty.PROCESSING_MESSAGES_COUNT,
         EQueueProperty.DELAYED_MESSAGES_COUNT,
         EQueueProperty.REQUEUED_MESSAGES_COUNT,
+        // New arguments for state management
+        EQueueProperty.OPERATIONAL_STATE,
+        EQueueOperationalState.ACTIVE,
+        maxQueueStateHistorySize,
+        EQueueProperty.LAST_STATE_CHANGE_AT,
+        now,
+        EQueueProperty.LOCK_ID,
+        initialTransitionData,
       ];
 
       this.logger.debug(
@@ -148,7 +176,7 @@ export class QueueManager {
 
           this.logger.debug(`Queue ${queueName} created successfully.`);
 
-          // Construct properties locally to save a round-trip to Redis
+          // Construct properties with initial state
           const properties: IQueueProperties = {
             queueType,
             deliveryModel,
@@ -161,7 +189,11 @@ export class QueueManager {
             processingMessagesCount: 0,
             delayedMessagesCount: 0,
             requeuedMessagesCount: 0,
+            operationalState: EQueueOperationalState.ACTIVE,
+            lockId: null,
+            lastStateChangeAt: now,
           };
+
           this.logger.debug(
             `Emitting queue.queueCreated event for ${queueName}`,
           );
@@ -171,7 +203,7 @@ export class QueueManager {
             properties,
           );
           this.logger.info(
-            `Queue ${queueName} successfully created with type=${queueType}, deliveryModel=${deliveryModel}`,
+            `Queue ${queueName} successfully created with type=${queueType}, deliveryModel=${deliveryModel}, state=${EQueueOperationalState.ACTIVE}`,
           );
           done(null, { queue: queueParams, properties });
         },
@@ -315,7 +347,7 @@ export class QueueManager {
                   EQueueType[properties.queueType]
                 }, deliveryModel=${
                   EQueueDeliveryModel[properties.deliveryModel]
-                }`,
+                }, state=${properties.operationalState}`,
               );
             } else {
               this.logger.debug(`No properties found for queue ${queueName}`);

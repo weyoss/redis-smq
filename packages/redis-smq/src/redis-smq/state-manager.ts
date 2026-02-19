@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-// redis-smq/state-manager.ts
 import { PowerSwitch } from 'redis-smq-common';
 
 export class StateManager {

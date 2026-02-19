@@ -50,7 +50,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   }
 
   protected onTick = () => {
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       this.logger.debug('Worker tick triggered');
       this.work((err) => {
         if (err) {
@@ -65,7 +65,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   };
 
   protected override handleError = (err: Error) => {
-    if (this.isRunning()) {
+    if (this.isOperational()) {
       this.logger.error(`Fatal error in worker ${this.constructor.name}`, err);
       // simply crashing the background worker
       throw err;

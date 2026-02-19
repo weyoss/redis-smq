@@ -17,7 +17,11 @@ import {
   EMessagePropertyStatus,
 } from '../../../../message/index.js';
 import { MessageEnvelope } from '../../../../message/message-envelope.js';
-import { EQueueProperty, EQueueType } from '../../../../queue-manager/index.js';
+import {
+  EQueueOperationalState,
+  EQueueProperty,
+  EQueueType,
+} from '../../../../queue-manager/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { UnexpectedScriptReplyError } from '../../../../errors/index.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
@@ -121,7 +125,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         keyQueueConsumerGroups,
       ];
       const argv: (string | number)[] = [
-        // Queue Property Constants
+        // Queue Property Constants (1-8)
         EQueueProperty.QUEUE_TYPE,
         EQueueProperty.MESSAGES_COUNT,
         EQueueProperty.PENDING_MESSAGES_COUNT,
@@ -131,12 +135,20 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         EQueueType.LIFO_QUEUE,
         EQueueType.FIFO_QUEUE,
 
-        // Message Status Constants
+        // Queue Operational State Constants (9-14) - NEW
+        EQueueProperty.OPERATIONAL_STATE,
+        EQueueProperty.LOCK_ID,
+        EQueueOperationalState.ACTIVE,
+        EQueueOperationalState.PAUSED,
+        EQueueOperationalState.STOPPED,
+        EQueueOperationalState.LOCKED,
+
+        // Message Status Constants (15-17)
         EMessagePropertyStatus.PENDING,
         EMessagePropertyStatus.SCHEDULED,
         EMessagePropertyStatus.DEAD_LETTERED,
 
-        // Message Property Constants
+        // Message Property Constants (18-40)
         EMessageProperty.ID,
         EMessageProperty.STATUS,
         EMessageProperty.MESSAGE,
@@ -221,7 +233,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
           // Dynamic keys for this message
           keys.push(newKeyMessage, keyScheduledMessage);
 
-          // Dynamic arguments for this message
+          // Dynamic arguments for this message (14 parameters)
           argv.push(
             newMessageId,
             newMessageJSON,
@@ -236,7 +248,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
             scheduledMessageRepeatCount,
             scheduledMessageEffectiveScheduledDelay,
             consumerGroupId ?? '',
-            ts,
+            ts, // messageDeadLetteredAt
           );
           done();
         },
@@ -263,6 +275,31 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
                 );
                 return cb(err);
               }
+
+              // Handle specific error responses from the script
+              if (typeof reply === 'string') {
+                if (reply.startsWith('PUBLISH_ERROR:')) {
+                  const [, failedMessageId, errorCode] = reply.split(':');
+                  this.logger.error(
+                    `Failed to publish repeating message ${failedMessageId}: ${errorCode}`,
+                  );
+                  return cb(
+                    new PanicError({
+                      message: `Failed to publish scheduled message: ${errorCode}`,
+                    }),
+                  );
+                }
+
+                this.logger.error(
+                  `Script execution returned an error: ${reply}`,
+                );
+                return cb(
+                  new PanicError({
+                    message: `PUBLISH_SCHEDULED_MESSAGE script failed: ${reply}`,
+                  }),
+                );
+              }
+
               if (typeof reply === 'number') {
                 if (reply !== messages.length) {
                   this.logger.warn(
@@ -274,16 +311,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
                 );
                 return cb();
               }
-              if (typeof reply === 'string') {
-                this.logger.error(
-                  `Script execution returned an error: ${reply}`,
-                );
-                return cb(
-                  new PanicError({
-                    message: `PUBLISH_SCHEDULED_MESSAGE script failed: ${reply}`,
-                  }),
-                );
-              }
+
               this.logger.error(
                 `Script execution returned unexpected response: ${reply}`,
               );

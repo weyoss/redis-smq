@@ -35,7 +35,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
    * This is the single authoritative method for scheduling a delayed tick.
    */
   protected scheduleNextTick = (): void => {
-    if (!this.isRunning()) return;
+    if (!this.isOperational()) return;
     this.schedulerTimer.reset();
     this.schedulerTimer.setTimeout(
       () => this.execNextMessageHandler(),
@@ -61,7 +61,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
    * If no handlers are ready, it schedules a delayed retry.
    */
   protected execNextMessageHandler = (): void => {
-    if (!this.isRunning()) return;
+    if (!this.isOperational()) return;
 
     const totalHandlers = this.messageHandlerInstances.length;
     if (totalHandlers === 0) {
@@ -72,7 +72,14 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     // Iterate through handlers to find a runnable one without intermediate delays.
     for (let i = 0; i < totalHandlers; i += 1) {
       const handler = this.getNextMessageHandler();
-      if (handler && handler.isRunning() && handler.isUp()) {
+      if (handler && handler.isOperational() && handler.isUp()) {
+        // Check if queue is active
+        const queue = handler.getQueue();
+        if (!this.isQueueActive(queue)) {
+          // Skip this handler as its queue is not active
+          continue;
+        }
+
         this.activeMessageHandler = handler;
         this.activeMessageHandler.dequeue();
         // A runnable handler was found and activated. Exit until it calls back.
@@ -102,7 +109,13 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       this.logger.error(
         `MultiplexedMessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
       );
-      this.shutdownMessageHandler(instance, () => {});
+      this.shutdownMessageHandler(instance, (err) => {
+        if (err) {
+          this.logger.error(
+            `Failed to shutdown handler ${instance.getId()}: ${err.message}`,
+          );
+        }
+      });
     });
     this.messageHandlerInstances.push(instance);
     this.logger.info(

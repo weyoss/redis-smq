@@ -3,8 +3,6 @@
 -- Weyoss <weyoss@outlook.com>
 -- https://github.com/weyoss
 --
--- Atomically creates a background job with target locking
---
 -- Atomically marks a background job as PROCESSING
 -- Should only be called by workers after acquiring a job
 --

@@ -12,6 +12,7 @@ import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { QueueNotFoundError } from '../../errors/index.js';
 import {
   EQueueDeliveryModel,
+  EQueueOperationalState,
   EQueueProperty,
   EQueueType,
   IQueueParams,
@@ -33,6 +34,9 @@ function parseProperties(
     processingMessagesCount: 0,
     delayedMessagesCount: 0,
     requeuedMessagesCount: 0,
+    operationalState: EQueueOperationalState.ACTIVE,
+    lockId: null,
+    lastStateChangeAt: null,
   };
   for (const key in raw) {
     const keyNum = Number(key);
@@ -70,6 +74,15 @@ function parseProperties(
         break;
       case EQueueProperty.REQUEUED_MESSAGES_COUNT:
         properties.requeuedMessagesCount = Number(value);
+        break;
+      case EQueueProperty.OPERATIONAL_STATE:
+        properties.operationalState = Number(value);
+        break;
+      case EQueueProperty.LAST_STATE_CHANGE_AT:
+        properties.lastStateChangeAt = Number(value);
+        break;
+      case EQueueProperty.LOCK_ID:
+        properties.lockId = value;
         break;
       default:
         return new PanicError({

@@ -56,17 +56,17 @@ export class ConsumerFactory extends FactoryAbstract {
    */
   static startConsumer(
     enableMultiplexing: boolean,
-    cb: ICallback<boolean>,
+    cb: ICallback<void>,
   ): Consumer;
 
-  static startConsumer(cb: ICallback<boolean>): Consumer;
+  static startConsumer(cb: ICallback<void>): Consumer;
 
   static startConsumer(
-    enableMultiplexingOrCb: boolean | ICallback<boolean>,
-    cb?: ICallback<boolean>,
+    enableMultiplexingOrCb: boolean | ICallback<void>,
+    cb?: ICallback<void>,
   ): Consumer {
     let enableMultiplexing = false;
-    let callback: ICallback<boolean> = () => void 0;
+    let callback: ICallback<void> = () => void 0;
 
     if (typeof enableMultiplexingOrCb === 'function') {
       callback = enableMultiplexingOrCb;

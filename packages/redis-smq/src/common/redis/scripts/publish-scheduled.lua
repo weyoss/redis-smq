@@ -28,10 +28,10 @@
 --     - keyScheduledMessage (for the original message)
 --
 -- ARGV:
---   ARGV[1-34]: A list of all EQueueProperty and EMessageProperty constants.
---   ARGV[35...]: A flat list of repeating parameters for each message.
+--   ARGV[1-40]: A list of all EQueueProperty and EMessageProperty constants.
+--   ARGV[41...]: A flat list of repeating parameters for each message.
 --
--- ARGV structure per message (13 parameters):
+-- ARGV structure per message (14 parameters):
 --   1. messageId (new message ID, or '')
 --   2. message (new message body, or '')
 --   3. messagePriority
@@ -45,6 +45,7 @@
 --   11. scheduledMessageRepeatCount
 --   12. scheduledMessageEffectiveScheduledDelay
 --   13. consumerGroupId
+--   14. messageDeadLetteredAt
 --
 -- Returns:
 --   - The number of successfully processed messages.
@@ -59,14 +60,7 @@ local keyQueueScheduled = KEYS[5]
 local keyQueueDeadLettered = KEYS[6]
 local keyQueueConsumerGroups = KEYS[7]
 
--- Early exit if the queue does not exist. This check is now done only once per batch.
-local queueType = redis.call("HGET", keyQueueProperties, ARGV[1] -- EQueuePropertyQueueType
-)
-if queueType == false then
-    return 0
-end
-
--- Queue Property Constants (ARGV[1-8])
+-- Queue Property Constants (ARGV[1-14])
 local EQueuePropertyQueueType = ARGV[1]
 local EQueuePropertyMessagesCount = ARGV[2]
 local EQueuePropertyPendingMessagesCount = ARGV[3]
@@ -75,39 +69,81 @@ local EQueuePropertyDeadLetteredMessagesCount = ARGV[5]
 local EQueuePropertyQueueTypePriorityQueue = ARGV[6]
 local EQueuePropertyQueueTypeLIFOQueue = ARGV[7]
 local EQueuePropertyQueueTypeFIFOQueue = ARGV[8]
+local EQueuePropertyOperationalState = ARGV[9]   -- New: Operational state field
+local EQueuePropertyLockId = ARGV[10]            -- New: Lock ID field
+local EQueueOperationalStateActive = ARGV[11]    -- New: ACTIVE state value
+local EQueueOperationalStatePaused = ARGV[12]    -- New: PAUSED state value
+local EQueueOperationalStateStopped = ARGV[13]   -- New: STOPPED state value
+local EQueueOperationalStateLocked = ARGV[14]    -- New: LOCKED state value
 
--- Message Status Constants (ARGV[9-11])
-local EMessagePropertyStatusPending = ARGV[9]
-local EMessagePropertyStatusScheduled = ARGV[10]
-local EMessagePropertyStatusDeadLettered = ARGV[11]
+-- Message Status Constants (ARGV[15-17])
+local EMessagePropertyStatusPending = ARGV[15]
+local EMessagePropertyStatusScheduled = ARGV[16]
+local EMessagePropertyStatusDeadLettered = ARGV[17]
 
--- Message Property Constants (ARGV[12-34])
-local EMessagePropertyId = ARGV[12]
-local EMessagePropertyStatus = ARGV[13]
-local EMessagePropertyMessage = ARGV[14]
-local EMessagePropertyScheduledAt = ARGV[15]
-local EMessagePropertyPublishedAt = ARGV[16]
-local EMessagePropertyProcessingStartedAt = ARGV[17]
-local EMessagePropertyDeadLetteredAt = ARGV[18]
-local EMessagePropertyAcknowledgedAt = ARGV[19]
-local EMessagePropertyUnacknowledgedAt = ARGV[20]
-local EMessagePropertyLastUnacknowledgedAt = ARGV[21]
-local EMessagePropertyLastScheduledAt = ARGV[22]
-local EMessagePropertyRequeuedAt = ARGV[23]
-local EMessagePropertyRequeueCount = ARGV[24]
-local EMessagePropertyLastRequeuedAt = ARGV[25]
-local EMessagePropertyLastRetriedAttemptAt = ARGV[26]
-local EMessagePropertyScheduledCronFired = ARGV[27]
-local EMessagePropertyAttempts = ARGV[28]
-local EMessagePropertyScheduledRepeatCount = ARGV[29]
-local EMessagePropertyExpired = ARGV[30]
-local EMessagePropertyEffectiveScheduledDelay = ARGV[31]
-local EMessagePropertyScheduledTimes = ARGV[32]
-local EMessagePropertyScheduledMessageParentId = ARGV[33]
-local EMessagePropertyRequeuedMessageParentId = ARGV[34]
+-- Message Property Constants (ARGV[18-40])
+local EMessagePropertyId = ARGV[18]
+local EMessagePropertyStatus = ARGV[19]
+local EMessagePropertyMessage = ARGV[20]
+local EMessagePropertyScheduledAt = ARGV[21]
+local EMessagePropertyPublishedAt = ARGV[22]
+local EMessagePropertyProcessingStartedAt = ARGV[23]
+local EMessagePropertyDeadLetteredAt = ARGV[24]
+local EMessagePropertyAcknowledgedAt = ARGV[25]
+local EMessagePropertyUnacknowledgedAt = ARGV[26]
+local EMessagePropertyLastUnacknowledgedAt = ARGV[27]
+local EMessagePropertyLastScheduledAt = ARGV[28]
+local EMessagePropertyRequeuedAt = ARGV[29]
+local EMessagePropertyRequeueCount = ARGV[30]
+local EMessagePropertyLastRequeuedAt = ARGV[31]
+local EMessagePropertyLastRetriedAttemptAt = ARGV[32]
+local EMessagePropertyScheduledCronFired = ARGV[33]
+local EMessagePropertyAttempts = ARGV[34]
+local EMessagePropertyScheduledRepeatCount = ARGV[35]
+local EMessagePropertyExpired = ARGV[36]
+local EMessagePropertyEffectiveScheduledDelay = ARGV[37]
+local EMessagePropertyScheduledTimes = ARGV[38]
+local EMessagePropertyScheduledMessageParentId = ARGV[39]
+local EMessagePropertyRequeuedMessageParentId = ARGV[40]
+
+-- Check queue operational state
+local queueProps = redis.call("HMGET", keyQueueProperties,
+        EQueuePropertyQueueType,
+        EQueuePropertyOperationalState)
+
+local queueType = queueProps[1]
+local operationalState = queueProps[2]
+
+-- Early exit if the queue does not exist. This check is now done only once per batch.
+if queueType == false then
+    return 0
+end
+
+if operationalState == false then
+    -- Default to ACTIVE if operational state is not set
+    operationalState = EQueueOperationalStateActive
+end
+
+-- Validate queue state for scheduled message processing
+if operationalState == EQueueOperationalStateStopped then
+    -- Queue is completely stopped, no processing allowed
+    return 0
+elseif operationalState == EQueueOperationalStateLocked then
+    -- Queue is locked, scheduled messages cannot be processed
+    return 0
+elseif operationalState == EQueueOperationalStatePaused then
+    -- Queue is paused, scheduled messages can be moved to pending but won't be consumed
+    -- This is allowed, so continue
+elseif operationalState == EQueueOperationalStateActive then
+    -- Queue is active, scheduled messages can be processed
+    -- This is allowed, so continue
+else
+    -- Unknown state, skip processing as a safety measure
+    return 0
+end
 
 -- Loop constants
-local INITIAL_ARGV_OFFSET = 34
+local INITIAL_ARGV_OFFSET = 40
 local INITIAL_KEY_OFFSET = 7
 local PARAMS_PER_MESSAGE = 14
 local KEYS_PER_MESSAGE = 2
@@ -177,7 +213,8 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 redis.call(
                         "HSET", keyScheduledMessage,
                         EMessagePropertyStatus, EMessagePropertyStatusDeadLettered,
-                        EMessagePropertyDeadLetteredAt, messageDeadLetteredAt)
+                        EMessagePropertyDeadLetteredAt, messageDeadLetteredAt
+                )
             end
             processed_count = processed_count + 1
         end
@@ -210,11 +247,82 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 keyMessage
             }
             local pArgs = {
-                EQueuePropertyQueueType, EQueuePropertyMessagesCount, EQueuePropertyPendingMessagesCount, EQueuePropertyScheduledMessagesCount, EQueuePropertyQueueTypePriorityQueue, EQueuePropertyQueueTypeLIFOQueue, EQueuePropertyQueueTypeFIFOQueue,
-                newMessagePriority, '', EMessagePropertyStatusScheduled, EMessagePropertyStatusPending,
-                EMessagePropertyId, EMessagePropertyStatus, EMessagePropertyMessage, EMessagePropertyScheduledAt, EMessagePropertyPublishedAt, EMessagePropertyProcessingStartedAt, EMessagePropertyDeadLetteredAt, EMessagePropertyAcknowledgedAt, EMessagePropertyUnacknowledgedAt, EMessagePropertyLastUnacknowledgedAt, EMessagePropertyLastScheduledAt, EMessagePropertyRequeuedAt, EMessagePropertyRequeueCount, EMessagePropertyLastRequeuedAt, EMessagePropertyLastRetriedAttemptAt, EMessagePropertyScheduledCronFired, EMessagePropertyAttempts, EMessagePropertyScheduledRepeatCount, EMessagePropertyExpired, EMessagePropertyEffectiveScheduledDelay, EMessagePropertyScheduledTimes, EMessagePropertyScheduledMessageParentId, EMessagePropertyRequeuedMessageParentId,
-                newMessageId, EMessagePropertyStatusPending, newMessage, '', newMessagePublishedAt, '', '', '', '', '', '', '', '0', '', '', '0', '0', '0', '0', '0', '0', scheduledMessageId, '',
-                consumerGroupId
+                -- Queue properties and state values (13 values: ARGV[1-13])
+                EQueuePropertyQueueType,
+                EQueuePropertyMessagesCount,
+                EQueuePropertyPendingMessagesCount,
+                EQueuePropertyScheduledMessagesCount,
+                EQueuePropertyQueueTypePriorityQueue,
+                EQueuePropertyQueueTypeLIFOQueue,
+                EQueuePropertyQueueTypeFIFOQueue,
+                EQueuePropertyOperationalState,
+                EQueuePropertyLockId,
+                EQueueOperationalStateActive,
+                EQueueOperationalStatePaused,
+                EQueueOperationalStateStopped,
+                EQueueOperationalStateLocked,
+
+                -- Message priority and scheduling values (4 values: ARGV[14-17])
+                newMessagePriority,
+                '',  -- scheduledTimestamp (empty - message is pending, not scheduled)
+                EMessagePropertyStatusScheduled,
+                EMessagePropertyStatusPending,
+
+                -- Message Property Keys (23 keys: ARGV[18-40])
+                EMessagePropertyId,
+                EMessagePropertyStatus,
+                EMessagePropertyMessage,
+                EMessagePropertyScheduledAt,
+                EMessagePropertyPublishedAt,
+                EMessagePropertyProcessingStartedAt,
+                EMessagePropertyDeadLetteredAt,
+                EMessagePropertyAcknowledgedAt,
+                EMessagePropertyUnacknowledgedAt,
+                EMessagePropertyLastUnacknowledgedAt,
+                EMessagePropertyLastScheduledAt,
+                EMessagePropertyRequeuedAt,
+                EMessagePropertyRequeueCount,
+                EMessagePropertyLastRequeuedAt,
+                EMessagePropertyLastRetriedAttemptAt,
+                EMessagePropertyScheduledCronFired,
+                EMessagePropertyAttempts,
+                EMessagePropertyScheduledRepeatCount,
+                EMessagePropertyExpired,
+                EMessagePropertyEffectiveScheduledDelay,
+                EMessagePropertyScheduledTimes,
+                EMessagePropertyScheduledMessageParentId,
+                EMessagePropertyRequeuedMessageParentId,
+
+                -- Message Property Values (23 values: ARGV[41-63])
+                newMessageId,                    -- ID
+                EMessagePropertyStatusPending,   -- STATUS
+                newMessage,                      -- MESSAGE
+                '',                              -- SCHEDULED_AT
+                newMessagePublishedAt,           -- PUBLISHED_AT
+                '',                              -- PROCESSING_STARTED_AT
+                '',                              -- DEAD_LETTERED_AT
+                '',                              -- ACKNOWLEDGED_AT
+                '',                              -- UNACKNOWLEDGED_AT
+                '',                              -- LAST_UNACKNOWLEDGED_AT
+                '',                              -- LAST_SCHEDULED_AT
+                '',                              -- REQUEUED_AT
+                '0',                             -- REQUEUE_COUNT
+                '',                              -- LAST_REQUEUED_AT
+                '',                              -- LAST_RETRIED_ATTEMPT_AT
+                '0',                             -- SCHEDULED_CRON_FIRED
+                '0',                             -- ATTEMPTS
+                '0',                             -- SCHEDULED_REPEAT_COUNT
+                '0',                             -- EXPIRED
+                '0',                             -- EFFECTIVE_SCHEDULED_DELAY
+                '0',                             -- SCHEDULED_TIMES
+                scheduledMessageId,              -- SCHEDULED_MESSAGE_PARENT_ID
+                '',                              -- REQUEUED_MESSAGE_PARENT_ID
+
+                -- Consumer Group ID (ARGV[64])
+                consumerGroupId,
+
+                -- Operation Lock ID (ARGV[65]) - empty for scheduled message processing
+                ''
             }
             local result = publish_message(pKeys, pArgs)
             if result ~= 'OK' then

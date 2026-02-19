@@ -50,12 +50,12 @@ export class LifecycleManager {
             return Configuration.initialize(cb);
           Configuration.initializeWithConfig(redisSMQConfig, cb);
         },
-        (cb) => InternalEventBus.getInstance().run((err) => cb(err)),
+        (cb) => InternalEventBus.getInstance().run(cb),
         (cb) => BackgroundJobCluster.run(cb),
         (cb) => {
           const config = Configuration.getConfig();
           if (config.eventBus.enabled) {
-            return EventBus.getInstance().run((err) => cb(err));
+            return EventBus.getInstance().run(cb);
           }
           cb();
         },

@@ -18,6 +18,7 @@ import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
 import {
+  EQueueOperationalState,
   EQueueProperty,
   IQueueParams,
   IQueueRateLimit,
@@ -27,11 +28,14 @@ import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
 import {
   InvalidRateLimitIntervalError,
   InvalidRateLimitValueError,
+  QueueLockedError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
 } from '../errors/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
+import { getRedisForQueueOperation } from '../common/helpers/get-redis-for-queue-operation.js';
+import { EQueueOperation } from '../queue-operation-validator/index.js';
 
 /**
  * The QueueRateLimit class provides functionality to manage rate limiting for
@@ -61,6 +65,7 @@ export class QueueRateLimit {
    *
    * @throws InvalidQueueParametersError
    * @throws QueueNotFoundError
+   * @throws QueueLockedError
    */
   clear(queue: string | IQueueParams, cb: ICallback<void>): void {
     const queueName =
@@ -70,46 +75,73 @@ export class QueueRateLimit {
     const queueParams = _parseQueueParams(queue);
     if (queueParams instanceof Error) return cb(queueParams);
 
-    withSharedPoolConnection((client, cb) => {
-      const { keyQueueProperties, keyQueueRateLimitCounter } =
-        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
+    getRedisForQueueOperation(
+      queue,
+      EQueueOperation.CLEAR_RATE_LIMIT,
+      (client, cb) => {
+        const { keyQueueProperties, keyQueueRateLimitCounter } =
+          redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
 
-      client.runScript(
-        ERedisScriptName.CLEAR_QUEUE_RATE_LIMIT,
-        [keyQueueProperties, keyQueueRateLimitCounter],
-        [String(EQueueProperty.RATE_LIMIT)],
-        (err, reply) => {
-          if (err) {
-            this.logger.error(
-              `Failed to clear rate limit for ${queueName}: ${err.message}`,
-            );
-            return cb(err);
-          }
+        const argv: (string | number)[] = [
+          EQueueProperty.RATE_LIMIT,
+          EQueueProperty.OPERATIONAL_STATE,
+          EQueueOperationalState.LOCKED,
+          EQueueProperty.LOCK_ID,
+          '', // lock ID
+        ];
 
-          const replyStr = String(reply);
-          if (!['OK', 'QUEUE_NOT_FOUND'].includes(replyStr)) {
-            const error = new UnexpectedScriptReplyError({
-              metadata: { reply },
-            });
-            this.logger.error(
-              `Unexpected reply when clearing rate limit for ${queueName}: ${replyStr}`,
-            );
-            return cb(error);
-          }
+        client.runScript(
+          ERedisScriptName.CLEAR_QUEUE_RATE_LIMIT,
+          [keyQueueProperties, keyQueueRateLimitCounter],
+          argv,
+          (err, reply) => {
+            if (err) {
+              this.logger.error(
+                `Failed to clear rate limit for ${queueName}: ${err.message}`,
+              );
+              return cb(err);
+            }
 
-          if (replyStr === 'QUEUE_NOT_FOUND') {
-            const error = new QueueNotFoundError();
-            this.logger.error(
-              `Queue not found when clearing rate limit: ${queueName}`,
-            );
-            return cb(error);
-          }
+            const replyStr = String(reply);
 
-          this.logger.info(`Cleared rate limit for queue: ${queueName}`);
-          cb();
-        },
-      );
-    }, cb);
+            // Handle queue state errors
+            if (replyStr === 'QUEUE_LOCKED') {
+              const error = new QueueLockedError({
+                metadata: {
+                  queue: queueParams,
+                },
+              });
+              this.logger.error(
+                `Cannot clear rate limit for ${queueName}: Queue is locked and no lock ID provided`,
+              );
+              return cb(error);
+            }
+
+            if (replyStr === 'QUEUE_NOT_FOUND') {
+              const error = new QueueNotFoundError();
+              this.logger.error(
+                `Queue not found when clearing rate limit: ${queueName}`,
+              );
+              return cb(error);
+            }
+
+            if (replyStr !== 'OK') {
+              const error = new UnexpectedScriptReplyError({
+                metadata: { reply },
+              });
+              this.logger.error(
+                `Unexpected reply when clearing rate limit for ${queueName}: ${replyStr}`,
+              );
+              return cb(error);
+            }
+
+            this.logger.info(`Cleared rate limit for queue: ${queueName}`);
+            cb();
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -128,6 +160,7 @@ export class QueueRateLimit {
    * @throws InvalidRateLimitIntervalError
    * @throws UnexpectedScriptReplyError
    * @throws QueueNotFoundError
+   * @throws QueueLockedError
    */
   set(
     queue: string | IQueueParams,
@@ -140,74 +173,102 @@ export class QueueRateLimit {
       `Setting rate limit for ${queueName}: ${rateLimit.limit}/${rateLimit.interval}ms`,
     );
 
-    withSharedPoolConnection((client, cb) => {
-      const queueParams = _parseQueueParams(queue);
-      if (queueParams instanceof Error) return cb(queueParams);
+    getRedisForQueueOperation(
+      queue,
+      EQueueOperation.SET_RATE_LIMIT,
+      (client, cb) => {
+        const queueParams = _parseQueueParams(queue);
+        if (queueParams instanceof Error) return cb(queueParams);
 
-      const limit = Number(rateLimit.limit);
-      if (isNaN(limit) || limit <= 0) {
-        const error = new InvalidRateLimitValueError();
-        this.logger.error(
-          `Invalid rate limit value for ${queueName}: ${rateLimit.limit}`,
-        );
-        return cb(error);
-      }
-
-      const interval = Number(rateLimit.interval);
-      if (isNaN(interval) || interval < 1000) {
-        const error = new InvalidRateLimitIntervalError();
-        this.logger.error(
-          `Invalid rate limit interval for ${queueName}: ${rateLimit.interval}`,
-        );
-        return cb(error);
-      }
-
-      const validatedRateLimit: IQueueRateLimit = { interval, limit };
-
-      const { keyQueueProperties } = redisKeys.getQueueKeys(
-        queueParams.ns,
-        queueParams.name,
-        null,
-      );
-
-      client.runScript(
-        ERedisScriptName.SET_QUEUE_RATE_LIMIT,
-        [keyQueueProperties],
-        [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
-        (err, reply) => {
-          if (err) {
-            this.logger.error(
-              `Failed to set rate limit for ${queueName}: ${err.message}`,
-            );
-            return cb(err);
-          }
-
-          const replyStr = String(reply);
-          if (!['OK', 'QUEUE_NOT_FOUND'].includes(replyStr)) {
-            const error = new UnexpectedScriptReplyError({
-              metadata: { reply },
-            });
-            this.logger.error(
-              `Unexpected reply when setting rate limit for ${queueName}: ${replyStr}`,
-            );
-            return cb(error);
-          }
-
-          if (replyStr === 'QUEUE_NOT_FOUND') {
-            const error = new QueueNotFoundError();
-            this.logger.error(
-              `Queue not found when setting rate limit: ${queueName}`,
-            );
-            return cb(error);
-          }
-
-          this.logger.info(
-            `Set rate limit for ${queueName}: ${limit}/${interval}ms`,
+        const limit = Number(rateLimit.limit);
+        if (isNaN(limit) || limit <= 0) {
+          const error = new InvalidRateLimitValueError();
+          this.logger.error(
+            `Invalid rate limit value for ${queueName}: ${rateLimit.limit}`,
           );
-          cb();
-        },
-      );
-    }, cb);
+          return cb(error);
+        }
+
+        const interval = Number(rateLimit.interval);
+        if (isNaN(interval) || interval < 1000) {
+          const error = new InvalidRateLimitIntervalError();
+          this.logger.error(
+            `Invalid rate limit interval for ${queueName}: ${rateLimit.interval}`,
+          );
+          return cb(error);
+        }
+
+        const validatedRateLimit: IQueueRateLimit = { interval, limit };
+
+        const { keyQueueProperties } = redisKeys.getQueueKeys(
+          queueParams.ns,
+          queueParams.name,
+          null,
+        );
+
+        const argv: (string | number)[] = [
+          EQueueProperty.RATE_LIMIT,
+          JSON.stringify(validatedRateLimit),
+          EQueueProperty.OPERATIONAL_STATE,
+          EQueueOperationalState.LOCKED,
+          EQueueProperty.LOCK_ID,
+          '', // lock ID
+        ];
+
+        client.runScript(
+          ERedisScriptName.SET_QUEUE_RATE_LIMIT,
+          [keyQueueProperties],
+          argv,
+          (err, reply) => {
+            if (err) {
+              this.logger.error(
+                `Failed to set rate limit for ${queueName}: ${err.message}`,
+              );
+              return cb(err);
+            }
+
+            const replyStr = String(reply);
+
+            // Handle queue state errors
+            if (replyStr === 'QUEUE_LOCKED') {
+              const error = new QueueLockedError({
+                metadata: {
+                  queue: queueParams,
+                },
+              });
+              this.logger.error(
+                `Cannot set rate limit for ${queueName}: Queue is locked and no lock ID provided`,
+              );
+              return cb(error);
+            }
+
+            if (replyStr === 'QUEUE_NOT_FOUND') {
+              const error = new QueueNotFoundError();
+              this.logger.error(
+                `Queue not found when setting rate limit: ${queueName}`,
+              );
+              return cb(error);
+            }
+
+            if (replyStr !== 'OK') {
+              const error = new UnexpectedScriptReplyError({
+                metadata: { reply },
+              });
+              this.logger.error(
+                `Unexpected reply when setting rate limit for ${queueName}: ${replyStr}`,
+              );
+              return cb(error);
+            }
+
+            this.logger.info(
+              `Set rate limit for ${queueName}: ${limit}/${interval}ms`,
+            );
+            cb();
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**
