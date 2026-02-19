@@ -35,3 +35,19 @@
 #### Returns
 
 `void`
+
+---
+
+### workerCluster.workerRemoved()
+
+> **workerCluster.workerRemoved**: (`workerId`) => `void`
+
+#### Parameters
+
+##### workerId
+
+`string`
+
+#### Returns
+
+`void`

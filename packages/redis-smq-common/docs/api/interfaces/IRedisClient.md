@@ -546,6 +546,30 @@
 
 ---
 
+### lindex()
+
+> **lindex**(`key`, `index`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### index
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string` \| `null`\>
+
+#### Returns
+
+`void`
+
+---
+
 ### llen()
 
 > **llen**(`key`, `cb`): `void`
