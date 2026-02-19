@@ -47,7 +47,7 @@ export class EventBus<Events extends TEventBusEvent> extends Runnable<Events> {
     if (event === 'error') {
       return super.emit(event, ...args);
     }
-    if (!this.isRunning()) {
+    if (!this.isOperational()) {
       this.eventEmitter.emit('error', new EventBusNotConnectedError());
       return false;
     }

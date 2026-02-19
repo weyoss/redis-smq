@@ -23,15 +23,15 @@ it('Locker: locker(), extend(), releaseLock()', async () => {
     new RedisLock(redisClient, getDummyLogger(), 'key1', 5000, false),
   );
   expect(lock.getId()).toBeDefined();
-  await expect(lock.acquireLockAsync()).resolves.toBe(true);
+  await lock.acquireLockAsync();
   expect(lock.isLocked()).toBe(true);
-  await expect(lock.acquireLockAsync()).resolves.toBe(false);
+  await lock.acquireLockAsync(); // second time, already acquired
   expect(lock.isLocked()).toBe(true);
 
   await bluebird.delay(10000);
 
   await expect(lock.extendLockAsync()).rejects.toThrow(ExtendLockError);
-  await expect(lock.acquireLockAsync()).resolves.toBe(true);
+  await lock.acquireLockAsync();
   await lock.extendLockAsync();
   await lock.releaseLockAsync();
   expect(lock.isLocked()).toBe(false);
@@ -39,6 +39,6 @@ it('Locker: locker(), extend(), releaseLock()', async () => {
   await lock.releaseLockAsync();
   expect(lock.isReleased()).toBe(true);
   await expect(lock.extendLockAsync()).rejects.toThrow(LockNotAcquiredError);
-  await expect(lock.acquireLockAsync()).resolves.toBe(true);
+  await lock.acquireLockAsync();
   await lock.releaseLockAsync();
 });
