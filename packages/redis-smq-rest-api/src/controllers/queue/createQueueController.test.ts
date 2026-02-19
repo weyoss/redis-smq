@@ -7,7 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { EQueueDeliveryModel, EQueueType } from 'redis-smq';
+import {
+  EQueueDeliveryModel,
+  EQueueOperationalState,
+  EQueueType,
+} from 'redis-smq';
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { config } from '../../../tests/common/config.js';
@@ -46,6 +50,9 @@ describe('createQueueController', () => {
           pendingMessagesCount: 0,
           scheduledMessagesCount: 0,
           processingMessagesCount: 0,
+          lockId: null,
+          operationalState: EQueueOperationalState.ACTIVE,
+          lastStateChangeAt: response1.body?.data?.properties.lastStateChangeAt,
         },
       },
     });
