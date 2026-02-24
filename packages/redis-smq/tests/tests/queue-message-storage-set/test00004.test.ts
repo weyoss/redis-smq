@@ -16,7 +16,7 @@ import {
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
-import { BrowserStorageSet } from '../../../src/common/message-browser/browser-storage/browser-storage-set.js';
+import { BrowserStorageSet } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-set.js';
 
 const { promisifyAll } = bluebird;
 

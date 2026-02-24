@@ -8,7 +8,7 @@
  */
 
 import { FactoryAbstract } from './factory-abstract.js';
-import { QueueAcknowledgedMessages } from '../../queue-acknowledged-messages/index.js';
+import { QueueAcknowledgedMessages } from '../../queue-messages/index.js';
 
 export class AcknowledgedMessagesFactory extends FactoryAbstract {
   /**

@@ -8,7 +8,7 @@
  */
 
 import { FactoryAbstract } from './factory-abstract.js';
-import { QueueDeadLetteredMessages } from '../../queue-dead-lettered-messages/index.js';
+import { QueueDeadLetteredMessages } from '../../queue-messages/index.js';
 
 export class DeadLetteredMessagesFactory extends FactoryAbstract {
   /**

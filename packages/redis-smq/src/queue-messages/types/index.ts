@@ -7,13 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export interface IQueueGroupConsumersPendingCount {
-  [key: string]: number;
-}
-
-export interface IQueueMessagesCount {
-  acknowledged: number;
-  deadLettered: number;
-  pending: number | IQueueGroupConsumersPendingCount;
-  scheduled: number;
-}
+export * from './queue-messages.js';
+export * from './queue-messages-registry.js';

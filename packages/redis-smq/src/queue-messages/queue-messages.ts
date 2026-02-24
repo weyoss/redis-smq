@@ -1,26 +1,26 @@
-import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
-import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+import { QueueMessagesAbstract } from './queue-messages-abstract.js';
 import { IQueueParams } from '../queue-manager/index.js';
-import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
-import { BrowserStorageSet } from '../common/message-browser/browser-storage/browser-storage-set.js';
-import { IQueueMessagesCount } from './types/index.js';
+import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { IBrowserStorage } from '../common/message-browser/browser-storage/browser-storage-abstract.js';
-import { EQueueMessageType } from '../common/index.js';
+import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
+import { EQueueMessageType, IQueueMessagesCount } from './types/index.js';
 
 /**
- * QueueMessages class manages message counting and state reporting across queue types.
- * It orchestrates various message handlers (pending, acknowledged, scheduled, dead-lettered)
- * and leverages a waterfall pattern for processing.
+ * QueueMessages class provides browsing capabilities for all messages in a queue,
+ * regardless of their status (pending, acknowledged, scheduled, dead-lettered).
  */
-export class QueueMessages extends MessageBrowserAbstract {
-  protected readonly redisKey = 'keyQueueMessages';
-  readonly messageType = EQueueMessageType.ALL_MESSAGES;
-
-  protected createDefaultStorage(): IBrowserStorage {
-    return new BrowserStorageSet(this.logger);
-  }
+export class QueueMessages extends QueueMessagesAbstract {
+  public readonly messageType = EQueueMessageType.ALL_MESSAGES;
 
   /**
    * Count messages broken down by status: pending, acknowledged, scheduled, and dead-lettered.

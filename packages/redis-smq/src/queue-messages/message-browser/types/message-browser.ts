@@ -10,12 +10,9 @@
 import { TQueueExtendedParams } from '../../../queue-manager/index.js';
 import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable } from '../../../message/index.js';
-import { EQueueMessageType } from '../../queue-messages-registry/types/index.js';
-import {
-  EBackgroundJobStatus,
-  IBackgroundJob,
-} from '../../background-job/types/index.js';
+import { EBackgroundJobStatus, IBackgroundJob } from '../../../common/index.js';
 import { TPurgeQueueJobTarget } from '../../../redis-smq/index.js';
+import { EQueueMessageType } from '../../types/index.js';
 
 export interface IMessageBrowser {
   readonly messageType: EQueueMessageType;

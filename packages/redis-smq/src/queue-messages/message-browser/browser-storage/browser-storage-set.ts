@@ -9,7 +9,7 @@
 
 import { async, ICallback } from 'redis-smq-common';
 import { BrowserStorageAbstract } from './browser-storage-abstract.js';
-import { withSharedPoolConnection } from '../../redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis sets.
@@ -189,7 +189,7 @@ export class BrowserStorageSet extends BrowserStorageAbstract {
        * @param cb - Callback function called when scanning is complete or on error
        * @returns void
        */
-      const fullScan = (cursor: string, cb: ICallback<void>): void => {
+      const fullScan = (cursor: string, cb: ICallback): void => {
         scanCount++;
         this.logger.debug(
           `SSCAN ${redisKey} iteration ${scanCount}, cursor: ${cursor}`,

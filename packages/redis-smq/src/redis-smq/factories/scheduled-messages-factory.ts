@@ -8,7 +8,7 @@
  */
 
 import { FactoryAbstract } from './factory-abstract.js';
-import { QueueScheduledMessages } from '../../queue-scheduled-messages/index.js';
+import { QueueScheduledMessages } from '../../queue-messages/index.js';
 
 export class ScheduledMessagesFactory extends FactoryAbstract {
   /**

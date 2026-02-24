@@ -22,7 +22,7 @@ export function _validateQueueExtendedParams(
   redisClient: IRedisClient,
   queue: IQueueParsedParams,
   requireGroupId: boolean,
-  cb: ICallback<void>,
+  cb: ICallback,
 ) {
   const { queueParams, groupId } = queue;
   _getQueueProperties(redisClient, queueParams, (err, properties) => {

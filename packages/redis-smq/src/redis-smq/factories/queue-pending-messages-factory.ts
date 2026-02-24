@@ -8,7 +8,7 @@
  */
 
 import { FactoryAbstract } from './factory-abstract.js';
-import { QueuePendingMessages } from '../../queue-pending-messages/index.js';
+import { QueuePendingMessages } from '../../queue-messages/index.js';
 
 export class PendingMessagesFactory extends FactoryAbstract {
   /**
