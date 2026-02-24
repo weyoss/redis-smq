@@ -6,6 +6,202 @@
 
 ## Type Declaration
 
+### CPUMonitor
+
+#### Methods
+
+##### cleanup()
+
+> **cleanup**(): `void`
+
+###### Returns
+
+`void`
+
+##### generateCallerId()
+
+> **generateCallerId**(): `string`
+
+###### Returns
+
+`string`
+
+##### getActiveCallerCount()
+
+> **getActiveCallerCount**(): `number`
+
+###### Returns
+
+`number`
+
+##### getActiveCallers()
+
+> **getActiveCallers**(): readonly `string`[]
+
+###### Returns
+
+readonly `string`[]
+
+##### getBaselineAge()
+
+> **getBaselineAge**(`callerId`): `number` \| `null`
+
+###### Parameters
+
+###### callerId
+
+`string`
+
+###### Returns
+
+`number` \| `null`
+
+##### getMonitorStats()
+
+> **getMonitorStats**(): `object`
+
+###### Returns
+
+`object`
+
+###### activeCallers
+
+> `readonly` **activeCallers**: `number`
+
+###### newestBaseline
+
+> `readonly` **newestBaseline**: `number`
+
+###### oldestBaseline
+
+> `readonly` **oldestBaseline**: `number`
+
+###### totalBaselines
+
+> `readonly` **totalBaselines**: `number`
+
+##### getOneTimeStats()
+
+> **getOneTimeStats**(): `ICPUUsage`
+
+###### Returns
+
+`ICPUUsage`
+
+##### getStats()
+
+> **getStats**(`callerId`): `ICPUUsage`
+
+Get current system-wide CPU usage for a given caller.
+Baselines older than maxBaselineAgeMs are cleaned up automatically.
+
+###### Parameters
+
+###### callerId
+
+`string` = `'default'`
+
+###### Returns
+
+`ICPUUsage`
+
+##### getStatsOverInterval()
+
+> **getStatsOverInterval**(`callerId`, `intervalMs`): `Promise`\<`ICPUUsage`\>
+
+One-shot measurement over a fixed interval (useful for scripts / tests).
+Cleans up old baselines before starting.
+
+###### Parameters
+
+###### callerId
+
+`string` = `'default'`
+
+###### intervalMs
+
+`number` = `1000`
+
+###### Returns
+
+`Promise`\<`ICPUUsage`\>
+
+##### getStatsWithAutoId()
+
+> **getStatsWithAutoId**(): `object`
+
+###### Returns
+
+`object`
+
+###### callerId
+
+> `readonly` **callerId**: `string`
+
+###### cleanup()
+
+> `readonly` **cleanup**: () => `void`
+
+###### Returns
+
+`void`
+
+###### usage
+
+> `readonly` **usage**: `ICPUUsage`
+
+##### hasCaller()
+
+> **hasCaller**(`callerId`): `boolean`
+
+###### Parameters
+
+###### callerId
+
+`string`
+
+###### Returns
+
+`boolean`
+
+##### removeCaller()
+
+> **removeCaller**(`callerId`): `boolean`
+
+###### Parameters
+
+###### callerId
+
+`string`
+
+###### Returns
+
+`boolean`
+
+##### reset()
+
+> **reset**(): `void`
+
+###### Returns
+
+`void`
+
+##### getInstance()
+
+> `static` **getInstance**(`options`): [`CPUMonitor`](#cpumonitor)
+
+Singleton – first call sets the options, later calls ignore them
+
+###### Parameters
+
+###### options
+
+`ICPUMonitorOptions` = `{}`
+
+###### Returns
+
+[`CPUMonitor`](#cpumonitor)
+
 ### doesPathExist()
 
 > **doesPathExist**(`filePath`): `Promise`\<`boolean`\>

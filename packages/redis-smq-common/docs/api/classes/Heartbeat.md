@@ -1,19 +1,32 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / WorkerCluster
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Heartbeat
 
-# Class: WorkerCluster
+# Class: Heartbeat\<T\>
 
-Coordinates distributed worker execution across multiple instances
-using Redis locks for exclusive access
+A robust base class for long-running components/services with explicit lifecycle management.
+
+Features:
+
+- `goingUp()` / `goingDown()` hooks returning callback-based tasks (executed in series)
+- Safe concurrent `run()` / `shutdown()` / `ensureIsOperational()` calls
+- Automatic abort of startup when shutdown is requested
 
 ## Extends
 
-- [`Runnable`](Runnable.md)\<[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\>
+- [`Runnable`](Runnable.md)\<[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\>
+
+## Type Parameters
+
+### T
+
+`T` = `Record`\<`string`, `unknown`\>
+
+The type of events that the Runnable class can emit.
 
 ## Constructors
 
 ### Constructor
 
-> **new WorkerCluster**(`redisClient`, `logger`, `uniqueGroupIdentifier`, `workerFilenamePattern`): `WorkerCluster`
+> **new Heartbeat**\<`T`\>(`redisClient`, `logger`, `config`, `dataFn`): `Heartbeat`\<`T`\>
 
 #### Parameters
 
@@ -25,49 +38,23 @@ using Redis locks for exclusive access
 
 [`ILogger`](../interfaces/ILogger.md)
 
-##### uniqueGroupIdentifier
+##### config
 
-`string` | `null`
+[`IHeartbeatConfig`](../interfaces/IHeartbeatConfig.md)
 
-##### workerFilenamePattern
+##### dataFn
 
-`string` = `'.worker.js'`
+[`THeartbeatDataFn`](../type-aliases/THeartbeatDataFn.md)\<`T`\>
 
 #### Returns
 
-`WorkerCluster`
+`Heartbeat`\<`T`\>
 
 #### Overrides
 
-`Runnable<TWorkerClusterEvent>.constructor`
+`Runnable< THeartbeatEvent<T> >.constructor`
 
 ## Methods
-
-### addWorker()
-
-> **addWorker**(`filename`, `payload`): [`RunnableWorker`](RunnableWorker.md)\<`unknown`\>
-
-Adds a worker instance to the cluster
-
-#### Parameters
-
-##### filename
-
-`string`
-
-##### payload
-
-`unknown`
-
-#### Returns
-
-[`RunnableWorker`](RunnableWorker.md)\<`unknown`\>
-
-#### Throws
-
-if cluster is not in DOWN state
-
----
 
 ### emit()
 
@@ -77,7 +64,7 @@ if cluster is not in DOWN state
 
 ##### E
 
-`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
 
 #### Parameters
 
@@ -87,7 +74,7 @@ if cluster is not in DOWN state
 
 ##### args
 
-...`Parameters`\<[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]\>
+...`Parameters`\<[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]\>
 
 #### Returns
 
@@ -258,42 +245,6 @@ Checks if the Runnable instance is currently up.
 
 ---
 
-### loadFromDir()
-
-> **loadFromDir**\<`WorkerPayload`\>(`workersDir`, `payload`, `cb`): `void`
-
-Loads workers from a directory
-
-#### Type Parameters
-
-##### WorkerPayload
-
-`WorkerPayload` = `unknown`
-
-#### Parameters
-
-##### workersDir
-
-`string`
-
-##### payload
-
-`WorkerPayload`
-
-##### cb
-
-[`ICallback`](../interfaces/ICallback.md)
-
-#### Returns
-
-`void`
-
-#### Throws
-
-if cluster is not in DOWN state or workers already exist
-
----
-
 ### on()
 
 > **on**\<`E`\>(`event`, `listener`): `this`
@@ -302,7 +253,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### E
 
-`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
 
 #### Parameters
 
@@ -312,7 +263,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### listener
 
-[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]
+[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]
 
 #### Returns
 
@@ -332,7 +283,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### E
 
-`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
 
 #### Parameters
 
@@ -342,7 +293,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### listener
 
-[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]
+[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]
 
 #### Returns
 
@@ -362,7 +313,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### E
 
-`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
 
 #### Parameters
 
@@ -388,7 +339,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### E
 
-`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
 
 #### Parameters
 
@@ -398,7 +349,7 @@ if cluster is not in DOWN state or workers already exist
 
 ##### listener
 
-[`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)\[`E`\]
+[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]
 
 #### Returns
 
@@ -469,3 +420,63 @@ If the shutdown process is successful, the callback will be called with no argum
 #### Inherited from
 
 [`Runnable`](Runnable.md).[`shutdown`](Runnable.md#shutdown)
+
+---
+
+### triggerBeat()
+
+> **triggerBeat**(): `void`
+
+Useful for tests or manual immediate heartbeats
+
+#### Returns
+
+`void`
+
+---
+
+### areComponentsAlive()
+
+> `static` **areComponentsAlive**(`redisClient`, `heartbeatKeys`, `cb`): `void`
+
+#### Parameters
+
+##### redisClient
+
+[`IRedisClient`](../interfaces/IRedisClient.md)
+
+##### heartbeatKeys
+
+`string`[]
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`Record`\<`string`, `boolean`\>\>
+
+#### Returns
+
+`void`
+
+---
+
+### isComponentAlive()
+
+> `static` **isComponentAlive**(`redisClient`, `heartbeatKey`, `cb`): `void`
+
+#### Parameters
+
+##### redisClient
+
+[`IRedisClient`](../interfaces/IRedisClient.md)
+
+##### heartbeatKey
+
+`string`
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+
+#### Returns
+
+`void`

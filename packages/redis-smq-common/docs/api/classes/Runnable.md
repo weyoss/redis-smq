@@ -19,6 +19,7 @@ Features:
 - [`EventBus`](EventBus.md)
 - [`RedisLock`](RedisLock.md)
 - [`WorkerCluster`](WorkerCluster.md)
+- [`Heartbeat`](Heartbeat.md)
 
 ## Type Parameters
 
