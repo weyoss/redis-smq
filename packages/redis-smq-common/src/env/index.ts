@@ -10,9 +10,11 @@
 import * as cacheDir from './cache-dir.js';
 import * as currentDir from './current-dir.js';
 import * as filesystem from './filesystem.js';
+import * as os from './os/index.js';
 
 export const env = {
   ...cacheDir,
   ...currentDir,
   ...filesystem,
+  ...os,
 };
