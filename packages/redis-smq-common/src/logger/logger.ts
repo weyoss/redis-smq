@@ -35,7 +35,7 @@ const dummyLogger: ILogger = Object.freeze({
  */
 export function createLogger(
   cfg: ILoggerConfig = {},
-  ns: string | string[] = [],
+  ns: string | string[],
 ): ILogger {
   if (!cfg.enabled) {
     return dummyLogger;

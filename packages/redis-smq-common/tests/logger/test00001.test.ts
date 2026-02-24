@@ -20,7 +20,7 @@ describe('Logger', () => {
   });
 
   it('should return a dummy logger when logging is disabled', () => {
-    const log = createLogger({ enabled: false });
+    const log = createLogger({ enabled: false }, []);
 
     // Spy on console methods to ensure they're not called
     const consoleDebugSpy = vi.spyOn(console, 'debug');
@@ -40,7 +40,7 @@ describe('Logger', () => {
   });
 
   it('should return a ConsoleLogger instance by default when enabled', () => {
-    const log = createLogger({ enabled: true });
+    const log = createLogger({ enabled: true }, []);
 
     // Check if the returned object is an instance of ConsoleLogger
     expect(log).toBeInstanceOf(ConsoleLogger);
@@ -85,14 +85,17 @@ describe('Logger', () => {
 
   it('should use custom logger options when provided', () => {
     // Create a logger with custom options
-    const log = createLogger({
-      enabled: true,
-      options: {
-        includeTimestamp: false,
-        colorize: false,
-        logLevel: 'WARN',
+    const log = createLogger(
+      {
+        enabled: true,
+        options: {
+          includeTimestamp: false,
+          colorize: false,
+          logLevel: 'WARN',
+        },
       },
-    });
+      [],
+    );
 
     // Debug and info should not log when level is WARN
     const debugSpy = vi.spyOn(console, 'debug');
