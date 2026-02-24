@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.14...v9.1.0-next.0) (2026-02-24)
+
+### 🚀 Chore
+
+- optimize npm keywords for maximum search coverage ([ab86170](https://github.com/weyoss/redis-smq/commit/ab861705317792f5b3bc5b0faed390f18959923a))
+- update READMEs after merging 'v9.0.14' into 'next' ([fb28ded](https://github.com/weyoss/redis-smq/commit/fb28ded9c0d44b598c8d7af2e847864cb6c4ce62))
+- upgrade packages to latest versions to mitigate security vulnerabilities ([0533085](https://github.com/weyoss/redis-smq/commit/0533085b12ab350ec556e4b841411b8518e85125))
+
+### 📝 Documentation
+
+- **redis-smq-common:** update API reference ([4ca2699](https://github.com/weyoss/redis-smq/commit/4ca26999683f303666e9ab308e9d9dda0ee451da))
+- **redis-smq-common:** update API reference ([0a8b4ec](https://github.com/weyoss/redis-smq/commit/0a8b4ecde80c2dd4519c02d16a6d2231ef2076b9))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** improve Runnable for safe concurrent lifecycle calls ([a29c582](https://github.com/weyoss/redis-smq/commit/a29c582a992d023f3f74fb200e92ec3e51816b5a))
+- **redis-smq-common:** introduce 'lindex' method to IRedisClient Interface ([4d81ded](https://github.com/weyoss/redis-smq/commit/4d81dedeed9e863f468206fdd9440651ba8e2362))
+- **redis-smq-common:** modularize CPUMonitor for improved component integration ([8ba003d](https://github.com/weyoss/redis-smq/commit/8ba003d2792184722a2b8820ce4152bfa17a0f2b))
+- **redis-smq-common:** modularize Heartbeat for improved component integration ([54e1010](https://github.com/weyoss/redis-smq/commit/54e101082f8655787a4f15413e2f2d09a3ecb37f))
+- **redis-smq-common:** optimize debug and info usage throughout codebase ([1a61a76](https://github.com/weyoss/redis-smq/commit/1a61a7628fa6714620f4cb767d0ef04508a9ee5e))
+- **redis-smq-common:** require 'ns' argument for createLogger() ([4875d47](https://github.com/weyoss/redis-smq/commit/4875d47ed9f19443fdf3c84f8bfac27979c245c9))
+- **redis-smq-common:** restructure WorkerCluster for clearer responsibility separation ([bbd7981](https://github.com/weyoss/redis-smq/commit/bbd7981052448681605327e2c24875610bcd946a))
+
 ## [9.0.14](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.2...v9.0.14) (2026-02-06)
 
 ### 🚀 Chore

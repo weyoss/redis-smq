@@ -3,6 +3,47 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.14...v9.1.0-next.0) (2026-02-24)
+
+### ✨ Features
+
+- **redis-smq:** add queue state management with pause/stop/resume functionality ([0f2f1d8](https://github.com/weyoss/redis-smq/commit/0f2f1d82ec8be7a96aa2cfb4704cc868fa8d7b22))
+- **redis-smq:** introduce QueueOperationValidator, enhance Queue State Management ([aad3ead](https://github.com/weyoss/redis-smq/commit/aad3ead469267473d11d0f9641e5f4a617a081c3))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** correct queue lockId to null instead of empty value ([ad33c40](https://github.com/weyoss/redis-smq/commit/ad33c40335be81be7776f0c70350f297fce4d0f5))
+
+### 🚀 Chore
+
+- optimize npm keywords for maximum search coverage ([ab86170](https://github.com/weyoss/redis-smq/commit/ab861705317792f5b3bc5b0faed390f18959923a))
+- update READMEs after merging 'v9.0.14' into 'next' ([fb28ded](https://github.com/weyoss/redis-smq/commit/fb28ded9c0d44b598c8d7af2e847864cb6c4ce62))
+- upgrade packages to latest versions to mitigate security vulnerabilities ([0533085](https://github.com/weyoss/redis-smq/commit/0533085b12ab350ec556e4b841411b8518e85125))
+
+### 📝 Documentation
+
+- **redis-smq-common:** update API reference ([4ca2699](https://github.com/weyoss/redis-smq/commit/4ca26999683f303666e9ab308e9d9dda0ee451da))
+- **redis-smq-common:** update API reference ([0a8b4ec](https://github.com/weyoss/redis-smq/commit/0a8b4ecde80c2dd4519c02d16a6d2231ef2076b9))
+- **redis-smq:** add queue state management guide and update API reference ([59f694c](https://github.com/weyoss/redis-smq/commit/59f694c547bace032ccc49c8a67c5c86383716c2))
+- **redis-smq:** add QueueOperationValidator documentation ([62c9542](https://github.com/weyoss/redis-smq/commit/62c9542465d9110c81a9cd88c427a5d469bc2267))
+- **redis-smq:** clarify difference between initialize/initializeWithConfig ([f3409b1](https://github.com/weyoss/redis-smq/commit/f3409b14a3c8db83e3893497c153df9e0fde19da))
+- **redis-smq:** update API reference ([fdf2c2d](https://github.com/weyoss/redis-smq/commit/fdf2c2d4e556f41af0c7216b2cc27d1c887adb54))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** improve Runnable for safe concurrent lifecycle calls ([a29c582](https://github.com/weyoss/redis-smq/commit/a29c582a992d023f3f74fb200e92ec3e51816b5a))
+- **redis-smq-common:** introduce 'lindex' method to IRedisClient Interface ([4d81ded](https://github.com/weyoss/redis-smq/commit/4d81dedeed9e863f468206fdd9440651ba8e2362))
+- **redis-smq-common:** modularize CPUMonitor for improved component integration ([8ba003d](https://github.com/weyoss/redis-smq/commit/8ba003d2792184722a2b8820ce4152bfa17a0f2b))
+- **redis-smq-common:** modularize Heartbeat for improved component integration ([54e1010](https://github.com/weyoss/redis-smq/commit/54e101082f8655787a4f15413e2f2d09a3ecb37f))
+- **redis-smq-common:** optimize debug and info usage throughout codebase ([1a61a76](https://github.com/weyoss/redis-smq/commit/1a61a7628fa6714620f4cb767d0ef04508a9ee5e))
+- **redis-smq-common:** require 'ns' argument for createLogger() ([4875d47](https://github.com/weyoss/redis-smq/commit/4875d47ed9f19443fdf3c84f8bfac27979c245c9))
+- **redis-smq-common:** restructure WorkerCluster for clearer responsibility separation ([bbd7981](https://github.com/weyoss/redis-smq/commit/bbd7981052448681605327e2c24875610bcd946a))
+- **redis-smq-rest-api:** update error map ([d4ab528](https://github.com/weyoss/redis-smq/commit/d4ab528ca8456aab3d6466445dbdfa379995e095))
+- **redis-smq-rest-api:** update errors map, fix create queue test case issues ([f4080bd](https://github.com/weyoss/redis-smq/commit/f4080bdff77c32a2e301e53caff49c5f56592889))
+- **redis-smq:** enhance queue-messages implementation by removing redundancies ([9a8a8ae](https://github.com/weyoss/redis-smq/commit/9a8a8ae59697475e6d9c84744da4ea7ee5c793f3))
+- **redis-smq:** integrate Heartbeat from redis-smq-common in Consumer ([0a1a937](https://github.com/weyoss/redis-smq/commit/0a1a9374430f7a13fdca1a3fc7b95224c68aa1c7))
+- **redis-smq:** optimize and shorten import statements ([cae93d5](https://github.com/weyoss/redis-smq/commit/cae93d5a23528cbc8490eb9124eb520089e58dc9))
+
 ## [9.0.14](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.2...v9.0.14) (2026-02-06)
 
 ### 🚀 Chore

@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.14...v9.1.0-next.0) (2026-02-24)
+
+### ✨ Features
+
+- **redis-smq:** add queue state management with pause/stop/resume functionality ([0f2f1d8](https://github.com/weyoss/redis-smq/commit/0f2f1d82ec8be7a96aa2cfb4704cc868fa8d7b22))
+- **redis-smq:** introduce QueueOperationValidator, enhance Queue State Management ([aad3ead](https://github.com/weyoss/redis-smq/commit/aad3ead469267473d11d0f9641e5f4a617a081c3))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** correct queue lockId to null instead of empty value ([ad33c40](https://github.com/weyoss/redis-smq/commit/ad33c40335be81be7776f0c70350f297fce4d0f5))
+
+### 🚀 Chore
+
+- optimize npm keywords for maximum search coverage ([ab86170](https://github.com/weyoss/redis-smq/commit/ab861705317792f5b3bc5b0faed390f18959923a))
+- update READMEs after merging 'v9.0.14' into 'next' ([fb28ded](https://github.com/weyoss/redis-smq/commit/fb28ded9c0d44b598c8d7af2e847864cb6c4ce62))
+
+### 📝 Documentation
+
+- **redis-smq:** add queue state management guide and update API reference ([59f694c](https://github.com/weyoss/redis-smq/commit/59f694c547bace032ccc49c8a67c5c86383716c2))
+- **redis-smq:** add QueueOperationValidator documentation ([62c9542](https://github.com/weyoss/redis-smq/commit/62c9542465d9110c81a9cd88c427a5d469bc2267))
+- **redis-smq:** clarify difference between initialize/initializeWithConfig ([f3409b1](https://github.com/weyoss/redis-smq/commit/f3409b14a3c8db83e3893497c153df9e0fde19da))
+- **redis-smq:** update API reference ([fdf2c2d](https://github.com/weyoss/redis-smq/commit/fdf2c2d4e556f41af0c7216b2cc27d1c887adb54))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** enhance queue-messages implementation by removing redundancies ([9a8a8ae](https://github.com/weyoss/redis-smq/commit/9a8a8ae59697475e6d9c84744da4ea7ee5c793f3))
+- **redis-smq:** integrate Heartbeat from redis-smq-common in Consumer ([0a1a937](https://github.com/weyoss/redis-smq/commit/0a1a9374430f7a13fdca1a3fc7b95224c68aa1c7))
+- **redis-smq:** optimize and shorten import statements ([cae93d5](https://github.com/weyoss/redis-smq/commit/cae93d5a23528cbc8490eb9124eb520089e58dc9))
+
 ## [9.0.14](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.2...v9.0.14) (2026-02-06)
 
 ### 🚀 Chore
