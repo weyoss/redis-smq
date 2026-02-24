@@ -70,22 +70,13 @@ export class RedisLock extends Runnable<TLockerEvent> {
     this.autoExtendInterval = autoExtendInterval;
     this.logger = logger.createLogger(this.constructor.name);
 
-    this.logger.info(`RedisLock instance created for key: ${lockKey}`);
-    this.logger.debug('RedisLock initialization details', {
-      id: this.id,
-      lockKey,
-      ttl,
-      retryOnFail,
-      autoExtendInterval,
-    });
-
     this.redisClient = redisClient;
     this.redisClient.on('error', this.handleError);
 
     this.timer = new Timer();
     this.timer.on('error', this.handleError);
 
-    this.logger.info('RedisLock initialization complete');
+    this.logger.debug('RedisLock initialization complete');
   }
 
   /**
@@ -141,7 +132,9 @@ export class RedisLock extends Runnable<TLockerEvent> {
           }
         }
 
-        this.logger.info(`Lock acquired successfully for key: ${this.lockKey}`);
+        this.logger.debug(
+          `Lock acquired successfully for key: ${this.lockKey}`,
+        );
         cb();
       },
     );
@@ -223,7 +216,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
         if (err) {
           this.logger.error(`Error releasing lock: ${err.message}`, err);
         } else {
-          this.logger.info(
+          this.logger.debug(
             `Lock released successfully for key: ${this.lockKey}`,
           );
         }
@@ -370,7 +363,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    */
   protected override finalizeUp(): void {
     super.finalizeUp();
-    this.logger.info(
+    this.logger.debug(
       `RedisLock transitioned to up state for key: ${this.lockKey}`,
     );
     this.emit('locker.up', this.id);
@@ -383,7 +376,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    */
   protected override finalizeDown(): void {
     super.finalizeDown();
-    this.logger.info(
+    this.logger.debug(
       `RedisLock transitioned to down state for key: ${this.lockKey}`,
     );
     this.emit('locker.down', this.id);
@@ -407,11 +400,11 @@ export class RedisLock extends Runnable<TLockerEvent> {
    * If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
    */
   override run(cb: ICallback): void {
-    this.logger.info(`Attempting to run RedisLock for key: ${this.lockKey}`);
+    this.logger.debug(`Attempting to run RedisLock for key: ${this.lockKey}`);
 
     super.run((err) => {
       if (err instanceof AcquireLockError) {
-        this.logger.info(
+        this.logger.debug(
           `Lock already held by another instance for key: ${this.lockKey}`,
         );
         return cb(err);
@@ -422,7 +415,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
         return cb(err);
       }
 
-      this.logger.info(
+      this.logger.debug(
         `RedisLock running successfully for key: ${this.lockKey}`,
       );
       if (this.autoExtendInterval) {
@@ -452,7 +445,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    * @returns {void}
    */
   acquireLock(cb: ICallback): void {
-    this.logger.info(`Acquiring lock for key: ${this.lockKey}`);
+    this.logger.debug(`Acquiring lock for key: ${this.lockKey}`);
     this.run(cb);
   }
 
@@ -468,7 +461,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    * @returns {void}
    */
   releaseLock(cb: ICallback): void {
-    this.logger.info(`Releasing lock for key: ${this.lockKey}`);
+    this.logger.debug(`Releasing lock for key: ${this.lockKey}`);
     this.shutdown(cb);
   }
 

@@ -36,23 +36,23 @@ export type TWorkerEvent = {
 const dir = env.getCurrentDir();
 
 // Track all workers for cleanup
-const allWorkers: Worker<never>[] = [];
+const allWorkers = new Set<Worker<never>>();
 
 // Cleanup all workers on process termination
 const cleanupAllWorkers = (): void => {
-  if (allWorkers.length === 0) return;
-  const tasks = allWorkers.map((worker) => {
+  if (allWorkers.size === 0) return;
+  const tasks = Array.from(allWorkers).map((worker) => {
     return (cb: ICallback) => {
       worker.shutdown(() => cb());
     };
   });
-  async.parallel(tasks, () => () => void 0);
+  async.parallel(tasks, () => void 0);
 };
 
 // Setup signal handlers
 process.once('SIGTERM', cleanupAllWorkers);
 process.once('SIGINT', cleanupAllWorkers);
-process.once('exit', cleanupAllWorkers);
+process.once('beforeExit', cleanupAllWorkers);
 
 /**
  * Worker base class with custom stream handling
@@ -79,7 +79,7 @@ export abstract class Worker<Reply> extends EventEmitter<TWorkerEvent> {
     this.initialPayload = initialPayload;
     this.logger = logger.createLogger(this.constructor.name);
 
-    allWorkers.push(this);
+    allWorkers.add(this);
   }
 
   /**
@@ -88,6 +88,7 @@ export abstract class Worker<Reply> extends EventEmitter<TWorkerEvent> {
   private cleanupStreams(): void {
     if (this.stdoutStream) {
       try {
+        this.workerThread?.stdout?.unpipe(this.stdoutStream);
         this.stdoutStream.end();
         this.stdoutStream.destroy();
         this.stdoutStream = null;
@@ -98,6 +99,7 @@ export abstract class Worker<Reply> extends EventEmitter<TWorkerEvent> {
 
     if (this.stderrStream) {
       try {
+        this.workerThread?.stderr?.unpipe(this.stderrStream);
         this.stderrStream.end();
         this.stderrStream.destroy();
         this.stderrStream = null;
@@ -185,7 +187,7 @@ export abstract class Worker<Reply> extends EventEmitter<TWorkerEvent> {
     });
 
     this.workerThread.on('exit', (code) => {
-      this.logger.info(`Worker exited with code ${code}`);
+      this.logger.debug(`Worker exited with code ${code}`);
       this.cleanupStreams();
       this.workerThread = null;
       this.emit('worker.terminated');
@@ -280,10 +282,7 @@ export abstract class Worker<Reply> extends EventEmitter<TWorkerEvent> {
    * Remove worker from global cleanup list
    */
   private removeFromGlobalList(): void {
-    const index = allWorkers.indexOf(this);
-    if (index > -1) {
-      allWorkers.splice(index, 1);
-    }
+    allWorkers.delete(this);
   }
 
   /**

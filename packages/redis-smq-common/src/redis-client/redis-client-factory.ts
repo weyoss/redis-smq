@@ -17,8 +17,10 @@ import {
   IRedisConfig,
   TRedisClientEvent,
 } from './types/index.js';
-import { UnsupportedClientError } from './errors/unsupported.client.error.js';
-import { RedisClientNotInstalledError } from './errors/redis-client-not-installed.error.js';
+import {
+  UnsupportedClientError,
+  RedisClientNotInstalledError,
+} from './errors/index.js';
 
 export class RedisClientFactory extends EventEmitter<
   Pick<TRedisClientEvent, 'error'>

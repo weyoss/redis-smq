@@ -26,11 +26,11 @@ export class CallableWorker<Payload, Reply>
 
   constructor(workerFilename: string, logger: ILogger) {
     super(workerFilename, undefined, logger);
-    this.logger.info(`CallableWorker instance created for ${workerFilename}`);
+    this.logger.debug(`CallableWorker instance created for ${workerFilename}`);
   }
 
   call(payload: Payload, cb: ICallback<Reply>) {
-    this.logger.info(`Calling worker ${this.id}`);
+    this.logger.debug(`Calling worker ${this.id}`);
 
     if (payload === null || payload === undefined) {
       this.logger.error('Worker call failed: payload is required');

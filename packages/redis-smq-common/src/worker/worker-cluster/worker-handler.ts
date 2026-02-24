@@ -68,7 +68,7 @@ export class WorkerHandler extends Runnable {
       return super.goingDown();
     }
 
-    this.logger.info(`Stopping ${workers.length} workers...`);
+    this.logger.debug(`Stopping ${workers.length} workers...`);
     const tasks = workers.map((worker, index) => {
       return (done: ICallback) => {
         this.logger.debug(

@@ -36,7 +36,7 @@ export class RunnableWorker<InitialPayload>
   ) {
     super(workerFilename, initialPayload, logger);
     this.powerSwitch = new PowerSwitch();
-    this.logger.info(`RunnableWorker instance created for ${workerFilename}`);
+    this.logger.debug(`RunnableWorker instance created for ${workerFilename}`);
   }
 
   /**
@@ -44,7 +44,7 @@ export class RunnableWorker<InitialPayload>
    * No response expected from worker thread
    */
   run(cb: ICallback) {
-    this.logger.info(`Attempting to run worker ${this.id}`);
+    this.logger.debug(`Attempting to run worker ${this.id}`);
 
     const r = this.powerSwitch.goingUp();
     if (r) {
@@ -63,7 +63,7 @@ export class RunnableWorker<InitialPayload>
 
         // Success - worker is running in background
         this.powerSwitch.commit();
-        this.logger.info(
+        this.logger.debug(
           `Worker ${this.id} started successfully (fire-and-forget)`,
         );
         cb(null);
@@ -83,7 +83,7 @@ export class RunnableWorker<InitialPayload>
   }
 
   override shutdown(cb: ICallback) {
-    this.logger.info(`Attempting to shut down worker ${this.id}`);
+    this.logger.debug(`Attempting to shut down worker ${this.id}`);
 
     const r = this.powerSwitch.goingDown();
     if (r) {
@@ -103,7 +103,7 @@ export class RunnableWorker<InitialPayload>
         }
         this.logger.debug('Committing power switch state change');
         this.powerSwitch.commit();
-        this.logger.info(`Worker ${this.id} shut down successfully`);
+        this.logger.debug(`Worker ${this.id} shut down successfully`);
         cb(null); // Always call with null for success
       });
     } else {

@@ -28,26 +28,23 @@ export type TWorkerClusterEvent = {
  * using Redis locks for exclusive access
  */
 export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
+  private readonly uniqueGroupIdentifier: string | null = null;
   private readonly workerHandler: WorkerHandler;
   private readonly workerLoader: WorkerLoader;
-  private readonly locker: RedisLock;
   private readonly redisClient: IRedisClient;
-  private readonly resourceGroupId: string;
   protected readonly logger: ILogger;
+
+  private locker: RedisLock | null = null;
 
   constructor(
     redisClient: IRedisClient,
     logger: ILogger,
-    resourceGroupId: string,
+    uniqueGroupIdentifier: string | null,
     workerFilenamePattern = '.worker.js',
   ) {
     super();
-
-    this.resourceGroupId = resourceGroupId;
     this.logger = logger.createLogger(this.constructor.name);
     this.redisClient = redisClient;
-
-    this.locker = this.createLocker();
     this.workerHandler = new WorkerHandler({ logger: this.logger });
     this.workerLoader = new WorkerLoader(
       this.logger,
@@ -55,30 +52,30 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
       this.handleWorkerError.bind(this),
       this.workerHandler,
     );
-
-    this.setupLockerListeners();
-    this.logger.info(`WorkerCluster initialized for ID: ${resourceGroupId}`);
+    this.uniqueGroupIdentifier = uniqueGroupIdentifier;
+    this.logger.debug(`WorkerCluster initialized`);
   }
 
-  private createLocker(): RedisLock {
-    this.logger.debug(
-      `Creating RedisLock for resource group: ${this.resourceGroupId}`,
-    );
-    return new RedisLock(
-      this.redisClient,
-      this.logger,
-      this.resourceGroupId,
-      60000, // lock TTL
-      true, // retry on failure
-      15000, // retry interval
-    );
-  }
+  private getLockerInstance(uniqueGroupIdentifier: string): RedisLock {
+    if (!this.locker) {
+      this.logger.debug(
+        `Creating RedisLock for resource group: ${this.uniqueGroupIdentifier}`,
+      );
+      this.locker = new RedisLock(
+        this.redisClient,
+        this.logger,
+        uniqueGroupIdentifier,
+        60000, // lock TTL
+        true, // retry on failure
+        15000, // retry interval
+      );
 
-  private setupLockerListeners(): void {
-    this.locker.on('locker.error', (err) => {
-      this.logger.error(`Locker error: ${err.message}`, err);
-      this.handleError(err);
-    });
+      this.locker.on('locker.error', (err) => {
+        this.logger.error(`Locker error: ${err.message}`, err);
+        this.handleError(err);
+      });
+    }
+    return this.locker;
   }
 
   private handleWorkerError(err: Error, filename: string): void {
@@ -87,16 +84,19 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
   }
 
   private acquireLock = (cb: ICallback): void => {
+    if (!this.uniqueGroupIdentifier) return cb();
+
     if (!this.isOperational()) {
       cb(new Error('Resource group is shutting down'));
       return;
     }
 
     this.logger.debug('Attempting to acquire lock...');
-    this.locker.acquireLock((err) => {
+    const locker = this.getLockerInstance(this.uniqueGroupIdentifier);
+    locker.acquireLock((err) => {
       if (!err) {
-        this.logger.info(
-          `Lock acquired successfully (Lock ID: ${this.locker.getId()})`,
+        this.logger.debug(
+          `Lock acquired successfully (Lock ID: ${locker.getId()})`,
         );
         cb();
         return;
@@ -115,12 +115,14 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
   };
 
   private releaseLock = (cb: ICallback): void => {
+    if (!this.uniqueGroupIdentifier) return cb();
+
     this.logger.debug('Releasing lock...');
-    this.locker.releaseLock((err) => {
+    this.getLockerInstance(this.uniqueGroupIdentifier).releaseLock((err) => {
       if (err) {
         this.logger.error(`Failed to release lock: ${err.message}`, err);
       } else {
-        this.logger.info('Lock released successfully');
+        this.logger.debug('Lock released successfully');
       }
       cb(err);
     });
@@ -189,10 +191,10 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
       return;
     }
 
-    this.logger.info(`Loading workers from directory: ${workersDir}`);
+    this.logger.debug(`Loading workers from directory: ${workersDir}`);
     this.workerLoader.loadFromDirectory(workersDir, payload, (err) => {
       if (!err) {
-        this.logger.info(`Successfully loaded workers from ${workersDir}`);
+        this.logger.debug(`Successfully loaded workers from ${workersDir}`);
       }
       cb(err);
     });

@@ -22,8 +22,11 @@ export class EventBus<Events extends TEventBusEvent> extends Runnable<Events> {
 
   constructor(config: IEventBusConfig = {}, namespace = '') {
     super();
-    this.logger = createLogger(config?.logger);
     this.namespace = namespace ? `${namespace}:` : '';
+    this.logger = createLogger(
+      config?.logger,
+      `${this.constructor.name}${namespace ? `-${namespace}` : ''}-${this.id}`,
+    );
   }
 
   /**

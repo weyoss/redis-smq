@@ -132,7 +132,7 @@ export class WorkerLoader {
           this.workerManager.addWorker(worker);
         });
 
-        this.logger.info(`Successfully created ${tempWorkers.length} workers`);
+        this.logger.debug(`Successfully created ${tempWorkers.length} workers`);
         cb();
       },
     );

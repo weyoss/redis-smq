@@ -59,6 +59,7 @@ export abstract class Runnable<
    * By default, this method returns an empty array. Subclasses can override this method to define their own tasks.
    */
   protected goingUp(): Array<(cb: ICallback<void>) => void> {
+    this.logger.debug(`Going up`);
     return [];
   }
 
@@ -73,6 +74,7 @@ export abstract class Runnable<
    * By default, this method returns an empty array. Subclasses can override this method to define their own tasks.
    */
   protected goingDown(): Array<(cb: ICallback<void>) => void> {
+    this.logger.debug(`Going down`);
     return [];
   }
 
@@ -85,8 +87,8 @@ export abstract class Runnable<
       this.flushWaitingForUp(err);
       return;
     }
-
     this.flushWaitingForUp();
+    this.logger.debug(`Up and running`);
   }
 
   /**
@@ -96,6 +98,7 @@ export abstract class Runnable<
     this.powerSwitch.commit(); // safe / idempotent
     this.flushWaitingForUp(new Error('Runnable has been shut down'));
     this.flushWaitingForDown();
+    this.logger.debug(`Completely shut down`);
   }
 
   /**
