@@ -47,7 +47,10 @@ export class LifecycleManager {
           RedisConnectionPool.initialize(redisConfig, {}, (err) => cb(err)),
         (cb) => {
           if (typeof redisSMQConfig === 'function')
-            return Configuration.initialize(cb);
+            return Configuration.initializeWithConfig(
+              { redis: redisConfig },
+              cb,
+            );
           Configuration.initializeWithConfig(redisSMQConfig, cb);
         },
         (cb) => InternalEventBus.getInstance().run(cb),
