@@ -9,35 +9,28 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { ConsumerHeartbeat } from '../../../src/consumer/consumer-heartbeat/consumer-heartbeat.js';
-import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getRedisInstance } from '../../common/redis.js';
+import { _isConsumerAlive } from '../../../src/consumer/_/_is-consumer-alive.js';
 
 test('Consumer heartbeat: check online/offline consumers', async () => {
   const defaultQueue = getDefaultQueue();
   const redisClient = await getRedisInstance();
-  const HeartbeatAsync = bluebird.promisifyAll(ConsumerHeartbeat);
+  const isConsumerAliveAsync = bluebird.promisify(_isConsumerAlive);
   await createQueue(defaultQueue, false);
   const consumer = getConsumer();
   await consumer.runAsync();
 
   //
-  const isAlive = await HeartbeatAsync.isConsumerAliveAsync(
-    redisClient,
-    consumer.getId(),
-  );
+  const isAlive = await isConsumerAliveAsync(redisClient, consumer.getId());
   expect(isAlive).toBe(true);
 
-  await shutDownBaseInstance(consumer);
+  await consumer.shutdownAsync();
 
-  const isAlive2 = await HeartbeatAsync.isConsumerAliveAsync(
-    redisClient,
-    consumer.getId(),
-  );
+  const isAlive2 = await isConsumerAliveAsync(redisClient, consumer.getId());
   expect(isAlive2).toBe(false);
 });

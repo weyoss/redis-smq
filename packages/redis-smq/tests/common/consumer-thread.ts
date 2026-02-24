@@ -35,7 +35,7 @@ process.on('message', function (payload: unknown) {
       );
     });
 
-    const consumer = new Consumer();
+    const consumer = new Consumer({ heartbeatTTL: 6_000 });
     consumer.consume(
       defaultQueue,
       () => void 0, // not acknowledging

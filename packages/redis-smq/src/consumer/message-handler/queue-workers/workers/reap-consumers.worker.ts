@@ -9,13 +9,13 @@
 
 import { async, ICallback } from 'redis-smq-common';
 import { _getQueueConsumerIds } from '../../../../queue-manager/_/_get-queue-consumer-ids.js';
-import { ConsumerHeartbeat } from '../../../consumer-heartbeat/consumer-heartbeat.js';
 import { MessageUnacknowledgement } from '../../consume-message/message-unacknowledgement.js';
 import { EMessageUnacknowledgementReason } from '../../consume-message/types/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _deleteEphemeralConsumerGroup } from '../../_/_delete-ephemeral-consumer-group.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
-import { IQueueWorkerPayload } from '../../../../common/worker/types/message-handler-worker.js';
+import { IQueueWorkerPayload } from '../../../../common/abstract/worker/types/message-handler-worker.js';
+import { _isConsumerAlive } from '../../../_/_is-consumer-alive.js';
 
 export class ReapConsumersWorker extends QueueWorkerAbstract {
   protected messageUnacknowledgement: MessageUnacknowledgement;
@@ -29,7 +29,7 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
     async.series(
       [
         (done: ICallback) => {
-          this.logger.info(`Unacknowledging messages...`);
+          this.logger.debug(`Unacknowledging messages...`);
           this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
             consumerId,
             [this.queueParsedParams.queueParams],
@@ -51,7 +51,7 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
           );
         },
         (done: ICallback) => {
-          this.logger.info(`Cleaning up ephemeral consumer groups...`);
+          this.logger.debug(`Cleaning up ephemeral consumer groups...`);
           _deleteEphemeralConsumerGroup(
             this.queueParsedParams.queueParams,
             consumerId,
@@ -112,29 +112,25 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
                   `Checking heartbeat for consumer ${consumerId} (${index + 1}/${consumerCount})`,
                 );
 
-                ConsumerHeartbeat.isConsumerAlive(
-                  redisClient,
-                  consumerId,
-                  (err, alive) => {
-                    if (err) {
-                      this.logger.error(
-                        `Error checking heartbeat for consumer ${consumerId}`,
-                        err,
-                      );
-                      done(err);
-                    } else if (!alive) {
-                      this.logger.info(
-                        `Consumer ${consumerId} is offline, cleaning up...`,
-                      );
-                      this.cleanUp(consumerId, done);
-                    } else {
-                      this.logger.debug(
-                        `Consumer ${consumerId} is alive and active`,
-                      );
-                      done();
-                    }
-                  },
-                );
+                _isConsumerAlive(redisClient, consumerId, (err, alive) => {
+                  if (err) {
+                    this.logger.error(
+                      `Error checking heartbeat for consumer ${consumerId}`,
+                      err,
+                    );
+                    done(err);
+                  } else if (!alive) {
+                    this.logger.info(
+                      `Consumer ${consumerId} is offline, cleaning up...`,
+                    );
+                    this.cleanUp(consumerId, done);
+                  } else {
+                    this.logger.debug(
+                      `Consumer ${consumerId} is alive and active`,
+                    );
+                    done();
+                  }
+                });
               },
               (err) => {
                 if (err) {

@@ -7,20 +7,25 @@
  * in the root directory of this source tree.
  */
 
-import { createLogger, ICallback, Runnable } from 'redis-smq-common';
-import { TConsumerEvent } from '../common/index.js';
+import { createLogger, Heartbeat, ICallback, Runnable } from 'redis-smq-common';
+import { IHeartbeatPayload, TConsumerEvent } from '../common/index.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import {
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../queue-manager/index.js';
-import { ConsumerHeartbeat } from './consumer-heartbeat/consumer-heartbeat.js';
 import { MessageHandlerRunner } from './message-handler-runner/message-handler-runner.js';
 import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multiplexed-message-handler-runner.js';
 import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { HeartbeatFactory } from '../common/heartbeat/heartbeat.js';
+import { heartbeatEventPublisher } from './heartbeat-event-publisher.js';
+import { IConsumerOptions } from './types/index.js';
+import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 
 /**
  * Consumer class responsible for receiving and processing messages from a message queue.
@@ -39,16 +44,29 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected logger;
 
   // Heartbeat instance for ensuring the consumer remains alive and responsive.
-  protected heartbeat: ConsumerHeartbeat | null = null;
+  protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
+
+  //
+  protected consumerOptions: IConsumerOptions;
 
   /**
    * Creates a new Consumer instance.
    *
-   * @param {boolean} [enableMultiplexing] -  (Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner.
+   * @param {IConsumerOptions} [consumerOptions] - (Optional) An object containing Consumer instance options:
+   * - `consumerOptions.enableMultiplexing` - (Optional) Enable consumer multiplexing. Default: false.
+   * - `consumerOptions.heartbeatTTL` - (Optional) Consumer heartbeat TTL in ms. Default: 120000ms
    */
-  constructor(enableMultiplexing?: boolean) {
+  constructor(consumerOptions?: IConsumerOptions);
+  /**
+   * Creates a new Consumer instance.
+   *
+   * @param {boolean} [enableMultiplexing] - (Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner.
+   * @deprecated This method signature is deprecated in  favor of `constructor(consumerOptions?: IConsumerOptions)`
+   */
+  constructor(enableMultiplexing?: boolean);
+  constructor(options?: boolean | IConsumerOptions) {
     super();
-    // Initialize configuration and components
+    this.consumerOptions = _parseConsumerOptions(options);
     const config = Configuration.getConfig();
     this.logger = createLogger(
       config.logger,
@@ -62,17 +80,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
       logger: this.logger,
     };
 
-    this.logger.info(
-      `Initializing consumer${enableMultiplexing ? ' with multiplexing enabled' : ''}`,
-    );
-
-    this.logger.debug('Initializing eventPublisher...');
     eventPublisher(this);
 
-    this.logger.debug(
-      `Creating ${enableMultiplexing ? 'multiplexed' : 'standard'} message handler runner`,
-    );
-    this.messageHandlerRunner = enableMultiplexing
+    this.messageHandlerRunner = this.consumerOptions.enableMultiplexing
       ? new MultiplexedMessageHandlerRunner(this.consumerContext)
       : new MessageHandlerRunner(this.consumerContext);
 
@@ -84,7 +94,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
       },
     );
 
-    this.logger.info(`Consumer initialized with ID: ${this.id}`);
+    this.logger.info(
+      `Consumer initialized${this.consumerOptions.enableMultiplexing ? ' with multiplexing enabled' : ''}`,
+    );
   }
 
   /**
@@ -94,21 +106,35 @@ export class Consumer extends Runnable<TConsumerEvent> {
    */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
     this.logger.debug('Setting up consumer heartbeat');
-    this.heartbeat = new ConsumerHeartbeat(this.consumerContext);
-    this.heartbeat.on('consumerHeartbeat.error', (err) => {
-      this.logger.error(`Heartbeat error: ${err.message}`);
-      this.handleError(err);
-    });
-    this.logger.debug('Starting heartbeat');
-    this.heartbeat.run((err) => {
-      if (err) {
-        this.logger.error(`Failed to start heartbeat: ${err.message}`);
-        cb(err);
-      } else {
-        this.logger.debug('Heartbeat started successfully');
-        cb();
-      }
-    });
+
+    withSharedPoolConnection((client, cb) => {
+      const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(this.id);
+      this.heartbeat = HeartbeatFactory(
+        client,
+        this.logger,
+        {
+          heartbeatKey: keyConsumerHeartbeat,
+          componentId: this.id,
+          componentType: this.constructor.name,
+          heartbeatTTL: this.consumerOptions.heartbeatTTL,
+        },
+        heartbeatEventPublisher,
+      );
+      this.heartbeat.on('heartbeat.error', (err) => {
+        this.logger.error(`Heartbeat error: ${err.message}`);
+        this.handleError(err);
+      });
+      this.logger.debug('Starting heartbeat');
+      this.heartbeat.run((err) => {
+        if (err) {
+          this.logger.error(`Failed to start heartbeat: ${err.message}`);
+          cb(err);
+        } else {
+          this.logger.debug('Heartbeat started successfully');
+          cb();
+        }
+      });
+    }, cb);
   };
 
   /**
@@ -116,7 +142,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *
    * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
    */
-  protected shutDownHeartbeat = (cb: ICallback<void>): void => {
+  protected shutdownHeartbeat = (cb: ICallback<void>): void => {
     if (this.heartbeat) {
       this.logger.debug('Shutting down heartbeat');
       this.heartbeat.shutdown((err) => {
@@ -175,7 +201,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during startup.
    */
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info('Consumer going up');
     return super.goingUp().concat([
       (cb) => {
         this.logger.debug(
@@ -195,12 +220,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during shutdown.
    */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info('Consumer going down');
-    this.logger.debug(
-      `Emitting consumer.goingDown event for consumer ${this.id}`,
-    );
     this.emit('consumer.goingDown', this.id);
-    return [this.shutdownMessageHandlers, this.shutDownHeartbeat].concat(
+    return [this.shutdownMessageHandlers, this.shutdownHeartbeat].concat(
       super.goingDown(),
     );
   }
@@ -210,8 +231,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
    */
   protected override finalizeUp() {
     super.finalizeUp();
-    this.logger.info('Consumer is up');
-    this.logger.debug(`Emitting consumer.up event for consumer ${this.id}`);
     this.emit('consumer.up', this.id);
   }
 
@@ -220,8 +239,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
    */
   protected override finalizeDown() {
     super.finalizeDown();
-    this.logger.info(`Consumer ${this.getId()} is now down`);
-    this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
     this.emit('consumer.down', this.id);
   }
 

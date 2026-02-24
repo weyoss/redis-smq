@@ -7,12 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export interface IConsumerHeartbeat {
-  timestamp: number;
-  data: IConsumerHeartbeatPayload;
-}
-
-export interface IConsumerHeartbeatPayload {
+export interface IHeartbeatPayload {
   ram: { usage: NodeJS.MemoryUsage; free: number; total: number };
   cpu: { user: number; system: number; percentage: string };
 }
