@@ -74,14 +74,12 @@ export class PubSubTargetResolver extends Runnable<
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.debug('PubSubTargetResolver is going up...');
     return super
       .goingUp()
       .concat([this.subscribeToEvents, this.loadAndCacheInitialTargets]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.debug('PubSubTargetResolver is going down...');
     return [this.unsubscribeFromEvents, this.clearCache].concat(
       super.goingDown(),
     );
@@ -178,7 +176,7 @@ export class PubSubTargetResolver extends Runnable<
       'queue.consumerGroupDeleted',
       this.onConsumerGroupDeleted,
     );
-    this.logger.info('Successfully subscribed to events.');
+    this.logger.debug('Successfully subscribed to events.');
     cb();
   };
 
@@ -203,7 +201,7 @@ export class PubSubTargetResolver extends Runnable<
       'queue.consumerGroupDeleted',
       this.onConsumerGroupDeleted,
     );
-    this.logger.info('Successfully unsubscribed from all events.');
+    this.logger.debug('Successfully unsubscribed from all events.');
     cb();
   };
 
@@ -225,7 +223,7 @@ export class PubSubTargetResolver extends Runnable<
             _getQueues(redisClient, cb);
           },
           (queues: IQueueParams[], cb: ICallback<void>) => {
-            this.logger.info(`Found [${queues.length}] queues to process.`);
+            this.logger.debug(`Found [${queues.length}] queues to process.`);
             async.eachOf(
               queues,
               (queue, index, done) => {
@@ -270,7 +268,7 @@ export class PubSubTargetResolver extends Runnable<
                 );
               },
               () => {
-                this.logger.info(
+                this.logger.debug(
                   'Finished initial loading of PUB/SUB targets.',
                 );
                 cb();
@@ -285,7 +283,7 @@ export class PubSubTargetResolver extends Runnable<
               err,
             );
           } else {
-            this.logger.info('Initial target cache is ready.');
+            this.logger.debug('Initial target cache is ready.');
           }
           cb(err);
         },
@@ -300,7 +298,7 @@ export class PubSubTargetResolver extends Runnable<
     this.logger.debug('Clearing PUB/SUB target cache...');
     const count = Object.keys(this.pubSubTargets).length;
     this.pubSubTargets = {};
-    this.logger.info(`Cleared [${count}] entries from cache.`);
+    this.logger.debug(`Cleared [${count}] entries from cache.`);
     cb();
   };
 

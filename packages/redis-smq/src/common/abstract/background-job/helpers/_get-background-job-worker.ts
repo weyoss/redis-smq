@@ -1,0 +1,31 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+import { ICallback } from 'redis-smq-common';
+import { redisKeys } from '../../../redis/redis-keys/redis-keys.js';
+import { withSharedPoolConnection } from '../../../redis/redis-connection-pool/with-shared-pool-connection.js';
+import { BackgroundJobWorkerNotFoundError } from '../../../../errors/index.js';
+
+export function _getBackgroundJobWorker(jobId: string, cb: ICallback<string>) {
+  const { keyBackgroundJobWorkerId } = redisKeys.getBackgroundJobKeys(jobId);
+  withSharedPoolConnection((client, cb) => {
+    client.get(keyBackgroundJobWorkerId, (err, workerId) => {
+      if (err) return cb(err);
+      if (!workerId)
+        return cb(
+          new BackgroundJobWorkerNotFoundError({
+            metadata: {
+              jobId,
+            },
+          }),
+        );
+      cb(null, workerId);
+    });
+  }, cb);
+}

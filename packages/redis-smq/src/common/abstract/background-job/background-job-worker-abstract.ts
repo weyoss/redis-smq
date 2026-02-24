@@ -10,6 +10,7 @@
 import {
   CallbackEmptyReplyError,
   createLogger,
+  Heartbeat,
   ICallback,
   ILogger,
   IRedisClient,
@@ -17,12 +18,17 @@ import {
 } from 'redis-smq-common';
 import { WorkerAbstract } from '../worker/worker-abstract.js';
 import { IGlobalWorkerPayload } from '../worker/types/global-worker.js';
-import { RedisConnectionPool } from '../redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../redis/redis-connection-pool/types/connection-pool.js';
+import { redisKeys } from '../../redis/redis-keys/redis-keys.js';
+import { withSharedPoolConnection } from '../../redis/redis-connection-pool/with-shared-pool-connection.js';
+import { HeartbeatFactory } from '../../heartbeat/heartbeat.js';
+import { IHeartbeatPayload } from '../../heartbeat/types/index.js';
 
 export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
   protected override logger: ILogger;
   protected redisClient: IRedisClient | null = null;
+  protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
 
   protected constructor(payload: IGlobalWorkerPayload) {
     super(payload.config);
@@ -30,11 +36,35 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
       ...payload.loggerContext.namespaces,
       this.constructor.name,
     ]);
-    this.logger.info(`Worker ${this.constructor.name} initialized.`);
+    this.logger.debug(`Worker ${this.constructor.name} initialized.`);
   }
+
+  protected setUpHeartbeat = (cb: ICallback<void>): void => {
+    withSharedPoolConnection((client, cb) => {
+      const { keyBackgroundJobWorkerHeartbeat } =
+        redisKeys.getBackgroundJobWorkerKeys(this.id);
+      this.heartbeat = HeartbeatFactory(client, this.logger, {
+        heartbeatKey: keyBackgroundJobWorkerHeartbeat,
+        componentId: this.id,
+        componentType: this.constructor.name,
+      });
+      this.heartbeat.run(cb);
+    }, cb);
+  };
+
+  protected shutdownHeartbeat = (cb: ICallback): void => {
+    if (this.heartbeat) {
+      return this.heartbeat.shutdown((err) => {
+        this.heartbeat = null;
+        cb(err);
+      });
+    }
+    cb();
+  };
 
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
+      this.setUpHeartbeat,
       (cb: ICallback) => {
         RedisConnectionPool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
@@ -51,6 +81,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
 
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
+      this.shutdownHeartbeat,
       (cb: ICallback) => {
         if (this.redisClient) {
           RedisConnectionPool.getInstance().release(this.redisClient);

@@ -566,7 +566,7 @@ export class ExchangeDirect {
                   return cb(err);
                 }
                 this.logger.info(
-                  `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} rk=${validatedRoutingKey}`,
+                  `bindQueue: bound queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns} rk=${validatedRoutingKey}`,
                 );
                 cb();
               },
@@ -856,7 +856,9 @@ export class ExchangeDirect {
               // Final callback after successful EXEC (or error)
               (err) => {
                 if (err) return cb(err);
-                this.logger.info('unbindQueue: unbound');
+                this.logger.info(
+                  `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} from ex=${exchangeParams.name} ns=${exchangeParams.ns} rk=${validatedRoutingKey}`,
+                );
                 cb();
               },
             ),
@@ -973,7 +975,7 @@ export class ExchangeDirect {
     const exchangeStr = JSON.stringify(exchangeParams);
 
     this.logger.debug(
-      `delete: direct exchange ns=${exchangeParams.ns} ex=${exchangeParams.name}`,
+      `delete: direct exchange ex=${exchangeParams.name}@${exchangeParams.ns}`,
     );
 
     withSharedPoolConnection((client, outerCb) => {
@@ -1097,7 +1099,9 @@ export class ExchangeDirect {
         },
         (err) => {
           if (err) return outerCb(err);
-          this.logger.info('delete: deleted');
+          this.logger.info(
+            `delete: deleted direct exchange ex=${exchangeParams.name}@${exchangeParams.ns}`,
+          );
           outerCb();
         },
         {

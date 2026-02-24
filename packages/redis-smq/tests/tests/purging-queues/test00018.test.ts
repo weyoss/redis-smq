@@ -15,6 +15,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueManager } from '../../common/queue-manager.js';
 import { getConsumer } from '../../common/consumer.js';
+import bluebird from 'bluebird';
 
 test('Deleting a message queue having live consumers', async () => {
   const defaultQueue = getDefaultQueue();
@@ -23,12 +24,16 @@ test('Deleting a message queue having live consumers', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
+  await bluebird.delay(5000);
+
   const q = await getQueueManager();
   await expect(q.deleteAsync(defaultQueue)).rejects.toThrow(
     QueueManagerActiveConsumersError,
   );
 
   await consumer.shutdownAsync();
+
+  await bluebird.delay(5000);
 
   // should succeed
   await q.deleteAsync(defaultQueue);

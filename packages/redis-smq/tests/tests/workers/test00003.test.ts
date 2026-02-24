@@ -38,7 +38,7 @@ test('ReapConsumersWorker', async () => {
     new ReapConsumersWorker({
       config,
       queueParsedParams,
-      loggerContext: { namespaces: [] },
+      loggerContext: { namespaces: ['workers-test00003'] },
     }),
   );
   await reapConsumerWorker.runAsync();

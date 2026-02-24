@@ -7,18 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { BackgroundJobWorkerAbstract } from '../../../../common/background-job/background-job-worker-abstract.js';
+import { BackgroundJobWorkerAbstract } from '../../../abstract/background-job/background-job-worker-abstract.js';
 import { async, ICallback, PanicError } from 'redis-smq-common';
 import { PurgeQueueJobManager } from './purge-queue-job-manager.js';
-import { IBrowserPage } from '../../../../common/index.js';
+import { IBrowserPage, IMessageBrowser } from '../../../index.js';
 import { _deleteMessage } from '../../../../message-manager/_/_delete-message.js';
-import { QueueMessagesRegistry } from '../../../../common/queue-messages-registry/queue-messages-registry.js';
-import {
-  EBackgroundJobStatus,
-  IBackgroundJob,
-} from '../../../../common/index.js';
+import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
 import { BackgroundJobCanceledError } from '../../../../errors/index.js';
 import { TPurgeQueueJobTarget } from './types/index.js';
+import { MessageBrowserFactory } from '../../../../queue-messages/message-browser-factory.js';
 
 export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
   protected jobManager: PurgeQueueJobManager | null = null;
@@ -32,10 +29,10 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
             if (err) return cb(err);
             if (!jobId) {
               // No job available
-              this.logger.info(`No job available.`);
+              this.logger.debug(`No job available.`);
               return cb(null);
             }
-            this.logger.info(`Worker ${this.id} acquired job: ${jobId}`);
+            this.logger.debug(`Worker ${this.id} acquired job: ${jobId}`);
             cb(null, jobId);
           });
         },
@@ -62,7 +59,7 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
       [
         // Update job status to processing
         (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
-          jobManager.start(jobId, next);
+          jobManager.start(jobId, this.id, next);
         },
 
         // Perform the actual purge
@@ -117,10 +114,6 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
     const delay = job.delay || 5000;
     const batchSize = job.batchSize || 1000;
 
-    const messageBrowser = QueueMessagesRegistry.getMessageBrowser(
-      job.target.messageType,
-    );
-
     let totalPurged = 0;
     let initialTotalItems = 0;
     let batchCount = 0;
@@ -158,8 +151,16 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
             });
           },
 
+          (_, next: ICallback<IMessageBrowser>) =>
+            MessageBrowserFactory.createBrowserForQueue(
+              job.target.queue.queueParams,
+              job.target.messageType,
+              this.logger,
+              next,
+            ),
+
           // Step 1: Get batch of message IDs
-          (_, next: ICallback<IBrowserPage<string>>) => {
+          (messageBrowser, next: ICallback<IBrowserPage<string>>) => {
             messageBrowser.getMessageIds(
               parsedParams,
               1, // always start from page 1
@@ -176,7 +177,7 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
             // After each iteration totalItems will be decreased by batchSize
             if (batchCount === 1) {
               initialTotalItems = totalItems;
-              this.logger.info(
+              this.logger.debug(
                 `Queue "${parsedParams.queueParams.name}" has ${initialTotalItems} messages to purge`,
               );
             }

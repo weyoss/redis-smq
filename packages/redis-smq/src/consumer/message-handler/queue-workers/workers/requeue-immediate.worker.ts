@@ -156,7 +156,9 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
                 `Script reported processing ${reply} messages, but expected ${messages.length}. This may be due to a message being moved or deleted before the worker could process it.`,
               );
             }
-            this.logger.info(`Successfully requeued ${reply} messages.`);
+            this.logger.info(
+              `Successfully re-queued ${reply} messages for immediate processing.`,
+            );
             return cb();
           }
           if (typeof reply === 'string') {

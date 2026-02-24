@@ -3,22 +3,23 @@
 -- Weyoss <weyoss@outlook.com>
 -- https://github.com/weyoss
 --
--- Atomically marks a background job as PROCESSING
--- Should only be called by workers after acquiring a job
+-- Atomically marks a background job as PROCESSING and assigns it to a worker
 --
 -- KEYS[1]: backgroundJobs key (hash)
--- KEYS[2]: backgroundJobsProcessing key (list) - job should already be here
+-- KEYS[2]: backgroundJobsProcessing key (list)
+-- KEYS[3]: jobWorkerKey (string) - maps jobId -> workerId
 --
 -- ARGV[1]: jobId
--- ARGV[2]: updatedJobData (JSON stringified with PROCESSING status)
--- ARGV[3]: pendingStatus (EBackgroundJobStatus.PENDING value)
--- ARGV[4]: processingStatus (EBackgroundJobStatus.PROCESSING value)
--- ARGV[5]: completedStatus (EBackgroundJobStatus.COMPLETED value)
--- ARGV[6]: failedStatus (EBackgroundJobStatus.FAILED value)
--- ARGV[7]: canceledStatus (EBackgroundJobStatus.CANCELED value)
+-- ARGV[2]: workerId
+-- ARGV[3]: updatedJobData (JSON stringified with PROCESSING status)
+-- ARGV[4]: pendingStatus (EBackgroundJobStatus.PENDING value)
+-- ARGV[5]: processingStatus (EBackgroundJobStatus.PROCESSING value)
+-- ARGV[6]: completedStatus (EBackgroundJobStatus.COMPLETED value)
+-- ARGV[7]: failedStatus (EBackgroundJobStatus.FAILED value)
+-- ARGV[8]: canceledStatus (EBackgroundJobStatus.CANCELED value)
 --
 -- Returns:
---  1: Success (job started)
+--  1: Success (job started and linked to worker)
 --  2: Job already processing (no-op)
 --  0: Job not found
 -- -1: Job already completed (no-op)
@@ -29,14 +30,16 @@
 -- Assign all KEYS and ARGVs to local variables
 local backgroundJobsKey = KEYS[1]
 local backgroundJobsProcessingKey = KEYS[2]
+local jobWorkerKey = KEYS[3]
 
 local jobId = ARGV[1]
-local updatedJobData = ARGV[2]
-local pendingStatus = ARGV[3]
-local processingStatus = ARGV[4]
-local completedStatus = ARGV[5]
-local failedStatus = ARGV[6]
-local canceledStatus = ARGV[7]
+local workerId = ARGV[2]
+local updatedJobData = ARGV[3]
+local pendingStatus = ARGV[4]
+local processingStatus = ARGV[5]
+local completedStatus = ARGV[6]
+local failedStatus = ARGV[7]
+local canceledStatus = ARGV[8]
 
 -- Get current job data from Redis
 local currentJobData = redis.call('HGET', backgroundJobsKey, jobId)
@@ -80,5 +83,8 @@ redis.call('RPUSH', backgroundJobsProcessingKey, jobId)
 
 -- Start the job (mark as PROCESSING)
 redis.call('HSET', backgroundJobsKey, jobId, updatedJobData)
+
+-- Link job to worker (store workerId for this job)
+redis.call('SET', jobWorkerKey, workerId)
 
 return 1  -- Successfully started

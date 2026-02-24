@@ -118,7 +118,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       });
     });
     this.messageHandlerInstances.push(instance);
-    this.logger.info(
+    this.logger.debug(
       `Created MultiplexedMessageHandler (ID: ${instance.getId()}) for queue: ${
         handlerParams.queue.queueParams.name
       }. Total: ${this.messageHandlerInstances.length}`,

@@ -272,7 +272,7 @@ export class ExchangeFanout {
         (err) => {
           if (err) return outerCb(err);
           this.logger.info(
-            `delete: exchange "${exchangeParams.name}" (ns=${exchangeParams.ns}) deleted`,
+            `delete: deleted exchange ${exchangeParams.name}@${exchangeParams.ns}`,
           );
           outerCb();
         },
@@ -362,6 +362,10 @@ export class ExchangeFanout {
     if (queueParams.ns !== exchangeParams.ns) {
       return cb(new NamespaceMismatchError());
     }
+
+    this.logger.info(
+      `bindQueue: bind queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns}`,
+    );
 
     const { keyQueueProperties, keyQueueExchangeBindings } =
       redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
@@ -482,7 +486,7 @@ export class ExchangeFanout {
                   return cb(err);
                 }
                 this.logger.info(
-                  `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
+                  `bindQueue: bound queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns}`,
                 );
                 cb();
               },
@@ -648,7 +652,7 @@ export class ExchangeFanout {
               (err) => {
                 if (err) return cb(err);
                 this.logger.info(
-                  `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
+                  `unbindQueue: unbound queue=${queueParams.name}@${queueParams.ns} from ex=${exchangeParams.name}@${exchangeParams.ns}`,
                 );
                 cb();
               },

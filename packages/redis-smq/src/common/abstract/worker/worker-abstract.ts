@@ -8,8 +8,8 @@
  */
 
 import { ICallback, Runnable, Timer } from 'redis-smq-common';
-import { RedisSMQ } from '../../redis-smq/index.js';
-import { IRedisSMQParsedConfig } from '../../config/index.js';
+import { RedisSMQ } from '../../../redis-smq/index.js';
+import { IRedisSMQParsedConfig } from '../../../config/index.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   private timer;
@@ -24,7 +24,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.debug('Worker going up');
     return super.goingUp().concat([
       (cb) => {
         if (RedisSMQ.isInitialized()) return cb();
@@ -39,7 +38,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.debug('Worker going down');
     return [
       (cb: ICallback) => {
         this.logger.debug('Resetting worker timer');

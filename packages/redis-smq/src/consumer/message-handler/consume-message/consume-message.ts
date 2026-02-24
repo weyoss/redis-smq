@@ -37,6 +37,7 @@ import {
 } from '../../../queue-manager/index.js';
 import {
   EMessageUnacknowledgementAction,
+  EMessageUnacknowledgementDeadLetterReason,
   EMessageUnacknowledgementReason,
   TMessageUnacknowledgementStatus,
 } from './types/index.js';
@@ -84,10 +85,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.messageHandlerId = messageHandlerId;
     this.messageUnack = new MessageUnacknowledgement(this.logger);
 
-    this.logger.debug(
-      `Initializing ConsumeMessage for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}, messageHandlerId ${this.messageHandlerId}`,
-    );
-
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       this.queue.queueParams,
       this.consumerId,
@@ -101,16 +98,9 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.keyQueueAcknowledged = keyQueueAcknowledged;
     this.keyQueueProcessing = keyQueueProcessing;
 
-    this.logger.debug(
-      `Queue processing key: ${this.keyQueueProcessing}, acknowledged key: ${this.keyQueueAcknowledged}`,
-    );
-
-    this.logger.debug('Initializing eventPublisher...');
     eventPublisher(this);
 
-    this.logger.info(
-      `ConsumeMessage initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
-    );
+    this.logger.debug(`${this.constructor.name} initialized`);
   }
 
   protected getRedisClient(): IRedisClient | PanicError {
@@ -271,7 +261,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   ): void {
     for (const messageId in messageUnacknowledgementStatus) {
       this.logger.info(
-        `Message ${messageId} unacknowledged successfully with reason: ${unacknowledgmentReason}`,
+        `Message ${messageId} unacknowledged successfully with reason: ${EMessageUnacknowledgementReason[unacknowledgmentReason]}`,
       );
 
       this.emit(
@@ -282,16 +272,13 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         this.consumerId,
         unacknowledgmentReason,
       );
-      this.logger.debug(
-        `Emitted consumer.consumeMessage.messageUnacknowledged event for message ${messageId}`,
-      );
 
       const unknowledgment = messageUnacknowledgementStatus[messageId];
       if (
         unknowledgment.action === EMessageUnacknowledgementAction.DEAD_LETTER
       ) {
         this.logger.info(
-          `Message ${messageId} moved to dead letter queue with reason: ${unknowledgment.deadLetterReason}`,
+          `Unacknowledged message ${messageId} moved to dead letter queue with reason: ${EMessageUnacknowledgementDeadLetterReason[unknowledgment.deadLetterReason]}`,
         );
         this.emit(
           'consumer.consumeMessage.messageDeadLettered',
@@ -301,13 +288,12 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           this.consumerId,
           unknowledgment.deadLetterReason,
         );
-        this.logger.debug(
-          `Emitted consumer.consumeMessage.messageDeadLettered event for message ${messageId}`,
-        );
       } else if (
         unknowledgment.action === EMessageUnacknowledgementAction.DELAY
       ) {
-        this.logger.info(`Message ${messageId} delayed for retry`);
+        this.logger.info(
+          `Unacknowledged message ${messageId} delayed for retry`,
+        );
         this.emit(
           'consumer.consumeMessage.messageDelayed',
           messageId,
@@ -315,20 +301,16 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           this.messageHandlerId,
           this.consumerId,
         );
-        this.logger.debug(
-          `Emitted consumer.consumeMessage.messageDelayed event for message ${messageId}`,
-        );
       } else {
-        this.logger.info(`Message ${messageId} requeued for retry`);
+        this.logger.info(
+          `Unacknowledged message ${messageId} has been re-queued for retry`,
+        );
         this.emit(
           'consumer.consumeMessage.messageRequeued',
           messageId,
           this.queue,
           this.messageHandlerId,
           this.consumerId,
-        );
-        this.logger.debug(
-          `Emitted consumer.consumeMessage.messageRequeued event for message ${messageId}`,
         );
       }
     }
@@ -510,9 +492,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   };
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info(
-      `ConsumeMessage going up for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
-    );
     return super.goingUp().concat([
       (cb: ICallback<void>) => {
         this.logger.debug('Initializing Redis client');
@@ -554,9 +533,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info(
-      `ConsumeMessage going down for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
-    );
     return [
       (cb: ICallback<void>) => {
         this.logger.debug('Unacknowledging any processing messages');

@@ -17,7 +17,7 @@ import { EQueueOperation, OperationBitmask } from '../types/index.js';
 import { _getQueueState } from '../../queue-state-manager/helpers/_get-queue-state.js';
 import { operationRegistry } from '../operation-registery.js';
 
-export function _checkOperations(
+export function _checkOperationList(
   client: IRedisClient,
   queueParams: IQueueParams,
   operations: EQueueOperation[],

@@ -17,10 +17,10 @@ import {
   IQueueStateTransition,
 } from '../../../../queue-state-manager/index.js';
 import { EQueueOperationalState } from '../../../../queue-manager/index.js';
-import { PurgeQueueJobManager } from '../../../../redis-smq/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
+import { PurgeQueueJobManager } from '../../../../common/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
 import { _unlockQueue } from '../../../../queue-state-manager/helpers/_unlock-queue.js';
 
-export class RecoverOrphanedLockWorker extends QueueWorkerAbstract {
+export class RecoverOrphanedQueueLockWorker extends QueueWorkerAbstract {
   override work(cb: ICallback) {
     withSharedPoolConnection((client, cb) => {
       const queue = this.queueParsedParams.queueParams;
@@ -36,10 +36,10 @@ export class RecoverOrphanedLockWorker extends QueueWorkerAbstract {
                 this.logger,
               );
               const jobId = String(state.lockId);
-              purgeQueueJobManager.validateJob(jobId, (err, r) => {
+              purgeQueueJobManager.hasTerminationStatus(jobId, (err, r) => {
                 if (err) return next(err);
-                if (!r) {
-                  this.logger.info(
+                if (r) {
+                  this.logger.debug(
                     `Recovering queue ${queue.name}@${queue.ns} from orphaned locked state...`,
                   );
                   _unlockQueue(
@@ -63,8 +63,12 @@ export class RecoverOrphanedLockWorker extends QueueWorkerAbstract {
                       next(err);
                     },
                   );
+                } else {
+                  next();
                 }
               });
+            } else {
+              next();
             }
           },
         ],
@@ -74,4 +78,4 @@ export class RecoverOrphanedLockWorker extends QueueWorkerAbstract {
   }
 }
 
-export default RecoverOrphanedLockWorker;
+export default RecoverOrphanedQueueLockWorker;

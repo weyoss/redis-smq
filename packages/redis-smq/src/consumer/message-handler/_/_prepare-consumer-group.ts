@@ -15,9 +15,8 @@ import {
 } from '../../../queue-manager/index.js';
 import { ConsumerGroups } from '../../../consumer-groups/index.js';
 import { ConsumerGroupsNotSupportedError } from '../../../errors/index.js';
-import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { _generateEphemeralConsumerGroupId } from './_generate-ephemeral-consumer-group-id.js';
+import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 export function _prepareConsumerGroup(
   queueParams: IQueueParsedParams,
@@ -25,48 +24,38 @@ export function _prepareConsumerGroup(
   cb: ICallback<string>,
   logger?: ILogger,
 ): void {
-  RedisConnectionPool.getInstance().acquire(
-    ERedisConnectionAcquisitionMode.SHARED,
-    (err, redisClient) => {
+  withSharedPoolConnection((redisClient, cb) => {
+    _getQueueProperties(redisClient, queueParams.queueParams, (err, props) => {
       if (err) return cb(err);
-      if (!redisClient) return cb(new CallbackEmptyReplyError());
+      if (!props) return cb(new CallbackEmptyReplyError());
 
-      _getQueueProperties(
-        redisClient,
-        queueParams.queueParams,
-        (err, props) => {
-          if (err) return cb(err);
-          if (!props) return cb(new CallbackEmptyReplyError());
-
-          if (props.deliveryModel === EQueueDeliveryModel.PUB_SUB) {
-            const consumerGroups = new ConsumerGroups();
-            let effectiveGroupId = queueParams.groupId;
-            if (!effectiveGroupId) {
-              logger?.debug(
-                `PUB_SUB queue without provided consumer group. Creating ephemeral group '${consumerId}'...`,
-              );
-              // Use consumer ID as group ID
-              effectiveGroupId = _generateEphemeralConsumerGroupId(consumerId);
-            }
-            return consumerGroups.saveConsumerGroup(
-              queueParams.queueParams,
-              effectiveGroupId,
-              (saveErr) => {
-                if (saveErr) return cb(saveErr);
-                cb(null, effectiveGroupId);
-              },
-            );
-          }
-          // POINT_TO_POINT
-          if (queueParams.groupId) {
-            logger?.error(
-              'Consumer group ID not supported for point-to-point delivery model',
-            );
-            return cb(new ConsumerGroupsNotSupportedError());
-          }
-          cb();
-        },
-      );
-    },
-  );
+      if (props.deliveryModel === EQueueDeliveryModel.PUB_SUB) {
+        const consumerGroups = new ConsumerGroups();
+        let effectiveGroupId = queueParams.groupId;
+        if (!effectiveGroupId) {
+          logger?.debug(
+            `PUB_SUB queue without provided consumer group. Creating ephemeral group '${consumerId}'...`,
+          );
+          // Use consumer ID as group ID
+          effectiveGroupId = _generateEphemeralConsumerGroupId(consumerId);
+        }
+        return consumerGroups.saveConsumerGroup(
+          queueParams.queueParams,
+          effectiveGroupId,
+          (saveErr) => {
+            if (saveErr) return cb(saveErr);
+            cb(null, effectiveGroupId);
+          },
+        );
+      }
+      // POINT_TO_POINT
+      if (queueParams.groupId) {
+        logger?.error(
+          'Consumer group ID not supported for point-to-point delivery model',
+        );
+        return cb(new ConsumerGroupsNotSupportedError());
+      }
+      cb();
+    });
+  }, cb);
 }

@@ -46,7 +46,7 @@ import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/re
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
-import { IQueueWorkerPayload } from '../../common/worker/types/message-handler-worker.js';
+import { IQueueWorkerPayload } from '../../common/abstract/worker/types/message-handler-worker.js';
 
 const WORKERS_DIR = path.resolve(
   env.getCurrentDir(),
@@ -385,7 +385,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           );
           // Shutdown this message handler as queue is stopped
           this.shutdown(() => {
-            this.logger.info(
+            this.logger.debug(
               `MessageHandler for queue ${this.queue.queueParams.name} shut down due to STOPPED state`,
             );
           });
@@ -398,7 +398,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           );
           // Shutdown this message handler as queue is locked
           this.shutdown(() => {
-            this.logger.info(
+            this.logger.debug(
               `MessageHandler for queue ${this.queue.queueParams.name} shut down due to LOCKED state`,
             );
           });
@@ -411,7 +411,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           );
           // Shutdown this message handler as queue is in invalid state
           this.shutdown(() => {
-            this.logger.info(
+            this.logger.debug(
               `MessageHandler for queue ${this.queue.queueParams.name} shut down due to invalid state`,
             );
           });

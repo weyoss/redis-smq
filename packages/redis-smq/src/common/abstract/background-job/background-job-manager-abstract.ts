@@ -18,13 +18,15 @@ import {
   BackgroundJobNotStartableError,
   BackgroundJobTargetLockedError,
   UnexpectedScriptReplyError,
-} from '../../errors/index.js';
+} from '../../../errors/index.js';
 import {
   EBackgroundJobStatus,
   IBackgroundJob,
   IBackgroundJobConfig,
 } from './types/index.js';
 import { resolve } from 'path';
+import { redisKeys } from '../../redis/redis-keys/redis-keys.js';
+import { _isBackgroundJobWorkerAlive } from './helpers/_is-background-job-worker-alive.js';
 
 const batchSize = 1000;
 const delay = 5000;
@@ -35,6 +37,7 @@ enum ELuaScript {
   COMPLETE_JOB = 'COMPLETE_JOB',
   FAIL_JOB = 'FAIL_JOB',
   START_JOB = 'START_JOB',
+  RECOVER_STUCK_JOB = 'RECOVER_STUCK_JOB',
 }
 
 const curDir = env.getCurrentDir();
@@ -47,6 +50,10 @@ const luaScriptMap = {
   ),
   [ELuaScript.FAIL_JOB]: resolve(curDir, './redis/scripts/fail-job.lua'),
   [ELuaScript.START_JOB]: resolve(curDir, './redis/scripts/start-job.lua'),
+  [ELuaScript.RECOVER_STUCK_JOB]: resolve(
+    curDir,
+    './redis/scripts/recover-stuck-job.lua',
+  ),
 };
 
 export abstract class BackgroundJobManagerAbstract<Target> {
@@ -161,7 +168,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               new BackgroundJobAlreadyExistsError({ metadata: { jobId } }),
             );
           case 1:
-            this.logger.info(
+            this.logger.debug(
               `Created job ${jobId} for target "${JSON.stringify(target)}"`,
             );
             return cb(null, backgroundJob);
@@ -235,7 +242,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
             updateErr,
           );
         } else {
-          this.logger.info(
+          this.logger.debug(
             `Job ${jobId}: Purged ${totalPurged} messages so far`,
           );
         }
@@ -290,6 +297,8 @@ export abstract class BackgroundJobManagerAbstract<Target> {
           backgroundJob: IBackgroundJob<Target>,
           next: ICallback<IBackgroundJob<Target>>,
         ) => {
+          const { keyBackgroundJobWorkerId } =
+            redisKeys.getBackgroundJobKeys(jobId);
           const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
@@ -304,6 +313,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               this.config.keyBackgroundJobsPending,
               this.config.keyBackgroundJobsProcessing,
               targetLockKey,
+              keyBackgroundJobWorkerId,
             ],
             [
               jobId,
@@ -356,11 +366,18 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Mark job as processing
-  start(jobId: string, cb: ICallback<IBackgroundJob<Target>>): void {
+  start(
+    jobId: string,
+    workerId: string,
+    cb: ICallback<IBackgroundJob<Target>>,
+  ): void {
     this.get(jobId, (err, backgroundJob) => {
       if (err) return cb(err);
       if (!backgroundJob)
         return cb(new BackgroundJobNotFoundError({ metadata: { jobId } }));
+
+      const { keyBackgroundJobWorkerId } =
+        redisKeys.getBackgroundJobKeys(jobId);
 
       const updatedJob = {
         ...backgroundJob,
@@ -374,9 +391,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
         [
           this.config.keyBackgroundJobs,
           this.config.keyBackgroundJobsProcessing,
+          keyBackgroundJobWorkerId,
         ],
         [
           jobId,
+          workerId,
           JSON.stringify(updatedJob),
           EBackgroundJobStatus.PENDING.toString(),
           EBackgroundJobStatus.PROCESSING.toString(),
@@ -462,6 +481,8 @@ export abstract class BackgroundJobManagerAbstract<Target> {
           backgroundJob: IBackgroundJob<Target>,
           next: ICallback<IBackgroundJob<Target>>,
         ) => {
+          const { keyBackgroundJobWorkerId } =
+            redisKeys.getBackgroundJobKeys(jobId);
           const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
@@ -477,6 +498,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsProcessing,
               targetLockKey,
+              keyBackgroundJobWorkerId,
             ],
             [
               jobId,
@@ -551,6 +573,8 @@ export abstract class BackgroundJobManagerAbstract<Target> {
           backgroundJob: IBackgroundJob<Target>,
           next: ICallback<IBackgroundJob<Target>>,
         ) => {
+          const { keyBackgroundJobWorkerId } =
+            redisKeys.getBackgroundJobKeys(jobId);
           const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
@@ -565,6 +589,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsProcessing,
               targetLockKey,
+              keyBackgroundJobWorkerId,
             ],
             [
               jobId,
@@ -678,7 +703,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   recoverStuckJobs(cb: ICallback): void {
-    this.logger.info(`Checking for stuck jobs...`);
+    this.logger.debug(`Checking for stuck jobs...`);
 
     // Get all jobs in processing list
     this.redisClient.lrange(
@@ -689,78 +714,165 @@ export abstract class BackgroundJobManagerAbstract<Target> {
         if (err) return cb(err);
 
         if (!jobIds || jobIds.length === 0) {
-          this.logger.info('No stuck jobs found');
+          this.logger.debug('No stuck jobs found');
           return cb(null);
         }
 
-        this.logger.info(`Found ${jobIds.length} potentially stuck jobs`);
+        this.logger.debug(`Found ${jobIds.length} potentially stuck jobs`);
+        let recovered = 0;
+        let skipped = 0;
+        let failed = 0;
 
-        // Process each stuck job
+        // Process each job in processing list
         async.eachOf(
           jobIds,
           (jobId, _, next) => {
-            this.get(jobId, (err, job) => {
-              if (err) {
-                this.logger.error(`Error getting stuck job ${jobId}:`, err);
-                // Remove from processing list anyway
-                this.removeFromProcessing(jobId, () => next());
-                return;
-              }
-
-              if (!job) {
-                // Job doesn't exist, clean up
-                this.logger.info(`Removing non-existent stuck job: ${jobId}`);
-                this.removeFromProcessing(jobId, () => next());
-                return;
-              }
-
-              if (job.status === EBackgroundJobStatus.PROCESSING) {
-                // Job was processing but worker crashed
-                this.logger.info(
-                  `Recovering stuck job: ${jobId} for queue ${job.target}`,
-                );
-
-                // Reset to pending so it can be retried
-                this.update(
-                  jobId,
-                  {
-                    status: EBackgroundJobStatus.PENDING,
-                    error: 'Recovered from worker crash',
-                    updatedAt: Date.now(),
-                  },
-                  (updateErr) => {
-                    if (updateErr) {
+            async.waterfall(
+              [
+                // Step 1: Check if worker is alive
+                (cb: ICallback<boolean>) => {
+                  _isBackgroundJobWorkerAlive(jobId, (err, isAlive) => {
+                    if (err) {
                       this.logger.error(
-                        `Failed to update stuck job ${jobId}:`,
-                        updateErr,
+                        `Error checking worker liveness for job ${jobId}:`,
+                        err,
                       );
+                      return cb(err);
                     }
 
-                    // Move back to pending list
-                    this.redisClient.lpush(
-                      this.config.keyBackgroundJobsPending,
-                      jobId,
-                      (pushErr) => {
-                        if (pushErr) {
+                    if (isAlive) {
+                      this.logger.debug(
+                        `Worker for job ${jobId} is still alive, skipping recovery`,
+                      );
+                      return cb(null, false); // Worker alive, don't recover
+                    }
+
+                    cb(null, true); // Worker dead, proceed with recovery
+                  });
+                },
+
+                // Step 2: Recover the stuck job using Lua script
+                (shouldRecover: boolean, cb: ICallback) => {
+                  if (!shouldRecover) {
+                    skipped++;
+                    return cb(null);
+                  }
+
+                  // We need to get job data to know the target for lock key
+                  this.get(jobId, (err, job) => {
+                    if (err) {
+                      this.logger.error(
+                        `Error getting job ${jobId} for recovery:`,
+                        err,
+                      );
+                      failed++;
+                      return cb(err);
+                    }
+
+                    if (!job) {
+                      // Job doesn't exist in hash but is in processing list - clean up
+                      this.logger.debug(
+                        `Job ${jobId} not found, removing from processing list`,
+                      );
+                      this.removeFromProcessing(jobId, () => {
+                        skipped++;
+                        cb(null);
+                      });
+                      return;
+                    }
+
+                    const { keyBackgroundJobWorkerId } =
+                      redisKeys.getBackgroundJobKeys(jobId);
+                    const targetLockKey = this.getTargetLockKey(job.target);
+                    const recoveryMessage = 'Recovered from worker crash';
+
+                    const updatedJob = {
+                      ...job,
+                      status: EBackgroundJobStatus.PENDING,
+                      error: recoveryMessage,
+                      updatedAt: Date.now(),
+                    };
+
+                    this.redisClient.runScript(
+                      ELuaScript.RECOVER_STUCK_JOB,
+                      [
+                        this.config.keyBackgroundJobs,
+                        this.config.keyBackgroundJobsPending,
+                        this.config.keyBackgroundJobsProcessing,
+                        targetLockKey,
+                        keyBackgroundJobWorkerId,
+                      ],
+                      [
+                        jobId,
+                        JSON.stringify(updatedJob),
+                        EBackgroundJobStatus.PENDING.toString(),
+                        EBackgroundJobStatus.PROCESSING.toString(),
+                        EBackgroundJobStatus.COMPLETED.toString(),
+                        EBackgroundJobStatus.FAILED.toString(),
+                        EBackgroundJobStatus.CANCELED.toString(),
+                        recoveryMessage,
+                      ],
+                      (err, reply) => {
+                        if (err) {
                           this.logger.error(
-                            `Failed to move job ${jobId} to pending:`,
-                            pushErr,
+                            `Error recovering job ${jobId}:`,
+                            err,
                           );
+                          failed++;
+                          return cb(err);
                         }
 
-                        // Remove from processing
-                        this.removeFromProcessing(jobId, (err) => next(err));
+                        switch (reply) {
+                          case 1:
+                            this.logger.info(
+                              `Successfully recovered stuck job ${jobId}`,
+                            );
+                            recovered++;
+                            break;
+                          case 0:
+                            this.logger.debug(
+                              `Job ${jobId} not found or not in recoverable state`,
+                            );
+                            skipped++;
+                            break;
+                          case -1:
+                            this.logger.debug(`Job ${jobId} already completed`);
+                            skipped++;
+                            break;
+                          case -2:
+                            this.logger.debug(`Job ${jobId} already failed`);
+                            skipped++;
+                            break;
+                          case -3:
+                            this.logger.debug(`Job ${jobId} already cancelled`);
+                            skipped++;
+                            break;
+                          default:
+                            this.logger.warn(
+                              `Unexpected reply for job ${jobId}: ${reply}`,
+                            );
+                            failed++;
+                        }
+                        cb(null);
                       },
                     );
-                  },
-                );
-              } else {
-                // Job is not processing, just clean up
-                this.removeFromProcessing(jobId, (err) => next(err));
-              }
-            });
+                  });
+                },
+              ],
+              (err) => next(err),
+            );
           },
-          cb,
+          (err) => {
+            if (err) {
+              this.logger.error('Error during stuck job recovery:', err);
+              return cb(err);
+            }
+
+            this.logger.debug(
+              `Stuck job recovery complete: ${recovered} recovered, ${skipped} skipped, ${failed} failed`,
+            );
+            cb(null);
+          },
         );
       },
     );

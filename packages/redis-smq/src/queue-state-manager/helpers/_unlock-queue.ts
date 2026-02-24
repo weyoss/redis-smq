@@ -101,12 +101,17 @@ export function _unlockQueue(
           logger,
           (err, transition) => {
             if (err) {
-              logger.error(`Error unlocking ${queueDesc}: ${err.message}`, err);
+              logger.error(
+                `Error unlocking ${queueParams.name}@${queueParams.ns}: ${err.message}`,
+                err,
+              );
               return done(err);
             }
             if (!transition) return done(new CallbackEmptyReplyError());
 
-            logger.info(`Queue ${queueDesc} unlocked successfully`);
+            logger.info(
+              `Queue ${queueParams.name}@${queueParams.ns} unlocked successfully`,
+            );
 
             done(null, transition);
           },

@@ -52,7 +52,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     eventPublisher(this);
     this.supervisorTimer = new Timer();
     this.supervisorTimer.on('error', (err) => this.handleError(err));
-    this.logger.info(`MessageHandlerRunner with ID: ${this.id} initialized.`);
+    this.logger.debug(`MessageHandlerRunner with ID: ${this.id} initialized.`);
   }
 
   /**
@@ -369,7 +369,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
         );
         cb(err);
       } else {
-        this.logger.info(
+        this.logger.debug(
           `Stopped message handler for queue: ${queue.queueParams.name} (configuration kept)`,
         );
         cb(null, true);
@@ -416,7 +416,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
         );
         cb(err);
       } else {
-        this.logger.info(
+        this.logger.debug(
           `Started message handler for queue: ${queue.queueParams.name}`,
         );
         cb(null, true);
@@ -438,7 +438,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       this.shutdownMessageHandler(handlerInstance, cb);
     } else {
       if (hadConfig) {
-        this.logger.info(
+        this.logger.debug(
           `Removed handler configuration for queue: ${queue.queueParams.name}`,
         );
       }
@@ -479,7 +479,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
             messageHandler,
           };
           this.messageHandlers.push(handlerParams);
-          this.logger.info(
+          this.logger.debug(
             `Message handler registered for queue: ${queue.queueParams.name}. Total handlers: ${this.messageHandlers.length}`,
           );
 

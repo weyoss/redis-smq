@@ -74,7 +74,7 @@ export function _transitQueueTo(
           (err, transition) => {
             if (err) {
               logger.error(
-                `Error setting state for ${queueDesc}: ${err.message}`,
+                `Error setting state for ${queueParams.name}@${queueParams.ns}: ${err.message}`,
                 err,
               );
               return done(err);
@@ -82,7 +82,7 @@ export function _transitQueueTo(
             if (!transition) return done(new CallbackEmptyReplyError());
 
             logger.info(
-              `Queue ${queueDesc} state changed from ${EQueueOperationalState[currentState.to]} to ${EQueueOperationalState[newState]} (reason: ${reason})`,
+              `Queue ${queueParams.name}@${queueParams.ns} state changed from ${EQueueOperationalState[currentState.to]} to ${EQueueOperationalState[newState]} (reason: ${reason})`,
             );
 
             // Emit state change event

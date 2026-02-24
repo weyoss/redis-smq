@@ -8,4 +8,4 @@
  */
 
 export * from './redis-smq.js';
-export * from './background-jobs/jobs/purge-queue/types/index.js';
+export * from '../common/background-jobs/jobs/purge-queue/types/index.js';

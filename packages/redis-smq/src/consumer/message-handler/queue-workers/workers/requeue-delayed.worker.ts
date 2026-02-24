@@ -174,7 +174,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
               );
             }
             this.logger.info(
-              `Successfully requeued ${reply} delayed messages.`,
+              `Successfully re-queued ${reply} messages for delayed processing.`,
             );
             return cb();
           }

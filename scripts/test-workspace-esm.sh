@@ -26,7 +26,7 @@ test_project() {
 
   # Run tests with Jest
   echo "Running tests..."
-  export NODE_OPTIONS="--experimental-vm-modules"
+  export NODE_OPTIONS="--experimental-vm-modules --trace-uncaught --stack-trace-limit=1000"
   if ! vitest "${VITEST_OPTIONS[@]}" "$@"; then
     echo "Test execution failed."
     return 1

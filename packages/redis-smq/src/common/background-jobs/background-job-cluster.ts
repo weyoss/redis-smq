@@ -12,15 +12,16 @@ import {
   createLogger,
   env,
   ICallback,
+  IRedisClient,
   Runnable,
   WorkerCluster,
 } from 'redis-smq-common';
 import { Configuration } from '../../config/index.js';
-import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { IGlobalWorkerPayload } from '../../common/worker/types/global-worker.js';
+import { RedisConnectionPool } from '../redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/types/connection-pool.js';
+import { IGlobalWorkerPayload } from '../abstract/worker/types/global-worker.js';
 import path from 'path';
+import { isMainThread } from 'node:worker_threads';
 
 const curDir = env.getCurrentDir();
 const workersPath = path.resolve(curDir, 'jobs');
@@ -30,6 +31,7 @@ export class BackgroundJobCluster extends Runnable<never> {
   protected logger;
   protected config;
   protected workerCluster: WorkerCluster | null = null;
+  protected redisClient: IRedisClient | null = null;
 
   protected constructor() {
     super();
@@ -40,9 +42,15 @@ export class BackgroundJobCluster extends Runnable<never> {
   }
 
   static run(cb: ICallback<void>) {
+    // avoid to recursively launch new background jobs from background jobs
+    if (!isMainThread) {
+      return cb();
+    }
+
     if (!BackgroundJobCluster.instance) {
       BackgroundJobCluster.instance = new BackgroundJobCluster();
     }
+
     BackgroundJobCluster.instance.run(cb);
   }
 
@@ -65,11 +73,11 @@ export class BackgroundJobCluster extends Runnable<never> {
           (err, redisClient) => {
             if (err) return cb(err);
             if (!redisClient) return cb(new CallbackEmptyReplyError());
-            const { keyGlobalWorkerClusterLock } = redisKeys.getMainKeys();
+            this.redisClient = redisClient;
             this.workerCluster = new WorkerCluster(
               redisClient,
               this.logger,
-              keyGlobalWorkerClusterLock,
+              null,
               '.job.js',
             );
             this.workerCluster.on('workerCluster.error', (err) => {
@@ -96,8 +104,17 @@ export class BackgroundJobCluster extends Runnable<never> {
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
       (cb: ICallback) => {
-        if (this.workerCluster) this.workerCluster.shutdown(cb);
-        else cb();
+        if (this.workerCluster) {
+          this.workerCluster.removeAllListeners('workerCluster.error');
+          this.workerCluster.shutdown(cb);
+        } else cb();
+      },
+      (cb: ICallback) => {
+        if (this.redisClient) {
+          RedisConnectionPool.getInstance().release(this.redisClient);
+          this.redisClient = null;
+        }
+        cb();
       },
     ].concat(super.goingDown());
   }

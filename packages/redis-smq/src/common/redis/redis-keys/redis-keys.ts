@@ -83,7 +83,7 @@ enum ERedisKey {
   NAMESPACES,
   EXCHANGES,
   CONFIGURATION,
-  GLOBAL_WORKER_CLUSTER,
+  GLOBAL_WORKER_CLUSTER, // todo remove unused key
   PURGE_QUEUE_BACKGROUND_JOBS,
   PURGE_QUEUE_BACKGROUND_JOBS_PENDING,
   PURGE_QUEUE_BACKGROUND_JOBS_PROCESSING,
@@ -93,6 +93,10 @@ enum ERedisKey {
 
   //
   QUEUE_STATE_HISTORY,
+
+  //
+  BACKGROUND_JOB_WORKER_HEARTBEAT,
+  BACKGROUND_JOB_WORKER_ID,
 }
 
 /**
@@ -319,7 +323,6 @@ export const redisKeys = {
       keyExchanges: ERedisKey.EXCHANGES,
       keyNamespaces: ERedisKey.NAMESPACES,
       keyConfiguration: ERedisKey.CONFIGURATION,
-      keyGlobalWorkerClusterLock: ERedisKey.GLOBAL_WORKER_CLUSTER,
       keyPurgeQueueBackgroundJobs: ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS,
       keyPurgeQueueBackgroundJobsPending:
         ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS_PENDING,
@@ -340,6 +343,25 @@ export const redisKeys = {
         queueParams.name,
         ...(groupId ? [groupId] : []),
       ),
+    };
+  },
+
+  getBackgroundJobKeys(jobId: string) {
+    const keys = {
+      keyBackgroundJobWorkerId: ERedisKey.BACKGROUND_JOB_WORKER_ID,
+    };
+    return {
+      ...makeNamespacedKeys(keys, jobId),
+    };
+  },
+
+  getBackgroundJobWorkerKeys(workerId: string) {
+    const keys = {
+      keyBackgroundJobWorkerHeartbeat:
+        ERedisKey.BACKGROUND_JOB_WORKER_HEARTBEAT,
+    };
+    return {
+      ...makeNamespacedKeys(keys, workerId),
     };
   },
 

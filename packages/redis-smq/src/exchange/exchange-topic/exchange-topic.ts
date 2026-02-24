@@ -463,7 +463,7 @@ export class ExchangeTopic {
                   return cb(err);
                 }
                 this.logger.info(
-                  `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} pat=${routingPattern}`,
+                  `bindQueue: bound queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns} pat=${routingPattern}`,
                 );
                 cb();
               },
@@ -702,7 +702,7 @@ export class ExchangeTopic {
               (err) => {
                 if (err) return cb(err);
                 this.logger.info(
-                  `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns} pat=${routingPattern}`,
+                  `unbindQueue: unbound queue=${queueParams.name}@${queueParams.ns} from ex=${exchangeParams.name}@${exchangeParams.ns} pat=${routingPattern}`,
                 );
                 cb();
               },
@@ -895,7 +895,7 @@ export class ExchangeTopic {
         (err) => {
           if (err) return outerCb(err);
           this.logger.info(
-            `delete: exchange "${exchangeParams.name}" (ns=${exchangeParams.ns}) deleted`,
+            `delete: exchange ${exchangeParams.name}@${exchangeParams.ns} deleted`,
           );
           outerCb();
         },

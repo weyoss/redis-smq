@@ -11,7 +11,7 @@ import { async, ICallback, IRedisConfig, PanicError } from 'redis-smq-common';
 import { Configuration, IRedisSMQConfig } from '../config/index.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
-import { BackgroundJobCluster } from './background-jobs/background-job-cluster.js';
+import { BackgroundJobCluster } from '../common/background-jobs/background-job-cluster.js';
 import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
 import { EventBus } from '../event-bus/index.js';

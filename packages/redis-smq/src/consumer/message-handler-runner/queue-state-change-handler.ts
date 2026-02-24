@@ -172,7 +172,7 @@ export class QueueStateChangeHandler {
 
     const checkCompletion = () => {
       if (stoppedCount === totalCount) {
-        this.logger.info(
+        this.logger.debug(
           `All ${totalCount} handler(s) for queue ${queueConfigs[0].queueParams.name} have been ${state.toLowerCase()}`,
         );
       }
@@ -210,7 +210,7 @@ export class QueueStateChangeHandler {
 
     const checkCompletion = () => {
       if (startedCount === totalCount) {
-        this.logger.info(
+        this.logger.debug(
           `All ${totalCount} handler(s) for queue ${queueConfigs[0].queueParams.name} have been started (ACTIVE state)`,
         );
       }

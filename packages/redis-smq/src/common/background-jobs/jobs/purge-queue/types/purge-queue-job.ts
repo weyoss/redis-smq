@@ -8,7 +8,7 @@
  */
 
 import { IQueueParsedParams } from '../../../../../queue-manager/index.js';
-import { EQueueMessageType } from '../../../../../common/index.js';
+import { EQueueMessageType } from '../../../../../queue-messages/index.js';
 
 export type TPurgeQueueJobTarget = {
   queue: IQueueParsedParams;

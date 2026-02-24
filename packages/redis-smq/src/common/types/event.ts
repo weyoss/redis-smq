@@ -8,11 +8,11 @@
  */
 
 import {
+  IHeartbeatPayload,
   IQueueParams,
   IQueueParsedParams,
   IQueueProperties,
 } from '../../index.js';
-import { IConsumerHeartbeat } from '../../consumer/consumer-heartbeat/types/index.js';
 import {
   EMessageUnacknowledgementDeadLetterReason,
   EMessageUnacknowledgementReason,
@@ -23,7 +23,7 @@ export type TConsumerHeartbeatEvent = {
   'consumerHeartbeat.heartbeat': (
     consumerId: string,
     timestamp: number,
-    heartbeatPayload: IConsumerHeartbeat,
+    heartbeatPayload: IHeartbeatPayload,
   ) => void;
   'consumerHeartbeat.error': (err: Error, consumerId: string) => void;
 };

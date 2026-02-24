@@ -22,10 +22,9 @@ export class MultiplexedMessageHandler extends MessageHandler {
   ) {
     super(consumerContext, handlerParams, false);
     this.dequeueNextFn = dequeueNextFn;
-    this.logger.info(
+    this.logger.debug(
       `MultiplexedMessageHandler initialized for consumer ${this.consumerContext.consumerId}, queue ${this.queue.queueParams.name}`,
     );
-    this.logger.debug('Auto-dequeue disabled for multiplexed handler');
   }
 
   protected override createDequeueMessageInstance(): DequeueMessage {

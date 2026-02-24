@@ -297,7 +297,9 @@ export class QueueManager {
           `Queue ${queueName} deleted from Redis, emitting queue.queueDeleted event`,
         );
         EventMultiplexer.publish('queue.queueDeleted', queueParams);
-        this.logger.info(`Queue ${queueName} successfully deleted`);
+        this.logger.info(
+          `Queue ${queueParams.name}@${queueParams.ns} successfully deleted`,
+        );
         cb();
       });
     }, cb);

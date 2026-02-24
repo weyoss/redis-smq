@@ -135,7 +135,9 @@ export class QueueRateLimit {
               return cb(error);
             }
 
-            this.logger.info(`Cleared rate limit for queue: ${queueName}`);
+            this.logger.info(
+              `Cleared rate limit for queue ${queueParams.name}@${queueParams.ns}`,
+            );
             cb();
           },
         );
@@ -261,7 +263,7 @@ export class QueueRateLimit {
             }
 
             this.logger.info(
-              `Set rate limit for ${queueName}: ${limit}/${interval}ms`,
+              `Set rate limit for ${queueParams.name}@${queueParams.ns}: ${limit}/${interval}ms`,
             );
             cb();
           },

@@ -11,6 +11,7 @@
 -- KEYS[2]: backgroundJobsPending key (list)
 -- KEYS[3]: backgroundJobsProcessing key (list)
 -- KEYS[4]: targetLockKey (string)
+-- KEYS[5]: jobWorkerKey (string)
 --
 -- ARGV[1]: jobId
 -- ARGV[2]: updatedJobData (JSON stringified with CANCELLED status)
@@ -33,6 +34,7 @@ local backgroundJobsKey = KEYS[1]
 local backgroundJobsPendingKey = KEYS[2]
 local backgroundJobsProcessingKey = KEYS[3]
 local targetLockKey = KEYS[4]
+local jobWorkerKey = KEYS[5]
 
 local jobId = ARGV[1]
 local updatedJobData = ARGV[2]
@@ -61,6 +63,7 @@ if statusStr == canceledStatus then
     redis.call('LREM', backgroundJobsPendingKey, 0, jobId)
     redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)
     redis.call('DEL', targetLockKey)
+    redis.call('DEL', jobWorkerKey)
     return 2  -- Already cancelled
 
 -- Check if job is already in terminal state (completed or failed)
@@ -68,12 +71,14 @@ elseif statusStr == completedStatus then
     -- Job already completed, just clean up from lists
     redis.call('LREM', backgroundJobsPendingKey, 0, jobId)
     redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)
+    redis.call('DEL', jobWorkerKey)
     return -1  -- Already completed
 
 elseif statusStr == failedStatus then
     -- Job already failed, just clean up from lists
     redis.call('LREM', backgroundJobsPendingKey, 0, jobId)
     redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)
+    redis.call('DEL', jobWorkerKey)
     return -2  -- Already failed
 end
 
@@ -87,5 +92,6 @@ redis.call('HSET', backgroundJobsKey, jobId, updatedJobData)  -- Update status t
 redis.call('LREM', backgroundJobsPendingKey, 0, jobId)        -- Remove from pending (hides it)
 redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)     -- Remove from processing (hides it)
 redis.call('DEL', targetLockKey)                             -- Release target lock
+redis.call('DEL', jobWorkerKey)                              -- Remove worker-job link
 
 return 1  -- Successfully cancelled and hidden

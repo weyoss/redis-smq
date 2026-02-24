@@ -98,7 +98,7 @@ test('Event bus: case 1', async () => {
   const c3 = bluebird.promisifyAll(new Consumer());
   await c3.runAsync();
   await c3.consumeAsync(anotherQueue, (msg, cb) => {
-    setTimeout(cb, 1000);
+    setTimeout(() => cb(), 1000);
   });
 
   const m3 = new ProducibleMessage().setQueue(anotherQueue).setBody('MMM');

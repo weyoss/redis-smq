@@ -78,14 +78,13 @@ export class Producer extends Runnable<TProducerEvent> {
       Configuration.getConfig().logger,
       `${this.constructor.name}-${this.getId()}`,
     );
-    this.logger.info(`Producer instance created`);
-
     this.directExchange = new ExchangeDirect();
     this.topicExchange = new ExchangeTopic();
     this.fanoutExchange = new ExchangeFanout();
 
     this.logger.debug('Initializing eventPublisher...');
     eventPublisher(this);
+    this.logger.info(`Producer initialized`);
   }
 
   /**
@@ -150,7 +149,6 @@ export class Producer extends Runnable<TProducerEvent> {
    * @returns An array of functions to be executed in series.
    */
   protected override goingUp(): ((cb: ICallback) => void)[] {
-    this.logger.info(`Producer is going up...`);
     return super.goingUp().concat([
       (cb: ICallback): void => {
         RedisConnectionPool.getInstance().acquire(
@@ -178,7 +176,6 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected override finalizeUp() {
     super.finalizeUp();
-    this.logger.info(`Producer is up.`);
     this.emit('producer.up', this.id);
   }
 
@@ -189,7 +186,6 @@ export class Producer extends Runnable<TProducerEvent> {
    * @returns An array of functions to be executed in series.
    */
   protected override goingDown(): ((cb: ICallback) => void)[] {
-    this.logger.info(`Producer is going down...`);
     this.emit('producer.goingDown', this.id);
     return [
       this._shutdownPubSubTargetResolver,
@@ -212,7 +208,6 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected override finalizeDown(): void {
     super.finalizeDown();
-    this.logger.info(`Producer is down.`);
     this.emit('producer.down', this.id);
   }
 

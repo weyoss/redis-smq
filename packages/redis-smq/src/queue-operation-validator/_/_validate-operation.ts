@@ -7,16 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import {
-  CallbackEmptyReplyError,
-  ICallback,
-  IRedisClient,
-} from 'redis-smq-common';
+import { ICallback, IRedisClient } from 'redis-smq-common';
 import { IQueueParams } from '../../queue-manager/index.js';
-import { EQueueOperation, OperationBitmask } from '../types/index.js';
-import { _getQueueState } from '../../queue-state-manager/helpers/_get-queue-state.js';
-import { operationRegistry } from '../operation-registery.js';
+import { EQueueOperation } from '../types/index.js';
 import { QueueOperationForbiddenError } from '../../errors/index.js';
+import { _checkOperation } from './_check-operation.js';
 
 export function _validateOperation(
   client: IRedisClient,
@@ -24,12 +19,8 @@ export function _validateOperation(
   operation: EQueueOperation,
   cb: ICallback,
 ): void {
-  _getQueueState(client, queueParams, (err, queueState) => {
+  _checkOperation(client, queueParams, operation, (err, allowed) => {
     if (err) return cb(err);
-    if (!queueState) return cb(new CallbackEmptyReplyError());
-
-    const bitmask = operationRegistry[queueState.to] ?? 0;
-    const allowed = (bitmask & OperationBitmask[operation]) !== 0;
     if (!allowed) {
       return cb(
         new QueueOperationForbiddenError({

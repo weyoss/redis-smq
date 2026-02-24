@@ -7,19 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { BackgroundJobManagerAbstract } from '../../../../common/background-job/background-job-manager-abstract.js';
+import { BackgroundJobManagerAbstract } from '../../../abstract/background-job/background-job-manager-abstract.js';
 import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../redis/redis-keys/redis-keys.js';
 import { TPurgeQueueJobTarget } from './types/index.js';
 import {
   EQueueStateLockOwner,
   EQueueStateTransitionReason,
 } from '../../../../queue-state-manager/index.js';
 import { IQueueParams } from '../../../../queue-manager/index.js';
-import {
-  EBackgroundJobStatus,
-  IBackgroundJob,
-} from '../../../../common/index.js';
+import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobNotFoundError } from '../../../../errors/index.js';
 import { _lockQueuelock } from '../../../../queue-state-manager/helpers/_lock-queue.js';
@@ -243,8 +240,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
     );
   }
 
-  validateJob(jobId: string, cb: ICallback<boolean>): void {
-    this.logger.info('Starting recovery of orphaned purge locks...');
+  hasTerminationStatus(jobId: string, cb: ICallback<boolean>): void {
     async.waterfall(
       [
         (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) =>
@@ -253,10 +249,11 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
           job: IBackgroundJob<TPurgeQueueJobTarget>,
           next: ICallback<boolean>,
         ) => {
+          // Job statuses that should unlock the queue upon completion
           const r =
-            job.status !== EBackgroundJobStatus.COMPLETED &&
-            job.status !== EBackgroundJobStatus.FAILED &&
-            job.status !== EBackgroundJobStatus.CANCELED;
+            job.status === EBackgroundJobStatus.COMPLETED ||
+            job.status === EBackgroundJobStatus.FAILED ||
+            job.status === EBackgroundJobStatus.CANCELED;
           next(null, r);
         },
       ],
