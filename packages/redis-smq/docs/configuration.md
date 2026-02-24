@@ -4,54 +4,137 @@
 
 Set up RedisSMQ with your Redis connection and optional features. Initialize once when your app starts.
 
-## Quick Start
+## Understanding the Two Initialization Methods
 
-### Basic Setup (Most Common)
+RedisSMQ has **two different initialization methods** that serve distinct purposes:
+
+| Method                   | Purpose                                    | When to Use                                                   |
+| ------------------------ | ------------------------------------------ | ------------------------------------------------------------- |
+| `initializeWithConfig()` | **Save** complete configuration to Redis   | First-time setup, changing Redis host/port, updating features |
+| `initialize()`           | **Load** existing configuration from Redis | Normal application startup (after config is saved)            |
+
+### Important: The Configuration Lives in Redis
+
+RedisSMQ stores its configuration **INSIDE Redis**, not in your application code. This ensures all parts of your system use the same settings.
+
+- `initializeWithConfig()` = **Write** configuration to Redis
+- `initialize()` = **Read** configuration from Redis (using just Redis connection details)
+
+## First-Time Setup (Required Once)
+
+**You must call `initializeWithConfig()` at least once** to save your configuration to Redis. This is typically done during initial deployment or when changing Redis connection details.
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
 const { ERedisConfigClient } = require('redis-smq-common');
 
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: '127.0.0.1',
-      port: 6379,
-    },
-  },
-  (err) => {
-    if (err) console.error('Failed:', err);
-    else console.log('RedisSMQ ready');
-  },
-);
-```
-
-### With Optional Features
-
-```javascript
+// FIRST-TIME SETUP: Save complete configuration to Redis
 RedisSMQ.initializeWithConfig(
   {
     namespace: 'myapp',
     redis: {
       client: ERedisConfigClient.IOREDIS,
       options: {
-        host: '127.0.0.1',
-        port: 6379,
+        host: '192.168.1.10', // Your Redis server
+        port: 6380, // Custom port
       },
     },
     logger: { enabled: true },
-    messageAudit: false,
     eventBus: { enabled: true },
+    // ... any other configuration
   },
   (err) => {
-    if (err) console.error('Failed:', err);
-    else console.log('Setup complete');
+    if (err) console.error('Setup failed:', err);
+    else console.log('Configuration saved to Redis successfully');
   },
 );
 ```
 
-**Note**: Use `initializeWithConfig` for first-time setup only. After configuration is saved, use `initialize()`.
+**⚠️ CRITICAL**: If you skip this step and only use `initialize()`, RedisSMQ will use **default settings** (localhost:6379) regardless of what you pass to `initialize()`.
+
+## Normal Application Startup (After Config is Saved)
+
+Once your configuration is saved in Redis, use the simpler `initialize()` method on every application start:
+
+```javascript
+// NORMAL STARTUP: Just provide Redis connection to load existing config
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: '192.168.1.10', // Must match what you used in initializeWithConfig
+      port: 6380,
+    },
+  },
+  (err) => {
+    if (err) console.error('Failed to load configuration:', err);
+    else {
+      // All components now use 192.168.1.10:6380
+      console.log('RedisSMQ ready - configuration loaded from Redis');
+    }
+  },
+);
+```
+
+## Common Pitfall: Why Components Connect to Wrong Redis
+
+**The Problem:**
+
+```javascript
+// ❌ This DOES NOT update RedisSMQ configuration
+RedisSMQ.initialize(
+  { host: '192.168.1.10', port: 6380 }, // Custom Redis
+  (err) => {
+    /* ... */
+  },
+);
+// InternalEventBus still connects to localhost:6379! 😕
+```
+
+**Why This Happens:**
+
+- `initialize()` only uses the Redis connection to **read** the stored configuration
+- If you've never called `initializeWithConfig()`, Redis contains **default configuration** (localhost:6379)
+- Internal components use the **stored configuration**, not your connection parameters
+
+**The Solution:**
+
+First-time setup (one-time):
+
+```typescript
+RedisSMQ.initializeWithConfig(
+  {
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: {
+        host: '192.168.1.10',
+        port: 6380,
+      },
+    },
+    // ... other configuration options
+  },
+  (err) => {
+    if (err) console.error('Setup failed:', err);
+  },
+);
+```
+
+Subsequent application startups:
+
+```typescript
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: '192.168.1.10',
+      port: 6380,
+    },
+  },
+  (err) => {
+    // Now all components use the correct Redis instance
+  },
+);
+```
 
 ## Configuration Options
 
@@ -59,7 +142,7 @@ RedisSMQ.initializeWithConfig(
 
 ```javascript
 const config = {
-  namespace: 'myapp',
+  namespace: 'myapp', // Isolates your app's queues
   redis: {
     client: ERedisConfigClient.IOREDIS,
     options: {
@@ -97,7 +180,6 @@ const config = {
   messageAudit: {
     acknowledgedMessages: true, // Track successful messages
     deadLetteredMessages: {
-      // Track failed messages with limits
       queueSize: 1000, // Keep last 1000 failed messages
       expire: 86400, // Delete after 24 hours (seconds)
     },
@@ -120,52 +202,6 @@ const config = {
     },
   },
 };
-```
-
-## When to Use Each Method
-
-### `RedisSMQ.initialize(redisConfig, callback)`
-
-- **Use for**: Normal application startup
-- **When**: Configuration already exists in Redis
-- **Example**: Daily restarts, deployment updates
-
-```javascript
-// After initial setup, use this:
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: '127.0.0.1',
-      port: 6379,
-    },
-  },
-  callback,
-);
-```
-
-### `RedisSMQ.initializeWithConfig(fullConfig, callback)`
-
-- **Use for**: First-time setup or configuration changes
-- **When**: Setting up new environment/application or changing Redis settings
-- **Example**: Initial deployment, changing namespace
-
-```javascript
-// First time or when changing config:
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'new-app',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: {
-        host: '127.0.0.1',
-        port: 6379,
-      },
-    },
-    // ... other settings
-  },
-  callback,
-);
 ```
 
 ## Managing Configuration
@@ -210,11 +246,14 @@ cfg.reset((err) => {
 ### 1. Namespace by Environment/Application
 
 ```javascript
-// Application
-namespace: 'myapp';
+// Production
+namespace: 'myapp-prod';
 
-// Environment
+// Staging
 namespace: 'myapp-staging';
+
+// Development
+namespace: 'myapp-dev';
 ```
 
 ### 2. Enable Features Only When Needed
@@ -248,15 +287,26 @@ const config = {
 };
 ```
 
-### 4. Store Configuration in Redis
+### 4. Remember: One-Time Setup, Then Simple Start
 
 ```javascript
-// First deploy: save config to Redis
-RedisSMQ.initializeWithConfig(fullConfig, callback);
+// First deploy ONLY: save config
+if (process.env.FIRST_TIME_SETUP) {
+  RedisSMQ.initializeWithConfig(fullConfig, callback);
+}
 
-// Subsequent starts: load from Redis
-RedisSMQ.initialize(redisConfig, callback);
+// All starts: load from Redis
+RedisSMQ.initialize(redisConnection, callback);
 ```
+
+## Quick Reference
+
+| Scenario                       | Method                   | What Happens                     |
+| ------------------------------ | ------------------------ | -------------------------------- |
+| **New application**            | `initializeWithConfig()` | Saves your config to Redis       |
+| **Changed Redis host/port**    | `initializeWithConfig()` | Updates stored config            |
+| **Normal app restart**         | `initialize()`           | Loads existing config from Redis |
+| **Testing different settings** | `initializeWithConfig()` | Overwrites stored config         |
 
 ---
 
