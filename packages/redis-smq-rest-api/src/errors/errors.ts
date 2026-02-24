@@ -27,6 +27,7 @@ export const errors = {
   BackgroundJobNotFoundError: [404, 'BackgroundJobNotFoundError'],
   BackgroundJobNotStartableError: [500, 'BackgroundJobNotStartableError'],
   BackgroundJobTargetLockedError: [500, 'BackgroundJobTargetLockedError'],
+  BackgroundJobWorkerNotFoundError: [404, 'BackgroundJobWorkerNotFoundError'],
   ConfigurationMessageAuditExpireError: [
     400,
     'ConfigurationMessageAuditExpireError',
