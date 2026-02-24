@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `MessageBrowserAbstract`
+- `QueueMessagesAbstract`
 
 ## Constructors
 
@@ -18,7 +18,7 @@
 
 #### Inherited from
 
-`MessageBrowserAbstract.constructor`
+`QueueMessagesAbstract.constructor`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Type of queue messages this browser handles.
 
 #### Overrides
 
-`MessageBrowserAbstract.messageType`
+`QueueMessagesAbstract.messageType`
 
 ## Methods
 
@@ -66,7 +66,7 @@ Callback when cancellation is processed.
 
 #### Inherited from
 
-`MessageBrowserAbstract.cancelPurge`
+`QueueMessagesAbstract.cancelPurge`
 
 ---
 
@@ -96,7 +96,7 @@ Callback returning the count
 
 #### Inherited from
 
-`MessageBrowserAbstract.countMessages`
+`QueueMessagesAbstract.countMessages`
 
 ---
 
@@ -130,7 +130,7 @@ Number of items per page
 
 `ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<`string`\>\>
 
-Callback returning an IQueueMessagesPage of message IDs
+Callback returning an IBrowserPage of message IDs
 
 #### Returns
 
@@ -138,7 +138,7 @@ Callback returning an IQueueMessagesPage of message IDs
 
 #### Inherited from
 
-`MessageBrowserAbstract.getMessageIds`
+`QueueMessagesAbstract.getMessageIds`
 
 ---
 
@@ -172,7 +172,7 @@ Number of items per page
 
 `ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
 
-Callback returning an IQueueMessagesPage of IMessageTransferable
+Callback returning an IBrowserPage of IMessageTransferable
 
 #### Returns
 
@@ -180,7 +180,7 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 #### Inherited from
 
-`MessageBrowserAbstract.getMessages`
+`QueueMessagesAbstract.getMessages`
 
 ---
 
@@ -216,7 +216,7 @@ Callback with the job object.
 
 #### Inherited from
 
-`MessageBrowserAbstract.getPurgeJob`
+`QueueMessagesAbstract.getPurgeJob`
 
 ---
 
@@ -252,7 +252,7 @@ Callback with the job status.
 
 #### Inherited from
 
-`MessageBrowserAbstract.getPurgeJobStatus`
+`QueueMessagesAbstract.getPurgeJobStatus`
 
 ---
 
@@ -286,4 +286,4 @@ Callback function that receives the job ID.
 
 #### Inherited from
 
-`MessageBrowserAbstract.purge`
+`QueueMessagesAbstract.purge`

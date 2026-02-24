@@ -13,6 +13,7 @@
 - [BackgroundJobNotFoundError](classes/BackgroundJobNotFoundError.md)
 - [BackgroundJobNotStartableError](classes/BackgroundJobNotStartableError.md)
 - [BackgroundJobTargetLockedError](classes/BackgroundJobTargetLockedError.md)
+- [BackgroundJobWorkerNotFoundError](classes/BackgroundJobWorkerNotFoundError.md)
 - [ConfigurationMessageAuditExpireError](classes/ConfigurationMessageAuditExpireError.md)
 - [ConfigurationMessageAuditQueueSizeError](classes/ConfigurationMessageAuditQueueSizeError.md)
 - [ConfigurationNamespaceError](classes/ConfigurationNamespaceError.md)

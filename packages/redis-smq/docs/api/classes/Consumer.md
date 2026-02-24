@@ -14,6 +14,31 @@ The Consumer can be configured for multiplexing, allowing it to handle multiple 
 
 ### Constructor
 
+> **new Consumer**(`consumerOptions?`): `Consumer`
+
+Creates a new Consumer instance.
+
+#### Parameters
+
+##### consumerOptions?
+
+`IConsumerOptions`
+
+(Optional) An object containing Consumer instance options:
+
+- `consumerOptions.enableMultiplexing` - (Optional) Enable consumer multiplexing. Default: false.
+- `consumerOptions.heartbeatTTL` - (Optional) Consumer heartbeat TTL in ms. Default: 120000ms
+
+#### Returns
+
+`Consumer`
+
+#### Overrides
+
+`Runnable<TConsumerEvent>.constructor`
+
+### Constructor
+
 > **new Consumer**(`enableMultiplexing?`): `Consumer`
 
 Creates a new Consumer instance.
@@ -29,6 +54,10 @@ Creates a new Consumer instance.
 #### Returns
 
 `Consumer`
+
+#### Deprecated
+
+This method signature is deprecated in favor of `constructor(consumerOptions?: IConsumerOptions)`
 
 #### Overrides
 

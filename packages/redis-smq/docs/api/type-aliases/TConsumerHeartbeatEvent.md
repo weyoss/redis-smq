@@ -42,7 +42,7 @@
 
 ##### heartbeatPayload
 
-`IConsumerHeartbeat`
+[`IHeartbeatPayload`](../interfaces/IHeartbeatPayload.md)
 
 #### Returns
 

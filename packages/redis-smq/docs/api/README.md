@@ -60,6 +60,7 @@
 - [IExchangeParams](interfaces/IExchangeParams.md)
 - [IExchangeParsedParams](interfaces/IExchangeParsedParams.md)
 - [IExchangeProperties](interfaces/IExchangeProperties.md)
+- [IHeartbeatPayload](interfaces/IHeartbeatPayload.md)
 - [IMessageAuditConfig](interfaces/IMessageAuditConfig.md)
 - [IMessageAuditConfigOptions](interfaces/IMessageAuditConfigOptions.md)
 - [IMessageAuditParsedConfig](interfaces/IMessageAuditParsedConfig.md)

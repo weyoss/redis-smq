@@ -14,23 +14,19 @@
 
 ## Methods
 
-### checkOperations()
+### canBindExchange()
 
-> `static` **checkOperations**(`queueParams`, `operations`, `cb`): `void`
+> `static` **canBindExchange**(`queue`, `cb`): `void`
 
 #### Parameters
 
-##### queueParams
+##### queue
 
-[`IQueueParams`](../interfaces/IQueueParams.md)
-
-##### operations
-
-[`EQueueOperation`](../enumerations/EQueueOperation.md)[]
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ##### cb
 
-`ICallback`\<`boolean`[]\>
+`ICallback`\<`boolean`\>
 
 #### Returns
 
@@ -38,23 +34,219 @@
 
 ---
 
-### validateOperation()
+### canClearRateLimit()
 
-> `static` **validateOperation**(`queueParams`, `operation`, `cb`): `void`
+> `static` **canClearRateLimit**(`queue`, `cb`): `void`
 
 #### Parameters
 
-##### queueParams
+##### queue
 
-[`IQueueParams`](../interfaces/IQueueParams.md)
-
-##### operation
-
-[`EQueueOperation`](../enumerations/EQueueOperation.md)
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ##### cb
 
-`ICallback`
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canConsume()
+
+> `static` **canConsume**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canCreateConsumerGroup()
+
+> `static` **canCreateConsumerGroup**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canDelete()
+
+> `static` **canDelete**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canDeleteConsumerGroup()
+
+> `static` **canDeleteConsumerGroup**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canDeleteMessage()
+
+> `static` **canDeleteMessage**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canProduce()
+
+> `static` **canProduce**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canPurge()
+
+> `static` **canPurge**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canRequeue()
+
+> `static` **canRequeue**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canSetRateLimit()
+
+> `static` **canSetRateLimit**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
+### canUnbindExchange()
+
+> `static` **canUnbindExchange**(`queue`, `cb`): `void`
+
+#### Parameters
+
+##### queue
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<`boolean`\>
 
 #### Returns
 

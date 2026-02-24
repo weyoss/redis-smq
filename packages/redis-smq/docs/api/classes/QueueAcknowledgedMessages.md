@@ -14,7 +14,7 @@ and management of these messages when the system is configured to audit them.
 
 ## Extends
 
-- `MessageBrowserAbstract`
+- `QueueMessagesAbstract`
 
 ## Constructors
 
@@ -28,7 +28,7 @@ and management of these messages when the system is configured to audit them.
 
 #### Inherited from
 
-`MessageBrowserAbstract.constructor`
+`QueueMessagesAbstract.constructor`
 
 ## Properties
 
@@ -40,7 +40,7 @@ Type of queue messages this browser handles.
 
 #### Overrides
 
-`MessageBrowserAbstract.messageType`
+`QueueMessagesAbstract.messageType`
 
 ## Methods
 
@@ -76,7 +76,7 @@ Callback when cancellation is processed.
 
 #### Inherited from
 
-`MessageBrowserAbstract.cancelPurge`
+`QueueMessagesAbstract.cancelPurge`
 
 ---
 
@@ -84,7 +84,7 @@ Callback when cancellation is processed.
 
 > **countMessages**(`queue`, `cb`): `void`
 
-Counts the total number of audited acknowledged messages.
+Counts the total number of messages in the queue.
 
 #### Parameters
 
@@ -104,29 +104,9 @@ Callback returning the count
 
 `void`
 
-#### Throws
+#### Inherited from
 
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-AcknowledgedMessageAuditNotEnabledError
-
-#### Overrides
-
-`MessageBrowserAbstract.countMessages`
+`QueueMessagesAbstract.countMessages`
 
 ---
 
@@ -160,7 +140,7 @@ Number of items per page
 
 `ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<`string`\>\>
 
-Callback returning an IQueueMessagesPage of message IDs
+Callback returning an IBrowserPage of message IDs
 
 #### Returns
 
@@ -168,7 +148,7 @@ Callback returning an IQueueMessagesPage of message IDs
 
 #### Inherited from
 
-`MessageBrowserAbstract.getMessageIds`
+`QueueMessagesAbstract.getMessageIds`
 
 ---
 
@@ -176,7 +156,7 @@ Callback returning an IQueueMessagesPage of message IDs
 
 > **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
-Retrieves audited acknowledged messages.
+Retrieves detailed messages for a specific page.
 
 #### Parameters
 
@@ -202,35 +182,15 @@ Number of items per page
 
 `ICallback`\<[`IBrowserPage`](../interfaces/IBrowserPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
 
-Callback returning an IQueueMessagesPage of IMessageTransferable
+Callback returning an IBrowserPage of IMessageTransferable
 
 #### Returns
 
 `void`
 
-#### Throws
+#### Inherited from
 
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-AcknowledgedMessageAuditNotEnabledError
-
-#### Overrides
-
-`MessageBrowserAbstract.getMessages`
+`QueueMessagesAbstract.getMessages`
 
 ---
 
@@ -266,7 +226,7 @@ Callback with the job object.
 
 #### Inherited from
 
-`MessageBrowserAbstract.getPurgeJob`
+`QueueMessagesAbstract.getPurgeJob`
 
 ---
 
@@ -302,7 +262,7 @@ Callback with the job status.
 
 #### Inherited from
 
-`MessageBrowserAbstract.getPurgeJobStatus`
+`QueueMessagesAbstract.getPurgeJobStatus`
 
 ---
 
@@ -310,7 +270,7 @@ Callback with the job status.
 
 > **purge**(`queue`, `cb`): `void`
 
-Purges all audited acknowledged messages from the specified queue.
+Purges all messages from the specified queue.
 
 This operation is performed asynchronously using a background job. When this method
 is called, it immediately creates and starts a purge job, and returns the ID of
@@ -322,50 +282,18 @@ that job. You can use the returned job ID to track the progress of the purge ope
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue to purge. Can be a string (queue name),
-queue parameters object, or queue consumer group parameters.
+The queue to purge.
 
 ##### cb
 
 `ICallback`\<`string`\>
 
-Callback function that will be invoked when the job is created.
-The callback receives two parameters: - `error` {Error|null} - If an error occurs during job creation,
-this will contain the Error object. If the job is successfully
-created, this will be `null`. - `jobId` {string|undefined} - The ID of the background job created
-to perform the purge operation. This ID can be used to: - Check the job status using `getPurgeJobStatus()` - Monitor progress via `getPurgeJob()` - Cancel the purge job if needed using `cancelPurge()`
-
-                         Note: Receiving a job ID does NOT mean the purge is complete,
-                         only that the purge job has been successfully created and started.
+Callback function that receives the job ID.
 
 #### Returns
 
 `void`
 
-#### Throws
+#### Inherited from
 
-AcknowledgedMessageAuditNotEnabledError
-
-#### Throws
-
-InvalidQueueParametersError
-
-#### Throws
-
-ConsumerGroupRequiredError
-
-#### Throws
-
-ConsumerGroupsNotSupportedError
-
-#### Throws
-
-QueueNotFoundError
-
-#### Throws
-
-BackgroundJobTargetLockedError
-
-#### Overrides
-
-`MessageBrowserAbstract.purge`
+`QueueMessagesAbstract.purge`
