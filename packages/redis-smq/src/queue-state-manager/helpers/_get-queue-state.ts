@@ -19,6 +19,8 @@ import {
 } from '../types/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _createQueueStateTransition } from './_create-queue-state-transition.js';
+import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { QueueNotFoundError } from '../../errors/index.js';
 
 export function _getQueueState(
   client: IRedisClient,
@@ -31,16 +33,19 @@ export function _getQueueState(
     null,
   );
 
-  // Get current state from queue properties
-  client.hget(
-    keyQueueProperties,
-    String(EQueueProperty.OPERATIONAL_STATE),
-    (err, stateValue) => {
+  client.runScript(
+    ERedisScriptName.GET_QUEUE_STATE,
+    [keyQueueProperties],
+    [EQueueProperty.OPERATIONAL_STATE],
+    (err, reply) => {
       if (err) return cb(err);
+      if (reply === 'QUEUE_NOT_FOUND') {
+        return cb(new QueueNotFoundError());
+      }
 
       // Default to ACTIVE if not set
-      const currentState: EQueueOperationalState = stateValue
-        ? Number(stateValue)
+      const currentState: EQueueOperationalState = reply
+        ? Number(reply)
         : EQueueOperationalState.ACTIVE;
 
       // Get latest state transition
