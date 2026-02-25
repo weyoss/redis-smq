@@ -120,6 +120,7 @@ export const errors = {
   QueueNotFoundError: [404, 'QueueNotFoundError'],
   QueueNotLockedError: [500, 'QueueNotLockedError'],
   QueueOperationForbiddenError: [500, 'QueueOperationForbiddenError'],
+  QueuePausedError: [500, 'QueuePausedError'],
   QueueStateTransitionError: [500, 'QueueStateTransitionError'],
   QueueStoppedError: [500, 'QueueStoppedError'],
   RequeueMessageScriptError: [500, 'RequeueMessageScriptError'],
