@@ -43,6 +43,14 @@ Otherwise, the second parameter will contain the deletion response.
 
 `void`
 
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
+
 ---
 
 ### deleteMessagesByIds()
@@ -70,6 +78,14 @@ Otherwise, the second parameter will contain the deletion response
 #### Returns
 
 `void`
+
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
 
 ---
 
@@ -244,3 +260,11 @@ RequeueMessageScriptError
 #### Throws
 
 UnexpectedScriptReplyError
+
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError

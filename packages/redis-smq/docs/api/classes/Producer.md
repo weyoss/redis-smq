@@ -341,6 +341,18 @@ InvalidQueueTypeError
 
 #### Throws
 
+QueueStoppedError
+
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
+
+#### Throws
+
 UnexpectedScriptReplyError
 
 #### Example

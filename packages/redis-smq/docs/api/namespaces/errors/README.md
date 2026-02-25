@@ -79,6 +79,7 @@
 - [QueueNotFoundError](classes/QueueNotFoundError.md)
 - [QueueNotLockedError](classes/QueueNotLockedError.md)
 - [QueueOperationForbiddenError](classes/QueueOperationForbiddenError.md)
+- [QueuePausedError](classes/QueuePausedError.md)
 - [QueueStateTransitionError](classes/QueueStateTransitionError.md)
 - [QueueStoppedError](classes/QueueStoppedError.md)
 - [RequeueMessageScriptError](classes/RequeueMessageScriptError.md)

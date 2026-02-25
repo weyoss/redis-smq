@@ -74,6 +74,14 @@ ConsumerSetMismatchError
 
 UnexpectedScriptReplyError
 
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
+
 ---
 
 ### getNamespaceQueues()

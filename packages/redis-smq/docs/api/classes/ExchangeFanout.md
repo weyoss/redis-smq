@@ -115,6 +115,10 @@ ExchangeTypeMismatchError
 
 ExchangeQueuePolicyMismatchError
 
+#### Throws
+
+QueueLockedError
+
 #### Example
 
 ```typescript
@@ -379,6 +383,10 @@ ExchangeTypeMismatchError
 #### Throws
 
 QueueNotBoundError
+
+#### Throws
+
+QueueLockedError
 
 #### Example
 

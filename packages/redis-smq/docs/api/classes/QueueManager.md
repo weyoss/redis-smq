@@ -69,6 +69,14 @@ ConsumerSetMismatchError
 
 #### Throws
 
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
+
+#### Throws
+
 UnexpectedScriptReplyError
 
 ---

@@ -205,6 +205,22 @@ MessageHandlerFilenameExtensionError
 
 #### Throws
 
+QueuePausedError
+
+#### Throws
+
+QueueStoppedError
+
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
+
+#### Throws
+
 UnexpectedScriptReplyError
 
 #### Example

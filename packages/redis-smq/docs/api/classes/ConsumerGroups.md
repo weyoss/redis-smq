@@ -68,7 +68,11 @@ ConsumerGroupsNotSupportedError
 
 #### Throws
 
-QueueOperationForbiddenError
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
 
 #### Throws
 
@@ -155,3 +159,11 @@ InvalidConsumerGroupIdError
 #### Throws
 
 ConsumerGroupsNotSupportedError
+
+#### Throws
+
+QueueLockedError
+
+#### Throws
+
+InvalidQueueStateError
