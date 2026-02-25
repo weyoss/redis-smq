@@ -80,7 +80,9 @@ export class QueueOperationValidator {
     if (queueParams instanceof Error) return cb(queueParams);
 
     withSharedPoolConnection((client, cb) => {
-      _checkOperation(client, queueParams, operation, cb);
+      _checkOperation(client, queueParams, operation, (err, result) =>
+        cb(err, result?.allowed),
+      );
     }, cb);
   }
 

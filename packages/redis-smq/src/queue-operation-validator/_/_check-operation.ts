@@ -12,7 +12,10 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { IQueueParams } from '../../queue-manager/index.js';
+import {
+  EQueueOperationalState,
+  IQueueParams,
+} from '../../queue-manager/index.js';
 import { EQueueOperation, OperationBitmask } from '../types/index.js';
 import { _getQueueState } from '../../queue-state-manager/helpers/_get-queue-state.js';
 import { operationRegistry } from '../operation-registery.js';
@@ -21,7 +24,10 @@ export function _checkOperation(
   client: IRedisClient,
   queueParams: IQueueParams,
   operation: EQueueOperation,
-  cb: ICallback<boolean>,
+  cb: ICallback<{
+    allowed: boolean;
+    currentQueueState: EQueueOperationalState;
+  }>,
 ): void {
   _getQueueState(client, queueParams, (err, queueState) => {
     if (err) return cb(err);
@@ -29,6 +35,6 @@ export function _checkOperation(
 
     const bitmask = operationRegistry[queueState.to] ?? 0;
     const allowed = (bitmask & OperationBitmask[operation]) !== 0;
-    cb(null, allowed);
+    cb(null, { allowed, currentQueueState: queueState.to });
   });
 }

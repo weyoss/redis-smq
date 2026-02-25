@@ -275,6 +275,10 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @throws QueueNotFoundError
    * @throws MessageHandlerFileError
    * @throws MessageHandlerFilenameExtensionError
+   * @throws QueuePausedError
+   * @throws QueueStoppedError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    * @throws UnexpectedScriptReplyError
    *
    * @example

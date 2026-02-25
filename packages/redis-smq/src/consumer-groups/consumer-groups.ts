@@ -41,6 +41,8 @@ export class ConsumerGroups {
    * @throws QueueNotFoundError
    * @throws InvalidConsumerGroupIdError
    * @throws ConsumerGroupsNotSupportedError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    *
    * @param {string | IQueueParams} queue - The queue to which the consumer group belongs.
    * @param {string} groupId - The ID of the consumer group to save.
@@ -94,7 +96,8 @@ export class ConsumerGroups {
    * @throws QueueNotFoundError
    * @throws ConsumerGroupNotEmptyError
    * @throws ConsumerGroupsNotSupportedError
-   * @throws QueueOperationForbiddenError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    * @throws UnexpectedScriptReplyError
    *
    * @param {string | IQueueParams} queue - The queue from which to delete the consumer group.

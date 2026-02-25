@@ -182,6 +182,9 @@ export class MessageManager {
    * @param cb - Callback function that will be called with the deletion result
    *             If an error occurs, the first parameter will be an Error object
    *             Otherwise, the second parameter will contain the deletion response
+   *
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    */
   deleteMessagesByIds(
     ids: string[],
@@ -221,6 +224,9 @@ export class MessageManager {
    * @param cb - A callback function that will be called with the result.
    *             If an error occurs, the first parameter will be an Error object.
    *             Otherwise, the second parameter will contain the deletion response.
+   *
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    */
   deleteMessageById(
     id: string,
@@ -255,6 +261,8 @@ export class MessageManager {
    * @throws MessageNotRequeuableError
    * @throws RequeueMessageScriptError
    * @throws UnexpectedScriptReplyError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    */
   requeueMessageById(messageId: string, cb: ICallback<string>): void {
     this.logger.debug('Requeuing message by ID', { messageId });

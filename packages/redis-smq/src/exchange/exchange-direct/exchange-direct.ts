@@ -345,6 +345,7 @@ export class ExchangeDirect {
    * @throws NamespaceMismatchError
    * @throws ExchangeTypeMismatchError
    * @throws ExchangeQueuePolicyMismatchError
+   * @throws QueueLockedError
    *
    * @example
    * ```typescript
@@ -600,6 +601,7 @@ export class ExchangeDirect {
    * @throws ExchangeNotFoundError
    * @throws ExchangeTypeMismatchError
    * @throws QueueNotBoundError
+   * @throws QueueLockedError
    *
    * @example
    * ```typescript

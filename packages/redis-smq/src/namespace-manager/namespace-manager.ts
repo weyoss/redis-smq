@@ -164,6 +164,8 @@ export class NamespaceManager {
    * @throws QueueHasBoundExchangesError
    * @throws ConsumerSetMismatchError
    * @throws UnexpectedScriptReplyError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    */
   delete(namespace: string, cb: ICallback<void>): void {
     this.logger.debug('Deleting namespace', { namespace });

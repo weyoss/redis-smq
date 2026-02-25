@@ -288,6 +288,7 @@ export class ExchangeTopic {
    * @throws NamespaceMismatchError
    * @throws ExchangeTypeMismatchError
    * @throws ExchangeQueuePolicyMismatchError
+   * @throws QueueLockedError
    *
    * @example
    * ```typescript
@@ -500,6 +501,7 @@ export class ExchangeTopic {
    * @throws ExchangeNotFoundError
    * @throws ExchangeTypeMismatchError
    * @throws QueueNotBoundError
+   * @throws QueueLockedError
    *
    * @example
    * ```typescript

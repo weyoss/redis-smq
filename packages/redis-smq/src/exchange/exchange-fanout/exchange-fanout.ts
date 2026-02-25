@@ -307,6 +307,7 @@ export class ExchangeFanout {
    * @throws NamespaceMismatchError
    * @throws ExchangeTypeMismatchError
    * @throws ExchangeQueuePolicyMismatchError
+   * @throws QueueLockedError
    *
    * @example
    * ```typescript
@@ -525,6 +526,7 @@ export class ExchangeFanout {
    * @throws ExchangeNotFoundError
    * @throws ExchangeTypeMismatchError
    * @throws QueueNotBoundError
+   * @throws QueueLockedError
    *
    * @example
    * ```typescript

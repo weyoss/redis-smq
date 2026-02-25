@@ -264,6 +264,8 @@ export class QueueManager {
    * @throws QueueManagerActiveConsumersError
    * @throws QueueHasBoundExchangesError
    * @throws ConsumerSetMismatchError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    * @throws UnexpectedScriptReplyError
    */
   delete(queue: string | IQueueParams, cb: ICallback): void {

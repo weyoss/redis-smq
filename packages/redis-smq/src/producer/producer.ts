@@ -468,6 +468,9 @@ export class Producer extends Runnable<TProducerEvent> {
    * @throws MessageAlreadyExistsError
    * @throws PriorityQueuingNotEnabledError
    * @throws InvalidQueueTypeError
+   * @throws QueueStoppedError
+   * @throws QueueLockedError
+   * @throws InvalidQueueStateError
    * @throws UnexpectedScriptReplyError
    *
    * @example
