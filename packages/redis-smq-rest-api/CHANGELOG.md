@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** add QueuePausedError to error map ([d7241cb](https://github.com/weyoss/redis-smq/commit/d7241cbac04b20499db30035ca15fc0e17fae302))
+
 ## [9.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.14...v9.1.0-next.0) (2026-02-24)
 
 ### 🚀 Chore

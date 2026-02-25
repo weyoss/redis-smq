@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
+
+### 📝 Documentation
+
+- **redis-smq:** update API reference ([6e9d87a](https://github.com/weyoss/redis-smq/commit/6e9d87af3a7d020950974e7b6063fb93b89858f8))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** add QueuePausedError to error map ([d7241cb](https://github.com/weyoss/redis-smq/commit/d7241cbac04b20499db30035ca15fc0e17fae302))
+- **redis-smq:** add lua script to retrieve queue state ([24ef6e9](https://github.com/weyoss/redis-smq/commit/24ef6e981f26c796ff52cdfac016d05a8734f4c8))
+
+### ✅ Tests
+
+- **redis-smq:** add e2e tests for QueueOperationValidator ([d815d2e](https://github.com/weyoss/redis-smq/commit/d815d2e6cc77928c021ef41b22d1e9b78c48b67c))
+- **redis-smq:** add e2e tests for QueueStateManager ([45f3376](https://github.com/weyoss/redis-smq/commit/45f33765b0b261e095499e06acc6a211cbcc7c9a))
+
 ## [9.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.14...v9.1.0-next.0) (2026-02-24)
 
 ### ✨ Features
