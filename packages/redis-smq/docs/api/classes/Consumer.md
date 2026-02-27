@@ -2,9 +2,43 @@
 
 # Class: Consumer
 
-Consumer class responsible for receiving and processing messages from a message queue.
-It implements the `Runnable` interface to handle lifecycle events like startup and shutdown.
-The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single Redis connection.
+Consumer class responsible for receiving and processing messages from message queues.
+
+The Consumer implements the `Runnable` interface to handle lifecycle events like startup
+and shutdown. It can be configured for multiplexing, allowing it to handle multiple queues
+simultaneously with a single Redis connection.
+
+## Template
+
+The type of events emitted by the consumer
+
+## Example
+
+```typescript
+// Create a consumer instance
+const consumer = new Consumer({ enableMultiplexing: false });
+
+// Start the consumer
+consumer.run((err) => {
+  if (err) {
+    console.error('Failed to start consumer:', err);
+    return;
+  }
+
+  // Consumer is ready to receive messages
+  consumer.consume(
+    'my-queue',
+    (message, done) => {
+      console.log('Processing message:', message);
+      // Process the message...
+      done(); // Acknowledge message processing
+    },
+    (consumeErr) => {
+      if (consumeErr) console.error('Failed to start consumption:', consumeErr);
+    },
+  );
+});
+```
 
 ## Extends
 
@@ -16,7 +50,7 @@ The Consumer can be configured for multiplexing, allowing it to handle multiple 
 
 > **new Consumer**(`consumerOptions?`): `Consumer`
 
-Creates a new Consumer instance.
+Creates a new Consumer instance with the specified options.
 
 #### Parameters
 
@@ -24,14 +58,32 @@ Creates a new Consumer instance.
 
 `IConsumerOptions`
 
-(Optional) An object containing Consumer instance options:
+Configuration options for the consumer:
 
-- `consumerOptions.enableMultiplexing` - (Optional) Enable consumer multiplexing. Default: false.
-- `consumerOptions.heartbeatTTL` - (Optional) Consumer heartbeat TTL in ms. Default: 120000ms
+- `enableMultiplexing` - When true, enables handling multiple queues with one connection. Default: false.
+- `heartbeatTTL` - Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
+- `enableBatchAcks` - When true, enables batch acknowledgment of messages. Default: true.
+- `batchSize` - Maximum number of messages to acknowledge in a batch. Default: 100.
+- `batchTimeoutMs` - Maximum time to wait for batch to fill before acknowledging. Default: 10000 (10 seconds).
 
 #### Returns
 
 `Consumer`
+
+#### Throws
+
+If RedisSMQ has not been initialized via `RedisSMQ.init()`.
+
+#### Example
+
+```typescript
+// Create consumer with custom options
+const consumer = new Consumer({
+  enableMultiplexing: true,
+  heartbeatTTL: 60000,
+  enableBatchAcks: false,
+});
+```
 
 #### Overrides
 
@@ -41,7 +93,7 @@ Creates a new Consumer instance.
 
 > **new Consumer**(`enableMultiplexing?`): `Consumer`
 
-Creates a new Consumer instance.
+Creates a new Consumer instance with multiplexing configuration.
 
 #### Parameters
 
@@ -49,7 +101,7 @@ Creates a new Consumer instance.
 
 `boolean`
 
-(Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner.
+When true, enables message multiplexing across multiple queues.
 
 #### Returns
 
@@ -57,7 +109,14 @@ Creates a new Consumer instance.
 
 #### Deprecated
 
-This method signature is deprecated in favor of `constructor(consumerOptions?: IConsumerOptions)`
+This constructor signature is deprecated. Use `constructor(consumerOptions?: IConsumerOptions)` instead.
+
+#### Example
+
+```typescript
+// Deprecated: Create consumer with multiplexing disabled
+const consumer = new Consumer(false);
+```
 
 #### Overrides
 
@@ -69,10 +128,10 @@ This method signature is deprecated in favor of `constructor(consumerOptions?: I
 
 > **cancel**(`queue`, `cb`): `void`
 
-Cancels the consumption of messages from a specified queue.
+Stops message consumption from a specified queue.
 
-This function is responsible for stopping the consumption of messages from a specific queue.
-It removes the message handler associated with the given queue from the message handler runner.
+This method removes the message handler associated with the given queue,
+stopping any further message processing from that queue.
 
 #### Parameters
 
@@ -80,18 +139,14 @@ It removes the message handler associated with the given queue from the message 
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-The queue parameters.
-This parameter represents the queue from which messages will be consumed.
-It can be a string representing the queue name or an object containing additional queue options.
+Queue to stop consuming from.
+Accepts the same formats as the `consume` method.
 
 ##### cb
 
 `ICallback`\<`void`\>
 
-Callback function to be called once cancellation is complete.
-This callback function will be invoked after the message handler associated with the given queue is removed.
-If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
-Otherwise, the callback function will be invoked with no arguments.
+Callback invoked after cancellation completes.
 
 #### Returns
 
@@ -99,43 +154,30 @@ Otherwise, the callback function will be invoked with no arguments.
 
 #### Throws
 
-InvalidQueueParametersError
+When queue parameters are invalid.
 
 #### Throws
 
-QueueNotFoundError
+When the specified queue doesn't exist.
 
 #### Example
 
 ```typescript
-const consumer = new Consumer();
-consumer.consume(
-  'my-queue',
-  (message, done) => {
-    // Handle the message
-    // ...
-    // Acknowledge the message
-    done();
-  },
-  (err) => {
-    if (err) {
-      console.error('Error consuming messages:', err);
-    } else {
-      console.log('Consumption set up successfully');
-    }
-  },
-);
+// Start consuming
+consumer.consume('my-queue', messageHandler, (err) => {
+  if (err) return console.error('Failed to setup consumption:', err);
 
-// Cancel consumption after some time
-setTimeout(() => {
-  consumer.cancel('my-queue', (err) => {
-    if (err) {
-      console.error('Error canceling consumption:', err);
-    } else {
-      console.log('Consumption cancelled successfully');
-    }
-  });
-}, 10000);
+  // Cancel consumption after 10 seconds
+  setTimeout(() => {
+    consumer.cancel('my-queue', (err) => {
+      if (err) {
+        console.error('Error canceling consumption:', err);
+      } else {
+        console.log('Consumption cancelled successfully');
+      }
+    });
+  }, 10000);
+});
 ```
 
 ---
@@ -144,7 +186,11 @@ setTimeout(() => {
 
 > **consume**(`queue`, `messageHandler`, `cb`): `void`
 
-Consumes messages from a specified queue using the provided message handler.
+Configures the consumer to process messages from a specified queue.
+
+This method registers a message handler for the given queue. The handler function
+will be called for each message received from the queue. Before consuming messages,
+ensure the queue exists in the system.
 
 #### Parameters
 
@@ -152,28 +198,24 @@ Consumes messages from a specified queue using the provided message handler.
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
-A queue from which messages will be consumed. Before consuming
-messages from a queue make sure that the specified queue already exists in
-the system.
+Queue to consume messages from. Can be:
+
+- A string representing the queue name (uses default namespace)
+- An object with `{ ns: string, name: string }` for custom namespace
+- An object with `{ ns: string, name: string, groupId: string }` for consumer groups
 
 ##### messageHandler
 
 [`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
 
-A callback function that defines how to process each
-message consumed from the queue. The messageHandler will receive the
-message as an argument and should implement the logic for processing the
-message. This might include business logic, transformation, storage, etc.
-It's crucial that this function handles exceptions and errors properly to
-avoid issues with message acknowledgment.
+Function that processes each message.
+Receives the message and a `done` callback that must be called to acknowledge processing.
 
 ##### cb
 
 `ICallback`\<`void`\>
 
-The callback function will be executed after the consumption process is initiated.
-It typically signifies the end of the consumption setup and can be used to
-handle success or errors in starting the consumption process.
+Callback invoked after consumption setup completes.
 
 #### Returns
 
@@ -181,66 +223,61 @@ handle success or errors in starting the consumption process.
 
 #### Throws
 
-InvalidQueueParametersError
+When queue parameters are invalid.
 
 #### Throws
 
-MessageHandlerAlreadyExistsError
+When a handler for this queue already exists.
 
 #### Throws
 
-ConsumerGroupsNotSupportedError
+When consumer groups are not supported with the specified queue.
 
 #### Throws
 
-QueueNotFoundError
+When the specified queue doesn't exist.
 
 #### Throws
 
-MessageHandlerFileError
+When there are issues with message handler file.
 
 #### Throws
 
-MessageHandlerFilenameExtensionError
+When message handler file has invalid extension.
 
 #### Throws
 
-QueuePausedError
+When the queue is paused.
 
 #### Throws
 
-QueueStoppedError
+When the queue is stopped.
 
 #### Throws
 
-QueueLockedError
+When the queue is locked.
 
 #### Throws
 
-InvalidQueueStateError
+When the queue is in an invalid state.
 
 #### Throws
 
-UnexpectedScriptReplyError
+When Redis returns unexpected response.
 
 #### Example
 
 ```typescript
-const consumer = new Consumer();
+// Consume from queue with default namespace
 consumer.consume(
   'my-queue',
   (message, done) => {
-    // Handle the message
-    // ...
-    // Acknowledge the message
-    done();
+    console.log('Processing message:', message);
+    // Process message...
+    done(); // Acknowledge successful processing
   },
   (err) => {
-    if (err) {
-      console.error('Error consuming messages:', err);
-    } else {
-      console.log('Consumption set up successfully');
-    }
+    if (err) console.error('Failed to setup consumption:', err);
   },
 );
 ```
@@ -319,43 +356,28 @@ consumer.consume(
 
 > **getQueues**(): [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
-Retrieves a list of queues the consumer is currently configured to handle.
-
-This function returns an array of parsed queue parameters that the consumer is currently set up to handle.
-The parsed queue parameters include the queue name, options, and any additional parameters specified.
+Retrieves the list of queues the consumer is currently configured to handle.
 
 #### Returns
 
 [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
-- An array of parsed queue parameters.
-  Each element in the array represents a queue that the consumer is currently consuming messages from.
+Array of parsed queue parameters for all queues
+currently being consumed. Each entry includes the queue name, namespace, and
+optional group ID.
 
 #### Example
 
 ```typescript
-const consumer = new Consumer();
-consumer.consume(
-  'my-queue',
-  (message, done) => {
-    // Handle the message
-    // ...
-    // Acknowledge the message
-    done();
-  },
-  (err) => {
-    if (err) {
-      console.error('Error consuming messages:', err);
-    } else {
-      console.log('Consumption set up successfully');
-    }
-  },
-);
+consumer.consume('queue-1', handler1);
+consumer.consume({ ns: 'custom', name: 'queue-2' }, handler2);
 
-// Get the list of queues the consumer is handling
 const queues = consumer.getQueues();
-console.log('Queues:', queues);
-// Output: Queues: [{ queueParams: { name:'my-queue', ns: 'default' }, groupId: null }]
+console.log(queues);
+// Output: [
+//   { queueParams: { name: 'queue-1', ns: 'default' }, groupId: null },
+//   { queueParams: { name: 'queue-2', ns: 'custom' }, groupId: null }
+// ]
 ```
 
 ---
@@ -597,3 +619,68 @@ console.log('Queues:', queues);
 #### Inherited from
 
 `Runnable.shutdown`
+
+---
+
+### getDefaultOptions()
+
+> `static` **getDefaultOptions**(): `TConsumerParsedOptions`
+
+Retrieves the current default options for Consumer instances.
+
+#### Returns
+
+`TConsumerParsedOptions`
+
+A copy of the current default options.
+
+#### Example
+
+```typescript
+const defaults = Consumer.getDefaultOptions();
+console.log(defaults);
+// Output: {
+//   enableMultiplexing: false,
+//   heartbeatTTL: 120000,
+//   enableBatchAcks: true,
+//   batchSize: 100,
+//   batchTimeoutMs: 10000
+// }
+```
+
+---
+
+### setDefaultOptions()
+
+> `static` **setDefaultOptions**(`options`): `void`
+
+Sets default options for all future Consumer instances.
+These options will be used when no options are provided to the constructor.
+
+#### Parameters
+
+##### options
+
+`IConsumerOptions`
+
+Default consumer options to set.
+
+#### Returns
+
+`void`
+
+#### Static
+
+#### Example
+
+```typescript
+// Set global defaults
+Consumer.setDefaultOptions({
+  enableMultiplexing: true,
+  heartbeatTTL: 60000,
+  enableBatchAcks: false,
+});
+
+// This consumer will use the defaults
+const consumer = new Consumer();
+```

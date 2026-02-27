@@ -28,7 +28,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.consumeMessage.messageAcknowledged()
 
@@ -56,11 +56,11 @@
 
 `void`
 
-***
+---
 
 ### consumer.consumeMessage.messageDeadLettered()
 
-> **consumer.consumeMessage.messageDeadLettered**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`, `deadLetterReason`) => `void`
+> **consumer.consumeMessage.messageDeadLettered**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`, `deadLetterCause`) => `void`
 
 #### Parameters
 
@@ -80,15 +80,15 @@
 
 `string`
 
-##### deadLetterReason
+##### deadLetterCause
 
-`EMessageUnacknowledgementDeadLetterReason`
+`EMessageDeadLetterCause`
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### consumer.consumeMessage.messageDelayed()
 
@@ -116,7 +116,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.consumeMessage.messageRequeued()
 
@@ -144,11 +144,11 @@
 
 `void`
 
-***
+---
 
 ### consumer.consumeMessage.messageUnacknowledged()
 
-> **consumer.consumeMessage.messageUnacknowledged**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`, `unknowledgmentReason`) => `void`
+> **consumer.consumeMessage.messageUnacknowledged**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`, `unacknowledgmentCause`) => `void`
 
 #### Parameters
 
@@ -168,9 +168,19 @@
 
 `string`
 
-##### unknowledgmentReason
+##### unacknowledgmentCause
 
-`EMessageUnacknowledgementReason`
+`EMessageUnacknowledgementCause`
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.consumeMessage.next()
+
+> **consumer.consumeMessage.next**: () => `void`
 
 #### Returns
 
