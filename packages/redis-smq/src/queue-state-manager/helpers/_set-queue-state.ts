@@ -78,7 +78,13 @@ export function _setQueueState(
       if (err) return cb(err);
       if (reply !== 'OK') {
         if (reply === 'QUEUE_NOT_FOUND') {
-          return cb(new QueueNotFoundError());
+          return cb(
+            new QueueNotFoundError({
+              metadata: {
+                queue: queueParams,
+              },
+            }),
+          );
         }
         if (reply === 'INVALID_STATE_TRANSITION') {
           return cb(

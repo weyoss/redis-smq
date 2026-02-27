@@ -7,62 +7,70 @@
 -- in the root directory of this source tree.
 --
 -- Description:
--- Atomically acknowledges a message. It removes the message from the processing
--- queue, updates its status, and adjusts queue counters.
+-- Atomically acknowledges one or multiple messages. It removes messages from the processing
+-- queue, updates their status, and adjusts queue counters.
 -- This script is safe from race conditions.
 -- Respects queue operational state - returns specific error codes when queue state prevents acknowledgement.
 --
 -- KEYS[1]: keyQueueProcessing
 -- KEYS[2]: keyQueueAcknowledged
 -- KEYS[3]: keyQueueProperties
--- KEYS[4]: keyMessage
+-- KEYS[4...]: keyMessage(s) - one per message
 --
--- ARGV[1]: messageId (the ID of the message to acknowledge)
--- ARGV[2]: EMessagePropertyStatus
--- ARGV[3]: EMessagePropertyStatusAcknowledged
--- ARGV[4]: EMessagePropertyAcknowledgedAt
--- ARGV[5]: EQueuePropertyAcknowledgedCount
--- ARGV[6]: EQueuePropertyProcessingCount
--- ARGV[7]: storeMessages (flag: '1' or '0')
--- ARGV[8]: expireStoredMessages (expiration time in ms, or '0')
--- ARGV[9]: storedMessagesSize (max size of acknowledged queue, or '0')
--- ARGV[10]: messageAcknowledgedAt (acknowledgement time in ms)
--- ARGV[11]: EQueuePropertyOperationalState (field name for operational state)
--- ARGV[12]: EQueueOperationalStateActive (ACTIVE state enum value)
--- ARGV[13]: EQueueOperationalStatePaused (PAUSED state enum value)
--- ARGV[14]: EQueueOperationalStateStopped (STOPPED state enum value)
--- ARGV[15]: EQueueOperationalStateLocked (LOCKED state enum value)
+-- ARGV[1]: storeMessages (flag: '1' or '0')
+-- ARGV[2]: expireStoredMessages (expiration time in ms, or '0')
+-- ARGV[3]: storedMessagesSize (max size of acknowledged queue, or '0')
+-- ARGV[4]: messageAcknowledgedAt (acknowledgement time in ms)
+-- ARGV[5]: EQueuePropertyOperationalState (field name for operational state)
+-- ARGV[6]: EQueueOperationalStateActive (ACTIVE state enum value)
+-- ARGV[7]: EQueueOperationalStatePaused (PAUSED state enum value)
+-- ARGV[8]: EQueueOperationalStateStopped (STOPPED state enum value)
+-- ARGV[9]: EQueueOperationalStateLocked (LOCKED state enum value)
+-- ARGV[10]: EMessagePropertyStatus (field name for message status)
+-- ARGV[11]: EMessagePropertyStatusAcknowledged (ACKNOWLEDGED status value)
+-- ARGV[12]: EMessagePropertyAcknowledgedAt (field name for acknowledged timestamp)
+-- ARGV[13]: EQueuePropertyAcknowledgedCount (field name for acknowledged count)
+-- ARGV[14]: EQueuePropertyProcessingCount (field name for processing count)
+-- ARGV[15...]: messageId(s) - one per message
 --
 -- Returns:
---   1: If the message was successfully acknowledged.
---   0: If the message was not found in the processing queue (already processed or moved).
+--   'QUEUE_NOT_FOUND': Queue does not exist.
 --   'QUEUE_STOPPED': Queue is in STOPPED state.
 --   'QUEUE_LOCKED': Queue is in LOCKED state.
 --   'QUEUE_INVALID_STATE': Queue is in an unknown state.
+--   Otherwise, array of results per message where each element is:
+--     1: Message was successfully acknowledged.
+--     0: Message was not found in the processing queue.
 
--- Static Keys
 local keyQueueProcessing = KEYS[1]
 local keyQueueAcknowledged = KEYS[2]
 local keyQueueProperties = KEYS[3]
-local keyMessage = KEYS[4]
 
--- Arguments
-local messageId = ARGV[1]
-local EMessagePropertyStatus = ARGV[2]
-local EMessagePropertyStatusAcknowledged = ARGV[3]
-local EMessagePropertyAcknowledgedAt = ARGV[4]
-local EQueuePropertyAcknowledgedCount = ARGV[5]
-local EQueuePropertyProcessingCount = ARGV[6]
-local storeMessages = ARGV[7]
-local expireStoredMessages = ARGV[8]
-local storedMessagesSize = ARGV[9]
-local messageAcknowledgedAt = ARGV[10]
--- Operational state constants (new)
-local EQueuePropertyOperationalState = ARGV[11]
-local EQueueOperationalStateActive = ARGV[12]
-local EQueueOperationalStatePaused = ARGV[13]
-local EQueueOperationalStateStopped = ARGV[14]
-local EQueueOperationalStateLocked = ARGV[15]
+-- Operational state constants
+local EQueuePropertyOperationalState = ARGV[5]
+local EQueueOperationalStateActive = ARGV[6]
+local EQueueOperationalStatePaused = ARGV[7]
+local EQueueOperationalStateStopped = ARGV[8]
+local EQueueOperationalStateLocked = ARGV[9]
+
+-- Message constants
+local EMessagePropertyStatus = ARGV[10]
+local EMessagePropertyStatusAcknowledged = ARGV[11]
+local EMessagePropertyAcknowledgedAt = ARGV[12]
+
+-- Queue counter fields
+local EQueuePropertyAcknowledgedCount = ARGV[13]
+local EQueuePropertyProcessingCount = ARGV[14]
+
+-- Script-specific arguments
+local storeMessages = ARGV[1]
+local expireStoredMessages = ARGV[2]
+local storedMessagesSize = ARGV[3]
+local messageAcknowledgedAt = ARGV[4]
+
+if redis.call("EXISTS", keyQueueProperties) == 0 then
+    return 'QUEUE_NOT_FOUND'
+end
 
 -- Get current operational state
 local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)
@@ -86,41 +94,59 @@ else
     return 'QUEUE_INVALID_STATE'
 end
 
--- Atomically remove the message from the processing queue.
--- LREM returns the number of elements removed. If it's 0, the message was not found.
--- This is the key to preventing race conditions and double-acknowledgements.
-local removed = redis.call("LREM", keyQueueProcessing, 1, messageId)
-if removed == 0 then
-    return 0
-end
+local results = {}
+local ackCount = 0
+local messageIndex = 1
+local acknowledgedIds = {}
 
--- Update message status to 'acknowledged'.
-redis.call(
-    "HSET", keyMessage,
-    EMessagePropertyStatus, EMessagePropertyStatusAcknowledged,
-    EMessagePropertyAcknowledgedAt, messageAcknowledgedAt
-)
+-- Process each message: messageIds start at ARGV[15]
+for argvIndex = 15, #ARGV do
+    local messageId = ARGV[argvIndex]
+    local keyMessage = KEYS[3 + messageIndex]  -- KEYS[4] for first message, KEYS[5] for second, etc.
 
--- Update queue counters.
-redis.call("HINCRBY", keyQueueProperties, EQueuePropertyAcknowledgedCount, 1)
-redis.call("HINCRBY", keyQueueProperties, EQueuePropertyProcessingCount, -1)
+    -- Atomically remove the message from the processing queue.
+    -- LREM returns the number of elements removed. If it's 0, the message was not found.
+    -- This is the key to preventing race conditions and double-acknowledgements.
+    local removed = redis.call("LREM", keyQueueProcessing, 1, messageId)
 
--- Handle optional storage of acknowledged messages.
-if storeMessages == '1' then
-    -- Add to acknowledged queue
-    redis.call("RPUSH", keyQueueAcknowledged, messageId)
+    if removed > 0 then
+        -- Update message status to 'acknowledged'.
+        redis.call(
+                "HSET", keyMessage,
+                EMessagePropertyStatus, EMessagePropertyStatusAcknowledged,
+                EMessagePropertyAcknowledgedAt, messageAcknowledgedAt
+        )
 
-    -- Apply expiration if configured
-    if expireStoredMessages ~= '0' then
-        redis.call("PEXPIRE", keyQueueAcknowledged, expireStoredMessages)
+        results[messageIndex] = 1
+        ackCount = ackCount + 1
+        acknowledgedIds[ackCount] = messageId
+    else
+        results[messageIndex] = 0
     end
 
-    -- Trim the queue if size limit is set
-    if storedMessagesSize ~= '0' then
-        -- storedMessagesSize is passed as a negative value for proper trimming (to keep newest messages)
-        redis.call("LTRIM", keyQueueAcknowledged, storedMessagesSize, -1)
+    messageIndex = messageIndex + 1
+end
+
+if ackCount > 0 then
+    -- Update queue counters.
+    redis.call("HINCRBY", keyQueueProperties, EQueuePropertyAcknowledgedCount, ackCount)
+    redis.call("HINCRBY", keyQueueProperties, EQueuePropertyProcessingCount, -ackCount)
+
+    if storeMessages == '1' then
+        -- Push all acknowledged IDs in one batch
+        redis.call("RPUSH", keyQueueAcknowledged, unpack(acknowledgedIds))
+
+        -- Apply expiration if configured
+        if expireStoredMessages ~= '0' then
+            redis.call("PEXPIRE", keyQueueAcknowledged, expireStoredMessages)
+        end
+
+        -- Trim the queue if size limit is set
+        if storedMessagesSize ~= '0' then
+            -- storedMessagesSize is passed as a negative value for proper trimming (to keep newest messages)
+            redis.call("LTRIM", keyQueueAcknowledged, storedMessagesSize, -1)
+        end
     end
 end
 
--- Return 1 to indicate success.
-return 1
+return results

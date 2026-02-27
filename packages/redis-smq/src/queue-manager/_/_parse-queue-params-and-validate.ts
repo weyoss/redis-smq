@@ -23,7 +23,14 @@ export function _parseQueueParamsAndValidate(
   else
     _queueExists(redisClient, queueParams, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new QueueNotFoundError());
+      else if (!reply)
+        cb(
+          new QueueNotFoundError({
+            metadata: {
+              queue: queueParams,
+            },
+          }),
+        );
       else cb(null, queueParams);
     });
 }

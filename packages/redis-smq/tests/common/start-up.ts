@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { ProducibleMessage, RedisSMQ } from '../../src/index.js';
+import { Consumer, ProducibleMessage, RedisSMQ } from '../../src/index.js';
 import { config } from './config.js';
 import { RedisClient } from '../../src/common/redis/redis-client/redis-client.js';
 
@@ -29,5 +29,12 @@ export async function startUp(): Promise<void> {
     retryThreshold: 3,
     retryDelay: 0,
     consumeTimeout: 0,
+  });
+
+  Consumer.setDefaultOptions({
+    heartbeatTTL: 6000,
+    enableBatchAcks: false,
+    batchSize: 100,
+    batchTimeoutMs: 1000,
   });
 }

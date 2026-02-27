@@ -118,7 +118,11 @@ export class QueueRateLimit {
             }
 
             if (replyStr === 'QUEUE_NOT_FOUND') {
-              const error = new QueueNotFoundError();
+              const error = new QueueNotFoundError({
+                metadata: {
+                  queue: queueParams,
+                },
+              });
               this.logger.error(
                 `Queue not found when clearing rate limit: ${queueName}`,
               );
@@ -245,7 +249,11 @@ export class QueueRateLimit {
             }
 
             if (replyStr === 'QUEUE_NOT_FOUND') {
-              const error = new QueueNotFoundError();
+              const error = new QueueNotFoundError({
+                metadata: {
+                  queue: queueParams,
+                },
+              });
               this.logger.error(
                 `Queue not found when setting rate limit: ${queueName}`,
               );

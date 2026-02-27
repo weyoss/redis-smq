@@ -199,7 +199,14 @@ export function _deleteQueue(
               );
             }
             // Handle other error cases
-            else if (reply === 'QUEUE_NOT_FOUND') cb(new QueueNotFoundError());
+            else if (reply === 'QUEUE_NOT_FOUND')
+              cb(
+                new QueueNotFoundError({
+                  metadata: {
+                    queue: queueParams,
+                  },
+                }),
+              );
             else if (reply === 'QUEUE_NOT_EMPTY') cb(new QueueNotEmptyError());
             else if (reply === 'QUEUE_HAS_ACTIVE_CONSUMERS')
               cb(new QueueManagerActiveConsumersError());

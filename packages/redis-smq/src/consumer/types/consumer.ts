@@ -10,4 +10,9 @@
 export interface IConsumerOptions {
   heartbeatTTL?: number;
   enableMultiplexing?: boolean;
+  enableBatchAcks?: boolean;
+  batchSize?: number;
+  batchTimeoutMs?: number;
 }
+
+export type TConsumerParsedOptions = Required<IConsumerOptions>;

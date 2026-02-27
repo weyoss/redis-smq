@@ -8,8 +8,11 @@
  */
 
 import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
+import { IQueueParams } from '../queue-manager/index.js';
 
-export class QueueNotFoundError extends RedisSMQError {
+export class QueueNotFoundError extends RedisSMQError<{
+  queue: IQueueParams;
+}> {
   getProps(): IRedisSMQErrorProperties {
     return {
       code: 'RedisSMQ.Queue.NotFound',

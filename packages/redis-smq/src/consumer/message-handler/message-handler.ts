@@ -103,20 +103,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       this.processMessage(messageId);
     };
 
-  protected onMessageUnacknowledged: TRedisSMQEvent['consumer.consumeMessage.messageUnacknowledged'] =
-    () => {
-      // A message has been processed, so a slot is free.
-      // Immediately request the next message.
-      this.next();
-    };
-
-  protected onMessageAcknowledged: TRedisSMQEvent['consumer.consumeMessage.messageAcknowledged'] =
-    () => {
-      // A message has been processed, so a slot is free.
-      // Immediately request the next message.
-      this.next();
-    };
-
   protected onMessageNext: TRedisSMQEvent['consumer.dequeueMessage.nextMessage'] =
     () => {
       // This event means the queue is empty or rate-limited.
@@ -130,15 +116,15 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   };
 
   protected override handleError(err: Error) {
-    if (this.isOperational()) {
-      this.logger.error(`MessageHandler error: ${err.message}`, err);
-      this.emit(
-        'consumer.messageHandler.error',
-        err,
-        this.consumerContext.consumerId,
-        this.queue,
-      );
-    }
+    if (!this.isOperational()) return;
+
+    this.logger.error(`MessageHandler error: ${err.message}`, err);
+    this.emit(
+      'consumer.messageHandler.error',
+      err,
+      this.consumerContext.consumerId,
+      this.queue,
+    );
     super.handleError(err);
   }
 
@@ -232,14 +218,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           this.messageHandler,
         );
         this.consumeMessage.on('consumer.consumeMessage.error', this.onError);
-        this.consumeMessage.on(
-          'consumer.consumeMessage.messageUnacknowledged',
-          this.onMessageUnacknowledged,
-        );
-        this.consumeMessage.on(
-          'consumer.consumeMessage.messageAcknowledged',
-          this.onMessageAcknowledged,
-        );
+        this.consumeMessage.on('consumer.consumeMessage.next', () => {
+          this.next();
+        });
         this.consumeMessage.run(cb);
       },
       (cb: ICallback) => {
@@ -313,14 +294,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
             this.consumeMessage?.removeListener(
               'consumer.consumeMessage.error',
               this.onError,
-            );
-            this.consumeMessage?.removeListener(
-              'consumer.consumeMessage.messageUnacknowledged',
-              this.onMessageUnacknowledged,
-            );
-            this.consumeMessage?.removeListener(
-              'consumer.consumeMessage.messageAcknowledged',
-              this.onMessageAcknowledged,
             );
             this.consumeMessage = null;
             cb();

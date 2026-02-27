@@ -14,8 +14,8 @@ import {
   IQueueProperties,
 } from '../../index.js';
 import {
-  EMessageUnacknowledgementDeadLetterReason,
-  EMessageUnacknowledgementReason,
+  EMessageDeadLetterCause,
+  EMessageUnacknowledgementCause,
 } from '../../consumer/message-handler/consume-message/types/index.js';
 import { IQueueStateTransition } from '../../queue-state-manager/index.js';
 
@@ -40,14 +40,14 @@ export type TConsumerConsumeMessageEvent = {
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
-    unknowledgmentReason: EMessageUnacknowledgementReason,
+    unacknowledgmentCause: EMessageUnacknowledgementCause,
   ) => void;
   'consumer.consumeMessage.messageDeadLettered': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
-    deadLetterReason: EMessageUnacknowledgementDeadLetterReason,
+    deadLetterCause: EMessageDeadLetterCause,
   ) => void;
   'consumer.consumeMessage.messageRequeued': (
     messageId: string,
@@ -61,6 +61,7 @@ export type TConsumerConsumeMessageEvent = {
     messageHandlerId: string,
     consumerId: string,
   ) => void;
+  'consumer.consumeMessage.next': () => void;
   'consumer.consumeMessage.error': (
     err: Error,
     consumerId: string,

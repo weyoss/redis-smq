@@ -17,58 +17,51 @@ import {
   ICallback,
   ILogger,
   IRedisClient,
-  PanicError,
   Runnable,
 } from 'redis-smq-common';
 import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
-import { ERedisScriptName } from '../../../common/redis/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
-import { Configuration, IRedisSMQParsedConfig } from '../../../config/index.js';
-import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-  IMessageTransferable,
-} from '../../../message/index.js';
+import { IRedisSMQParsedConfig } from '../../../config/index.js';
+import { IMessageTransferable } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
+import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
-  EQueueOperationalState,
-  EQueueProperty,
-  IQueueParsedParams,
-} from '../../../queue-manager/index.js';
-import {
-  EMessageUnacknowledgementAction,
-  EMessageUnacknowledgementDeadLetterReason,
-  EMessageUnacknowledgementReason,
-  TMessageUnacknowledgementStatus,
+  EMessageRecoveryAction,
+  EMessageUnacknowledgementCause,
+  TMessageRecovery,
 } from './types/index.js';
 import {
   MessageHandlerFileError,
   MessageHandlerFilenameExtensionError,
 } from '../../../errors/index.js';
-import { MessageUnacknowledgement } from './message-unacknowledgement.js';
+import { MessageUnacknowledger } from './message-unacknowledger.js';
 import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from '../types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
+import { MessageAcknowledger } from './message-acknowledger.js';
+import { TConsumerParsedOptions } from '../../types/index.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected readonly consumerId: string;
   protected readonly config: IRedisSMQParsedConfig;
+  protected readonly logger: ILogger;
+  protected readonly keyQueueProperties: string;
+  protected readonly keyQueueProcessing: string;
+  protected readonly keyQueueAcknowledged: string;
+  protected readonly queue: IQueueParsedParams;
+  protected readonly messageHandler: TConsumerMessageHandler;
+  protected readonly messageHandlerId: string;
+  protected readonly consumerOptions: TConsumerParsedOptions;
 
-  protected logger: ILogger;
-  protected keyQueueProperties;
-  protected keyQueueProcessing;
-  protected keyQueueAcknowledged;
-  protected queue;
-  protected messageHandler;
-  protected messageHandlerId;
-  protected messageUnack;
-  protected redisClient: IRedisClient | null = null;
-  protected consumeMessageWorker: CallableWorker<
+  private messageUnack: MessageUnacknowledger;
+  private redisClient: IRedisClient | null = null;
+  private consumeMessageWorker: CallableWorker<
     IMessageTransferable,
     void
   > | null = null;
+  private messageAcknowledger: MessageAcknowledger | null = null;
 
   constructor(
     consumerContext: IConsumerContext,
@@ -80,10 +73,11 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.consumerId = consumerContext.consumerId;
     this.logger = consumerContext.logger.createLogger(this.constructor.name);
     this.config = consumerContext.config;
+    this.consumerOptions = consumerContext.consumerOptions;
     this.queue = queue;
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
-    this.messageUnack = new MessageUnacknowledgement(this.logger);
+    this.messageUnack = new MessageUnacknowledger(this.logger);
 
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       this.queue.queueParams,
@@ -99,169 +93,77 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.keyQueueProcessing = keyQueueProcessing;
 
     eventPublisher(this);
-
     this.logger.debug(`${this.constructor.name} initialized`);
   }
 
-  protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient)
-      return new PanicError({ message: 'A RedisClient instance is required.' });
-    return this.redisClient;
+  handleReceivedMessage(message: MessageEnvelope): void {
+    const messageId = message.getId();
+    this.logger.debug(`Received message ${messageId}`);
+
+    if (!this.isOperational()) {
+      this.logger.warn(`Ignoring message ${messageId} - consumer not running`);
+      return;
+    }
+
+    if (message.getSetExpired()) {
+      this.logger.info(`Message ${messageId} expired, unacknowledging`);
+      this.unacknowledgeMessage(
+        message,
+        EMessageUnacknowledgementCause.TTL_EXPIRED,
+      );
+    } else {
+      this.logger.debug(
+        `Message ${messageId} valid, proceeding with consumption`,
+      );
+      this.consumeMessage(message);
+    }
   }
 
   protected acknowledgeMessage(message: MessageEnvelope): void {
-    const messageId = message.getId();
-    this.logger.debug(`Acknowledging message ${messageId}`);
-
-    const { enabled, queueSize, expire } =
-      Configuration.getConfig().messageAudit.acknowledgedMessages;
-    const { keyMessage } = redisKeys.getMessageKeys(messageId);
-
-    this.logger.debug(
-      `Message key: ${keyMessage}, enabled: ${enabled}, queueSize: ${queueSize}, expire: ${expire}`,
-    );
-
-    const redisClient = this.getRedisClient();
-    if (redisClient instanceof Error) {
-      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
-      this.handleError(redisClient);
-      return void 0;
+    if (this.messageAcknowledger) {
+      this.messageAcknowledger.add(message);
+    } else {
+      this.logger.error('MessageAcknowledger not initialized');
     }
-
-    const argv: (string | number)[] = [
-      messageId,
-      EMessageProperty.STATUS,
-      EMessagePropertyStatus.ACKNOWLEDGED,
-      EMessageProperty.ACKNOWLEDGED_AT,
-      EQueueProperty.ACKNOWLEDGED_MESSAGES_COUNT,
-      EQueueProperty.PROCESSING_MESSAGES_COUNT,
-      Number(enabled),
-      expire,
-      queueSize * -1,
-      Date.now(),
-      EQueueProperty.OPERATIONAL_STATE,
-      EQueueOperationalState.ACTIVE,
-      EQueueOperationalState.PAUSED,
-      EQueueOperationalState.STOPPED,
-      EQueueOperationalState.LOCKED,
-    ];
-
-    this.logger.debug(
-      `Running ACKNOWLEDGE_MESSAGE script for message ${messageId}`,
-    );
-    redisClient.runScript(
-      ERedisScriptName.ACKNOWLEDGE_MESSAGE,
-      [
-        this.keyQueueProcessing,
-        this.keyQueueAcknowledged,
-        this.keyQueueProperties,
-        keyMessage,
-      ],
-      argv,
-      (err, reply) => {
-        if (err) {
-          this.logger.error(
-            `Failed to acknowledge message ${messageId}: ${err.message}`,
-          );
-          return this.handleError(err);
-        }
-
-        // Handle queue state specific errors
-        if (reply === 'QUEUE_STOPPED') {
-          this.logger.warn(
-            `Cannot acknowledge message ${messageId}: Queue is in STOPPED state`,
-          );
-          // Unacknowledge the message since we can't acknowledge it
-          this.unacknowledgeMessage(
-            message,
-            EMessageUnacknowledgementReason.QUEUE_STOPPED,
-          );
-          return;
-        }
-
-        if (reply === 'QUEUE_LOCKED') {
-          this.logger.warn(
-            `Cannot acknowledge message ${messageId}: Queue is in LOCKED state`,
-          );
-          // Unacknowledge the message since we can't acknowledge it
-          this.unacknowledgeMessage(
-            message,
-            EMessageUnacknowledgementReason.QUEUE_LOCKED,
-          );
-          return;
-        }
-
-        if (reply === 'QUEUE_INVALID_STATE') {
-          this.logger.warn(
-            `Cannot acknowledge message ${messageId}: Queue is in invalid state`,
-          );
-          // Unacknowledge the message since we can't acknowledge it
-          this.unacknowledgeMessage(
-            message,
-            EMessageUnacknowledgementReason.QUEUE_INVALID_STATE,
-          );
-          return;
-        }
-
-        if (reply === 1) {
-          this.logger.info(`Message ${messageId} acknowledged successfully`);
-          this.emit(
-            'consumer.consumeMessage.messageAcknowledged',
-            messageId,
-            this.queue,
-            this.messageHandlerId,
-            this.consumerId,
-          );
-          this.logger.debug(
-            `Emitted consumer.consumeMessage.messageAcknowledged event for message ${messageId}`,
-          );
-          return;
-        }
-
-        if (reply === 0) {
-          // This case should never happen
-          return this.handleError(
-            new PanicError({
-              message: `Message ${messageId} could not be acknowledged. It was not found in the processing queue.`,
-            }),
-          );
-        }
-
-        this.handleError(
-          new PanicError({
-            message: `Unexpected reply from ACKNOWLEDGE_MESSAGE script: ${reply}`,
-          }),
-        );
-      },
-    );
+    this.emit('consumer.consumeMessage.next');
   }
 
   protected unacknowledgeMessage(
     message: MessageEnvelope,
-    unacknowledgmentReason: EMessageUnacknowledgementReason,
+    cause: EMessageUnacknowledgementCause,
   ): void {
     this.messageUnack.unacknowledgeMessage(
       this.consumerId,
       message,
-      unacknowledgmentReason,
+      cause,
       (err, reply) => {
         if (err) return this.handleError(err);
         if (!reply) return this.handleError(new CallbackEmptyReplyError());
-        this.handleMessageUnacknowledgementResult(
-          unacknowledgmentReason,
-          reply,
-        );
+        this.handleUnacknowledgementResult(cause, reply);
       },
+    );
+    this.emit('consumer.consumeMessage.next');
+  }
+
+  private onMessageAcknowledged(message: MessageEnvelope): void {
+    const messageId = message.getId();
+    this.logger.info(`Message ${messageId} acknowledged successfully`);
+    this.emit(
+      'consumer.consumeMessage.messageAcknowledged',
+      messageId,
+      this.queue,
+      this.messageHandlerId,
+      this.consumerId,
     );
   }
 
-  protected handleMessageUnacknowledgementResult(
-    unacknowledgmentReason: EMessageUnacknowledgementReason,
-    messageUnacknowledgementStatus: TMessageUnacknowledgementStatus,
+  private handleUnacknowledgementResult(
+    cause: EMessageUnacknowledgementCause,
+    result: TMessageRecovery,
   ): void {
-    for (const messageId in messageUnacknowledgementStatus) {
+    for (const messageId in result) {
       this.logger.info(
-        `Message ${messageId} unacknowledged successfully with reason: ${EMessageUnacknowledgementReason[unacknowledgmentReason]}`,
+        `Message ${messageId} unacknowledged: ${EMessageUnacknowledgementCause[cause]}`,
       );
 
       this.emit(
@@ -270,30 +172,22 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         this.queue,
         this.messageHandlerId,
         this.consumerId,
-        unacknowledgmentReason,
+        cause,
       );
 
-      const unknowledgment = messageUnacknowledgementStatus[messageId];
-      if (
-        unknowledgment.action === EMessageUnacknowledgementAction.DEAD_LETTER
-      ) {
-        this.logger.info(
-          `Unacknowledged message ${messageId} moved to dead letter queue with reason: ${EMessageUnacknowledgementDeadLetterReason[unknowledgment.deadLetterReason]}`,
-        );
+      const details = result[messageId];
+      if (details.action === EMessageRecoveryAction.DEAD_LETTER) {
+        this.logger.info(`Message ${messageId} moved to dead letter queue`);
         this.emit(
           'consumer.consumeMessage.messageDeadLettered',
           messageId,
           this.queue,
           this.messageHandlerId,
           this.consumerId,
-          unknowledgment.deadLetterReason,
+          details.deadLetterCause,
         );
-      } else if (
-        unknowledgment.action === EMessageUnacknowledgementAction.DELAY
-      ) {
-        this.logger.info(
-          `Unacknowledged message ${messageId} delayed for retry`,
-        );
+      } else if (details.action === EMessageRecoveryAction.DELAY) {
+        this.logger.info(`Message ${messageId} delayed for retry`);
         this.emit(
           'consumer.consumeMessage.messageDelayed',
           messageId,
@@ -302,9 +196,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           this.consumerId,
         );
       } else {
-        this.logger.info(
-          `Unacknowledged message ${messageId} has been re-queued for retry`,
-        );
+        this.logger.info(`Message ${messageId} re-queued for retry`);
         this.emit(
           'consumer.consumeMessage.messageRequeued',
           messageId,
@@ -316,179 +208,130 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     }
   }
 
-  protected getConsumeMessageWorker(messageHandlerFilename: string) {
-    this.logger.debug(
-      `Getting consume message worker for handler file: ${messageHandlerFilename}`,
-    );
-    if (!this.consumeMessageWorker) {
-      this.logger.debug(
-        `Creating new WorkerCallable for handler file: ${messageHandlerFilename}`,
+  private consumeMessage(message: MessageEnvelope): void {
+    const messageId = message.getId();
+    this.logger.debug(`Consuming message ${messageId}`);
+
+    let isCallbackHandled = false;
+
+    try {
+      let onConsumed: ICallback<void> = (err) => {
+        if (isCallbackHandled) {
+          this.logger.debug(`Callback for ${messageId} already handled`);
+          return;
+        }
+        isCallbackHandled = true;
+
+        if (!this.isOperational()) {
+          this.logger.debug(
+            `Consumer not running, ignoring callback for ${messageId}`,
+          );
+          return;
+        }
+
+        if (err) {
+          this.logger.error(`Error consuming ${messageId}: ${err.message}`);
+          const reason =
+            err instanceof AsyncCallbackTimeoutError
+              ? EMessageUnacknowledgementCause.TIMEOUT
+              : EMessageUnacknowledgementCause.UNACKNOWLEDGED;
+          this.unacknowledgeMessage(message, reason);
+          return;
+        }
+
+        this.logger.debug(`Message ${messageId} consumed successfully`);
+        this.acknowledgeMessage(message);
+      };
+
+      const consumeTimeout = message.producibleMessage.getConsumeTimeout();
+      if (consumeTimeout) {
+        this.logger.debug(
+          `Setting timeout ${consumeTimeout}ms for ${messageId}`,
+        );
+        onConsumed = async.withTimeout(onConsumed, consumeTimeout);
+      }
+
+      this.invokeMessageHandler(
+        this.messageHandler,
+        message.transfer(),
+        onConsumed,
       );
-      this.consumeMessageWorker = new CallableWorker<
-        IMessageTransferable,
-        void
-      >(messageHandlerFilename, this.logger);
+    } catch (error) {
+      this.logger.error(`Exception consuming ${messageId}: ${error}`);
+      isCallbackHandled = true;
+      this.unacknowledgeMessage(
+        message,
+        EMessageUnacknowledgementCause.CONSUME_ERROR,
+      );
+      this.emit('consumer.consumeMessage.next');
     }
-    return this.consumeMessageWorker;
   }
 
-  protected invokeMessageHandler(
-    messageHandler: TConsumerMessageHandler,
+  private invokeMessageHandler(
+    handler: TConsumerMessageHandler,
     msg: IMessageTransferable,
     cb: ICallback<void>,
   ): void {
     const messageId = msg.id;
-    this.logger.debug(`Invoking message handler for message ${messageId}`);
 
-    if (typeof messageHandler === 'string') {
-      this.logger.debug(
-        `Using worker-based message handler: ${messageHandler}`,
-      );
-      this.getConsumeMessageWorker(messageHandler).call(msg, (err) => {
+    if (typeof handler === 'string') {
+      this.getWorker(handler).call(msg, (err) => {
         if (err) {
           this.logger.error(
-            `Worker-based message handler failed for message ${messageId}: ${err.message}`,
-          );
-        } else {
-          this.logger.debug(
-            `Worker-based message handler completed successfully for message ${messageId}`,
+            `Worker handler failed for ${messageId}: ${err.message}`,
           );
         }
         cb(err);
       });
     } else {
-      this.logger.debug(
-        `Using function-based message handler for message ${messageId}`,
-      );
       try {
-        messageHandler(msg, (err) => {
+        handler(msg, (err) => {
           if (err) {
             this.logger.error(
-              `Function-based message handler failed for message ${messageId}: ${err.message}`,
-            );
-          } else {
-            this.logger.debug(
-              `Function-based message handler completed successfully for message ${messageId}`,
+              `Function handler failed for ${messageId}: ${err.message}`,
             );
           }
           cb(err);
         });
       } catch (err) {
         this.logger.error(
-          `Exception in function-based message handler for message ${messageId}: ${err}`,
+          `Exception in function handler for ${messageId}: ${err}`,
         );
         cb(err instanceof Error ? err : new Error(String(err)));
       }
     }
   }
 
-  protected consumeMessage(msg: MessageEnvelope): void {
-    const messageId = msg.getId();
-    this.logger.debug(`Consuming message ${messageId}`);
-
-    let isCallbackHandled = false;
-    try {
-      let onConsumed: ICallback<void> = (err) => {
-        if (isCallbackHandled) {
-          this.logger.debug(
-            `Ignoring onConsumed callback for message ${messageId} as already handled`,
-          );
-          return;
-        }
-        isCallbackHandled = true;
-        if (this.isOperational()) {
-          if (err) {
-            this.logger.error(
-              `Error consuming message ${messageId}: ${err.message}`,
-            );
-            const unacknowledgementReason =
-              err instanceof AsyncCallbackTimeoutError
-                ? EMessageUnacknowledgementReason.TIMEOUT
-                : EMessageUnacknowledgementReason.UNACKNOWLEDGED;
-            if (
-              unacknowledgementReason ===
-              EMessageUnacknowledgementReason.TIMEOUT
-            ) {
-              this.logger.warn(
-                `Consume timeout (${consumeTimeout}ms) reached for message ${messageId}`,
-              );
-            }
-            return this.unacknowledgeMessage(msg, unacknowledgementReason);
-          }
-          this.logger.debug(
-            `Message ${messageId} consumed successfully, acknowledging`,
-          );
-          return this.acknowledgeMessage(msg);
-        }
-        this.logger.debug(
-          `Ignoring onConsumed callback for message ${messageId} as consumer is not running`,
-        );
-      };
-
-      const consumeTimeout = msg.producibleMessage.getConsumeTimeout();
-      if (consumeTimeout) {
-        this.logger.debug(
-          `Setting consume timeout of ${consumeTimeout}ms for message ${messageId}`,
-        );
-        onConsumed = async.withTimeout(onConsumed, consumeTimeout);
-      }
-
-      this.logger.debug(
-        `Transferring message ${messageId} for handler invocation`,
-      );
-      this.invokeMessageHandler(
-        this.messageHandler,
-        msg.transfer(),
-        onConsumed,
-      );
-    } catch (error: unknown) {
-      this.logger.error(
-        `Exception during message consumption for message ${messageId}: ${error}`,
-      );
-      isCallbackHandled = true;
-      this.unacknowledgeMessage(
-        msg,
-        EMessageUnacknowledgementReason.CONSUME_ERROR,
-      );
+  private getWorker(
+    filename: string,
+  ): CallableWorker<IMessageTransferable, void> {
+    if (!this.consumeMessageWorker) {
+      this.logger.debug(`Creating worker for ${filename}`);
+      this.consumeMessageWorker = new CallableWorker(filename, this.logger);
     }
+    return this.consumeMessageWorker;
   }
 
-  protected validateMessageHandler = (cb: ICallback<void>): void => {
-    if (typeof this.messageHandler === 'string') {
-      this.logger.debug(
-        `Validating message handler file: ${this.messageHandler}`,
-      );
-
-      const fileExtension = path.extname(this.messageHandler);
-      if (!['.js', '.cjs'].includes(fileExtension)) {
-        this.logger.error(
-          `Invalid message handler file extension: ${fileExtension}, expected .js or .cjs`,
-        );
-        cb(new MessageHandlerFilenameExtensionError());
-      } else {
-        this.logger.debug(
-          `Checking if message handler file exists: ${this.messageHandler}`,
-        );
-        stat(this.messageHandler, (err) => {
-          if (err) {
-            this.logger.error(
-              `Message handler file not found: ${this.messageHandler}, error: ${err.message}`,
-            );
-            cb(new MessageHandlerFileError());
-          } else {
-            this.logger.debug(
-              `Message handler file validated successfully: ${this.messageHandler}`,
-            );
-            cb();
-          }
-        });
-      }
-    } else {
-      this.logger.debug(
-        'Using function-based message handler, no file validation needed',
-      );
-      cb();
+  private validateHandler = (cb: ICallback<void>): void => {
+    if (typeof this.messageHandler !== 'string') {
+      this.logger.debug('Function-based handler, no validation needed');
+      return cb();
     }
+
+    const ext = path.extname(this.messageHandler);
+    if (!['.js', '.cjs'].includes(ext)) {
+      this.logger.error(`Invalid extension: ${ext}`);
+      return cb(new MessageHandlerFilenameExtensionError());
+    }
+
+    stat(this.messageHandler, (err) => {
+      if (err) {
+        this.logger.error(`Handler file not found: ${this.messageHandler}`);
+        return cb(new MessageHandlerFileError());
+      }
+      this.logger.debug(`Handler validated: ${this.messageHandler}`);
+      cb();
+    });
   };
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
@@ -497,133 +340,123 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         this.logger.debug('Initializing Redis client');
         RedisConnectionPool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
-          (err, redisClient) => {
+          (err, client) => {
             if (err) {
-              this.logger.error(
-                `Failed to initialize Redis client: ${err.message}`,
-              );
+              this.logger.error(`Redis client failed: ${err.message}`);
               return cb(err);
             }
-            if (!redisClient) {
-              this.logger.debug(
-                'Got an empty reply. Expected a Redis client instance',
-              );
-              return cb(new CallbackEmptyReplyError());
-            }
-            this.redisClient = redisClient;
-            this.logger.debug('Redis client initialized successfully');
-            cb();
+            if (!client) return cb(new CallbackEmptyReplyError());
+
+            this.redisClient = client;
+
+            // Initialize MessageAcknowledger
+            this.messageAcknowledger = new MessageAcknowledger(
+              this.queue,
+              this.consumerId,
+              this.logger,
+              client,
+              this.consumerOptions,
+            );
+
+            this.messageAcknowledger.on('messageAcknowledger.error', (err) => {
+              this.handleError(err);
+            });
+
+            this.messageAcknowledger.on(
+              'messageAcknowledger.messageAcknowledged',
+              (message: MessageEnvelope) => {
+                this.onMessageAcknowledged(message);
+              },
+            );
+
+            // Start the MessageAcknowledger
+            this.messageAcknowledger.run((err) => {
+              if (err) {
+                this.logger.error(
+                  `Failed to start MessageAcknowledger: ${err.message}`,
+                );
+                return cb(err);
+              }
+              this.logger.debug('MessageAcknowledger started');
+              cb();
+            });
           },
         );
       },
       (cb: ICallback<void>) => {
         this.logger.debug('Validating message handler');
-        this.validateMessageHandler((err) => {
-          if (err) {
-            this.logger.error(
-              `Message handler validation failed: ${err.message}`,
-            );
-          } else {
-            this.logger.debug('Message handler validated successfully');
-          }
-          cb(err);
-        });
+        this.validateHandler(cb);
       },
     ]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     return [
+      // Step 1: Shutdown MessageAcknowledger (flushes pending acks)
       (cb: ICallback<void>) => {
-        this.logger.debug('Unacknowledging any processing messages');
-        const unacknowledgementReason =
-          EMessageUnacknowledgementReason.OFFLINE_MESSAGE_HANDLER;
+        if (this.messageAcknowledger) {
+          this.logger.info('Shutting down MessageAcknowledger');
+          this.messageAcknowledger.shutdown(cb);
+        } else {
+          cb();
+        }
+      },
+
+      // Step 2: Unacknowledge any messages still in processing
+      (cb: ICallback<void>) => {
+        this.logger.debug('Unacknowledging processing messages');
         this.messageUnack.unacknowledgeMessagesInProcess(
           this.consumerId,
           [this.queue.queueParams],
-          unacknowledgementReason,
+          EMessageUnacknowledgementCause.SHUTTING_DOWN,
           (err, result) => {
             if (err) {
-              this.logger.error(
-                `Error during message unacknowledgement: ${err.message} (ignoring)`,
-              );
+              this.logger.error(`Unacknowledgement error: ${err.message}`);
             } else if (result) {
-              this.handleMessageUnacknowledgementResult(
-                unacknowledgementReason,
+              this.handleUnacknowledgementResult(
+                EMessageUnacknowledgementCause.SHUTTING_DOWN,
                 result,
               );
-            } else {
-              this.logger.debug('No messages to unacknowledge during cleanup');
             }
             cb();
           },
         );
       },
+
+      // Step 3: Shutdown worker
       (cb: ICallback<void>) => {
         if (this.consumeMessageWorker) {
-          this.logger.debug('Shutting down consume message worker');
           this.consumeMessageWorker.shutdown((err) => {
-            if (err) {
-              this.logger.warn(
-                `Error shutting down consume message worker: ${err.message}`,
-              );
-            } else {
-              this.logger.debug(
-                'Consume message worker shut down successfully',
-              );
-            }
+            if (err) this.logger.warn(`Worker shutdown error: ${err.message}`);
             cb();
           });
         } else {
-          this.logger.debug('No consume message worker to shut down');
           cb();
         }
       },
+
+      // Step 4: Release Redis client
       (cb: ICallback) => {
         if (this.redisClient) {
           RedisConnectionPool.getInstance().release(this.redisClient);
           this.redisClient = null;
+          this.messageAcknowledger = null;
         }
         cb();
       },
     ].concat(super.goingDown());
   }
 
-  protected override handleError(err: Error) {
-    this.logger.error(`ConsumeMessage error: ${err.message}`, err);
+  protected override handleError(err: unknown): void {
+    if (!this.isOperational()) return;
+
+    const error = err instanceof Error ? err : new Error(String(err));
     this.emit(
       'consumer.consumeMessage.error',
-      err,
+      error,
       this.consumerId,
       this.queue,
     );
-    this.logger.debug(`Emitted consumer.consumeMessage.error event`);
     super.handleError(err);
-  }
-
-  handleReceivedMessage(message: MessageEnvelope): void {
-    const messageId = message.getId();
-    this.logger.debug(`Received message ${messageId}`);
-
-    if (this.isOperational()) {
-      if (message.getSetExpired()) {
-        this.logger.info(
-          `Message ${messageId} has expired, unacknowledging with TTL_EXPIRED reason`,
-        );
-        this.unacknowledgeMessage(
-          message,
-          EMessageUnacknowledgementReason.TTL_EXPIRED,
-        );
-      } else {
-        this.logger.debug(
-          `Message ${messageId} is valid, proceeding with consumption`,
-        );
-        this.consumeMessage(message);
-      }
-    } else {
-      this.logger.warn(
-        `Ignoring received message ${messageId} as consumer is not running`,
-      );
-    }
   }
 }

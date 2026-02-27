@@ -34,6 +34,7 @@
 --
 -- Returns:
 --   The number of messages that were successfully unacknowledged.
+--   'QUEUE_NOT_FOUND': Queue does not exist.
 --   'QUEUE_STOPPED': Queue is in STOPPED state.
 --   'QUEUE_LOCKED': Queue is in LOCKED state.
 --   'QUEUE_INVALID_STATE': Queue is in an unknown state.
@@ -77,6 +78,10 @@ local INITIAL_ARGV_OFFSET = 23
 local PARAMS_PER_MESSAGE = 9
 local KEYS_PER_MESSAGE = 3 -- keyQueueProcessing + keyMessage + keyConsumerQueues
 local E_INVALID_ARGS_ERROR_REPLY = "Mismatch between the number of keys and arguments provided."
+
+if redis.call("EXISTS", keyQueueProperties) == 0 then
+    return 'QUEUE_NOT_FOUND'
+end
 
 -- Get current operational state (check once for the entire batch)
 local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)

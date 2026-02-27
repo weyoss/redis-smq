@@ -78,7 +78,13 @@ export function _deleteConsumerGroup(
 
       // Handle other error cases
       if (replyStr === 'QUEUE_NOT_FOUND') {
-        return cb(new QueueNotFoundError());
+        return cb(
+          new QueueNotFoundError({
+            metadata: {
+              queue: queueParams,
+            },
+          }),
+        );
       }
 
       if (replyStr === 'CONSUMER_GROUPS_NOT_SUPPORTED') {

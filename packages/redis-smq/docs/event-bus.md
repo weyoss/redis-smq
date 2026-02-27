@@ -126,10 +126,10 @@ eventBus.on(
 
 eventBus.on(
   'consumer.consumeMessage.messageDeadLettered',
-  (messageId, queue, messageHandlerId, consumerId, deadLetterReason) => {
+  (messageId, queue, messageHandlerId, consumerId, deadLetterCause) => {
     console.error(`💀 Dead lettered ${messageId}:`, {
       queue: queue.name,
-      reason: EMessageUnacknowledgementDeadLetterReason[deadLetterReason],
+      cause: EMessageDeadLetterCause[deadLetterCause],
       timestamp: new Date(),
     });
   },

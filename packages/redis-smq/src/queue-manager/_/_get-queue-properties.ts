@@ -105,7 +105,14 @@ export function _getQueueProperties(
   );
   redisClient.hgetall(keyQueueProperties, (err, reply) => {
     if (err) cb(err);
-    else if (!reply || !Object.keys(reply).length) cb(new QueueNotFoundError());
+    else if (!reply || !Object.keys(reply).length)
+      cb(
+        new QueueNotFoundError({
+          metadata: {
+            queue: queueParams,
+          },
+        }),
+      );
     else {
       const queueProperties = parseProperties(reply);
       if (queueProperties instanceof Error) cb(queueProperties);

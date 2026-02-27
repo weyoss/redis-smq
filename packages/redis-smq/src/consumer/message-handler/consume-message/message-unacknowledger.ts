@@ -24,11 +24,11 @@ import {
 } from '../../../queue-manager/index.js';
 import { _getConsumerQueues } from '../../_/_get-consumer-queues.js';
 import {
-  EMessageUnacknowledgementAction,
-  EMessageUnacknowledgementDeadLetterReason,
-  EMessageUnacknowledgementReason,
-  TMessageUnacknowledgementAction,
-  TMessageUnacknowledgementStatus,
+  EMessageRecoveryAction,
+  EMessageDeadLetterCause,
+  EMessageUnacknowledgementCause,
+  TMessageRecoveryResolution,
+  TMessageRecovery,
 } from './types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import {
@@ -39,11 +39,11 @@ import {
 type TScriptArgs = {
   keys: string[];
   args: (string | number)[];
-  actions: Map<MessageEnvelope, TMessageUnacknowledgementAction>;
+  actions: Map<MessageEnvelope, TMessageRecoveryResolution>;
 };
 
 type TUnacknowledgementArgs = {
-  action: TMessageUnacknowledgementAction | null;
+  action: TMessageRecoveryResolution | null;
   keys: string[];
   args: (string | number)[];
 };
@@ -69,15 +69,15 @@ const UNACK_STATIC_ARGS = (): (string | number)[] => {
   const { enabled, expire, queueSize } =
     Configuration.getConfig().messageAudit.deadLetteredMessages;
   return [
-    EMessageUnacknowledgementAction.DELAY,
-    EMessageUnacknowledgementAction.REQUEUE,
-    EMessageUnacknowledgementAction.DEAD_LETTER,
+    EMessageRecoveryAction.DELAY,
+    EMessageRecoveryAction.REQUEUE,
+    EMessageRecoveryAction.DEAD_LETTER,
     Number(enabled),
     expire,
     queueSize * -1,
     EMessageProperty.STATUS,
-    EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
-    EMessageUnacknowledgementReason.OFFLINE_MESSAGE_HANDLER,
+    EMessageUnacknowledgementCause.OFFLINE_CONSUMER,
+    EMessageUnacknowledgementCause.SHUTTING_DOWN,
     EQueueProperty.PROCESSING_MESSAGES_COUNT,
     EQueueProperty.DEAD_LETTERED_MESSAGES_COUNT,
     EQueueProperty.REQUEUED_MESSAGES_COUNT,
@@ -105,7 +105,7 @@ const UNACK_STATIC_ARGS = (): (string | number)[] => {
  * - Requeuing messages for retry
  * - Delaying messages before retry
  */
-export class MessageUnacknowledgement {
+export class MessageUnacknowledger {
   protected readonly logger;
 
   /**
@@ -124,13 +124,13 @@ export class MessageUnacknowledgement {
    */
   protected getMessageUnacknowledgementAction(
     message: MessageEnvelope,
-    unacknowledgedReason: EMessageUnacknowledgementReason,
-  ): TMessageUnacknowledgementAction {
+    unacknowledgedReason: EMessageUnacknowledgementCause,
+  ): TMessageRecoveryResolution {
     // Check if message TTL has expired
-    if (unacknowledgedReason === EMessageUnacknowledgementReason.TTL_EXPIRED) {
+    if (unacknowledgedReason === EMessageUnacknowledgementCause.TTL_EXPIRED) {
       return {
-        action: EMessageUnacknowledgementAction.DEAD_LETTER,
-        deadLetterReason: EMessageUnacknowledgementDeadLetterReason.TTL_EXPIRED,
+        action: EMessageRecoveryAction.DEAD_LETTER,
+        deadLetterCause: EMessageDeadLetterCause.TTL_EXPIRED,
       };
     }
 
@@ -139,34 +139,32 @@ export class MessageUnacknowledgement {
       // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
       // messages are periodically scheduled for delivery.
       return {
-        action: EMessageUnacknowledgementAction.DEAD_LETTER,
-        deadLetterReason:
-          EMessageUnacknowledgementDeadLetterReason.PERIODIC_MESSAGE,
+        action: EMessageRecoveryAction.DEAD_LETTER,
+        deadLetterCause: EMessageDeadLetterCause.PERIODIC_MESSAGE,
       };
     }
 
     // Check if retry threshold has been exceeded
     if (message.hasRetryThresholdExceeded()) {
       return {
-        action: EMessageUnacknowledgementAction.DEAD_LETTER,
-        deadLetterReason:
-          EMessageUnacknowledgementDeadLetterReason.RETRY_THRESHOLD_EXCEEDED,
+        action: EMessageRecoveryAction.DEAD_LETTER,
+        deadLetterCause: EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
       };
     }
 
     // Determine if message should be delayed before retry
     const delay = message.producibleMessage.getRetryDelay();
     return delay
-      ? { action: EMessageUnacknowledgementAction.DELAY }
-      : { action: EMessageUnacknowledgementAction.REQUEUE };
+      ? { action: EMessageRecoveryAction.DELAY }
+      : { action: EMessageRecoveryAction.REQUEUE };
   }
 
-  protected unacknowledgeMessagesFromProcessingQueue(
+  protected unacknowledgeProcessingQueueMessages(
     client: IRedisClient,
     consumerId: string,
     queue: IQueueParams,
-    unacknowledgementReason: EMessageUnacknowledgementReason,
-    cb: ICallback<TMessageUnacknowledgementStatus>,
+    unacknowledgementCause: EMessageUnacknowledgementCause,
+    cb: ICallback<TMessageRecovery>,
   ): void {
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       queue,
@@ -184,16 +182,13 @@ export class MessageUnacknowledgement {
           if (!messageIds.length) next(null, []);
           else _getMessages(client, messageIds, next);
         },
-        (
-          messages: MessageEnvelope[],
-          next: ICallback<TMessageUnacknowledgementStatus>,
-        ) => {
+        (messages: MessageEnvelope[], next: ICallback<TMessageRecovery>) => {
           this.executeUnacknowledgementScript(
             client,
             consumerId,
             queue,
             messages,
-            unacknowledgementReason,
+            unacknowledgementCause,
             next,
           );
         },
@@ -206,7 +201,7 @@ export class MessageUnacknowledgement {
     consumerId: string,
     queue: IQueueParams,
     msg: MessageEnvelope | null,
-    unacknowledgementReason: EMessageUnacknowledgementReason,
+    unacknowledgementReason: EMessageUnacknowledgementCause,
   ): TUnacknowledgementArgs {
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       queue,
@@ -217,7 +212,7 @@ export class MessageUnacknowledgement {
     const msgId = msg?.getId() ?? '';
     const keyMessage = msg ? redisKeys.getMessageKeys(msgId).keyMessage : '';
 
-    const unackAction: TMessageUnacknowledgementAction | null = msg
+    const unackAction: TMessageRecoveryResolution | null = msg
       ? this.getMessageUnacknowledgementAction(msg, unacknowledgementReason)
       : null;
 
@@ -248,14 +243,14 @@ export class MessageUnacknowledgement {
     consumerId: string,
     queue: IQueueParams,
     messages: MessageEnvelope[],
-    unacknowledgementReason: EMessageUnacknowledgementReason,
+    unacknowledgementReason: EMessageUnacknowledgementCause,
   ): TScriptArgs {
     const staticKeys = UNACK_STATIC_KEYS(queue);
     const staticArgs = UNACK_STATIC_ARGS();
 
     const dynamicKeys: string[] = [];
     const dynamicArgs: (string | number)[] = [];
-    const actions = new Map<MessageEnvelope, TMessageUnacknowledgementAction>();
+    const actions = new Map<MessageEnvelope, TMessageRecoveryResolution>();
 
     const messagesOrNull: (MessageEnvelope | null)[] = messages.length
       ? messages
@@ -287,14 +282,14 @@ export class MessageUnacknowledgement {
     consumerId: string,
     queue: IQueueParams,
     messages: MessageEnvelope[],
-    unacknowledgementReason: EMessageUnacknowledgementReason,
-    cb: ICallback<TMessageUnacknowledgementStatus>,
+    cause: EMessageUnacknowledgementCause,
+    cb: ICallback<TMessageRecovery>,
   ): void {
     const { keys, args, actions } = this.buildScriptArgs(
       consumerId,
       queue,
       messages,
-      unacknowledgementReason,
+      cause,
     );
     client.runScript(
       ERedisScriptName.UNACKNOWLEDGE_MESSAGE,
@@ -303,7 +298,7 @@ export class MessageUnacknowledgement {
       (err, reply) => {
         if (err) return cb(err);
 
-        // Handle string responses from the script (queue state errors)
+        // Handle string responses from the script (queue or queue state errors)
         if (typeof reply === 'string') {
           this.logger.warn(`Script returned queue state: ${reply}`);
           return cb(
@@ -336,7 +331,7 @@ export class MessageUnacknowledgement {
             }),
           );
         }
-        const status: TMessageUnacknowledgementStatus = Object.fromEntries(
+        const status: TMessageRecovery = Object.fromEntries(
           Array.from(actions.entries()).map(([msg, action]) => [
             msg.getId(),
             action,
@@ -352,14 +347,14 @@ export class MessageUnacknowledgement {
    *
    * @param consumerId - The ID of the consumer
    * @param msg - The message envelope
-   * @param unacknowledgementReason - The reason for unacknowledgement
+   * @param cause - The reason for unacknowledgement
    * @param cb - Callback function
    */
   public unacknowledgeMessage(
     consumerId: string,
     msg: MessageEnvelope,
-    unacknowledgementReason: EMessageUnacknowledgementReason,
-    cb: ICallback<TMessageUnacknowledgementStatus>,
+    cause: EMessageUnacknowledgementCause,
+    cb: ICallback<TMessageRecovery>,
   ): void {
     withSharedPoolConnection((client, done) => {
       const queue = msg.getDestinationQueue();
@@ -368,7 +363,7 @@ export class MessageUnacknowledgement {
         consumerId,
         queue,
         [msg],
-        unacknowledgementReason,
+        cause,
         done,
       );
     }, cb);
@@ -385,8 +380,8 @@ export class MessageUnacknowledgement {
   public unacknowledgeMessagesInProcess(
     consumerId: string,
     queues: IQueueParams[] | null,
-    unackReason: EMessageUnacknowledgementReason,
-    cb: ICallback<TMessageUnacknowledgementStatus>,
+    unackReason: EMessageUnacknowledgementCause,
+    cb: ICallback<TMessageRecovery>,
   ): void {
     withSharedPoolConnection((client, done) => {
       async.waterfall(
@@ -397,14 +392,11 @@ export class MessageUnacknowledgement {
             else _getConsumerQueues(client, consumerId, next);
           },
           // Step 2: Process each queue and collect the results
-          (
-            queues: IQueueParams[],
-            next: ICallback<TMessageUnacknowledgementStatus[]>,
-          ) => {
+          (queues: IQueueParams[], next: ICallback<TMessageRecovery[]>) => {
             async.map(
               queues,
               (queue, finished) =>
-                this.unacknowledgeMessagesFromProcessingQueue(
+                this.unacknowledgeProcessingQueueMessages(
                   client,
                   consumerId,
                   queue,
@@ -416,12 +408,11 @@ export class MessageUnacknowledgement {
             );
           },
           // Step 3: Combine the results from all queues into a single status object
-          (
-            statuses: TMessageUnacknowledgementStatus[],
-            next: ICallback<TMessageUnacknowledgementStatus>,
-          ) => {
-            const combinedStatus: TMessageUnacknowledgementStatus =
-              Object.assign({}, ...statuses);
+          (statuses: TMessageRecovery[], next: ICallback<TMessageRecovery>) => {
+            const combinedStatus: TMessageRecovery = Object.assign(
+              {},
+              ...statuses,
+            );
             next(null, combinedStatus);
           },
         ],

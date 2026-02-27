@@ -200,7 +200,13 @@ export function _publishMessage(
           return cb();
         case 'QUEUE_NOT_FOUND':
           logger.error(`Queue ${queueName} not found for message ${messageId}`);
-          return cb(new QueueNotFoundError());
+          return cb(
+            new QueueNotFoundError({
+              metadata: {
+                queue: destinationQueue,
+              },
+            }),
+          );
         case 'CONSUMER_GROUP_NOT_FOUND':
           logger.error(
             `Consumer group ${consumerGroupId} not found for queue ${queueName}`,

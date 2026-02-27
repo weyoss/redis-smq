@@ -12,6 +12,7 @@ import path from 'path';
 import { env, ICallback } from 'redis-smq-common';
 import {
   Configuration,
+  Consumer,
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
@@ -144,7 +145,9 @@ export async function createQueue(
 export async function crashAConsumerConsumingAMessage() {
   await new Promise((resolve) => {
     const thread = fork(path.join(env.getCurrentDir(), 'consumer-thread.js'));
-    thread.send(JSON.stringify(config));
+    thread.send(
+      JSON.stringify({ config, consumerOptions: Consumer.getDefaultOptions() }),
+    );
     thread.on('error', () => void 0);
     thread.on('exit', resolve);
   });

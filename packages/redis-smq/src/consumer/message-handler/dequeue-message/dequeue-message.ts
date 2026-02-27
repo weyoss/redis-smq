@@ -242,7 +242,13 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           (err, reply) => {
             if (err) return cb(err);
             if (reply === 'QUEUE_NOT_FOUND')
-              return cb(new QueueNotFoundError());
+              return cb(
+                new QueueNotFoundError({
+                  metadata: {
+                    queue: this.queue.queueParams,
+                  },
+                }),
+              );
             if (reply === 'QUEUE_NOT_ACTIVE')
               return cb(
                 new QueueNotActiveError({

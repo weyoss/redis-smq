@@ -32,7 +32,14 @@ export function _getQueueConsumerIds(
       (cb: ICallback<void>) =>
         _queueExists(client, queue, (err, reply) => {
           if (err) return cb(err);
-          if (!reply) return cb(new QueueNotFoundError());
+          if (!reply)
+            return cb(
+              new QueueNotFoundError({
+                metadata: {
+                  queue,
+                },
+              }),
+            );
           cb();
         }),
       (cb: ICallback<string[]>) => {

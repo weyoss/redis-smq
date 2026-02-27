@@ -7,25 +7,33 @@
  * in the root directory of this source tree.
  */
 
-import { IConsumerOptions } from '../types/index.js';
-
-const defaultConfig: Required<IConsumerOptions> = {
-  enableMultiplexing: false,
-  heartbeatTTL: 120_000,
-};
+import { IConsumerOptions, TConsumerParsedOptions } from '../types/index.js';
 
 export function _parseConsumerOptions(
-  config?: boolean | IConsumerOptions,
-): Required<IConsumerOptions> {
+  config: boolean | IConsumerOptions | undefined,
+  defaultConfig: TConsumerParsedOptions,
+): TConsumerParsedOptions {
   if (config == null) {
     return defaultConfig;
   }
+
   if (typeof config === 'boolean') {
     return {
       ...defaultConfig,
       enableMultiplexing: true,
     };
   }
+
+  if (config?.batchSize && config.batchSize > 1000) {
+    throw new Error(`Batch size is too big. Maximum allowed value is 1000.`);
+  }
+
+  if (config?.batchTimeoutMs && config.batchTimeoutMs < 1000) {
+    throw new Error(
+      `Batch timeout is too small. Minimum allowed value is 1000.`,
+    );
+  }
+
   return {
     ...defaultConfig,
     ...config,

@@ -40,7 +40,13 @@ export function _getQueueState(
     (err, reply) => {
       if (err) return cb(err);
       if (reply === 'QUEUE_NOT_FOUND') {
-        return cb(new QueueNotFoundError());
+        return cb(
+          new QueueNotFoundError({
+            metadata: {
+              queue: queueParams,
+            },
+          }),
+        );
       }
 
       // Default to ACTIVE if not set

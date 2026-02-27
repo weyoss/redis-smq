@@ -45,7 +45,7 @@ test('Set a rate limit for a queue and consume message using many consumers', as
   );
 
   for (let i = 0; i < 6; i += 1) {
-    const consumer = await getConsumer();
+    const consumer = getConsumer();
     await consumer.runAsync();
   }
 
@@ -58,8 +58,9 @@ test('Set a rate limit for a queue and consume message using many consumers', as
     );
   }
 
-  await bluebird.delay(30000);
-  expect(messages.length > 6).toBe(true);
+  await bluebird.delay(25000);
+  expect(messages.length).toBeGreaterThanOrEqual(6);
+  expect(messages.length).toBeLessThanOrEqual(9);
 
   for (let i = 0; i < messages.length; i += 1) {
     if (i === 0) {

@@ -15,9 +15,16 @@ import {
   RedisSMQ,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
+import { TConsumerParsedOptions } from '../../src/consumer/types/index.js';
 
 process.on('message', function (payload: unknown) {
-  const config: IRedisSMQParsedConfig = JSON.parse(String(payload));
+  const {
+    config,
+    consumerOptions,
+  }: {
+    config: IRedisSMQParsedConfig;
+    consumerOptions: TConsumerParsedOptions;
+  } = JSON.parse(String(payload));
   RedisSMQ.initializeWithConfig(config, (err) => {
     if (err) throw err;
     const defaultQueue = getDefaultQueue();
@@ -35,7 +42,7 @@ process.on('message', function (payload: unknown) {
       );
     });
 
-    const consumer = new Consumer({ heartbeatTTL: 6_000 });
+    const consumer = new Consumer(consumerOptions);
     consumer.consume(
       defaultQueue,
       () => void 0, // not acknowledging

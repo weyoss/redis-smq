@@ -24,7 +24,7 @@ import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { HeartbeatFactory } from '../common/heartbeat/heartbeat.js';
 import { heartbeatEventPublisher } from './heartbeat-event-publisher.js';
-import { IConsumerOptions } from './types/index.js';
+import { IConsumerOptions, TConsumerParsedOptions } from './types/index.js';
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 
 /**
@@ -35,6 +35,14 @@ import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
  * @extends Runnable<TConsumerEvent>
  */
 export class Consumer extends Runnable<TConsumerEvent> {
+  private static defaultOptions: TConsumerParsedOptions = {
+    enableMultiplexing: false,
+    heartbeatTTL: 120_000,
+    enableBatchAcks: true,
+    batchSize: 100,
+    batchTimeoutMs: 10_000,
+  };
+
   protected readonly consumerContext: IConsumerContext;
 
   // Instance responsible for running message handlers. It can be either a multiplexed or a standard message handler runner.
@@ -47,7 +55,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
 
   //
-  protected consumerOptions: IConsumerOptions;
+  protected consumerOptions: TConsumerParsedOptions;
 
   /**
    * Creates a new Consumer instance.
@@ -66,7 +74,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
   constructor(enableMultiplexing?: boolean);
   constructor(options?: boolean | IConsumerOptions) {
     super();
-    this.consumerOptions = _parseConsumerOptions(options);
+    this.consumerOptions = _parseConsumerOptions(
+      options,
+      Consumer.defaultOptions,
+    );
+    console.log(this.consumerOptions);
     const config = Configuration.getConfig();
     this.logger = createLogger(
       config.logger,
@@ -78,6 +90,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
       consumerId: this.getId(),
       config: config,
       logger: this.logger,
+      consumerOptions: this.consumerOptions,
     };
 
     eventPublisher(this);
@@ -464,5 +477,18 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
     );
     return queues;
+  }
+
+  static setDefaultOptions(options: IConsumerOptions): void {
+    this.defaultOptions = _parseConsumerOptions(
+      options,
+      Consumer.defaultOptions,
+    );
+  }
+
+  static getDefaultOptions(): TConsumerParsedOptions {
+    return {
+      ...this.defaultOptions,
+    };
   }
 }

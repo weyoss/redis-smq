@@ -9,8 +9,8 @@
 
 import { async, ICallback } from 'redis-smq-common';
 import { _getQueueConsumerIds } from '../../../../queue-manager/_/_get-queue-consumer-ids.js';
-import { MessageUnacknowledgement } from '../../consume-message/message-unacknowledgement.js';
-import { EMessageUnacknowledgementReason } from '../../consume-message/types/index.js';
+import { MessageUnacknowledger } from '../../consume-message/message-unacknowledger.js';
+import { EMessageUnacknowledgementCause } from '../../consume-message/types/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _deleteEphemeralConsumerGroup } from '../../_/_delete-ephemeral-consumer-group.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
@@ -18,14 +18,14 @@ import { IQueueWorkerPayload } from '../../../../common/abstract/worker/types/me
 import { _isConsumerAlive } from '../../../_/_is-consumer-alive.js';
 
 export class ReapConsumersWorker extends QueueWorkerAbstract {
-  protected messageUnacknowledgement: MessageUnacknowledgement;
+  protected messageUnacknowledgement: MessageUnacknowledger;
 
   constructor(payload: IQueueWorkerPayload) {
     super(payload);
-    this.messageUnacknowledgement = new MessageUnacknowledgement(this.logger);
+    this.messageUnacknowledgement = new MessageUnacknowledger(this.logger);
   }
 
-  protected cleanUp(consumerId: string, cb: ICallback): void {
+  protected recoverFromConsumerCrash(consumerId: string, cb: ICallback): void {
     async.series(
       [
         (done: ICallback) => {
@@ -33,14 +33,15 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
           this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
             consumerId,
             [this.queueParsedParams.queueParams],
-            EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
+            EMessageUnacknowledgementCause.OFFLINE_CONSUMER,
             (err, status) => {
               if (err) {
                 this.logger.error(
                   `Failed to unacknowledge messages for offline consumer ${consumerId}`,
                   err,
                 );
-                return done(err);
+                // ignoring err
+                return done();
               }
               const messageCount = status ? Object.keys(status).length : 0;
               this.logger.info(
@@ -123,7 +124,7 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
                     this.logger.info(
                       `Consumer ${consumerId} is offline, cleaning up...`,
                     );
-                    this.cleanUp(consumerId, done);
+                    this.recoverFromConsumerCrash(consumerId, done);
                   } else {
                     this.logger.debug(
                       `Consumer ${consumerId} is alive and active`,

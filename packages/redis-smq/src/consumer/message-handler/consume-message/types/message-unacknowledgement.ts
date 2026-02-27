@@ -7,42 +7,41 @@
  * in the root directory of this source tree.
  */
 
-export enum EMessageUnacknowledgementAction {
+export enum EMessageRecoveryAction {
   DEAD_LETTER,
   REQUEUE,
   DELAY,
 }
 
-export enum EMessageUnacknowledgementDeadLetterReason {
+export enum EMessageDeadLetterCause {
   TTL_EXPIRED,
   RETRY_THRESHOLD_EXCEEDED,
   PERIODIC_MESSAGE,
 }
 
-export enum EMessageUnacknowledgementReason {
+export enum EMessageUnacknowledgementCause {
   TIMEOUT,
   CONSUME_ERROR,
   UNACKNOWLEDGED,
   OFFLINE_CONSUMER,
-  OFFLINE_MESSAGE_HANDLER,
+  SHUTTING_DOWN,
   TTL_EXPIRED,
   QUEUE_STOPPED,
   QUEUE_INVALID_STATE,
   QUEUE_LOCKED,
+  MESSAGE_NOT_FOUND,
+  QUEUE_STATE_CHANGED,
+  QUEUE_NOT_FOUND,
+  UNEXPECTED_ERROR,
 }
 
-export type TMessageUnacknowledgementAction =
+export type TMessageRecoveryResolution =
   | {
-      action:
-        | EMessageUnacknowledgementAction.REQUEUE
-        | EMessageUnacknowledgementAction.DELAY;
+      action: EMessageRecoveryAction.REQUEUE | EMessageRecoveryAction.DELAY;
     }
   | {
-      action: EMessageUnacknowledgementAction.DEAD_LETTER;
-      deadLetterReason: EMessageUnacknowledgementDeadLetterReason;
+      action: EMessageRecoveryAction.DEAD_LETTER;
+      deadLetterCause: EMessageDeadLetterCause;
     };
 
-export type TMessageUnacknowledgementStatus = Record<
-  string,
-  TMessageUnacknowledgementAction
->;
+export type TMessageRecovery = Record<string, TMessageRecoveryResolution>;
