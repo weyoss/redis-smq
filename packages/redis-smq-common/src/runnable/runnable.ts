@@ -113,7 +113,7 @@ export abstract class Runnable<
    * @param err - The error that occurred within the Runnable instance.
    * @returns {void} - This function does not return any value.
    */
-  protected handleError(err: Error): void {
+  protected handleError(err: unknown): void {
     if (!this.isOperational()) return;
 
     this.logger.error(err);
