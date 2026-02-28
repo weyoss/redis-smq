@@ -333,14 +333,14 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   }
 
   protected override handleError(err: Error) {
-    if (this.isOperational()) {
-      this.logger.error(`MessageHandlerRunner error: ${err.message}`, err);
-      this.emit(
-        'consumer.messageHandlerRunner.error',
-        err,
-        this.consumerContext.consumerId,
-      );
-    }
+    if (!this.isOperational()) return;
+
+    this.logger.error(`MessageHandlerRunner error: ${err.message}`, err);
+    this.emit(
+      'consumer.messageHandlerRunner.error',
+      err,
+      this.consumerContext.consumerId,
+    );
     super.handleError(err);
   }
 

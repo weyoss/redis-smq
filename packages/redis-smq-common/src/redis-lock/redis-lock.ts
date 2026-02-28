@@ -351,6 +351,8 @@ export class RedisLock extends Runnable<TLockerEvent> {
    * @returns {void}
    */
   protected override handleError = (err: Error): void => {
+    if (!this.isOperational()) return;
+
     this.logger.error(`RedisLock error: ${err.message}`, err);
     this.emit('locker.error', err, this.id);
     super.handleError(err);

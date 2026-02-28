@@ -109,12 +109,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       this.timer.setTimeout(() => this.next(), 1000);
     };
 
-  protected onError = (err: Error) => {
-    if (this.isOperational()) {
-      this.handleError(err);
-    }
-  };
-
   protected override handleError(err: Error) {
     if (!this.isOperational()) return;
 
@@ -144,7 +138,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       this.logger,
       keyQueueWorkerClusterLock,
     );
-    this.queueWorkerCluster.on('workerCluster.error', this.onError);
+    this.queueWorkerCluster.on('workerCluster.error', (err) =>
+      this.handleError(err),
+    );
     this.queueWorkerCluster.loadFromDir<IQueueWorkerPayload>(
       WORKERS_DIR,
       {
@@ -217,7 +213,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           this.getId(),
           this.messageHandler,
         );
-        this.consumeMessage.on('consumer.consumeMessage.error', this.onError);
+        this.consumeMessage.on('consumer.consumeMessage.error', (err) =>
+          this.handleError(err),
+        );
         this.consumeMessage.on('consumer.consumeMessage.next', () => {
           this.next();
         });
@@ -225,7 +223,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       },
       (cb: ICallback) => {
         this.dequeueMessage = this.createDequeueMessageInstance();
-        this.dequeueMessage.on('consumer.dequeueMessage.error', this.onError);
+        this.dequeueMessage.on('consumer.dequeueMessage.error', (err) =>
+          this.handleError(err),
+        );
         this.dequeueMessage.on(
           'consumer.dequeueMessage.messageReceived',
           this.onMessageReceived,
@@ -273,7 +273,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           this.dequeueMessage.shutdown(() => {
             this.dequeueMessage?.removeListener(
               'consumer.dequeueMessage.error',
-              this.onError,
+              (err) => this.handleError(err),
             );
             this.dequeueMessage?.removeListener(
               'consumer.dequeueMessage.messageReceived',
@@ -293,7 +293,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           this.consumeMessage.shutdown(() => {
             this.consumeMessage?.removeListener(
               'consumer.consumeMessage.error',
-              this.onError,
+              (err) => this.handleError(err),
             );
             this.consumeMessage = null;
             cb();

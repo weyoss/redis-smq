@@ -180,15 +180,15 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   }
 
   protected override handleError(err: Error) {
-    if (this.isOperational()) {
-      this.logger.error(`DequeueMessage error: ${err.message}`, err);
-      this.emit(
-        'consumer.dequeueMessage.error',
-        err,
-        this.consumerContext.consumerId,
-        this.queue,
-      );
-    }
+    if (!this.isOperational()) return;
+
+    this.logger.error(`DequeueMessage error: ${err.message}`, err);
+    this.emit(
+      'consumer.dequeueMessage.error',
+      err,
+      this.consumerContext.consumerId,
+      this.queue,
+    );
     super.handleError(err);
   }
 

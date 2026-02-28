@@ -147,11 +147,11 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
   }
 
   protected override handleError(err: Error): void {
-    if (this.isOperational()) {
-      this.logger.error(`WorkerCluster error: ${err.message}`, err);
-      this.emit('workerCluster.error', err);
-      super.handleError(err);
-    }
+    if (!this.isOperational()) return;
+
+    this.logger.error(`WorkerCluster error: ${err.message}`, err);
+    this.emit('workerCluster.error', err);
+    super.handleError(err);
   }
 
   /**

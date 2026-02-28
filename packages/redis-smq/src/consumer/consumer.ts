@@ -318,6 +318,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * Logs the error and emits the 'consumer.error' event with error details.
    */
   protected override handleError(err: Error) {
+    if (!this.isOperational()) return;
+
     this.logger.error(`Consumer error: ${err.message}`, err);
     this.logger.debug(`Emitting consumer.error event for consumer ${this.id}`);
     this.emit('consumer.error', err, this.id);
