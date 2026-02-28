@@ -74,6 +74,11 @@ if (!isDevelopment) {
   };
 }
 
+if (!(totalMessages > 0)) {
+  console.log(`Total messages must greater than 0. Exiting...`);
+  process.exit(0);
+}
+
 if (!consumerCount && !producerCount) {
   console.log(`No benchmark type provided. Exiting...`);
   process.exit(0);

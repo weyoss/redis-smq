@@ -8,18 +8,14 @@
  */
 
 import { IBenchmarkResult, IWorkerCompleteMessage } from '../types/index.js';
-import { HighResTimer } from './timing.js';
+import { calculateThroughput } from './calculate-throughput.js';
 
 export function calculateBenchmarkResult(
   resultData: IWorkerCompleteMessage['data'][],
 ): IBenchmarkResult {
   const totalMessages = resultData.reduce((sum, c) => sum + c.processed, 0);
   const maxTimeNs = Math.max(...resultData.map((c) => c.timeTaken));
-  let throughput = 0;
-  if (maxTimeNs) {
-    const maxTimeSeconds = HighResTimer.toSeconds(maxTimeNs);
-    throughput = Number((totalMessages / maxTimeSeconds).toFixed(0));
-  }
+  const throughput = calculateThroughput(totalMessages, maxTimeNs);
   return {
     totalMessages,
     totalTimeNs: maxTimeNs,

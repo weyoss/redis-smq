@@ -21,6 +21,7 @@ import { Worker } from 'worker_threads';
 import { createWorker } from '../helpers/create-worker.js';
 import { HighResTimer } from '../helpers/timing.js';
 import { calculateBenchmarkResult } from '../helpers/calculate-benchmark-result.js';
+import { calculateThroughput } from '../helpers/calculate-throughput.js';
 
 export abstract class BaseBenchmark {
   protected showProgress = false;
@@ -65,8 +66,10 @@ export abstract class BaseBenchmark {
 
         const { workerId, processed, timeTaken } = msg.data;
 
+        const throughput = calculateThroughput(processed, timeTaken);
+
         console.log(
-          `${this.workerLabel} ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
+          `${this.workerLabel} ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${throughput} msg/s)`,
         );
 
         if (this.completedWorkers === this.workerCount)
@@ -105,7 +108,7 @@ export abstract class BaseBenchmark {
       }
 
       console.log(
-        `${this.workerLabel} ${i} will handle ${workerMessageCount} messages`,
+        `${this.workerLabel} ${i} will handle ${workerMessageCount} messages (approx)`,
       );
 
       const worker = createWorker({
@@ -113,6 +116,7 @@ export abstract class BaseBenchmark {
         workerPath: this.workerPath,
         workerId: i,
         expectedMessages: workerMessageCount,
+        totalMessages: this.totalMessages,
         queue: this.queue,
         onMessage,
       });

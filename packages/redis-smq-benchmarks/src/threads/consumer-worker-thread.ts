@@ -8,7 +8,7 @@
  */
 
 import { parentPort, workerData } from 'worker_threads';
-import { RedisSMQ } from 'redis-smq';
+import { RedisSMQ, TConsumerMessageHandler } from 'redis-smq';
 import { async } from 'redis-smq-common';
 import {
   EWorkerMessageType,
@@ -17,69 +17,82 @@ import {
 } from '../types/index.js';
 import { HighResTimer } from '../helpers/timing.js';
 
-const { queue, redisConfig, workerId, expectedMessages } =
+const { queue, redisConfig, workerId, totalMessages, expectedMessages } =
   workerData as IWorkerData;
 
 let consumedCount = 0;
 let startTime = 0;
+let lastMessageTime = 0;
+let idleTimer: NodeJS.Timeout | null = null;
+let isActive = true;
 
 RedisSMQ.initialize(redisConfig, (err) => {
   if (err) throw err;
   const consumer = RedisSMQ.createConsumer();
+
+  const complete = () => {
+    if (!isActive) return;
+    isActive = false;
+    RedisSMQ.shutdown(() => {
+      // Use lastMessageTime as the end time (time of last consumption)
+      const timeTaken = lastMessageTime - startTime;
+
+      const message: TWorkerMessage = {
+        type: EWorkerMessageType.COMPLETED,
+        data: {
+          workerId,
+          processed: consumedCount,
+          timeTaken,
+          expected: expectedMessages,
+        },
+      };
+      parentPort?.postMessage(message);
+    });
+  };
+
+  const checkIdle = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+
+    // If no message received for 5 seconds, consider queue empty
+    idleTimer = setTimeout(complete, 5000);
+  };
 
   async.series(
     [
       (cb) => consumer.run(cb),
       (cb) => {
         startTime = HighResTimer.now();
-        consumer.consume(
-          queue,
-          (_msg, ack) => {
-            consumedCount++;
-            ack();
+        lastMessageTime = startTime;
 
-            // Report progress every 10% of expected messages
-            if (
-              expectedMessages > 0 &&
-              consumedCount % Math.max(1, Math.floor(expectedMessages / 10)) ===
-                0
-            ) {
-              const message: TWorkerMessage = {
-                type: EWorkerMessageType.PROGRESS,
-                data: { workerId, progress: consumedCount },
-              };
-              parentPort?.postMessage(message);
-            }
+        const messageHandler: TConsumerMessageHandler = (msg, ack) => {
+          // Update last message time on each consumption
+          lastMessageTime = HighResTimer.now();
 
-            // Stop consuming after reaching expected message count
-            if (expectedMessages > 0 && consumedCount >= expectedMessages) {
-              const timeTaken = HighResTimer.now() - startTime;
-              consumer.cancel(queue, (err) => {
-                if (err) {
-                  console.error(
-                    `Worker ${workerId} error cancelling consumer:`,
-                    err,
-                  );
-                  return cb(err);
-                }
-                const message: TWorkerMessage = {
-                  type: EWorkerMessageType.COMPLETED,
-                  data: {
-                    workerId,
-                    processed: consumedCount,
-                    timeTaken,
-                    expected: expectedMessages,
-                  },
-                };
-                parentPort?.postMessage(message);
-                cb();
-              });
-            }
-          },
-          (err) => {
-            if (err) cb(err);
-          },
-        );
+          // Reset idle timer on each message
+          checkIdle();
+
+          consumedCount++;
+          ack();
+
+          // Report progress every 20% of total messages
+          if (
+            totalMessages > 0 &&
+            consumedCount % Math.max(1, Math.floor(totalMessages / 20)) === 0
+          ) {
+            const message: TWorkerMessage = {
+              type: EWorkerMessageType.PROGRESS,
+              data: { workerId, progress: consumedCount },
+            };
+            parentPort?.postMessage(message);
+          }
+        };
+
+        consumer.consume(queue, messageHandler, (err) => {
+          if (err) return cb(err);
+
+          // if this consumer gets no messages, complete after a longer idle
+          checkIdle();
+        });
       },
     ],
     (err) => {
@@ -87,7 +100,6 @@ RedisSMQ.initialize(redisConfig, (err) => {
         console.error(`Worker ${workerId} error:`, err);
         throw err;
       }
-      RedisSMQ.shutdown(() => void 0);
     },
   );
 });

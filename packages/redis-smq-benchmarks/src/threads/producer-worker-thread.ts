@@ -42,26 +42,22 @@ RedisSMQ.initialize(redisConfig, (err) => {
               if (perr) return cb(perr);
               pump();
             });
+            return;
           }
 
           // Stop consuming after reaching expected message count
-          else if (producedCount >= expectedMessages) {
-            const timeTaken = HighResTimer.now() - startTime;
-            const message: TWorkerMessage = {
-              type: EWorkerMessageType.COMPLETED,
-              data: {
-                workerId,
-                processed: producedCount,
-                timeTaken,
-                expected: expectedMessages,
-              },
-            };
-            parentPort?.postMessage(message);
-            return cb();
-          }
-
-          //
-          else cb();
+          const timeTaken = HighResTimer.now() - startTime;
+          const message: TWorkerMessage = {
+            type: EWorkerMessageType.COMPLETED,
+            data: {
+              workerId,
+              processed: producedCount,
+              timeTaken,
+              expected: expectedMessages,
+            },
+          };
+          parentPort?.postMessage(message);
+          return cb();
         };
         pump();
       },

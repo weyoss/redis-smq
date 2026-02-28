@@ -20,6 +20,7 @@ export interface IWorkerData {
   redisConfig: IRedisConfig;
   workerId: number;
   expectedMessages: number;
+  totalMessages: number;
 }
 
 export type TWorkerMessage = IWorkerProgressMessage | IWorkerCompleteMessage;

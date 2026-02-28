@@ -20,6 +20,7 @@ import { createWorker } from './helpers/create-worker.js';
 import { Worker } from 'worker_threads';
 import { HighResTimer } from './helpers/timing.js';
 import { calculateBenchmarkResult } from './helpers/calculate-benchmark-result.js';
+import { calculateThroughput } from './helpers/calculate-throughput.js';
 
 /**
  * RedisSMQ Benchmark: End-to-End Throughput with N producers and M consumers.
@@ -66,8 +67,10 @@ export function runE2EBenchmark(
       producerWorkerResults.push(msg.data);
       const { workerId, processed, timeTaken } = msg.data;
 
+      const throughput = calculateThroughput(processed, timeTaken);
+
       console.log(
-        `Producer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
+        `Producer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${throughput} msg/s)`,
       );
 
       checkBenchmarkCompletion();
@@ -83,8 +86,10 @@ export function runE2EBenchmark(
       consumerWorkerResults.push(msg.data);
       const { workerId, processed, timeTaken } = msg.data;
 
+      const throughput = calculateThroughput(processed, timeTaken);
+
       console.log(
-        `Consumer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${(processed / HighResTimer.toSeconds(timeTaken)).toFixed(0)} msg/s)`,
+        `Consumer ${workerId} completed: ${processed} messages in ${HighResTimer.format(timeTaken)} (${throughput} msg/s)`,
       );
 
       checkBenchmarkCompletion();
@@ -194,6 +199,7 @@ export function runE2EBenchmark(
               workerPath: producerWorkerPath,
               workerId: i,
               expectedMessages: producerMessageCount,
+              totalMessages,
               redisConfig,
               queue,
               onMessage: onProducerMessage,
@@ -217,6 +223,7 @@ export function runE2EBenchmark(
               workerPath: consumerWorkerPath,
               workerId: i,
               expectedMessages: consumerMessageCount,
+              totalMessages,
               redisConfig,
               queue,
               onMessage: onConsumerMessage,

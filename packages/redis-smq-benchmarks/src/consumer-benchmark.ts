@@ -44,6 +44,12 @@ export class ConsumerBenchmark extends BaseBenchmark {
       console.log(`Total messages consumed: ${r.totalMessages}`);
       console.log(`Total time: ${HighResTimer.format(r.totalTimeNs)}`);
       console.log(`Overall throughput: ${r.throughput} messages/second`);
+
+      if (r.totalMessages !== this.totalMessages) {
+        console.log(
+          `WARNING: Expected ${this.totalMessages} messages but consumed ${r.totalMessages}`,
+        );
+      }
       console.log('========================================\n');
       cb();
     };

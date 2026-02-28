@@ -17,16 +17,19 @@ export function createWorker(params: {
   workerPath: string;
   queue: IQueueParams;
   expectedMessages: number;
+  totalMessages: number;
   redisConfig: IRedisConfig;
   onMessage: (message: TWorkerMessage) => void;
 }) {
   //
-  const { queue, workerId, expectedMessages, redisConfig } = params;
+  const { queue, workerId, expectedMessages, totalMessages, redisConfig } =
+    params;
   const workerData: IWorkerData = {
     redisConfig,
     queue,
     workerId,
     expectedMessages,
+    totalMessages,
   };
 
   //

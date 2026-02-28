@@ -73,6 +73,7 @@ describe('consumer-worker-thread.ts', () => {
       redisConfig: redisConfig,
       workerId: 1,
       expectedMessages: 100,
+      totalMessages: 100,
     };
   });
 
