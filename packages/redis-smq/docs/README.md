@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / Documentation
+
 # RedisSMQ Documentation
 
 **RedisSMQ** is a high-performance, Redis-backed message queue library for Node.js. It offers a clean,
