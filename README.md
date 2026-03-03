@@ -10,18 +10,24 @@ A high-performance Redis message queue for Node.js — simple to use, built for 
 
 ## ✨ Features
 
-- 📬 [Reliable delivery](packages/redis-smq/docs/queue-delivery-models.md) with retry mechanisms
-- 📊 [Multiple queue strategies](packages/redis-smq/docs/queues.md): FIFO, LIFO, and Priority Queues
-- 🔀 [Exchange patterns](packages/redis-smq/docs/message-exchanges.md): Direct, Topic, and Fanout routing
-- 🚦 [Rate limiting](packages/redis-smq/docs/queue-rate-limiting.md) for controlled message consumption
-- 🕰️ [Built-in scheduler](packages/redis-smq/docs/scheduling-messages.md) for delayed and repeating messages
-- 🚀 [High-throughput processing](packages/redis-smq/docs/performance.md)
-- 🧵 [Worker threads](packages/redis-smq/docs/message-handler-worker-threads.md) for sandboxing and performance
-- ⏱️ [Message expiration](packages/redis-smq/docs/messages.md) and consumption timeouts
-- 🔄 [Multi-queue](packages/redis-smq/docs/consuming-messages.md) producers and consumers
-- 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI v3 and Swagger UI
-- 📊 [Web UI](packages/redis-smq-web-ui/README.md) for real-time monitoring
-- 📦 [ESM & CJS](packages/redis-smq/docs/esm-cjs-modules.md) module support
+- 📬 [Reliable delivery](packages/redis-smq/docs/queue-delivery-models.md) with retries
+- 📊 [Multiple queue types](packages/redis-smq/docs/queues.md): FIFO, LIFO, Priority
+- 🔀 [Flexible routing](packages/redis-smq/docs/message-exchanges.md): Direct/Topic/Fanout exchanges+ Direct queue publishing
+- 👥 [Pub/Sub & Point-to-Point](packages/redis-smq/docs/queue-delivery-models.md) delivery models with native consumer groups
+- 🚦 [Queue-level rate limiting](packages/redis-smq/docs/queue-rate-limiting.md)
+- ⏰ [Built-in scheduler](packages/redis-smq/docs/scheduling-messages.md): delays, CRON, repeating
+- 🔒 [Queue state management](packages/redis-smq/docs/queue-state-management-system.md): pause/stop/resume + audit
+- ⏱️ [Message TTL & consumption timeouts](packages/redis-smq/docs/messages.md)
+- 🚀 [High-throughput design](packages/redis-smq/docs/performance.md) with atomic Lua scripts
+- 📦 [Batch acks](packages/redis-smq/docs/message-batch-unacknowledgements.md) & [Batch unacks](packages/redis-smq/docs/message-batch-unacknowledgements.md) — 99% fewer Redis calls
+- 🧵 [Worker threads](packages/redis-smq/docs/message-handler-worker-threads.md) for CPU-heavy handlers
+- 🔄 [Multi-queue producers & consumers](packages/redis-smq/docs/consuming-messages.md) with [multiplexing](packages/redis-smq/docs/multiplexing.md) support
+- 📡 [Event bus](packages/redis-smq/docs/event-bus.md) for real-time internal events
+- 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI + Swagger
+- 📊 [Web UI](packages/redis-smq-web-ui/README.md) for live management
+- 🎯 [Process-wide API](packages/redis-smq/docs/simplified-redis-smq-api.md) — initialize once, factory methods, single shutdown
+- 📦 [ESM + CJS](packages/redis-smq/docs/esm-cjs-modules.md) module support
+- 📖 [TypeScript-first](packages/redis-smq/docs/api/README.md) with rich docs
 
 ## 🎯 Use Cases
 
