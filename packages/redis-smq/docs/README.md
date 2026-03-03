@@ -43,7 +43,7 @@ message auditing, worker threads, and more — all while keeping operations atom
 - [Queue Rate Limiting](queue-rate-limiting.md) — _Throttle consumption per queue_
 - [Message Audit](message-audit.md) — _Track acknowledged & dead-lettered messages_
 - [EventBus](event-bus.md) — _Real-time observability of internal events_
-- [Queue State Management System](queue-state-management-system.md) — _Pause, stop, lock queues with audit trail_
+- [Queue State Management System](queue-state-management-system.md) — _Pause, stop, resume queues with audit trail_
 - [Validating Queue Operations](validating-queue-operations.md) — _State-based operation guards_
 
 ### 🔧 Reliability & Performance
