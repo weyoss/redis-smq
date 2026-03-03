@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Version Compatibility
+[RedisSMQ](../README.md) / [Documentation](README.md) / Version Compatibility
 
 # Version Compatibility
 

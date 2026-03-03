@@ -1,4 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueOperationForbiddenError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueOperationForbiddenError
 
 # Class: QueueOperationForbiddenError
 

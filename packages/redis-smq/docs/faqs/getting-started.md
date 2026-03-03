@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / What is the recommended way to set up and configure RedisSMQ for a new project?
+[RedisSMQ](../README.md) / [Documentation](README.md) / [FAQs](README.md) / What is the recommended way to set up and configure RedisSMQ for a new project?
 
 # What is the recommended way to set up and configure RedisSMQ for a new project?
 

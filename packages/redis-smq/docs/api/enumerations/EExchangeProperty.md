@@ -1,14 +1,14 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EExchangeProperty
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EExchangeProperty
 
 # Enumeration: EExchangeProperty
 
 ## Enumeration Members
 
-### QUEUE\_POLICY
+### QUEUE_POLICY
 
-> **QUEUE\_POLICY**: `1`
+> **QUEUE_POLICY**: `1`
 
-***
+---
 
 ### TYPE
 

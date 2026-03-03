@@ -1,4 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidConfigurationError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidConfigurationError
 
 # Class: InvalidConfigurationError
 

@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeProperties
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IExchangeProperties
 
 # Interface: IExchangeProperties
 
@@ -8,7 +8,7 @@
 
 > **queuePolicy**: [`EExchangeQueuePolicy`](../enumerations/EExchangeQueuePolicy.md)
 
-***
+---
 
 ### type
 

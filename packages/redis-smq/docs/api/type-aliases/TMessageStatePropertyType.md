@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TMessageStatePropertyType
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TMessageStatePropertyType
 
 # Type Alias: TMessageStatePropertyType\<T\>
 
@@ -10,4 +10,4 @@ Utility type: Get the value type for a given enum value.
 
 ### T
 
-`T` *extends* [`TMessageStateProperty`](TMessageStateProperty.md)
+`T` _extends_ [`TMessageStateProperty`](TMessageStateProperty.md)

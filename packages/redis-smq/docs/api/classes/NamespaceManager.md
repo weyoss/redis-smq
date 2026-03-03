@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / NamespaceManager
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / NamespaceManager
 
 # Class: NamespaceManager
 

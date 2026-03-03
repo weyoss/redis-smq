@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeParams
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IExchangeParams
 
 # Interface: IExchangeParams
 
@@ -12,7 +12,7 @@
 
 > **name**: `string`
 
-***
+---
 
 ### ns
 

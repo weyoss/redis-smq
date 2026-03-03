@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Validating Queue Operations
+[RedisSMQ](../README.md) / [Documentation](README.md) / Validating Queue Operations
 
 # Validating Queue Operations
 

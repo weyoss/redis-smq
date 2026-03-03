@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TMessageDeleteRawResponse
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TMessageDeleteRawResponse
 
 # Type Alias: TMessageDeleteRawResponse
 

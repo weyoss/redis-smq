@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueRateLimit
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IQueueRateLimit
 
 # Interface: IQueueRateLimit
 
@@ -10,7 +10,7 @@
 
 The time window over which the rate limit is applied. In milliseconds.
 
-***
+---
 
 ### limit
 

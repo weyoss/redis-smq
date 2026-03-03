@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Queue Delivery Models
+[RedisSMQ](../README.md) / [Documentation](README.md) / Queue Delivery Models
 
 # Queue Delivery Models
 

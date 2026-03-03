@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / What are the most important features and changes that
+[RedisSMQ](../README.md) / [Documentation](README.md) / [FAQs](README.md) / What are the most important features and changes that
 RedisSMQ v8 introduces?
 
 **What are the most important features and changes that RedisSMQ v8 introduces?**

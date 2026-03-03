@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / How do I handle errors and exceptions when using RedisSMQ's classes and methods?
+[RedisSMQ](../README.md) / [Documentation](README.md) / [FAQs](README.md) / How do I handle errors and exceptions when using RedisSMQ's classes and methods?
 
 # How do I handle errors and exceptions when using RedisSMQ's classes and methods?
 

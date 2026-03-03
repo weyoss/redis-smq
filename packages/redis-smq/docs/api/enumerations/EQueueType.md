@@ -1,21 +1,21 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EQueueType
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EQueueType
 
 # Enumeration: EQueueType
 
 ## Enumeration Members
 
-### FIFO\_QUEUE
+### FIFO_QUEUE
 
-> **FIFO\_QUEUE**: `1`
+> **FIFO_QUEUE**: `1`
 
-***
+---
 
-### LIFO\_QUEUE
+### LIFO_QUEUE
 
-> **LIFO\_QUEUE**: `0`
+> **LIFO_QUEUE**: `0`
 
-***
+---
 
-### PRIORITY\_QUEUE
+### PRIORITY_QUEUE
 
-> **PRIORITY\_QUEUE**: `2`
+> **PRIORITY_QUEUE**: `2`

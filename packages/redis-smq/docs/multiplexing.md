@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Multiplexing
+[RedisSMQ](../README.md) / [Documentation](README.md) / Multiplexing
 
 # Multiplexing
 

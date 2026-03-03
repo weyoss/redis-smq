@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EMessageProperty
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EMessageProperty
 
 # Enumeration: EMessageProperty
 
@@ -7,149 +7,149 @@ Assigning explicit values prevents accidental reordering from breaking data comp
 
 ## Enumeration Members
 
-### ACKNOWLEDGED\_AT
+### ACKNOWLEDGED_AT
 
-> **ACKNOWLEDGED\_AT**: `7`
+> **ACKNOWLEDGED_AT**: `7`
 
-***
+---
 
 ### ATTEMPTS
 
 > **ATTEMPTS**: `16`
 
-***
+---
 
-### DEAD\_LETTERED\_AT
+### DEAD_LETTERED_AT
 
-> **DEAD\_LETTERED\_AT**: `6`
+> **DEAD_LETTERED_AT**: `6`
 
-***
+---
 
-### EFFECTIVE\_SCHEDULED\_DELAY
+### EFFECTIVE_SCHEDULED_DELAY
 
-> **EFFECTIVE\_SCHEDULED\_DELAY**: `19`
+> **EFFECTIVE_SCHEDULED_DELAY**: `19`
 
-***
+---
 
 ### EXPIRED
 
 > **EXPIRED**: `18`
 
-***
+---
 
 ### ID
 
 > **ID**: `0`
 
-***
+---
 
-### LAST\_REQUEUED\_AT
+### LAST_REQUEUED_AT
 
-> **LAST\_REQUEUED\_AT**: `13`
+> **LAST_REQUEUED_AT**: `13`
 
 A timestamp that is updated each time a message is manually requeued.
 
-***
+---
 
-### LAST\_RETRIED\_ATTEMPT\_AT
+### LAST_RETRIED_ATTEMPT_AT
 
-> **LAST\_RETRIED\_ATTEMPT\_AT**: `14`
+> **LAST_RETRIED_ATTEMPT_AT**: `14`
 
 A timestamp that is set only when a message is automatically
 retried after a processing failure (e.g., from an unacknowledged message).
 
-***
+---
 
-### LAST\_SCHEDULED\_AT
+### LAST_SCHEDULED_AT
 
-> **LAST\_SCHEDULED\_AT**: `10`
+> **LAST_SCHEDULED_AT**: `10`
 
-***
+---
 
-### LAST\_UNACKNOWLEDGED\_AT
+### LAST_UNACKNOWLEDGED_AT
 
-> **LAST\_UNACKNOWLEDGED\_AT**: `9`
+> **LAST_UNACKNOWLEDGED_AT**: `9`
 
-***
+---
 
 ### MESSAGE
 
 > **MESSAGE**: `2`
 
-***
+---
 
-### PROCESSING\_STARTED\_AT
+### PROCESSING_STARTED_AT
 
-> **PROCESSING\_STARTED\_AT**: `5`
+> **PROCESSING_STARTED_AT**: `5`
 
-***
+---
 
-### PUBLISHED\_AT
+### PUBLISHED_AT
 
-> **PUBLISHED\_AT**: `4`
+> **PUBLISHED_AT**: `4`
 
-***
+---
 
-### REQUEUE\_COUNT
+### REQUEUE_COUNT
 
-> **REQUEUE\_COUNT**: `12`
+> **REQUEUE_COUNT**: `12`
 
 A counter for how many times a message has been requeued.
 
-***
+---
 
-### REQUEUED\_AT
+### REQUEUED_AT
 
-> **REQUEUED\_AT**: `11`
+> **REQUEUED_AT**: `11`
 
 A timestamp that is set only when a message is manually requeued
 for the first time.
 This is used for tracking the "clone" action.
 
-***
+---
 
-### REQUEUED\_MESSAGE\_PARENT\_ID
+### REQUEUED_MESSAGE_PARENT_ID
 
-> **REQUEUED\_MESSAGE\_PARENT\_ID**: `22`
+> **REQUEUED_MESSAGE_PARENT_ID**: `22`
 
-***
+---
 
-### SCHEDULED\_AT
+### SCHEDULED_AT
 
-> **SCHEDULED\_AT**: `3`
+> **SCHEDULED_AT**: `3`
 
-***
+---
 
-### SCHEDULED\_CRON\_FIRED
+### SCHEDULED_CRON_FIRED
 
-> **SCHEDULED\_CRON\_FIRED**: `15`
+> **SCHEDULED_CRON_FIRED**: `15`
 
-***
+---
 
-### SCHEDULED\_MESSAGE\_PARENT\_ID
+### SCHEDULED_MESSAGE_PARENT_ID
 
-> **SCHEDULED\_MESSAGE\_PARENT\_ID**: `21`
+> **SCHEDULED_MESSAGE_PARENT_ID**: `21`
 
-***
+---
 
-### SCHEDULED\_REPEAT\_COUNT
+### SCHEDULED_REPEAT_COUNT
 
-> **SCHEDULED\_REPEAT\_COUNT**: `17`
+> **SCHEDULED_REPEAT_COUNT**: `17`
 
-***
+---
 
-### SCHEDULED\_TIMES
+### SCHEDULED_TIMES
 
-> **SCHEDULED\_TIMES**: `20`
+> **SCHEDULED_TIMES**: `20`
 
-***
+---
 
 ### STATUS
 
 > **STATUS**: `1`
 
-***
+---
 
-### UNACKNOWLEDGED\_AT
+### UNACKNOWLEDGED_AT
 
-> **UNACKNOWLEDGED\_AT**: `8`
+> **UNACKNOWLEDGED_AT**: `8`

@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageAuditParsedConfig
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IMessageAuditParsedConfig
 
 # Interface: IMessageAuditParsedConfig
 
@@ -19,7 +19,7 @@ Parsed configuration for acknowledged message audit.
 Contains the normalized settings including whether audit is enabled
 and the effective queueSize and expire values (0 = unlimited).
 
-***
+---
 
 ### deadLetteredMessages
 

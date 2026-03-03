@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EMessagePropertyStatus
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EMessagePropertyStatus
 
 # Enumeration: EMessagePropertyStatus
 
@@ -10,15 +10,15 @@
 
 Message has been successfully consumed and acknowledged.
 
-***
+---
 
-### DEAD\_LETTERED
+### DEAD_LETTERED
 
-> **DEAD\_LETTERED**: `7`
+> **DEAD_LETTERED**: `7`
 
 Message has failed processing and has been moved to the dead-letter queue.
 
-***
+---
 
 ### NEW
 
@@ -27,7 +27,7 @@ Message has failed processing and has been moved to the dead-letter queue.
 Message has been created but not yet published to the queue.
 This is the default state of a message before it enters the message queue.
 
-***
+---
 
 ### PENDING
 
@@ -35,7 +35,7 @@ This is the default state of a message before it enters the message queue.
 
 Message is waiting to be consumed.
 
-***
+---
 
 ### PROCESSING
 
@@ -43,7 +43,7 @@ Message is waiting to be consumed.
 
 Message is being processed by a consumer.
 
-***
+---
 
 ### SCHEDULED
 
@@ -51,18 +51,18 @@ Message is being processed by a consumer.
 
 Message is scheduled to be delivered at a later time.
 
-***
+---
 
-### UNACK\_DELAYING
+### UNACK_DELAYING
 
-> **UNACK\_DELAYING**: `6`
+> **UNACK_DELAYING**: `6`
 
 Message has been unacknowledged and is waiting in the delayed queue for a scheduled retry.
 
-***
+---
 
-### UNACK\_REQUEUING
+### UNACK_REQUEUING
 
-> **UNACK\_REQUEUING**: `5`
+> **UNACK_REQUEUING**: `5`
 
 Message has been unacknowledged and is waiting in the requeue list to be moved back to the pending queue.

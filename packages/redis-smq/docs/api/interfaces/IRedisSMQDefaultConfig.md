@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IRedisSMQDefaultConfig
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IRedisSMQDefaultConfig
 
 # Interface: IRedisSMQDefaultConfig
 
@@ -20,7 +20,7 @@
 
 [`IRedisSMQParsedConfig`](IRedisSMQParsedConfig.md).[`eventBus`](IRedisSMQParsedConfig.md#eventbus)
 
-***
+---
 
 ### logger
 
@@ -42,7 +42,7 @@
 
 [`IRedisSMQConfig`](IRedisSMQConfig.md).[`logger`](IRedisSMQConfig.md#logger)
 
-***
+---
 
 ### messageAudit
 
@@ -52,7 +52,7 @@
 
 [`IRedisSMQParsedConfig`](IRedisSMQParsedConfig.md).[`messageAudit`](IRedisSMQParsedConfig.md#messageaudit)
 
-***
+---
 
 ### namespace
 
@@ -61,17 +61,19 @@
 Logical namespace for all queues, exchanges, and Redis keys used by RedisSMQ.
 
 Purpose:
+
 - Isolates resources between applications/environments.
 - Used whenever an operation does not explicitly pass a namespace.
 
 Defaults:
+
 - If omitted, the default namespace is used (see defaultConfig.namespace).
 
 #### Inherited from
 
 [`IRedisSMQConfig`](IRedisSMQConfig.md).[`namespace`](IRedisSMQConfig.md#namespace)
 
-***
+---
 
 ### redis
 

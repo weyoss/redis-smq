@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / ProducibleMessage
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / ProducibleMessage
 
 # Class: ProducibleMessage
 

@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Simplified RedisSMQ API
+[RedisSMQ](../README.md) / [Documentation](README.md) / Simplified RedisSMQ API
 
 # Simplified RedisSMQ API
 

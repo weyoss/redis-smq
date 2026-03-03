@@ -1,4 +1,4 @@
-[RedisSMQ](../../README.md) / [Docs](../README.md) / API Reference
+[RedisSMQ](../../README.md) / [Documentation](../README.md) / API Reference
 
 # API Reference
 

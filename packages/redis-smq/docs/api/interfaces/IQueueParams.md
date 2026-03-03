@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueParams
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IQueueParams
 
 # Interface: IQueueParams
 
@@ -8,7 +8,7 @@
 
 > **name**: `string`
 
-***
+---
 
 ### ns
 

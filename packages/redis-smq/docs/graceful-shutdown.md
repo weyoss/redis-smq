@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Graceful Shutdown
+[RedisSMQ](../README.md) / [Documentation](README.md) / Graceful Shutdown
 
 # Graceful Shutdown
 

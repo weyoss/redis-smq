@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageAuditConfig
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IMessageAuditConfig
 
 # Interface: IMessageAuditConfig
 
@@ -17,19 +17,19 @@ environments to manage Redis memory usage.
 ```typescript
 // Enable audit for dead-lettered messages with unlimited storage
 const config: IMessageAuditConfig = {
-  deadLetteredMessages: true
+  deadLetteredMessages: true,
 };
 
 // Enable audit with custom limits to control storage growth
 const config: IMessageAuditConfig = {
   acknowledgedMessages: {
-    queueSize: 5000,        // limit to 5,000 message IDs per queue
-    expire: 12 * 60 * 60    // retain for 12 hours
+    queueSize: 5000, // limit to 5,000 message IDs per queue
+    expire: 12 * 60 * 60, // retain for 12 hours
   },
   deadLetteredMessages: {
-    queueSize: 10000,       // limit to 10,000 message IDs per queue
-    expire: 7 * 24 * 60 * 60 // retain for 7 days
-  }
+    queueSize: 10000, // limit to 10,000 message IDs per queue
+    expire: 7 * 24 * 60 * 60, // retain for 7 days
+  },
 };
 ```
 
@@ -49,7 +49,7 @@ to browse and analyze acknowledged messages per queue.
 - `false` or `undefined`: Disable audit
 - `IMessageAuditConfigOptions`: Enable with custom settings
 
-***
+---
 
 ### deadLetteredMessages?
 

@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EExchangeType
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EExchangeType
 
 # Enumeration: EExchangeType
 
@@ -8,13 +8,13 @@
 
 > **DIRECT**: `0`
 
-***
+---
 
 ### FANOUT
 
 > **FANOUT**: `1`
 
-***
+---
 
 ### TOPIC
 

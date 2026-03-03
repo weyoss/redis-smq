@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Configuration
+[RedisSMQ](../README.md) / [Documentation](README.md) / Configuration
 
 # Configuration
 
@@ -88,7 +88,7 @@ RedisSMQ.initialize(
     /* ... */
   },
 );
-// InternalEventBus still connects to localhost:6379! 😕
+// Components still connects to localhost:6379! 😕
 ```
 
 **Why This Happens:**

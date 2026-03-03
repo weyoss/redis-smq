@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Queue State Management System
+[RedisSMQ](../README.md) / [Documentation](README.md) / Queue State Management System
 
 # Queue State Management System
 

@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeParsedParams
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IExchangeParsedParams
 
 # Interface: IExchangeParsedParams
 
@@ -16,7 +16,7 @@
 
 [`IExchangeParams`](IExchangeParams.md).[`name`](IExchangeParams.md#name)
 
-***
+---
 
 ### ns
 
@@ -26,7 +26,7 @@
 
 [`IExchangeParams`](IExchangeParams.md).[`ns`](IExchangeParams.md#ns)
 
-***
+---
 
 ### type
 

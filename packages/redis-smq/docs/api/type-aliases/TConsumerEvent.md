@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TConsumerEvent
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TConsumerEvent
 
 # Type Alias: TConsumerEvent
 
@@ -20,7 +20,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.error()
 
@@ -40,7 +40,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.goingDown()
 
@@ -56,7 +56,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.goingUp()
 
@@ -72,7 +72,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.up()
 

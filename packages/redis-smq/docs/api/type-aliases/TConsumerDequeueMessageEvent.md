@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TConsumerDequeueMessageEvent
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TConsumerDequeueMessageEvent
 
 # Type Alias: TConsumerDequeueMessageEvent
 
@@ -28,7 +28,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.dequeueMessage.messageReceived()
 
@@ -52,7 +52,7 @@
 
 `void`
 
-***
+---
 
 ### consumer.dequeueMessage.nextMessage()
 

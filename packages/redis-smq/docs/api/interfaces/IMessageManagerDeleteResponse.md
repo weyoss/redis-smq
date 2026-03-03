@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageManagerDeleteResponse
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IMessageManagerDeleteResponse
 
 # Interface: IMessageManagerDeleteResponse
 
@@ -24,7 +24,7 @@
 
 > **success**: `number`
 
-***
+---
 
 ### status
 

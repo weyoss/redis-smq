@@ -1,15 +1,15 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EQueueDeliveryModel
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EQueueDeliveryModel
 
 # Enumeration: EQueueDeliveryModel
 
 ## Enumeration Members
 
-### POINT\_TO\_POINT
+### POINT_TO_POINT
 
-> **POINT\_TO\_POINT**: `0`
+> **POINT_TO_POINT**: `0`
 
-***
+---
 
-### PUB\_SUB
+### PUB_SUB
 
-> **PUB\_SUB**: `1`
+> **PUB_SUB**: `1`

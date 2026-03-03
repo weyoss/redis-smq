@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessagesCount
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IQueueMessagesCount
 
 # Interface: IQueueMessagesCount
 
@@ -8,19 +8,19 @@
 
 > **acknowledged**: `number`
 
-***
+---
 
 ### deadLettered
 
 > **deadLettered**: `number`
 
-***
+---
 
 ### pending
 
 > **pending**: `number` \| [`IQueueGroupConsumersPendingCount`](IQueueGroupConsumersPendingCount.md)
 
-***
+---
 
 ### scheduled
 

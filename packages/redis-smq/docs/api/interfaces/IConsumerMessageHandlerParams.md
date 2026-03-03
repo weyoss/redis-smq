@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IConsumerMessageHandlerParams
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IConsumerMessageHandlerParams
 
 # Interface: IConsumerMessageHandlerParams
 
@@ -8,7 +8,7 @@
 
 > **messageHandler**: [`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
 
-***
+---
 
 ### queue
 

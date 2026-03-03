@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TProducerEvent
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TProducerEvent
 
 # Type Alias: TProducerEvent
 
@@ -20,7 +20,7 @@
 
 `void`
 
-***
+---
 
 ### producer.error()
 
@@ -40,7 +40,7 @@
 
 `void`
 
-***
+---
 
 ### producer.goingDown()
 
@@ -56,7 +56,7 @@
 
 `void`
 
-***
+---
 
 ### producer.goingUp()
 
@@ -72,7 +72,7 @@
 
 `void`
 
-***
+---
 
 ### producer.messagePublished()
 
@@ -96,7 +96,7 @@
 
 `void`
 
-***
+---
 
 ### producer.up()
 

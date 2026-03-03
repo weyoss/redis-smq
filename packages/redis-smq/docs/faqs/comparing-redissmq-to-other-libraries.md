@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](../README.md) / [FAQs](README.md) / What are the key features of RedisSMQ and how do they differ from other messaging libraries?
+[RedisSMQ](../README.md) / [Documentation](../README.md) / [FAQs](README.md) / What are the key features of RedisSMQ and how do they differ from other messaging libraries?
 
 # What are the key features of RedisSMQ and how do they differ from other messaging libraries?
 

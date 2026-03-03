@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / RedisSMQ Architecture Overview
+[RedisSMQ](../README.md) / [Documentation](README.md) / RedisSMQ Architecture Overview
 
 # RedisSMQ Architecture Overview
 

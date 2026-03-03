@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EExchangeQueuePolicy
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / EExchangeQueuePolicy
 
 # Enumeration: EExchangeQueuePolicy
 
@@ -8,7 +8,7 @@
 
 > **PRIORITY**: `1`
 
-***
+---
 
 ### STANDARD
 

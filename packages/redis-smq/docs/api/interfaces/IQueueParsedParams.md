@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueParsedParams
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IQueueParsedParams
 
 # Interface: IQueueParsedParams
 
@@ -8,7 +8,7 @@
 
 > **groupId**: `string` \| `null`
 
-***
+---
 
 ### queueParams
 

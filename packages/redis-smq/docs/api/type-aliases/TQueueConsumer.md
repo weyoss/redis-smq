@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TQueueConsumer
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TQueueConsumer
 
 # Type Alias: TQueueConsumer
 
@@ -10,19 +10,19 @@
 
 > **createdAt**: `number`
 
-***
+---
 
 ### hostname
 
 > **hostname**: `string`
 
-***
+---
 
 ### ipAddress
 
 > **ipAddress**: `string`[]
 
-***
+---
 
 ### pid
 

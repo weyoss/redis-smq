@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageAuditConfigOptions
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IMessageAuditConfigOptions
 
 # Interface: IMessageAuditConfigOptions
 
@@ -21,10 +21,10 @@ Set to 0 for unlimited retention time (default behavior).
 #### Default
 
 ```ts
-0 (unlimited)
+0(unlimited);
 ```
 
-***
+---
 
 ### queueSize?
 
@@ -38,5 +38,5 @@ Set to 0 for unlimited storage (default behavior).
 #### Default
 
 ```ts
-0 (unlimited)
+0(unlimited);
 ```

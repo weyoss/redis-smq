@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Performance
+[RedisSMQ](../README.md) / [Documentation](README.md) / Performance
 
 # RedisSMQ Performance
 

@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / FAQs
+[RedisSMQ](../README.md) / [Documentation](README.md) / FAQs
 
 # Frequently Asked Questions
 

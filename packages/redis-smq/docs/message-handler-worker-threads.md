@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Message Handler Worker Threads
+[RedisSMQ](../README.md) / [Documentation](README.md) / Message Handler Worker Threads
 
 # Message Handler Worker Threads
 

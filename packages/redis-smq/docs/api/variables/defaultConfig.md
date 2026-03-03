@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / defaultConfig
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / defaultConfig
 
 # Variable: defaultConfig
 
