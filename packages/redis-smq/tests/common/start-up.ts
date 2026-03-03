@@ -33,7 +33,15 @@ export async function startUp(): Promise<void> {
 
   Consumer.setDefaultOptions({
     heartbeatTTL: 6000,
-    batchAcks: true,
-    batchUnacks: true,
+    batchAcks: {
+      enabled: true,
+      batchSize: 100,
+      batchTimeoutMs: 1000,
+    },
+    batchUnacks: {
+      enabled: true,
+      batchSize: 100,
+      batchTimeoutMs: 1000,
+    },
   });
 }
