@@ -15,7 +15,7 @@ import {
   RedisSMQ,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
-import { IConsumerParsedOptions } from '../../src/consumer/types/index.js';
+import { IConsumerParsedOptions } from '../../src/index.js';
 
 process.on('message', function (payload: unknown) {
   const {
