@@ -104,6 +104,7 @@ export const errors = {
     'NoMatchedQueuesForMessageExchangeError',
   ],
   PriorityQueuingNotEnabledError: [500, 'PriorityQueuingNotEnabledError'],
+  ProcessingQueueNotEmptyError: [409, 'ProcessingQueueNotEmptyError'],
   ProducerNotRunningError: [500, 'ProducerNotRunningError'],
   QueueAlreadyBeingPurgedError: [500, 'QueueAlreadyBeingPurgedError'],
   QueueAlreadyBound: [500, 'QueueAlreadyBound'],
