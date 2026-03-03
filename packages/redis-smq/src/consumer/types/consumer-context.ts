@@ -9,7 +9,7 @@
 
 import { ILogger } from 'redis-smq-common';
 import { IRedisSMQParsedConfig } from '../../config/index.js';
-import { TConsumerParsedOptions } from './consumer.js';
+import { IConsumerParsedOptions } from './consumer.js';
 
 /**
  * IConsumerContext provides a shared container for dependencies that are passed
@@ -36,5 +36,5 @@ export interface IConsumerContext {
   /**
    *
    */
-  readonly consumerOptions: TConsumerParsedOptions;
+  readonly consumerOptions: IConsumerParsedOptions;
 }

@@ -7,35 +7,61 @@
  * in the root directory of this source tree.
  */
 
-import { IConsumerOptions, TConsumerParsedOptions } from '../types/index.js';
+import {
+  IConsumerOptions,
+  IConsumerParsedOptions,
+  IConsumerBatchConfig,
+} from '../types/index.js';
+
+function parseBatchConfig(
+  config: boolean | IConsumerBatchConfig | undefined,
+  defaultConfig: Required<IConsumerBatchConfig>,
+): Required<IConsumerBatchConfig> {
+  if (config === undefined || config === true) {
+    return { ...defaultConfig };
+  }
+  if (config === false) {
+    return {
+      enabled: false,
+      batchSize: defaultConfig.batchSize,
+      batchTimeoutMs: defaultConfig.batchTimeoutMs,
+    };
+  }
+  return {
+    enabled: config.enabled ?? defaultConfig.enabled,
+    batchSize: config.batchSize ?? defaultConfig.batchSize,
+    batchTimeoutMs: config.batchTimeoutMs ?? defaultConfig.batchTimeoutMs,
+  };
+}
 
 export function _parseConsumerOptions(
   config: boolean | IConsumerOptions | undefined,
-  defaultConfig: TConsumerParsedOptions,
-): TConsumerParsedOptions {
-  if (config == null) {
-    return defaultConfig;
-  }
-
-  if (typeof config === 'boolean') {
+  defaultConfig: IConsumerParsedOptions,
+): IConsumerParsedOptions {
+  if (config === undefined) {
     return {
-      ...defaultConfig,
-      enableMultiplexing: true,
+      heartbeatTTL: defaultConfig.heartbeatTTL,
+      enableMultiplexing: defaultConfig.enableMultiplexing,
+      batchAcks: { ...defaultConfig.batchAcks },
+      batchUnacks: { ...defaultConfig.batchUnacks },
     };
   }
-
-  if (config?.batchSize && config.batchSize > 1000) {
-    throw new Error(`Batch size is too big. Maximum allowed value is 1000.`);
+  if (typeof config === 'boolean') {
+    return {
+      heartbeatTTL: defaultConfig.heartbeatTTL,
+      enableMultiplexing: config,
+      batchAcks: { ...defaultConfig.batchAcks },
+      batchUnacks: { ...defaultConfig.batchUnacks },
+    };
   }
-
-  if (config?.batchTimeoutMs && config.batchTimeoutMs < 1000) {
-    throw new Error(
-      `Batch timeout is too small. Minimum allowed value is 1000.`,
-    );
-  }
-
   return {
-    ...defaultConfig,
-    ...config,
+    heartbeatTTL: config.heartbeatTTL ?? defaultConfig.heartbeatTTL,
+    enableMultiplexing:
+      config.enableMultiplexing ?? defaultConfig.enableMultiplexing,
+    batchAcks: parseBatchConfig(config.batchAcks, defaultConfig.batchAcks),
+    batchUnacks: parseBatchConfig(
+      config.batchUnacks,
+      defaultConfig.batchUnacks,
+    ),
   };
 }

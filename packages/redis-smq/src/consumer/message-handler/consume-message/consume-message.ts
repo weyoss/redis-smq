@@ -41,7 +41,7 @@ import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-con
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
 import { MessageAcknowledger } from './message-acknowledger.js';
-import { TConsumerParsedOptions } from '../../types/index.js';
+import { IConsumerParsedOptions } from '../../types/index.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected readonly consumerId: string;
@@ -53,7 +53,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected readonly queue: IQueueParsedParams;
   protected readonly messageHandler: TConsumerMessageHandler;
   protected readonly messageHandlerId: string;
-  protected readonly consumerOptions: TConsumerParsedOptions;
+  protected readonly consumerOptions: IConsumerParsedOptions;
 
   private redisClient: IRedisClient | null = null;
   private consumeMessageWorker: CallableWorker<

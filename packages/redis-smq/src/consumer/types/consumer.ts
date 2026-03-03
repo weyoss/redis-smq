@@ -7,13 +7,20 @@
  * in the root directory of this source tree.
  */
 
-export interface IConsumerOptions {
-  heartbeatTTL?: number;
-  enableMultiplexing?: boolean;
-  enableBatchAcks?: boolean;
-  enableBatchUnacks?: boolean;
+export interface IConsumerBatchConfig {
+  enabled?: boolean;
   batchSize?: number;
   batchTimeoutMs?: number;
 }
 
-export type TConsumerParsedOptions = Required<IConsumerOptions>;
+export interface IConsumerOptions {
+  heartbeatTTL?: number;
+  enableMultiplexing?: boolean;
+  batchAcks?: boolean | IConsumerBatchConfig;
+  batchUnacks?: boolean | IConsumerBatchConfig;
+}
+
+export interface IConsumerParsedOptions extends Required<IConsumerOptions> {
+  batchAcks: Required<IConsumerBatchConfig>;
+  batchUnacks: Required<IConsumerBatchConfig>;
+}

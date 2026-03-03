@@ -24,7 +24,7 @@ import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { HeartbeatFactory } from '../common/heartbeat/heartbeat.js';
 import { heartbeatEventPublisher } from './heartbeat-event-publisher.js';
-import { IConsumerOptions, TConsumerParsedOptions } from './types/index.js';
+import { IConsumerOptions, IConsumerParsedOptions } from './types/index.js';
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 
 /**
@@ -38,18 +38,24 @@ import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
  *     console.error('Failed to start consumer:', err);
  *     return;
  *   }
- *   console.error('Consumer is running');
+ *   console.log('Consumer is running');
  * });
  * ```
  */
 export class Consumer extends Runnable<TConsumerEvent> {
-  private static defaultOptions: TConsumerParsedOptions = {
+  private static defaultOptions: IConsumerParsedOptions = {
     enableMultiplexing: false,
     heartbeatTTL: 120_000,
-    enableBatchAcks: true,
-    enableBatchUnacks: true,
-    batchSize: 100,
-    batchTimeoutMs: 10_000,
+    batchAcks: {
+      enabled: true,
+      batchSize: 100,
+      batchTimeoutMs: 10_000,
+    },
+    batchUnacks: {
+      enabled: true,
+      batchSize: 100,
+      batchTimeoutMs: 10_000,
+    },
   };
 
   /** Internal context containing consumer configuration and dependencies */
@@ -70,27 +76,76 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
 
   /** Parsed consumer configuration options */
-  protected consumerOptions: TConsumerParsedOptions;
+  protected consumerOptions: IConsumerParsedOptions;
 
   /**
    * Creates a new Consumer instance with the specified options.
    *
-   * @param {IConsumerOptions} [consumerOptions] - Configuration options for the consumer:
-   *   - `enableMultiplexing` - When true, enables handling multiple queues with one connection. Default: false.
-   *   - `heartbeatTTL` - Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
-   *   - `enableBatchAcks` - When true, enables batch acknowledgment of messages. Default: true.
-   *   - `enableBatchUnacks` - When true, enables batch unacknowledgment of messages. Default: true.
-   *   - `batchSize` - Maximum number of messages to acknowledge in a batch. Default: 100.
-   *   - `batchTimeoutMs` - Maximum time to wait for batch to fill before acknowledging. Default: 10000 (10 seconds).
+   * @param {IConsumerOptions} [consumerOptions] - Configuration options for the consumer.
+   *
+   * The configuration object supports the following properties:
+   *
+   * - `enableMultiplexing` (boolean): When true, enables handling multiple queues with a single connection. Default: false.
+   *
+   * - `heartbeatTTL` (number): Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
+   *
+   * - `batchAcks` (boolean | IConsumerBatchConfig): Configuration for acknowledgment batching.
+   *   - If `true`: Enables batch acknowledgments with default settings.
+   *   - If `false`: Disables batch acknowledgments.
+   *   - If object: Custom configuration with:
+   *     - `enabled?`: boolean - Enable/disable (default: true)
+   *     - `batchSize?`: number - Max messages per batch (default: 100)
+   *     - `batchTimeoutMs?`: number - Max wait time in ms (default: 10000)
+   *
+   * - `batchUnacks` (boolean | IConsumerBatchConfig): Configuration for unacknowledgment batching.
+   *   - If `true`: Enables batch unacknowledgments with default settings.
+   *   - If `false`: Disables batch unacknowledgments.
+   *   - If object: Same configuration options as `batchAcks`.
+   *
    * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.init()`.
    *
    * @example
    * ```typescript
-   * // Create consumer with custom options
+   * // Create consumer with default settings
+   * const consumer = new Consumer();
+   *
+   * // Enable multiplexing, keep other defaults
+   * const consumer = new Consumer({
+   *   enableMultiplexing: true
+   * });
+   *
+   * // Custom heartbeat and disable acknowledgment batching
+   * const consumer = new Consumer({
+   *   heartbeatTTL: 60000,
+   *   batchAcks: false
+   * });
+   *
+   * // Custom batch configuration for unacknowledgments
+   * const consumer = new Consumer({
+   *   batchUnacks: {
+   *     batchSize: 500,
+   *     batchTimeoutMs: 5000
+   *   }
+   * });
+   *
+   * // Disable both types of batching
+   * const consumer = new Consumer({
+   *   batchAcks: false,
+   *   batchUnacks: false
+   * });
+   *
+   * // Full custom configuration
    * const consumer = new Consumer({
    *   enableMultiplexing: true,
-   *   heartbeatTTL: 60000,
-   *   enableBatchAcks: false
+   *   heartbeatTTL: 30000,
+   *   batchAcks: {
+   *     enabled: true,
+   *     batchSize: 200,
+   *     batchTimeoutMs: 2000
+   *   },
+   *   batchUnacks: {
+   *     enabled: false  // Disable unack batching
+   *   }
    * });
    * ```
    */
@@ -106,6 +161,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * ```typescript
    * // Deprecated: Create consumer with multiplexing disabled
    * const consumer = new Consumer(false);
+   *
+   * // Deprecated: Create consumer with multiplexing enabled
+   * const consumer = new Consumer(true);
    * ```
    */
   constructor(enableMultiplexing?: boolean);
@@ -122,7 +180,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `${this.constructor.name.toLowerCase()}-${this.id}`,
     );
 
-    //
     this.consumerContext = {
       consumerId: this.getId(),
       config: config,
@@ -347,6 +404,27 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * }, (err) => {
    *   if (err) console.error('Failed to setup consumption:', err);
    * });
+   *
+   * // Consume from queue with custom namespace
+   * consumer.consume(
+   *   { ns: 'orders', name: 'incoming' },
+   *   (message, done) => {
+   *     // Process order...
+   *     done();
+   *   },
+   *   (err) => {
+   *     if (err) console.error('Failed to setup consumption:', err);
+   *   }
+   * );
+   *
+   * // Consume from consumer group
+   * consumer.consume(
+   *   { ns: 'chat', name: 'messages', groupId: 'group-1' },
+   *   messageHandler,
+   *   (err) => {
+   *     if (err) console.error('Failed to setup consumption:', err);
+   *   }
+   * );
    * ```
    *
    * @see /packages/redis-smq/docs/consuming-messages.md
@@ -378,7 +456,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
             return cb(err);
           }
           this.logger.info(
-            `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+            `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''}`,
           );
           cb();
         },
@@ -416,6 +494,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *     });
    *   }, 10000);
    * });
+   *
+   * // Cancel consumption from a consumer group
+   * consumer.cancel(
+   *   { ns: 'chat', name: 'messages', groupId: 'group-1' },
+   *   (err) => {
+   *     if (err) console.error('Failed to cancel:', err);
+   *   }
+   * );
    * ```
    */
   cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
@@ -493,10 +579,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * Consumer.setDefaultOptions({
    *   enableMultiplexing: true,
    *   heartbeatTTL: 60000,
-   *   enableBatchAcks: false
+   *   batchAcks: {
+   *     batchSize: 500,
+   *     batchTimeoutMs: 5000
+   *   },
+   *   batchUnacks: false
    * });
    *
-   * // This consumer will use the defaults
+   * // This consumer will use the defaults above
    * const consumer = new Consumer();
    * ```
    */
@@ -510,7 +600,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
   /**
    * Retrieves the current default options for Consumer instances.
    *
-   * @returns {TConsumerParsedOptions} A copy of the current default options.
+   * @returns {IConsumerParsedOptions} A copy of the current default options.
    *
    * @example
    * ```typescript
@@ -519,13 +609,12 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * // Output: {
    * //   enableMultiplexing: false,
    * //   heartbeatTTL: 120000,
-   * //   enableBatchAcks: true,
-   * //   batchSize: 100,
-   * //   batchTimeoutMs: 10000
+   * //   batchAcks: { enabled: true, batchSize: 100, batchTimeoutMs: 10000 },
+   * //   batchUnacks: { enabled: true, batchSize: 100, batchTimeoutMs: 10000 }
    * // }
    * ```
    */
-  static getDefaultOptions(): TConsumerParsedOptions {
+  static getDefaultOptions(): IConsumerParsedOptions {
     return {
       ...this.defaultOptions,
     };

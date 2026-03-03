@@ -28,7 +28,7 @@ import {
   TUnacknowledgementResult,
 } from './types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { TConsumerParsedOptions } from '../../types/index.js';
+import { IConsumerParsedOptions } from '../../types/index.js';
 import { _executeUnacknowledgementScript } from './_/_execute-unacknowledgement-script.js';
 
 export type TMessageUnacknowledgerEvent = {
@@ -56,16 +56,18 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     consumerId: string,
     queue: IQueueParams,
     logger: ILogger,
-    consumerOptions: TConsumerParsedOptions,
+    consumerOptions: IConsumerParsedOptions,
   ) {
     super();
     this.consumerId = consumerId;
     this.queue = queue;
     this.queueRef = `${queue.name}@${queue.ns}`;
     this.logger = logger.createLogger(`${this.constructor.name.toLowerCase()}`);
-    this.useBatchUnacks = consumerOptions.enableBatchUnacks;
-    this.batchSize = consumerOptions.batchSize;
-    this.batchTimeoutMs = consumerOptions.batchTimeoutMs;
+
+    const { enabled, batchTimeoutMs, batchSize } = consumerOptions.batchUnacks;
+    this.useBatchUnacks = enabled;
+    this.batchSize = batchSize;
+    this.batchTimeoutMs = batchTimeoutMs;
 
     this.batch = {
       messages: [],

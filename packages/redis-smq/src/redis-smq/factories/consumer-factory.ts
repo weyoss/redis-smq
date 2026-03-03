@@ -10,7 +10,7 @@
 import { FactoryAbstract } from './factory-abstract.js';
 import { Consumer } from '../../consumer/index.js';
 import { ICallback, InvalidArgumentsError } from 'redis-smq-common';
-import { IConsumerOptions } from '../../consumer/types/index.js';
+import { IConsumerOptions } from '../../consumer/index.js';
 
 /**
  * Factory class for creating and managing Consumer instances.
@@ -20,6 +20,11 @@ import { IConsumerOptions } from '../../consumer/types/index.js';
  * automatically tracked for lifecycle management.
  *
  * @see {@link Consumer} for detailed Consumer API documentation
+ * @see {@link Consumer.consume} for setting up message consumption
+ * @see {@link Consumer.cancel} for stopping message consumption
+ * @see {@link Consumer.getQueues} for listing active queues
+ * @see {@link Consumer.run} for starting the consumer
+ * @see {@link Consumer.shutdown} for graceful shutdown
  *
  * @example
  * ```typescript
@@ -34,29 +39,40 @@ import { IConsumerOptions } from '../../consumer/types/index.js';
  */
 export class ConsumerFactory extends FactoryAbstract {
   /**
-   * Creates a new Consumer instance with the specified configuration options.
+   * Creates a new Consumer instance with default options.
    *
-   * @param {IConsumerOptions} consumerOptions - Configuration options for the consumer:
-   *   - `enableMultiplexing` - When true, enables handling multiple queues with one connection. Default: false.
-   *   - `heartbeatTTL` - Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
-   *   - `enableBatchAcks` - When true, enables batch acknowledgment of messages. Default: true.
-   *   - `batchSize` - Maximum number of messages to acknowledge in a batch. Default: 100.
-   *   - `batchTimeoutMs` - Maximum time to wait for batch to fill before acknowledging. Default: 10000 (10 seconds).
-   * @returns {Consumer} A new configured Consumer instance.
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.initialize()`.
+   * @returns {Consumer} A new Consumer instance with default configuration
+   *
+   * @see {@link Consumer.constructor} for detailed configuration options
+   * @see {@link Consumer.getDefaultOptions} for viewing default settings
    *
    * @example
    * ```typescript
-   * // Create consumer with custom options
+   * const consumer = ConsumerFactory.create();
+   * console.log(Consumer.getDefaultOptions()); // View default settings
+   * ```
+   */
+  static create(): Consumer;
+
+  /**
+   * Creates a new Consumer instance with custom configuration.
+   *
+   * @param {IConsumerOptions} consumerOptions - Configuration options
+   * @returns {Consumer} A new Consumer instance with the specified configuration
+   *
+   * @see {@link IConsumerOptions} for all available configuration options
+   * @see {@link Consumer.constructor} for detailed documentation
+   *
+   * @example
+   * ```typescript
    * const consumer = ConsumerFactory.create({
    *   enableMultiplexing: true,
    *   heartbeatTTL: 60000,
-   *   enableBatchAcks: false
-   * });
-   *
-   * consumer.run((err) => {
-   *   if (err) return console.error('Consumer failed to start:', err);
-   *   console.log('Consumer is ready to receive messages');
+   *   batchAcks: {
+   *     batchSize: 500,
+   *     batchTimeoutMs: 5000
+   *   },
+   *   batchUnacks: false
    * });
    * ```
    */
@@ -65,42 +81,24 @@ export class ConsumerFactory extends FactoryAbstract {
   /**
    * Creates a new Consumer instance with multiplexing configuration.
    *
-   * @deprecated This method signature is deprecated. Use {@link create} with {@link IConsumerOptions} instead.
-   * @param {boolean} enableMultiplexing - When true, enables message multiplexing across multiple queues.
-   * @returns {Consumer} A new Consumer instance with the specified multiplexing setting.
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.initialize()`.
+   * @param {boolean} enableMultiplexing - Enable/disable message multiplexing
+   * @returns {Consumer} A new Consumer instance
+   * @deprecated Use {@link IConsumerOptions} object with `enableMultiplexing` property instead
+   *
+   * @see {@link Consumer.constructor} for the modern configuration API
    *
    * @example
    * ```typescript
-   * // Deprecated: Create consumer with multiplexing disabled
-   * const consumer = ConsumerFactory.create(false);
+   * // Deprecated
+   * const consumer = ConsumerFactory.create(true);
    *
-   * consumer.run((err) => {
-   *   if (err) return console.error('Consumer failed to start:', err);
-   *   console.log('Consumer is ready to receive messages');
+   * // Modern equivalent
+   * const consumer = ConsumerFactory.create({
+   *   enableMultiplexing: true
    * });
    * ```
    */
   static create(enableMultiplexing: boolean): Consumer;
-
-  /**
-   * Creates a new Consumer instance with default configuration.
-   *
-   * @returns {Consumer} A new Consumer instance with default settings.
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.initialize()`.
-   *
-   * @example
-   * ```typescript
-   * // Create consumer with default options
-   * const consumer = ConsumerFactory.create();
-   *
-   * consumer.run((err) => {
-   *   if (err) return console.error('Consumer failed to start:', err);
-   *   console.log('Consumer is ready to receive messages');
-   * });
-   * ```
-   */
-  static create(): Consumer;
 
   static create(mixed?: boolean | IConsumerOptions): Consumer {
     ConsumerFactory.ensureInitialized();
@@ -109,43 +107,34 @@ export class ConsumerFactory extends FactoryAbstract {
   }
 
   /**
-   * Creates and automatically starts a consumer in a single operation.
+   * Creates and automatically starts a consumer with custom configuration.
    *
-   * This is a convenience method that combines:
-   * 1. Creating a consumer with {@link create}
-   * 2. Starting the consumer with `consumer.run()`
+   * @param {IConsumerOptions} consumerOptions - Configuration options
+   * @param {ICallback<void>} cb - Callback invoked when consumer starts
+   * @returns {Consumer} The created Consumer instance
    *
-   * The consumer is returned immediately and will start asynchronously.
-   * The callback is invoked when the consumer has successfully started.
-   *
-   * @param {IConsumerOptions} consumerOptions - Configuration options for the consumer.
-   * @param {ICallback<void>} cb - Callback invoked when the consumer successfully starts.
-   *   The callback receives an error if startup fails.
-   * @returns {Consumer} The created Consumer instance (already started asynchronously).
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.initialize()`.
+   * @see {@link Consumer.run} for startup behavior
+   * @see {@link Consumer.consume} for setting up message handlers after startup
    *
    * @example
    * ```typescript
-   * // Create and start consumer with custom options
    * const consumer = ConsumerFactory.startConsumer(
-   *   { enableBatchAcks: false },
+   *   {
+   *     enableMultiplexing: true,
+   *     batchAcks: { batchSize: 200 }
+   *   },
    *   (err) => {
    *     if (err) {
-   *       console.error('Failed to start consumer:', err);
+   *       console.error('Failed to start:', err);
    *       return;
    *     }
    *
-   *     // Consumer is now running, set up message consumption
-   *     consumer.consume('my-queue', (message, done) => {
-   *       console.log('Processing message:', message);
-   *       // Process the message...
-   *       done(); // Acknowledge message processing
+   *     // Consumer is running, set up message consumption
+   *     consumer.consume('orders', (message, done) => {
+   *       console.log('Processing order:', message);
+   *       done();
    *     }, (consumeErr) => {
-   *       if (consumeErr) {
-   *         console.error('Failed to start consumption:', consumeErr);
-   *       } else {
-   *         console.log('Consumer is now consuming messages');
-   *       }
+   *       if (consumeErr) console.error('Failed to setup consumption:', consumeErr);
    *     });
    *   }
    * );
@@ -159,24 +148,27 @@ export class ConsumerFactory extends FactoryAbstract {
   /**
    * Creates and automatically starts a consumer with multiplexing configuration.
    *
-   * @deprecated This method signature is deprecated. Use {@link startConsumer} with {@link IConsumerOptions} instead.
-   * @param {boolean} enableMultiplexing - When true, enables message multiplexing.
-   * @param {ICallback<void>} cb - Callback invoked when the consumer successfully starts.
-   * @returns {Consumer} The created Consumer instance (already started asynchronously).
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.initialize()`.
+   * @param {boolean} enableMultiplexing - Enable/disable message multiplexing
+   * @param {ICallback<void>} cb - Callback invoked when consumer starts
+   * @returns {Consumer} The created Consumer instance
+   * @deprecated Use {@link IConsumerOptions} object with `enableMultiplexing` property instead
+   *
+   * @see {@link Consumer.run} for startup behavior
    *
    * @example
    * ```typescript
-   * // Deprecated: Create and start consumer with multiplexing setting
-   * const consumer = ConsumerFactory.startConsumer(false, (err) => {
-   *   if (err) return console.error('Failed to start consumer:', err);
-   *
-   *   // Consumer is now running
-   *   consumer.consume('my-queue', (message, done) => {
-   *     console.log('Processing message:', message);
-   *     done();
-   *   });
+   * // Deprecated
+   * const consumer = ConsumerFactory.startConsumer(true, (err) => {
+   *   if (err) console.error('Failed to start:', err);
    * });
+   *
+   * // Modern equivalent
+   * const consumer = ConsumerFactory.startConsumer(
+   *   { enableMultiplexing: true },
+   *   (err) => {
+   *     if (err) console.error('Failed to start:', err);
+   *   }
+   * );
    * ```
    */
   static startConsumer(
@@ -187,9 +179,11 @@ export class ConsumerFactory extends FactoryAbstract {
   /**
    * Creates and automatically starts a consumer with default configuration.
    *
-   * @param {ICallback<void>} cb - Callback invoked when the consumer successfully starts.
-   * @returns {Consumer} The created Consumer instance (already started asynchronously).
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.initialize()`.
+   * @param {ICallback<void>} cb - Callback invoked when consumer starts
+   * @returns {Consumer} The created Consumer instance
+   *
+   * @see {@link Consumer.run} for startup behavior
+   * @see {@link Consumer.getDefaultOptions} to view default settings
    *
    * @example
    * ```typescript
@@ -206,6 +200,13 @@ export class ConsumerFactory extends FactoryAbstract {
    *     done();
    *   }, (consumeErr) => {
    *     if (consumeErr) console.error('Failed to start consumption:', consumeErr);
+   *   });
+   *
+   *   // Later, shut down gracefully
+   *   process.on('SIGTERM', () => {
+   *     consumer.shutdown(() => {
+   *       console.log('Consumer shut down');
+   *     });
    *   });
    * });
    * ```

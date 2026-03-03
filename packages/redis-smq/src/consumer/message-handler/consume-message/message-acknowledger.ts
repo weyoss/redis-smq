@@ -15,7 +15,7 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
-import { TConsumerParsedOptions } from '../../types/index.js';
+import { IConsumerParsedOptions } from '../../types/index.js';
 import { _executeAcknowledgementScript } from './_/_execute-acknowledgement-script.js';
 
 export type TMessageAcknowledgerEvent = {
@@ -39,16 +39,17 @@ export class MessageAcknowledger extends Runnable<TMessageAcknowledgerEvent> {
     queue: IQueueParsedParams,
     consumerId: string,
     logger: ILogger,
-    consumerOptions: TConsumerParsedOptions,
+    consumerOptions: IConsumerParsedOptions,
   ) {
     super();
     this.queue = queue;
     this.consumerId = consumerId;
     this.logger = logger.createLogger(this.constructor.name);
 
-    this.useBatchAcks = consumerOptions.enableBatchAcks;
-    this.batchSize = consumerOptions.batchSize;
-    this.batchTimeoutMs = consumerOptions.batchTimeoutMs;
+    const { enabled, batchTimeoutMs, batchSize } = consumerOptions.batchAcks;
+    this.useBatchAcks = enabled;
+    this.batchSize = batchSize;
+    this.batchTimeoutMs = batchTimeoutMs;
   }
 
   add(message: MessageEnvelope): void {

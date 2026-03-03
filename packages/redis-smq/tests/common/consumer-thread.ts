@@ -15,7 +15,7 @@ import {
   RedisSMQ,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
-import { TConsumerParsedOptions } from '../../src/consumer/types/index.js';
+import { IConsumerParsedOptions } from '../../src/consumer/types/index.js';
 
 process.on('message', function (payload: unknown) {
   const {
@@ -23,7 +23,7 @@ process.on('message', function (payload: unknown) {
     consumerOptions,
   }: {
     config: IRedisSMQParsedConfig;
-    consumerOptions: TConsumerParsedOptions;
+    consumerOptions: IConsumerParsedOptions;
   } = JSON.parse(String(payload));
   RedisSMQ.initializeWithConfig(config, (err) => {
     if (err) throw err;
