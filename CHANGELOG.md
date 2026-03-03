@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.3...v9.1.0-next.4) (2026-03-03)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** restore consumer options for running tests ([6d6f6b3](https://github.com/weyoss/redis-smq/commit/6d6f6b3ec503236c997a64d21d515bf75d12df96))
+
+### 📝 Documentation
+
+- **redis-smq:** fix typo in README.md file ([17ca22c](https://github.com/weyoss/redis-smq/commit/17ca22c349cda5da027ea26cb938184877917750))
+
 ## [9.1.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.2...v9.1.0-next.3) (2026-03-03)
 
 ### 📝 Documentation
