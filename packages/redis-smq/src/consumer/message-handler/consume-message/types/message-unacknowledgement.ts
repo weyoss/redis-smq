@@ -7,7 +7,10 @@
  * in the root directory of this source tree.
  */
 
-export enum EMessageRecoveryAction {
+import { MessageEnvelope } from '../../../../message/message-envelope.js';
+import { ICallback } from 'redis-smq-common';
+
+export enum EUnacknowledgementAction {
   DEAD_LETTER,
   REQUEUE,
   DELAY,
@@ -35,13 +38,27 @@ export enum EMessageUnacknowledgementCause {
   UNEXPECTED_ERROR,
 }
 
-export type TMessageRecoveryResolution =
+export type TUnacknowledgementResolution =
   | {
-      action: EMessageRecoveryAction.REQUEUE | EMessageRecoveryAction.DELAY;
+      cause: EMessageUnacknowledgementCause;
+      action: EUnacknowledgementAction.REQUEUE | EUnacknowledgementAction.DELAY;
     }
   | {
-      action: EMessageRecoveryAction.DEAD_LETTER;
+      cause: EMessageUnacknowledgementCause;
+      action: EUnacknowledgementAction.DEAD_LETTER;
       deadLetterCause: EMessageDeadLetterCause;
     };
 
-export type TMessageRecovery = Record<string, TMessageRecoveryResolution>;
+export type TUnacknowledgementResult = Record<
+  string,
+  TUnacknowledgementResolution
+>;
+
+export type TUnacknowledgementBatch = {
+  messages: {
+    message: MessageEnvelope;
+    resolution: TUnacknowledgementResolution;
+  }[];
+  callbacks: ICallback<TUnacknowledgementResult>[];
+  timer: NodeJS.Timeout | null;
+};

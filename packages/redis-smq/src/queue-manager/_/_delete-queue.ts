@@ -25,10 +25,10 @@ import {
   IQueueParams,
 } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
-import { processingQueue } from '../../consumer/message-handler/consume-message/processing-queue.js';
 import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
+import { _getProcessingQueues } from './_get-processing-queues.js';
 
 export function _deleteQueue(
   redisClient: IRedisClient,
@@ -75,17 +75,13 @@ export function _deleteQueue(
 
       // Step 3: Get processing queues.
       (cb: ICallback<void>) => {
-        processingQueue.getQueueProcessingQueues(
-          redisClient,
-          queueParams,
-          (err, reply) => {
-            if (err) cb(err);
-            else {
-              processingQueues = Object.keys(reply ?? {});
-              cb();
-            }
-          },
-        );
+        _getProcessingQueues(redisClient, queueParams, (err, reply) => {
+          if (err) cb(err);
+          else {
+            processingQueues = Object.keys(reply ?? {});
+            cb();
+          }
+        });
       },
     ],
     (err) => {

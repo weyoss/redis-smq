@@ -8,33 +8,15 @@
  */
 
 import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { ICallback, ILogger, IRedisClient, Runnable } from 'redis-smq-common';
-import { Configuration } from '../../../config/index.js';
-import { ERedisScriptName } from '../../../common/redis/scripts.js';
 import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../message/index.js';
-import {
-  EQueueOperationalState,
-  EQueueProperty,
-  IQueueParsedParams,
-} from '../../../queue-manager/index.js';
+  CallbackEmptyReplyError,
+  ICallback,
+  ILogger,
+  Runnable,
+} from 'redis-smq-common';
+import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { TConsumerParsedOptions } from '../../types/index.js';
-import {
-  InvalidQueueStateError,
-  QueueLockedError,
-  QueueNotFoundError,
-  QueueStoppedError,
-  UnexpectedScriptReplyError,
-} from '../../../errors/index.js';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
-
-export interface IMessageAcknowledgementPending {
-  messageId: string;
-  keyMessage: string;
-  message: MessageEnvelope;
-}
+import { _executeAcknowledgementScript } from './_/_execute-acknowledgement-script.js';
 
 export type TMessageAcknowledgerEvent = {
   'messageAcknowledger.error': (error: unknown) => void;
@@ -42,15 +24,11 @@ export type TMessageAcknowledgerEvent = {
 };
 
 export class MessageAcknowledger extends Runnable<TMessageAcknowledgerEvent> {
-  private readonly redisClient: IRedisClient;
-  private readonly keyQueueProcessing: string;
-  private readonly keyQueueAcknowledged: string;
-  private readonly keyQueueProperties: string;
-
-  private pending: IMessageAcknowledgementPending[] = [];
+  private pending: MessageEnvelope[] = [];
   private timer: NodeJS.Timeout | null = null;
   private pendingCallbacks: ICallback<void>[] = [];
 
+  protected readonly consumerId: string;
   protected readonly queue: IQueueParsedParams;
   protected readonly logger: ILogger;
   protected readonly useBatchAcks: boolean;
@@ -61,25 +39,12 @@ export class MessageAcknowledger extends Runnable<TMessageAcknowledgerEvent> {
     queue: IQueueParsedParams,
     consumerId: string,
     logger: ILogger,
-    redisClient: IRedisClient,
     consumerOptions: TConsumerParsedOptions,
   ) {
     super();
     this.queue = queue;
+    this.consumerId = consumerId;
     this.logger = logger.createLogger(this.constructor.name);
-    this.redisClient = redisClient;
-    const { keyQueueProperties, keyQueueAcknowledged } = redisKeys.getQueueKeys(
-      queue.queueParams.ns,
-      queue.queueParams.name,
-      queue.groupId,
-    );
-    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-      queue.queueParams,
-      consumerId,
-    );
-    this.keyQueueProcessing = keyQueueProcessing;
-    this.keyQueueAcknowledged = keyQueueAcknowledged;
-    this.keyQueueProperties = keyQueueProperties;
 
     this.useBatchAcks = consumerOptions.enableBatchAcks;
     this.batchSize = consumerOptions.batchSize;
@@ -97,14 +62,19 @@ export class MessageAcknowledger extends Runnable<TMessageAcknowledgerEvent> {
       return;
     }
 
-    const { keyMessage } = redisKeys.getMessageKeys(messageId);
-
     if (!this.useBatchAcks) {
-      this.executeAck([message], [messageId], [keyMessage]);
+      const messages = [message];
+      _executeAcknowledgementScript(
+        this.queue,
+        this.consumerId,
+        messages,
+        (err, result) =>
+          this.handleAcknowledgementResult(err, result, messages),
+      );
       return;
     }
 
-    this.pending.push({ messageId, keyMessage, message });
+    this.pending.push(message);
     this.logger.debug(
       `Queued message ${messageId} for batch. Queue size: ${this.pending.length}`,
     );
@@ -134,15 +104,17 @@ export class MessageAcknowledger extends Runnable<TMessageAcknowledgerEvent> {
 
     this.logger.debug(`Flushing batch of ${batch.length} acknowledgments`);
 
-    const messages = batch.map((item) => item.message);
-    const messageIds = batch.map((item) => item.messageId);
-    const messageKeys = batch.map((item) => item.keyMessage);
-
-    this.executeAck(messages, messageIds, messageKeys, () => {
-      const callbacks = [...this.pendingCallbacks];
-      this.pendingCallbacks = [];
-      callbacks.forEach((callback) => callback());
-    });
+    _executeAcknowledgementScript(
+      this.queue,
+      this.consumerId,
+      batch,
+      (err, result) => {
+        this.handleAcknowledgementResult(err, result, batch);
+        const callbacks = [...this.pendingCallbacks];
+        this.pendingCallbacks = [];
+        callbacks.forEach((callback) => callback());
+      },
+    );
   }
 
   protected override goingDown(): Array<(cb: ICallback<void>) => void> {
@@ -156,152 +128,27 @@ export class MessageAcknowledger extends Runnable<TMessageAcknowledgerEvent> {
     ];
   }
 
-  private executeAck(
+  private handleAcknowledgementResult(
+    err: Error | null | undefined,
+    result: (0 | 1)[] | undefined,
     messages: MessageEnvelope[],
-    messageIds: string[],
-    messageKeys: string[],
-    onComplete?: ICallback<void>,
   ): void {
-    const { enabled, queueSize, expire } =
-      Configuration.getConfig().messageAudit.acknowledgedMessages;
-
-    const argv = this.buildAckArgs(messageIds, enabled, queueSize, expire);
-    const keys = [
-      this.keyQueueProcessing,
-      this.keyQueueAcknowledged,
-      this.keyQueueProperties,
-      ...messageKeys,
-    ];
-
-    this.redisClient.runScript(
-      ERedisScriptName.ACKNOWLEDGE_MESSAGE,
-      keys,
-      argv,
-      (err, reply) => {
-        if (err) {
-          this.logger.error(`Acknowledgment failed: ${err.message}`);
-          this.handleAcknowledgementError(err);
-          return;
-        }
-
-        this.handleAckResponse(reply, messages, messageIds);
-        if (onComplete) onComplete();
-      },
-    );
-  }
-
-  private buildAckArgs(
-    messageIds: string[],
-    enabled: boolean,
-    queueSize: number,
-    expire: number,
-  ): (string | number)[] {
-    return [
-      Number(enabled), // ARGV[1]: storeMessages
-      expire, // ARGV[2]: expireStoredMessages
-      queueSize * -1, // ARGV[3]: storedMessagesSize
-      Date.now(), // ARGV[4]: messageAcknowledgedAt
-      EQueueProperty.OPERATIONAL_STATE, // ARGV[5]: state field
-      EQueueOperationalState.ACTIVE, // ARGV[6]: active state
-      EQueueOperationalState.PAUSED, // ARGV[7]: paused state
-      EQueueOperationalState.STOPPED, // ARGV[8]: stopped state
-      EQueueOperationalState.LOCKED, // ARGV[9]: locked state
-      EMessageProperty.STATUS, // ARGV[10]: status field
-      EMessagePropertyStatus.ACKNOWLEDGED, // ARGV[11]: acknowledged status
-      EMessageProperty.ACKNOWLEDGED_AT, // ARGV[12]: acknowledged at field
-      EQueueProperty.ACKNOWLEDGED_MESSAGES_COUNT, // ARGV[13]: acknowledged count field
-      EQueueProperty.PROCESSING_MESSAGES_COUNT, // ARGV[14]: processing count field
-      ...messageIds, // ARGV[15+]: message IDs
-    ];
-  }
-
-  private handleAckResponse(
-    reply: unknown,
-    messages: MessageEnvelope[],
-    messageIds: string[],
-  ): void {
-    if (!Array.isArray(reply)) {
-      this.handleAcknowledgementError(reply);
+    if (err) {
+      this.logger.error(`Message acknowledgement failed due to: ${err}`);
+      this.handleError(err);
       return;
     }
-    this.handleBatchResponse(reply as (0 | 1)[], messages, messageIds);
-  }
-
-  private handleAcknowledgementError(error: unknown): void {
-    this.logger.error(`Message acknowledgement failed due to: ${error}`);
-
-    if (error instanceof Error) {
-      this.emit('messageAcknowledger.error', error);
-      return;
-    }
-
-    if (error === 'QUEUE_STOPPED') {
-      this.emit(
-        'messageAcknowledger.error',
-        new QueueStoppedError({
-          metadata: {
-            queue: this.queue.queueParams,
-          },
+    if (!result) {
+      this.handleError(
+        new CallbackEmptyReplyError({
+          message: `_executeAcknowledgementScript() returned an empty result.`,
         }),
       );
       return;
     }
-
-    if (error === 'QUEUE_LOCKED') {
-      this.emit(
-        'messageAcknowledger.error',
-        new QueueLockedError({
-          metadata: {
-            queue: this.queue.queueParams,
-          },
-        }),
-      );
-      return;
-    }
-
-    if (error === 'QUEUE_NOT_FOUND') {
-      this.emit(
-        'messageAcknowledger.error',
-        new QueueNotFoundError({
-          metadata: {
-            queue: this.queue.queueParams,
-          },
-        }),
-      );
-      return;
-    }
-
-    if (error === 'QUEUE_INVALID_STATE') {
-      this.emit(
-        'messageAcknowledger.error',
-        new InvalidQueueStateError({
-          metadata: {
-            queue: this.queue.queueParams,
-          },
-        }),
-      );
-      return;
-    }
-
-    this.emit(
-      'messageAcknowledger.error',
-      new UnexpectedScriptReplyError({
-        metadata: {
-          reply: error,
-        },
-      }),
-    );
-  }
-
-  private handleBatchResponse(
-    results: (0 | 1)[],
-    messages: MessageEnvelope[],
-    messageIds: string[],
-  ): void {
-    results.forEach((result, index) => {
+    result.forEach((result, index) => {
       const message = messages[index];
-      const messageId = messageIds[index];
-
+      const messageId = message.getId();
       if (result === 0) {
         this.logger.info(
           `Message ${messageId} was already acknowledged or something else`,

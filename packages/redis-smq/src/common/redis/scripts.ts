@@ -19,6 +19,7 @@ export enum ERedisScriptName {
   CHECK_QUEUE_RATE_LIMIT = 'CHECK_QUEUE_RATE_LIMIT',
   CREATE_QUEUE = 'CREATE_QUEUE',
   SUBSCRIBE_CONSUMER = 'SUBSCRIBE_CONSUMER',
+  UNSUBSCRIBE_CONSUMER = 'UNSUBSCRIBE_CONSUMER',
   UNACKNOWLEDGE_MESSAGE = 'UNACKNOWLEDGE_MESSAGE',
   ACKNOWLEDGE_MESSAGE = 'ACKNOWLEDGE_MESSAGE',
   DELETE_MESSAGE = 'DELETE_MESSAGE',
@@ -61,6 +62,10 @@ export const scriptFileMap: Record<ERedisScriptName, string | string[]> = {
   [ERedisScriptName.SUBSCRIBE_CONSUMER]: resolve(
     dirname,
     './scripts/subscribe-consumer.lua',
+  ),
+  [ERedisScriptName.UNSUBSCRIBE_CONSUMER]: resolve(
+    dirname,
+    './scripts/unsubscribe-consumer.lua',
   ),
   [ERedisScriptName.UNACKNOWLEDGE_MESSAGE]: resolve(
     dirname,

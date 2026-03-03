@@ -47,6 +47,8 @@ import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-gr
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { IQueueWorkerPayload } from '../../common/abstract/worker/types/message-handler-worker.js';
+import { _subscribeConsumer } from './_/_subscribe-consumer.js';
+import { _unsubscribeConsumer } from './_/_unsubscribe-consumer.js';
 
 const WORKERS_DIR = path.resolve(
   env.getCurrentDir(),
@@ -207,6 +209,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         );
       },
       (cb: ICallback) => {
+        _subscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
+      },
+      (cb: ICallback) => {
         this.consumeMessage = new ConsumeMessage(
           this.consumerContext,
           this.queue,
@@ -268,6 +273,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         );
       },
       this.shutdownWorkerCluster,
+
+      // stop dequeuing messages
       (cb: ICallback) => {
         if (this.dequeueMessage) {
           this.dequeueMessage.shutdown(() => {
@@ -288,6 +295,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           });
         } else cb();
       },
+
+      // stop consuming messages
       (cb: ICallback) => {
         if (this.consumeMessage) {
           this.consumeMessage.shutdown(() => {
@@ -300,6 +309,12 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           });
         } else cb();
       },
+
+      // unsubscribe from queue
+      (cb: ICallback) => {
+        _unsubscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
+      },
+
       (cb: ICallback) => {
         if (this.redisClient) {
           RedisConnectionPool.getInstance().release(this.redisClient);

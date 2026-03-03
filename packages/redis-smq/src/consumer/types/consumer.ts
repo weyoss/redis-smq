@@ -11,6 +11,7 @@ export interface IConsumerOptions {
   heartbeatTTL?: number;
   enableMultiplexing?: boolean;
   enableBatchAcks?: boolean;
+  enableBatchUnacks?: boolean;
   batchSize?: number;
   batchTimeoutMs?: number;
 }

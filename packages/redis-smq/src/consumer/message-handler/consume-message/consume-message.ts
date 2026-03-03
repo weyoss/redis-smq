@@ -26,9 +26,9 @@ import { IMessageTransferable } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
-  EMessageRecoveryAction,
+  EUnacknowledgementAction,
   EMessageUnacknowledgementCause,
-  TMessageRecovery,
+  TUnacknowledgementResult,
 } from './types/index.js';
 import {
   MessageHandlerFileError,
@@ -55,13 +55,13 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected readonly messageHandlerId: string;
   protected readonly consumerOptions: TConsumerParsedOptions;
 
-  private messageUnack: MessageUnacknowledger;
   private redisClient: IRedisClient | null = null;
   private consumeMessageWorker: CallableWorker<
     IMessageTransferable,
     void
   > | null = null;
-  private messageAcknowledger: MessageAcknowledger | null = null;
+  private messageUnacknowledger: MessageUnacknowledger;
+  private messageAcknowledger: MessageAcknowledger;
 
   constructor(
     consumerContext: IConsumerContext,
@@ -77,7 +77,12 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.queue = queue;
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
-    this.messageUnack = new MessageUnacknowledger(this.logger);
+
+    // Initialize MessageAcknowledger
+    this.messageAcknowledger = this.initializeMessageAcknowledger();
+
+    // Initialize MessageUnacknowledger
+    this.messageUnacknowledger = this.initializeMessageUnacknowledger();
 
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       this.queue.queueParams,
@@ -93,7 +98,54 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.keyQueueProcessing = keyQueueProcessing;
 
     eventPublisher(this);
-    this.logger.debug(`${this.constructor.name} initialized`);
+    this.logger.debug(
+      `${this.constructor.name} initialized for queue ${queue.queueParams.name}@${queue.queueParams.ns}`,
+    );
+  }
+
+  protected initializeMessageAcknowledger(): MessageAcknowledger {
+    const messageAcknowledger = new MessageAcknowledger(
+      this.queue,
+      this.consumerId,
+      this.logger,
+      this.consumerOptions,
+    );
+
+    messageAcknowledger.on('messageAcknowledger.error', (err) => {
+      this.handleError(err);
+    });
+
+    messageAcknowledger.on(
+      'messageAcknowledger.messageAcknowledged',
+      (message: MessageEnvelope) => {
+        this.onMessageAcknowledged(message);
+      },
+    );
+
+    return messageAcknowledger;
+  }
+
+  protected initializeMessageUnacknowledger(): MessageUnacknowledger {
+    const messageUnacknowledger = new MessageUnacknowledger(
+      this.consumerId,
+      this.queue.queueParams,
+      this.logger,
+      this.consumerOptions,
+    );
+
+    // Set up event handlers
+    messageUnacknowledger.on('messageUnacknowledger.error', (err) => {
+      this.handleError(err);
+    });
+
+    messageUnacknowledger.on(
+      'messageUnacknowledger.messagesUnacknowledged',
+      (status: TUnacknowledgementResult) => {
+        this.handleUnacknowledgementResult(status);
+      },
+    );
+
+    return messageUnacknowledger;
   }
 
   handleReceivedMessage(message: MessageEnvelope): void {
@@ -132,16 +184,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     message: MessageEnvelope,
     cause: EMessageUnacknowledgementCause,
   ): void {
-    this.messageUnack.unacknowledgeMessage(
-      this.consumerId,
-      message,
-      cause,
-      (err, reply) => {
-        if (err) return this.handleError(err);
-        if (!reply) return this.handleError(new CallbackEmptyReplyError());
-        this.handleUnacknowledgementResult(cause, reply);
-      },
-    );
+    this.messageUnacknowledger.add(message, cause);
     this.emit('consumer.consumeMessage.next');
   }
 
@@ -158,12 +201,18 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   }
 
   private handleUnacknowledgementResult(
-    cause: EMessageUnacknowledgementCause,
-    result: TMessageRecovery,
+    result: TUnacknowledgementResult,
   ): void {
-    for (const messageId in result) {
+    const messageCount = Object.keys(result).length;
+    if (messageCount === 0) return;
+
+    this.logger.debug(
+      `Handling unacknowledgement result for ${messageCount} messages`,
+    );
+
+    for (const [messageId, details] of Object.entries(result)) {
       this.logger.info(
-        `Message ${messageId} unacknowledged: ${EMessageUnacknowledgementCause[cause]}`,
+        `Message ${messageId} unacknowledged: ${EMessageUnacknowledgementCause[details.cause]}`,
       );
 
       this.emit(
@@ -172,11 +221,10 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         this.queue,
         this.messageHandlerId,
         this.consumerId,
-        cause,
+        details.cause,
       );
 
-      const details = result[messageId];
-      if (details.action === EMessageRecoveryAction.DEAD_LETTER) {
+      if (details.action === EUnacknowledgementAction.DEAD_LETTER) {
         this.logger.info(`Message ${messageId} moved to dead letter queue`);
         this.emit(
           'consumer.consumeMessage.messageDeadLettered',
@@ -186,7 +234,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           this.consumerId,
           details.deadLetterCause,
         );
-      } else if (details.action === EMessageRecoveryAction.DELAY) {
+      } else if (details.action === EUnacknowledgementAction.DELAY) {
         this.logger.info(`Message ${messageId} delayed for retry`);
         this.emit(
           'consumer.consumeMessage.messageDelayed',
@@ -336,7 +384,8 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
-      (cb: ICallback<void>) => {
+      // Step 1: Initialize Redis client
+      (cb: ICallback) => {
         this.logger.debug('Initializing Redis client');
         RedisConnectionPool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
@@ -346,44 +395,43 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
               return cb(err);
             }
             if (!client) return cb(new CallbackEmptyReplyError());
-
             this.redisClient = client;
-
-            // Initialize MessageAcknowledger
-            this.messageAcknowledger = new MessageAcknowledger(
-              this.queue,
-              this.consumerId,
-              this.logger,
-              client,
-              this.consumerOptions,
-            );
-
-            this.messageAcknowledger.on('messageAcknowledger.error', (err) => {
-              this.handleError(err);
-            });
-
-            this.messageAcknowledger.on(
-              'messageAcknowledger.messageAcknowledged',
-              (message: MessageEnvelope) => {
-                this.onMessageAcknowledged(message);
-              },
-            );
-
-            // Start the MessageAcknowledger
-            this.messageAcknowledger.run((err) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to start MessageAcknowledger: ${err.message}`,
-                );
-                return cb(err);
-              }
-              this.logger.debug('MessageAcknowledger started');
-              cb();
-            });
+            cb();
           },
         );
       },
-      (cb: ICallback<void>) => {
+
+      // Step 2: Start MessageUnacknowledger
+      (cb: ICallback) => {
+        this.logger.debug('Starting MessageUnacknowledger');
+        this.messageUnacknowledger.run((err) => {
+          if (err) {
+            this.logger.error(
+              `Failed to start MessageUnacknowledger: ${err.message}`,
+            );
+            return cb(err);
+          }
+          this.logger.debug('MessageUnacknowledger started');
+          cb();
+        });
+      },
+
+      // Step 3: Start MessageAcknowledger
+      (cb: ICallback) => {
+        this.messageAcknowledger.run((err) => {
+          if (err) {
+            this.logger.error(
+              `Failed to start MessageAcknowledger: ${err.message}`,
+            );
+            return cb(err);
+          }
+          this.logger.debug('MessageAcknowledger started');
+          cb();
+        });
+      },
+
+      // Step 4: Validate message handler
+      (cb: ICallback) => {
         this.logger.debug('Validating message handler');
         this.validateHandler(cb);
       },
@@ -402,25 +450,10 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         }
       },
 
-      // Step 2: Unacknowledge any messages still in processing
+      // Step 2: Shutdown MessageUnacknowledger (flushes pending batches)
       (cb: ICallback<void>) => {
-        this.logger.debug('Unacknowledging processing messages');
-        this.messageUnack.unacknowledgeMessagesInProcess(
-          this.consumerId,
-          [this.queue.queueParams],
-          EMessageUnacknowledgementCause.SHUTTING_DOWN,
-          (err, result) => {
-            if (err) {
-              this.logger.error(`Unacknowledgement error: ${err.message}`);
-            } else if (result) {
-              this.handleUnacknowledgementResult(
-                EMessageUnacknowledgementCause.SHUTTING_DOWN,
-                result,
-              );
-            }
-            cb();
-          },
-        );
+        this.logger.debug('Shutting down MessageUnacknowledger');
+        this.messageUnacknowledger.shutdown(cb);
       },
 
       // Step 3: Shutdown worker
@@ -440,7 +473,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         if (this.redisClient) {
           RedisConnectionPool.getInstance().release(this.redisClient);
           this.redisClient = null;
-          this.messageAcknowledger = null;
         }
         cb();
       },

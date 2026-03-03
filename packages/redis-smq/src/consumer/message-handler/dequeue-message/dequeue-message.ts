@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import * as os from 'os';
 import {
   CallbackEmptyReplyError,
   ICallback,
@@ -17,7 +16,6 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
-import { ERedisScriptName } from '../../../common/redis/scripts.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../../config/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
@@ -26,33 +24,11 @@ import {
   EQueueType,
   IQueueParsedParams,
   IQueueRateLimit,
-  TQueueConsumer,
-  EQueueOperationalState,
-  EQueueProperty,
 } from '../../../index.js';
-import {
-  QueueNotFoundError,
-  QueueNotActiveError,
-  UnexpectedScriptReplyError,
-} from '../../../errors/index.js';
 import { eventPublisher } from './event-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
-
-const IPAddresses = (() => {
-  const nets = os.networkInterfaces();
-  const addresses: string[] = [];
-  for (const netInterface in nets) {
-    const addr = nets[netInterface] ?? [];
-    for (const netAddr of addr) {
-      if (netAddr.family === 'IPv4' && !netAddr.internal) {
-        addresses.push(netAddr.address);
-      }
-    }
-  }
-  return addresses;
-})();
 
 export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected readonly consumerContext: IConsumerContext;
@@ -206,57 +182,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
             if (!redisClient) return cb(new CallbackEmptyReplyError());
             this.redisClient = redisClient;
             cb();
-          },
-        );
-      },
-      (cb: ICallback) => {
-        const consumerInfo: TQueueConsumer = {
-          ipAddress: IPAddresses,
-          hostname: os.hostname(),
-          pid: process.pid,
-          createdAt: Date.now(),
-        };
-        const redisClient = this.getRedisClient();
-        if (redisClient instanceof Error) return cb(redisClient);
-
-        const keys = [
-          this.keyQueues,
-          this.keyQueueConsumers,
-          this.keyConsumerQueues,
-          this.keyQueueProcessingQueues,
-          this.keyQueueProcessing,
-          this.keyQueueProperties,
-        ];
-        const args = [
-          this.consumerContext.consumerId,
-          JSON.stringify(consumerInfo),
-          JSON.stringify(this.queue.queueParams),
-          // Operational state constants (ARGV[4-5])
-          EQueueProperty.OPERATIONAL_STATE,
-          EQueueOperationalState.ACTIVE,
-        ];
-        redisClient.runScript(
-          ERedisScriptName.SUBSCRIBE_CONSUMER,
-          keys,
-          args,
-          (err, reply) => {
-            if (err) return cb(err);
-            if (reply === 'QUEUE_NOT_FOUND')
-              return cb(
-                new QueueNotFoundError({
-                  metadata: {
-                    queue: this.queue.queueParams,
-                  },
-                }),
-              );
-            if (reply === 'QUEUE_NOT_ACTIVE')
-              return cb(
-                new QueueNotActiveError({
-                  metadata: { queue: this.queue.queueParams },
-                }),
-              );
-            if (reply === 'OK') return cb();
-            cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
           },
         );
       },

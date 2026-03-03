@@ -90,3 +90,4 @@ export * from './queue-not-locked.error.js';
 export * from './queue-lock-owner-mismatch.error.js';
 export * from './background-job-worker-not-found.error.js';
 export * from './queue-paused.error.js';
+export * from './processing-queue-not-empty.error.js';

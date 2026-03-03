@@ -14,12 +14,11 @@
 -- 4. Registers the consumer's dedicated processing queue.
 -- Consumers are only allowed to subscribe when queue operational state is ACTIVE.
 --
--- KEYS[1]: keyQueues (a set of all queue names)
+-- KEYS[1]: keyQueueProperties (the hash key where queue properties are stored)
 -- KEYS[2]: keyQueueConsumers (a hash mapping consumer IDs to their info for a given queue)
 -- KEYS[3]: keyConsumerQueues (a set of queues that a given consumer is subscribed to)
 -- KEYS[4]: keyQueueProcessingQueues (a hash mapping processing queue keys to consumer IDs for a given queue)
 -- KEYS[5]: keyQueueProcessing (the consumer's dedicated processing queue)
--- KEYS[6]: keyQueueProperties (the hash key where queue properties are stored)
 --
 -- ARGV[1]: consumerId
 -- ARGV[2]: consumerInfo (a string, typically JSON, with consumer details)
@@ -33,12 +32,11 @@
 --   - 'QUEUE_NOT_ACTIVE' if the queue operational state is not ACTIVE.
 
 -- Static Keys
-local keyQueues = KEYS[1]
+local keyQueueProperties = KEYS[1]
 local keyQueueConsumers = KEYS[2]
 local keyConsumerQueues = KEYS[3]
 local keyQueueProcessingQueues = KEYS[4]
 local keyQueueProcessing = KEYS[5]
-local keyQueueProperties = KEYS[6]
 
 -- Arguments
 local consumerId = ARGV[1]
@@ -49,7 +47,7 @@ local EQueuePropertyOperationalState = ARGV[4]
 local EQueueOperationalStateActive = ARGV[5]
 
 -- First, check if the queue exists. This is a critical guard clause.
-if redis.call("SISMEMBER", keyQueues, queue) == 0 then
+if redis.call("EXISTS", keyQueueProperties) == 0 then
     return 'QUEUE_NOT_FOUND'
 end
 

@@ -14,142 +14,231 @@ import { EMessageUnacknowledgementCause } from '../../consume-message/types/inde
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _deleteEphemeralConsumerGroup } from '../../_/_delete-ephemeral-consumer-group.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
-import { IQueueWorkerPayload } from '../../../../common/abstract/worker/types/message-handler-worker.js';
 import { _isConsumerAlive } from '../../../_/_is-consumer-alive.js';
+import { Consumer } from '../../../consumer.js';
+import { _unsubscribeConsumer } from '../../_/_unsubscribe-consumer.js';
 
 export class ReapConsumersWorker extends QueueWorkerAbstract {
-  protected messageUnacknowledgement: MessageUnacknowledger;
+  /**
+   * Creates a MessageUnacknowledger instance for a specific consumer.
+   * The reaper uses non-batch mode since it's dealing with offline consumers.
+   */
+  protected createMessageUnacknowledger(
+    consumerId: string,
+  ): MessageUnacknowledger {
+    const unacknowledger = new MessageUnacknowledger(
+      consumerId,
+      this.queueParsedParams.queueParams,
+      this.logger,
+      Consumer.getDefaultOptions(),
+    );
 
-  constructor(payload: IQueueWorkerPayload) {
-    super(payload);
-    this.messageUnacknowledgement = new MessageUnacknowledger(this.logger);
+    unacknowledger.on('messageUnacknowledger.error', (err) => {
+      this.logger.error(
+        `MessageUnacknowledger error for consumer ${consumerId}:`,
+        err,
+      );
+    });
+
+    unacknowledger.on(
+      'messageUnacknowledger.messagesUnacknowledged',
+      (status) => {
+        const messageCount = Object.keys(status).length;
+        if (messageCount > 0) {
+          this.logger.info(
+            `Unacknowledged ${messageCount} messages for consumer ${consumerId}`,
+          );
+        }
+      },
+    );
+
+    return unacknowledger;
   }
 
-  protected recoverFromConsumerCrash(consumerId: string, cb: ICallback): void {
+  /**
+   * Recovers a single offline consumer.
+   */
+  protected recoverConsumer(
+    consumerId: string,
+    unacknowledger: MessageUnacknowledger,
+    cb: ICallback,
+  ): void {
+    const queue = this.queueParsedParams.queueParams;
+    const queueRef = `${queue.name}@${queue.ns}`;
+
     async.series(
       [
+        // Step 1: Start the unacknowledger
         (done: ICallback) => {
-          this.logger.debug(`Unacknowledging messages...`);
-          this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
-            consumerId,
-            [this.queueParsedParams.queueParams],
+          this.logger.debug(
+            `Starting unacknowledger for consumer ${consumerId}`,
+          );
+          unacknowledger.run(done);
+        },
+
+        // Step 2: Unacknowledge all messages in the queue
+        (done: ICallback) => {
+          this.logger.debug(
+            `Unacknowledging messages for consumer ${consumerId} on queue ${queueRef}`,
+          );
+
+          unacknowledger.unacknowledgeProcessingQueue(
             EMessageUnacknowledgementCause.OFFLINE_CONSUMER,
             (err, status) => {
               if (err) {
                 this.logger.error(
-                  `Failed to unacknowledge messages for offline consumer ${consumerId}`,
-                  err,
+                  `Failed to unacknowledge messages for consumer ${consumerId}: ${err.message}`,
                 );
-                // ignoring err
-                return done();
+                return done(); // Continue with recovery
               }
-              const messageCount = status ? Object.keys(status).length : 0;
-              this.logger.info(
-                `Successfully unacknowledged ${messageCount} messages for offline consumer ${consumerId}`,
-              );
+
+              const count = status ? Object.keys(status).length : 0;
+              if (count > 0) {
+                this.logger.info(
+                  `Unacknowledged ${count} messages for consumer ${consumerId}`,
+                );
+              }
               done();
             },
           );
         },
+
+        // Step 3: Clean up ephemeral consumer groups
         (done: ICallback) => {
-          this.logger.debug(`Cleaning up ephemeral consumer groups...`);
-          _deleteEphemeralConsumerGroup(
-            this.queueParsedParams.queueParams,
-            consumerId,
-            null,
-            (err) => {
-              const queue = this.queueParsedParams.queueParams;
-              const queueRef = `${queue.name}@${queue.ns}`;
-              if (err) {
-                // Best-effort cleanup: do not fail the whole cycle, but log with full context
-                this.logger.warn(
-                  `Failed to delete ephemeral consumer group for ${queueRef}, consumer ${consumerId}`,
-                  err,
-                );
-              } else {
-                this.logger.debug(
-                  `Ephemeral consumer group deleted for ${queueRef}, consumer ${consumerId}`,
-                );
-              }
-              done();
-            },
+          this.logger.debug(
+            `Cleaning up ephemeral groups for consumer ${consumerId}`,
           );
+
+          _deleteEphemeralConsumerGroup(queue, consumerId, null, (err) => {
+            if (err) {
+              this.logger.warn(
+                `Failed to delete ephemeral group for ${queueRef}, consumer ${consumerId}: ${err.message}`,
+              );
+            } else {
+              this.logger.debug(
+                `Ephemeral group deleted for ${queueRef}, consumer ${consumerId}`,
+              );
+            }
+            done();
+          });
+        },
+
+        // Step 4: Unsubscribe consumer from queue
+        (done: ICallback) => {
+          _unsubscribeConsumer(consumerId, this.queueParsedParams, (err) => {
+            if (err) {
+              const queue = this.queueParsedParams.queueParams;
+              this.logger.error(
+                `Failed to unsubscribe consumer ${consumerId} from queue ${queue.name}@${queue.ns}: ${err.message}`,
+              );
+            }
+            done(err); // pass the error so the next time we try again
+          });
         },
       ],
-      (err) => cb(err),
+      (err) => {
+        this.logger.debug(
+          `Shutting down unacknowledger for consumer ${consumerId}`,
+        );
+        unacknowledger.shutdown(() => cb(err));
+      },
     );
   }
 
+  /**
+   * Main work function that checks for offline consumers and triggers recovery.
+   */
   work = (cb: ICallback<void>): void => {
-    this.logger.debug('Starting watch consumers work cycle');
+    this.logger.debug('Starting reap consumers work cycle');
 
-    withSharedPoolConnection((redisClient, cb) => {
-      const queueName = this.queueParsedParams.queueParams.name;
-      const queueNamespace = this.queueParsedParams.queueParams.ns;
-      this.logger.debug(
-        `Checking consumers for queue: ${queueNamespace}:${queueName}`,
-      );
+    withSharedPoolConnection((redisClient, connCb) => {
+      const queue = this.queueParsedParams.queueParams;
+      const queueRef = `${queue.name}@${queue.ns}`;
 
-      _getQueueConsumerIds(
-        redisClient,
-        this.queueParsedParams.queueParams,
-        (err, consumerIds) => {
-          if (err) {
-            this.logger.error(
-              `Error retrieving consumer IDs for queue ${queueNamespace}:${queueName}`,
-              err,
-            );
-            cb(err);
-          } else {
-            const consumerCount = consumerIds?.length || 0;
+      this.logger.debug(`Checking consumers for queue: ${queueRef}`);
+
+      _getQueueConsumerIds(redisClient, queue, (err, consumerIds) => {
+        if (err) {
+          this.logger.error(
+            `Failed to get consumer IDs for ${queueRef}: ${err.message}`,
+          );
+          return connCb(err);
+        }
+
+        const consumers = consumerIds || [];
+        if (consumers.length === 0) {
+          this.logger.debug(`No consumers found for queue ${queueRef}`);
+          return connCb();
+        }
+
+        this.logger.debug(
+          `Found ${consumers.length} consumers for queue ${queueRef}`,
+        );
+
+        let offlineCount = 0;
+        let errorCount = 0;
+
+        // Check each consumer's heartbeat
+        async.eachOf(
+          consumers,
+          (consumerId, index, done) => {
             this.logger.debug(
-              `Found ${consumerCount} consumers for queue ${queueNamespace}:${queueName}`,
+              `[${index + 1}/${consumers.length}] Checking heartbeat for consumer ${consumerId}`,
             );
 
-            async.eachOf(
-              consumerIds ?? [],
-              (consumerId, index, done) => {
-                this.logger.debug(
-                  `Checking heartbeat for consumer ${consumerId} (${index + 1}/${consumerCount})`,
+            _isConsumerAlive(redisClient, consumerId, (err, alive) => {
+              if (err) {
+                this.logger.error(
+                  `Heartbeat check failed for ${consumerId}: ${err.message}`,
                 );
+                errorCount++;
+                return done(err);
+              }
 
-                _isConsumerAlive(redisClient, consumerId, (err, alive) => {
-                  if (err) {
+              if (alive) {
+                this.logger.debug(`Consumer ${consumerId} is alive`);
+                return done();
+              }
+
+              // Consumer is offline - recover it
+              offlineCount++;
+              this.logger.info(
+                `Consumer ${consumerId} is offline, starting recovery`,
+              );
+
+              const unacknowledger =
+                this.createMessageUnacknowledger(consumerId);
+
+              this.recoverConsumer(
+                consumerId,
+                unacknowledger,
+                (recoveryErr) => {
+                  if (recoveryErr) {
                     this.logger.error(
-                      `Error checking heartbeat for consumer ${consumerId}`,
-                      err,
+                      `Recovery failed for consumer ${consumerId}: ${recoveryErr.message}`,
                     );
-                    done(err);
-                  } else if (!alive) {
-                    this.logger.info(
-                      `Consumer ${consumerId} is offline, cleaning up...`,
-                    );
-                    this.recoverFromConsumerCrash(consumerId, done);
+                    errorCount++;
                   } else {
-                    this.logger.debug(
-                      `Consumer ${consumerId} is alive and active`,
+                    this.logger.info(
+                      `Successfully recovered consumer ${consumerId}`,
                     );
-                    done();
                   }
-                });
-              },
-              (err) => {
-                if (err) {
-                  this.logger.error(
-                    'Error during consumer heartbeat check cycle',
-                    err,
-                  );
-                } else {
-                  this.logger.debug(
-                    'Completed watch consumers work cycle successfully',
-                  );
-                }
-                cb(err);
-              },
+                  done();
+                },
+              );
+            });
+          },
+          (err) => {
+            this.logger.info(
+              `Reap cycle complete for ${queueRef}: ` +
+                `checked=${consumers.length}, ` +
+                `offline=${offlineCount}, ` +
+                `errors=${errorCount}`,
             );
-          }
-        },
-      );
+            connCb(err);
+          },
+        );
+      });
     }, cb);
   };
 }

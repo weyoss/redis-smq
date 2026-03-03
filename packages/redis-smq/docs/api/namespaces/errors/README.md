@@ -63,6 +63,7 @@
 - [NamespaceNotFoundError](classes/NamespaceNotFoundError.md)
 - [NoMatchedQueuesForMessageExchangeError](classes/NoMatchedQueuesForMessageExchangeError.md)
 - [PriorityQueuingNotEnabledError](classes/PriorityQueuingNotEnabledError.md)
+- [ProcessingQueueNotEmptyError](classes/ProcessingQueueNotEmptyError.md)
 - [ProducerNotRunningError](classes/ProducerNotRunningError.md)
 - [QueueAlreadyBeingPurgedError](classes/QueueAlreadyBeingPurgedError.md)
 - [QueueAlreadyBound](classes/QueueAlreadyBound.md)

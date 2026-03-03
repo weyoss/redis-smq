@@ -14,23 +14,20 @@
 -- Respects queue operational state - returns specific error codes when queue state prevents unacknowledgement.
 --
 -- KEYS:
---   Static Keys (1-5): All queue-related keys except consumer-specific ones.
---   Dynamic Keys (6...): A repeating triplet of [keyQueueProcessing, keyMessage, keyConsumerQueues] for each message.
+--   Static Keys (1-3): All queue-related keys except consumer-specific ones.
+--   Dynamic Keys (4...): A repeating triplet of [keyQueueProcessing, keyMessage] for each message.
 --
 -- ARGV:
---   Static ARGV (1-23): All constants.
---   Dynamic ARGV (24...): A flat list of parameters for each message.
+--   Static ARGV (1-20): All constants.
+--   Dynamic ARGV (21...): A flat list of parameters for each message.
 --
 -- ARGV structure per message (9 parameters):
---   1. queue (JSON string)
---   2. consumerId
---   3. messageId
---   4. retryAction
---   5. messageUnacknowledgedCause
---   6. deadLetteredAt
---   7. messageExpired
---   8. unacknowledgedAt
---   9. lastUnacknowledgedAt
+--   1. messageId
+--   2. retryAction
+--   3. deadLetteredAt
+--   4. messageExpired
+--   5. unacknowledgedAt
+--   6. lastUnacknowledgedAt
 --
 -- Returns:
 --   The number of messages that were successfully unacknowledged.
@@ -42,41 +39,36 @@
 -- Static Keys
 local keyQueueRequeued = KEYS[1]
 local keyQueueDL = KEYS[2]
-local keyQueueProcessingQueues = KEYS[3]
-local keyQueueConsumers = KEYS[4]
-local keyQueueProperties = KEYS[5]
+local keyQueueProperties = KEYS[3]
 
 -- Static ARGV
 local ERetryActionDelay = ARGV[1]
 local ERetryActionRequeue = ARGV[2]
-local ERetryActionDeadLetter = ARGV[3]
-local storeMessages = ARGV[4]
-local expireStoredMessages = ARGV[5]
-local storedMessagesSize = ARGV[6]
-local EMessagePropertyStatus = ARGV[7]
-local EMessageUnacknowledgedCauseOfflineConsumer = ARGV[8]
-local EMessageUnacknowledgedCauseOfflineHandler = ARGV[9]
-local EQueuePropertyProcessingMessagesCount = ARGV[10]
-local EQueuePropertyDeadLetteredMessagesCount = ARGV[11]
-local EQueuePropertyRequeuedMessagesCount = ARGV[12]
-local EMessagePropertyStatusUnackRequeuing = ARGV[13]
-local EMessagePropertyStatusDeadLettered = ARGV[14]
-local EMessagePropertyDeadLetteredAt = ARGV[15]
-local EMessagePropertyUnacknowledgedAt = ARGV[16]
-local EMessagePropertyLastUnacknowledgedAt = ARGV[17]
-local EMessagePropertyExpired = ARGV[18]
+local storeMessages = ARGV[3]
+local expireStoredMessages = ARGV[4]
+local storedMessagesSize = ARGV[5]
+local EMessagePropertyStatus = ARGV[6]
+local EQueuePropertyProcessingMessagesCount = ARGV[7]
+local EQueuePropertyDeadLetteredMessagesCount = ARGV[8]
+local EQueuePropertyRequeuedMessagesCount = ARGV[9]
+local EMessagePropertyStatusUnackRequeuing = ARGV[10]
+local EMessagePropertyStatusDeadLettered = ARGV[11]
+local EMessagePropertyDeadLetteredAt = ARGV[12]
+local EMessagePropertyUnacknowledgedAt = ARGV[13]
+local EMessagePropertyLastUnacknowledgedAt = ARGV[14]
+local EMessagePropertyExpired = ARGV[15]
 -- Operational state constants (new)
-local EQueuePropertyOperationalState = ARGV[19]
-local EQueueOperationalStateActive = ARGV[20]
-local EQueueOperationalStatePaused = ARGV[21]
-local EQueueOperationalStateStopped = ARGV[22]
-local EQueueOperationalStateLocked = ARGV[23]
+local EQueuePropertyOperationalState = ARGV[16]
+local EQueueOperationalStateActive = ARGV[17]
+local EQueueOperationalStatePaused = ARGV[18]
+local EQueueOperationalStateStopped = ARGV[19]
+local EQueueOperationalStateLocked = ARGV[20]
 
 -- Loop constants
-local INITIAL_KEY_OFFSET = 5
-local INITIAL_ARGV_OFFSET = 23
-local PARAMS_PER_MESSAGE = 9
-local KEYS_PER_MESSAGE = 3 -- keyQueueProcessing + keyMessage + keyConsumerQueues
+local INITIAL_KEY_OFFSET = 3
+local INITIAL_ARGV_OFFSET = 20
+local PARAMS_PER_MESSAGE = 6
+local KEYS_PER_MESSAGE = 2
 local E_INVALID_ARGS_ERROR_REPLY = "Mismatch between the number of keys and arguments provided."
 
 if redis.call("EXISTS", keyQueueProperties) == 0 then
@@ -122,20 +114,16 @@ local requeuedCount = 0
 
 for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     -- Read all values for this message
-    local queue = ARGV[argvIndex]
-    local consumerId = ARGV[argvIndex + 1]
-    local messageId = ARGV[argvIndex + 2]
-    local retryAction = ARGV[argvIndex + 3]
-    local messageUnacknowledgedCause = ARGV[argvIndex + 4]
-    local deadLetteredAt = ARGV[argvIndex + 5]
-    local messageExpired = ARGV[argvIndex + 6]
-    local unacknowledgedAt = ARGV[argvIndex + 7]
-    local lastUnacknowledgedAt = ARGV[argvIndex + 8]
+    local messageId = ARGV[argvIndex]
+    local retryAction = ARGV[argvIndex + 1]
+    local deadLetteredAt = ARGV[argvIndex + 2]
+    local messageExpired = ARGV[argvIndex + 3]
+    local unacknowledgedAt = ARGV[argvIndex + 4]
+    local lastUnacknowledgedAt = ARGV[argvIndex + 5]
 
     -- Get dynamic keys for this message
     local keyQueueProcessing = KEYS[keyIndex]
     local keyMessage = KEYS[keyIndex + 1]
-    local keyConsumerQueues = KEYS[keyIndex + 2]
     keyIndex = keyIndex + KEYS_PER_MESSAGE
 
     -- Process message only if it exists and can be claimed
@@ -171,22 +159,6 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 EMessagePropertyExpired, messageExpired
             )
             processedCount = processedCount + 1
-        end
-    end
-
-    -- Handle offline consumer/handler
-    if messageUnacknowledgedCause == EMessageUnacknowledgedCauseOfflineConsumer or
-            messageUnacknowledgedCause == EMessageUnacknowledgedCauseOfflineHandler then
-        -- Delete processing queue
-        redis.call("HDEL", keyQueueProcessingQueues, keyQueueProcessing)
-        redis.call("DEL", keyQueueProcessing)
-
-        -- Remove queue consumer
-        redis.call("HDEL", keyQueueConsumers, consumerId)
-        redis.call("SREM", keyConsumerQueues, queue)
-        local size = redis.call("SCARD", keyConsumerQueues)
-        if size == 0 then
-            redis.call("DEL", keyConsumerQueues)
         end
     end
 end

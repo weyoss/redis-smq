@@ -7,417 +7,412 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
-import { ERedisScriptName } from '../../../common/redis/scripts.js';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
-import { Configuration } from '../../../config/index.js';
 import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../message/index.js';
+  async,
+  ICallback,
+  ILogger,
+  IRedisClient,
+  PanicError,
+  Runnable,
+} from 'redis-smq-common';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessages } from '../../../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
+import { IQueueParams } from '../../../queue-manager/index.js';
 import {
-  EQueueProperty,
-  IQueueParams,
-  EQueueOperationalState,
-} from '../../../queue-manager/index.js';
-import { _getConsumerQueues } from '../../_/_get-consumer-queues.js';
-import {
-  EMessageRecoveryAction,
   EMessageDeadLetterCause,
   EMessageUnacknowledgementCause,
-  TMessageRecoveryResolution,
-  TMessageRecovery,
+  EUnacknowledgementAction,
+  TUnacknowledgementBatch,
+  TUnacknowledgementResolution,
+  TUnacknowledgementResult,
 } from './types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import {
-  ScriptResultMismatchError,
-  UnexpectedScriptReplyError,
-} from '../../../errors/index.js';
+import { TConsumerParsedOptions } from '../../types/index.js';
+import { _executeUnacknowledgementScript } from './_/_execute-unacknowledgement-script.js';
 
-type TScriptArgs = {
-  keys: string[];
-  args: (string | number)[];
-  actions: Map<MessageEnvelope, TMessageRecoveryResolution>;
-};
-
-type TUnacknowledgementArgs = {
-  action: TMessageRecoveryResolution | null;
-  keys: string[];
-  args: (string | number)[];
-};
-
-const UNACK_STATIC_KEYS = (queue: IQueueParams): string[] => {
-  const {
-    keyQueueRequeued,
-    keyQueueDL,
-    keyQueueProcessingQueues,
-    keyQueueConsumers,
-    keyQueueProperties,
-  } = redisKeys.getQueueKeys(queue.ns, queue.name, null);
-  return [
-    keyQueueRequeued,
-    keyQueueDL,
-    keyQueueProcessingQueues,
-    keyQueueConsumers,
-    keyQueueProperties,
-  ];
-};
-
-const UNACK_STATIC_ARGS = (): (string | number)[] => {
-  const { enabled, expire, queueSize } =
-    Configuration.getConfig().messageAudit.deadLetteredMessages;
-  return [
-    EMessageRecoveryAction.DELAY,
-    EMessageRecoveryAction.REQUEUE,
-    EMessageRecoveryAction.DEAD_LETTER,
-    Number(enabled),
-    expire,
-    queueSize * -1,
-    EMessageProperty.STATUS,
-    EMessageUnacknowledgementCause.OFFLINE_CONSUMER,
-    EMessageUnacknowledgementCause.SHUTTING_DOWN,
-    EQueueProperty.PROCESSING_MESSAGES_COUNT,
-    EQueueProperty.DEAD_LETTERED_MESSAGES_COUNT,
-    EQueueProperty.REQUEUED_MESSAGES_COUNT,
-    EMessagePropertyStatus.UNACK_REQUEUING,
-    EMessagePropertyStatus.DEAD_LETTERED,
-    EMessageProperty.DEAD_LETTERED_AT,
-    EMessageProperty.UNACKNOWLEDGED_AT,
-    EMessageProperty.LAST_UNACKNOWLEDGED_AT,
-    EMessageProperty.EXPIRED,
-    // Operational state constants (ARGV[19-23])
-    EQueueProperty.OPERATIONAL_STATE,
-    EQueueOperationalState.ACTIVE,
-    EQueueOperationalState.PAUSED,
-    EQueueOperationalState.STOPPED,
-    EQueueOperationalState.LOCKED,
-  ];
+export type TMessageUnacknowledgerEvent = {
+  'messageUnacknowledger.error': (error: unknown) => void;
+  'messageUnacknowledger.messagesUnacknowledged': (
+    recoveryStatus: TUnacknowledgementResult,
+  ) => void;
 };
 
 /**
- * Handles the unacknowledgement of messages in the message queue system.
- *
- * This class is responsible for determining what happens to messages that
- * were not successfully processed, including:
- * - Moving messages to dead letter queues
- * - Requeuing messages for retry
- * - Delaying messages before retry
+ * Handles unacknowledgement of messages for a specific queue with optional batching.
  */
-export class MessageUnacknowledger {
-  protected readonly logger;
+export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent> {
+  private readonly consumerId: string;
+  private readonly queue: IQueueParams;
+  private readonly queueRef: string;
+  private readonly useBatchUnacks: boolean;
+  private readonly batchSize: number;
+  private readonly batchTimeoutMs: number;
+  private readonly batch: TUnacknowledgementBatch;
 
-  /**
-   * Creates a new MessageUnacknowledgement instance.
-   */
-  constructor(logger: ILogger) {
-    this.logger = logger.createLogger(this.constructor.name.toLowerCase());
+  protected readonly logger: ILogger;
+
+  constructor(
+    consumerId: string,
+    queue: IQueueParams,
+    logger: ILogger,
+    consumerOptions: TConsumerParsedOptions,
+  ) {
+    super();
+    this.consumerId = consumerId;
+    this.queue = queue;
+    this.queueRef = `${queue.name}@${queue.ns}`;
+    this.logger = logger.createLogger(`${this.constructor.name.toLowerCase()}`);
+    this.useBatchUnacks = consumerOptions.enableBatchUnacks;
+    this.batchSize = consumerOptions.batchSize;
+    this.batchTimeoutMs = consumerOptions.batchTimeoutMs;
+
+    this.batch = {
+      messages: [],
+      callbacks: [],
+      timer: null,
+    };
+
+    this.logger.debug(
+      `MessageUnacknowledger initialized for queue ${this.queueRef}`,
+    );
   }
 
-  /**
-   * Determines the appropriate action to take for an unacknowledged message.
-   *
-   * @param message - The message envelope
-   * @param unacknowledgedReason - The reason for unacknowledgement
-   * @returns The action to take for the unacknowledged message
-   */
-  protected getMessageUnacknowledgementAction(
+  private getResolution(
     message: MessageEnvelope,
-    unacknowledgedReason: EMessageUnacknowledgementCause,
-  ): TMessageRecoveryResolution {
-    // Check if message TTL has expired
-    if (unacknowledgedReason === EMessageUnacknowledgementCause.TTL_EXPIRED) {
+    cause: EMessageUnacknowledgementCause,
+  ): TUnacknowledgementResolution {
+    // TTL expired always goes to DLQ
+    if (cause === EMessageUnacknowledgementCause.TTL_EXPIRED) {
       return {
-        action: EMessageRecoveryAction.DEAD_LETTER,
+        cause,
+        action: EUnacknowledgementAction.DEAD_LETTER,
         deadLetterCause: EMessageDeadLetterCause.TTL_EXPIRED,
       };
     }
 
-    // Handle periodic messages
+    // Periodic messages are never retried - they're rescheduled by the scheduler
     if (message.isPeriodic()) {
-      // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
-      // messages are periodically scheduled for delivery.
       return {
-        action: EMessageRecoveryAction.DEAD_LETTER,
+        cause,
+        action: EUnacknowledgementAction.DEAD_LETTER,
         deadLetterCause: EMessageDeadLetterCause.PERIODIC_MESSAGE,
       };
     }
 
-    // Check if retry threshold has been exceeded
+    // Check if retry threshold exceeded
     if (message.hasRetryThresholdExceeded()) {
       return {
-        action: EMessageRecoveryAction.DEAD_LETTER,
+        cause,
+        action: EUnacknowledgementAction.DEAD_LETTER,
         deadLetterCause: EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
       };
     }
 
-    // Determine if message should be delayed before retry
+    // Determine if message should be delayed or requeued immediately
     const delay = message.producibleMessage.getRetryDelay();
     return delay
-      ? { action: EMessageRecoveryAction.DELAY }
-      : { action: EMessageRecoveryAction.REQUEUE };
+      ? { cause, action: EUnacknowledgementAction.DELAY }
+      : { cause, action: EUnacknowledgementAction.REQUEUE };
   }
 
-  protected unacknowledgeProcessingQueueMessages(
+  private buildPendingMessages(
+    messages: MessageEnvelope[],
+    cause: EMessageUnacknowledgementCause,
+  ): TUnacknowledgementBatch['messages'] {
+    return messages.map((m) => {
+      const resolution = this.getResolution(m, cause);
+      const { keyMessage } = redisKeys.getMessageKeys(m.getId());
+      return {
+        messageId: m.getId(),
+        keyMessage,
+        message: m,
+        resolution,
+      };
+    });
+  }
+
+  private processBatch(): void {
+    if (this.batch.timer) {
+      clearTimeout(this.batch.timer);
+      this.batch.timer = null;
+    }
+
+    if (this.batch.messages.length === 0) {
+      this.batch.callbacks.forEach((cb) => cb(null, {}));
+      this.batch.callbacks = [];
+      return;
+    }
+
+    const messages = [...this.batch.messages];
+    const callbacks = [...this.batch.callbacks];
+    this.batch.messages = [];
+    this.batch.callbacks = [];
+
+    this.logger.debug(
+      `Processing batch of ${messages.length} messages for queue ${this.queue.ns}:${this.queue.name}`,
+    );
+
+    withSharedPoolConnection(
+      (client, done) => {
+        _executeUnacknowledgementScript(
+          this.queue,
+          messages,
+          this.consumerId,
+          this.logger,
+          (err, result) => {
+            if (err) {
+              callbacks.forEach((cb) => cb(err));
+              return done(err);
+            }
+            if (result) {
+              this.emit('messageUnacknowledger.messagesUnacknowledged', result);
+              callbacks.forEach((cb) => cb(null, result));
+            }
+            done();
+          },
+        );
+      },
+      (err) => {
+        if (err) this.handleError(err);
+      },
+    );
+  }
+
+  private getMessagesFromQueue(
     client: IRedisClient,
-    consumerId: string,
-    queue: IQueueParams,
-    unacknowledgementCause: EMessageUnacknowledgementCause,
-    cb: ICallback<TMessageRecovery>,
+    cb: ICallback<MessageEnvelope[]>,
   ): void {
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-      queue,
-      consumerId,
+      this.queue,
+      this.consumerId,
     );
+
     async.waterfall(
       [
         (next: ICallback<string[]>) => {
-          client.lrange(keyQueueProcessing, 0, -1, (err, reply) => {
-            if (err) next(err);
-            else next(null, reply ?? []);
-          });
-        },
-        (messageIds: string[], next: ICallback<MessageEnvelope[]>) => {
-          if (!messageIds.length) next(null, []);
-          else _getMessages(client, messageIds, next);
-        },
-        (messages: MessageEnvelope[], next: ICallback<TMessageRecovery>) => {
-          this.executeUnacknowledgementScript(
-            client,
-            consumerId,
-            queue,
-            messages,
-            unacknowledgementCause,
-            next,
+          client.lrange(keyQueueProcessing, 0, -1, (err, reply) =>
+            next(err, reply ?? []),
           );
+        },
+        (ids: string[], next: ICallback<MessageEnvelope[]>) => {
+          if (!ids.length) return next(null, []);
+          _getMessages(client, ids, next);
         },
       ],
       cb,
     );
   }
 
-  protected prepareUnacknowledgementArgs(
-    consumerId: string,
-    queue: IQueueParams,
-    msg: MessageEnvelope | null,
-    unacknowledgementReason: EMessageUnacknowledgementCause,
-  ): TUnacknowledgementArgs {
-    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-      queue,
-      consumerId,
-    );
-    const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
+  protected override goingDown(): Array<(cb: ICallback<void>) => void> {
+    return [
+      (next: ICallback) => {
+        if (this.batch.messages.length === 0) {
+          this.logger.debug('No pending batch to flush during shutdown');
+          return next();
+        }
 
-    const msgId = msg?.getId() ?? '';
-    const keyMessage = msg ? redisKeys.getMessageKeys(msgId).keyMessage : '';
+        this.logger.info(
+          `Flushing pending batch of ${this.batch.messages.length} messages on shutdown`,
+        );
 
-    const unackAction: TMessageRecoveryResolution | null = msg
-      ? this.getMessageUnacknowledgementAction(msg, unacknowledgementReason)
-      : null;
-
-    const ts = Date.now();
-    const messageState = msg?.getMessageState();
-
-    const keys = [keyQueueProcessing, keyMessage, keyConsumerQueues];
-    const args: (string | number)[] = [
-      JSON.stringify(queue),
-      consumerId,
-      msgId,
-      unackAction?.action ?? -1,
-      unacknowledgementReason,
-      messageState?.getDeadLetteredAt() ?? '',
-      Number(messageState?.getExpired() ?? false),
-      messageState?.getUnacknowledgedAt() ?? ts,
-      ts, // lastUnacknowledgedAt
+        this.flush((err) => {
+          if (err) {
+            this.logger.error(
+              `Error flushing batch during shutdown: ${err.message}`,
+            );
+          }
+          next();
+        });
+      },
+      (next: ICallback) => {
+        this.logger.info('Unacknowledging messages in processing queue');
+        this.unacknowledgeProcessingQueue(
+          EMessageUnacknowledgementCause.SHUTTING_DOWN,
+          () => next(),
+        );
+      },
     ];
-
-    return {
-      action: unackAction,
-      keys,
-      args,
-    };
   }
 
-  protected buildScriptArgs(
-    consumerId: string,
-    queue: IQueueParams,
-    messages: MessageEnvelope[],
-    unacknowledgementReason: EMessageUnacknowledgementCause,
-  ): TScriptArgs {
-    const staticKeys = UNACK_STATIC_KEYS(queue);
-    const staticArgs = UNACK_STATIC_ARGS();
+  protected override handleError(err: unknown): void {
+    if (!this.isOperational()) return;
 
-    const dynamicKeys: string[] = [];
-    const dynamicArgs: (string | number)[] = [];
-    const actions = new Map<MessageEnvelope, TMessageRecoveryResolution>();
+    const error = err instanceof Error ? err : new Error(String(err));
+    this.logger.error(`MessageUnacknowledger error: ${error.message}`);
+    this.emit('messageUnacknowledger.error', error);
+    super.handleError(err);
+  }
 
-    const messagesOrNull: (MessageEnvelope | null)[] = messages.length
-      ? messages
-      : [null];
-
-    for (const msg of messagesOrNull) {
-      const payload = this.prepareUnacknowledgementArgs(
-        consumerId,
-        queue,
-        msg,
-        unacknowledgementReason,
+  /**
+   * Add a single message to be unacknowledged
+   */
+  public add(
+    message: MessageEnvelope,
+    cause: EMessageUnacknowledgementCause,
+  ): void {
+    if (!this.isOperational()) {
+      this.logger.warn(
+        `Cannot add message ${message.getId()} - not operational`,
       );
-      if (msg && payload.action) {
-        actions.set(msg, payload.action);
-      }
-      dynamicKeys.push(...payload.keys);
-      dynamicArgs.push(...payload.args);
+      return;
     }
 
-    return {
-      keys: [...staticKeys, ...dynamicKeys],
-      args: [...staticArgs, ...dynamicArgs],
-      actions,
-    };
+    // Non-batch mode - process immediately
+    if (!this.useBatchUnacks) {
+      this.unacknowledgeMessage(message, cause, (err, result) => {
+        if (err) this.handleError(err);
+        if (result) {
+          this.emit('messageUnacknowledger.messagesUnacknowledged', result);
+        }
+      });
+      return;
+    }
+
+    const resolution = this.getResolution(message, cause);
+
+    this.logger.debug(
+      `Adding message ${message.getId()} to unacknowledger, action: ${resolution.action}`,
+    );
+
+    this.batch.messages.push({
+      message,
+      resolution,
+    });
+
+    // Flush if batch is full
+    if (this.batch.messages.length >= this.batchSize) {
+      this.logger.debug(`Batch full, flushing immediately`);
+      this.processBatch();
+    }
+    // Set timer if this is the first message in a new batch
+    else if (!this.batch.timer) {
+      this.logger.debug(`Setting timer: ${this.batchTimeoutMs}ms`);
+      this.batch.timer = setTimeout(() => {
+        if (this.batch.messages.length > 0) {
+          this.logger.debug(`Timer expired, flushing`);
+          this.processBatch();
+        }
+      }, this.batchTimeoutMs);
+      this.batch.timer.unref();
+    }
   }
 
-  protected executeUnacknowledgementScript(
-    client: IRedisClient,
-    consumerId: string,
-    queue: IQueueParams,
-    messages: MessageEnvelope[],
+  /**
+   * Unacknowledge a single message immediately (bypasses batching).
+   */
+  public unacknowledgeMessage(
+    message: MessageEnvelope,
     cause: EMessageUnacknowledgementCause,
-    cb: ICallback<TMessageRecovery>,
+    cb: ICallback<TUnacknowledgementResult>,
   ): void {
-    const { keys, args, actions } = this.buildScriptArgs(
-      consumerId,
-      queue,
-      messages,
-      cause,
+    if (!this.isOperational()) {
+      return cb(
+        new PanicError({ message: 'MessageUnacknowledger not operational' }),
+      );
+    }
+
+    const resolution = this.getResolution(message, cause);
+
+    this.logger.debug(`Immediately unacknowledging message ${message.getId()}`);
+    _executeUnacknowledgementScript(
+      this.queue,
+      [
+        {
+          message,
+          resolution,
+        },
+      ],
+      this.consumerId,
+      this.logger,
+      cb,
     );
-    client.runScript(
-      ERedisScriptName.UNACKNOWLEDGE_MESSAGE,
-      keys,
-      args,
-      (err, reply) => {
-        if (err) return cb(err);
+  }
 
-        // Handle string responses from the script (queue or queue state errors)
-        if (typeof reply === 'string') {
-          this.logger.warn(`Script returned queue state: ${reply}`);
-          return cb(
-            new UnexpectedScriptReplyError({
-              metadata: {
-                reply,
-              },
-            }),
-          );
-        }
+  /**
+   * Unacknowledge all messages currently in the processing queue.
+   */
+  public unacknowledgeProcessingQueue(
+    cause: EMessageUnacknowledgementCause,
+    cb: ICallback<TUnacknowledgementResult>,
+  ): void {
+    // this method is allowed to run in all states except when the instance is fully shutdown
+    if (this.isDown() && !this.isGoingUp()) {
+      return cb(
+        new PanicError({ message: 'MessageUnacknowledger is fully down' }),
+      );
+    }
 
-        const processedCount = Number(reply);
-        if (isNaN(processedCount)) {
-          return cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
-        }
-        const expectedCount = messages.length;
-        if (processedCount !== expectedCount) {
-          // This is a warning, not an error, as messages may have been already processed
-          this.logger.warn(
-            `Script reported processing ${processedCount} entries, but expected ${expectedCount}. ` +
-              `This may be due to messages being already processed or removed.`,
+    const queueRef = `${this.queue.ns}:${this.queue.name}`;
+    this.logger.info(
+      `Unacknowledging all messages in processing queue ${queueRef}`,
+    );
+
+    async.waterfall(
+      [
+        (next: ICallback<MessageEnvelope[]>) => {
+          withSharedPoolConnection((client, done) => {
+            this.getMessagesFromQueue(client, done);
+          }, next);
+        },
+        (
+          messages: MessageEnvelope[],
+          next: ICallback<TUnacknowledgementResult>,
+        ) => {
+          const messageCount = messages?.length || 0;
+          this.logger.debug(
+            `Found ${messageCount} messages in processing queue ${queueRef}`,
           );
-          return cb(
-            new ScriptResultMismatchError({
-              message: `Script reported processing ${processedCount} entries, but expected ${expectedCount}`,
-              metadata: {
-                expected: expectedCount,
-                actual: processedCount,
-              },
-            }),
+
+          const pending = this.buildPendingMessages(messages || [], cause);
+          _executeUnacknowledgementScript(
+            this.queue,
+            pending,
+            this.consumerId,
+            this.logger,
+            next,
+          );
+        },
+      ],
+      (err, result) => {
+        if (err) {
+          this.logger.error(
+            `Failed to unacknowledge queue ${queueRef}: ${err.message}`,
           );
         }
-        const status: TMessageRecovery = Object.fromEntries(
-          Array.from(actions.entries()).map(([msg, action]) => [
-            msg.getId(),
-            action,
-          ]),
-        );
-        cb(null, status);
+        if (result) {
+          const unackedCount = Object.keys(result).length;
+          this.logger.info(
+            `Unacknowledged ${unackedCount} messages from processing queue ${queueRef}`,
+          );
+          this.emit('messageUnacknowledger.messagesUnacknowledged', result);
+        }
+        cb(err, result);
       },
     );
   }
 
   /**
-   * Unacknowledges a specific message.
-   *
-   * @param consumerId - The ID of the consumer
-   * @param msg - The message envelope
-   * @param cause - The reason for unacknowledgement
-   * @param cb - Callback function
+   * Flush any pending messages in the batch.
    */
-  public unacknowledgeMessage(
-    consumerId: string,
-    msg: MessageEnvelope,
-    cause: EMessageUnacknowledgementCause,
-    cb: ICallback<TMessageRecovery>,
-  ): void {
-    withSharedPoolConnection((client, done) => {
-      const queue = msg.getDestinationQueue();
-      this.executeUnacknowledgementScript(
-        client,
-        consumerId,
-        queue,
-        [msg],
-        cause,
-        done,
+  public flush(cb?: ICallback<TUnacknowledgementResult>): void {
+    if (this.isDown() && !this.isGoingUp()) {
+      return cb?.(
+        new PanicError({ message: 'MessageUnacknowledger is fully down' }),
       );
-    }, cb);
-  }
+    }
 
-  /**
-   * Unacknowledges all messages currently being processed by a consumer.
-   *
-   * @param consumerId - The ID of the consumer
-   * @param queues - Optional list of queues to check, or null to check all queues for the consumer
-   * @param unackReason - The reason for unacknowledgement
-   * @param cb - Callback function
-   */
-  public unacknowledgeMessagesInProcess(
-    consumerId: string,
-    queues: IQueueParams[] | null,
-    unackReason: EMessageUnacknowledgementCause,
-    cb: ICallback<TMessageRecovery>,
-  ): void {
-    withSharedPoolConnection((client, done) => {
-      async.waterfall(
-        [
-          // Step 1: Get the list of queues for this consumer
-          (next: ICallback<IQueueParams[]>) => {
-            if (queues) next(null, queues);
-            else _getConsumerQueues(client, consumerId, next);
-          },
-          // Step 2: Process each queue and collect the results
-          (queues: IQueueParams[], next: ICallback<TMessageRecovery[]>) => {
-            async.map(
-              queues,
-              (queue, finished) =>
-                this.unacknowledgeProcessingQueueMessages(
-                  client,
-                  consumerId,
-                  queue,
-                  unackReason,
-                  finished,
-                ),
-              100,
-              next,
-            );
-          },
-          // Step 3: Combine the results from all queues into a single status object
-          (statuses: TMessageRecovery[], next: ICallback<TMessageRecovery>) => {
-            const combinedStatus: TMessageRecovery = Object.assign(
-              {},
-              ...statuses,
-            );
-            next(null, combinedStatus);
-          },
-        ],
-        done,
-      );
-    }, cb);
+    if (this.batch.messages.length === 0) {
+      this.logger.debug('No pending messages to flush');
+      cb?.(null, {});
+      return;
+    }
+
+    this.logger.debug(
+      `Flushing ${this.batch.messages.length} pending messages`,
+    );
+
+    if (cb) this.batch.callbacks.push(cb);
+    this.processBatch();
   }
 }

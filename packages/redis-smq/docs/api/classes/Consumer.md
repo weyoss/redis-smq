@@ -4,39 +4,16 @@
 
 Consumer class responsible for receiving and processing messages from message queues.
 
-The Consumer implements the `Runnable` interface to handle lifecycle events like startup
-and shutdown. It can be configured for multiplexing, allowing it to handle multiple queues
-simultaneously with a single Redis connection.
-
-## Template
-
-The type of events emitted by the consumer
-
 ## Example
 
 ```typescript
-// Create a consumer instance
-const consumer = new Consumer({ enableMultiplexing: false });
-
-// Start the consumer
+const consumer = new Consumer();
 consumer.run((err) => {
   if (err) {
     console.error('Failed to start consumer:', err);
     return;
   }
-
-  // Consumer is ready to receive messages
-  consumer.consume(
-    'my-queue',
-    (message, done) => {
-      console.log('Processing message:', message);
-      // Process the message...
-      done(); // Acknowledge message processing
-    },
-    (consumeErr) => {
-      if (consumeErr) console.error('Failed to start consumption:', consumeErr);
-    },
-  );
+  console.error('Consumer is running');
 });
 ```
 
@@ -63,6 +40,7 @@ Configuration options for the consumer:
 - `enableMultiplexing` - When true, enables handling multiple queues with one connection. Default: false.
 - `heartbeatTTL` - Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
 - `enableBatchAcks` - When true, enables batch acknowledgment of messages. Default: true.
+- `enableBatchUnacks` - When true, enables batch unacknowledgment of messages. Default: true.
 - `batchSize` - Maximum number of messages to acknowledge in a batch. Default: 100.
 - `batchTimeoutMs` - Maximum time to wait for batch to fill before acknowledging. Default: 10000 (10 seconds).
 
