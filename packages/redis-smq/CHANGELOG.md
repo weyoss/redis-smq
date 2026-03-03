@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.2...v9.1.0-next.3) (2026-03-03)
+
+### 📝 Documentation
+
+- **redis-smq:** add batch message acks/unacks documentation ([bc84781](https://github.com/weyoss/redis-smq/commit/bc84781d5236cb7475b22bbb80a9cfd83a17e666))
+- **redis-smq:** add navigation path to main README file ([ff67c41](https://github.com/weyoss/redis-smq/commit/ff67c41ffbb304c3d66a3556a1272aaf0401ed4b))
+- **redis-smq:** clean up and improve documentation for clarity ([91bc470](https://github.com/weyoss/redis-smq/commit/91bc470a10da806456ac3dc53728f28ef15e4fe5))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** improve batch configuration API with nested objects ([e1748e6](https://github.com/weyoss/redis-smq/commit/e1748e65b5f6f9b0001081276ab7e9dfbfb08463))
+- **redis-smq:** shorten import ([52d5427](https://github.com/weyoss/redis-smq/commit/52d5427ca2c9a66096a3c8085e96e5670483836f))
+
 ## [9.1.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.1...v9.1.0-next.2) (2026-03-03)
 
 ### ✨ Features
