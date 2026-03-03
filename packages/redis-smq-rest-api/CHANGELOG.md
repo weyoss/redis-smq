@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.1...v9.1.0-next.2) (2026-03-03)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** add ProcessingQueueNotEmptyError to error map ([21c6413](https://github.com/weyoss/redis-smq/commit/21c6413fd198161d548dbc8d7506b96d2fe54576))
+
 ## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
 
 ### ♻️ Code Refactoring

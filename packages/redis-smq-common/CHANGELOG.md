@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.1...v9.1.0-next.2) (2026-03-03)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** update err type to handle any kind of thrown errors ([ace66f0](https://github.com/weyoss/redis-smq/commit/ace66f0cefc5cf236e4e35b2eea9746b15c63af0))
+- suppress error reporting for non-operational Runnable instances ([7d6db5a](https://github.com/weyoss/redis-smq/commit/7d6db5ac10aef94fa1c7108977cb434849e877e6))
+
 ## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
 
 **Note:** Version bump only for package redis-smq-common

@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.1...v9.1.0-next.2) (2026-03-03)
+
+### ✨ Features
+
+- **redis-smq:** implement batch message acks for improved performance ([4664e6a](https://github.com/weyoss/redis-smq/commit/4664e6a626e22eddbd6477f20dd93fcaba4ed5ab))
+- **redis-smq:** implement batch unacks for improved performance ([973dd16](https://github.com/weyoss/redis-smq/commit/973dd16d0c851d89c563af8613b663f174fba616))
+
+### 📝 Documentation
+
+- **redis-smq:** enhance ConsumerFactory and Consumer documentation ([e1a9c51](https://github.com/weyoss/redis-smq/commit/e1a9c518455074c744a86451a6f80c4f7e0f7ff8))
+
+### ♻️ Code Refactoring
+
+- suppress error reporting for non-operational Runnable instances ([7d6db5a](https://github.com/weyoss/redis-smq/commit/7d6db5ac10aef94fa1c7108977cb434849e877e6))
+
 ## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
 
 ### 📝 Documentation

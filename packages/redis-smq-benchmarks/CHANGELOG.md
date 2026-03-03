@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.1...v9.1.0-next.2) (2026-03-03)
+
+### ⚡ Performance Improvements
+
+- **redis-smq-benchmarks:** maximize consumer speed and track messages accurately ([acb5848](https://github.com/weyoss/redis-smq/commit/acb58484974431a298e0b8caa84cba9781460d90))
+
 ## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
 
 **Note:** Version bump only for package redis-smq-benchmarks
