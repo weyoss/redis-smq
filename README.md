@@ -56,8 +56,6 @@ npm install ioredis --save
 npm install @redis/client --save
 ```
 
-> ⚠️ **v9 Breaking Changes:** If upgrading, read the [v9.0.0 Release Notes](release-notes/release-v9.md).
-
 ### 2. Initialize (once per process)
 
 ```javascript
@@ -75,6 +73,9 @@ RedisSMQ.initialize(
   }
 );
 ```
+
+> 🔧 **Important**: Use `RedisSMQ.initializeWithConfig()` to save your configuration to Redis 
+> before `RedisSMQ.initialize()`. See [Configuration](packages/redis-smq/docs/configuration.md) for details.
 
 ### 3. Create a Queue
 
