@@ -88,7 +88,7 @@ RedisSMQ.initialize(
     /* ... */
   },
 );
-// Components still connects to localhost:6379! 😕
+// Components still connect to localhost:6379! 😕
 ```
 
 **Why This Happens:**

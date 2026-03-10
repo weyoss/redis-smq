@@ -41,7 +41,7 @@ The configuration object supports the following properties:
 
 - `enableMultiplexing` (boolean): When true, enables handling multiple queues with a single connection. Default: false.
 
-- `heartbeatTTL` (number): Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
+- `heartbeatTTL` (number): Consumer heartbeat TTL in milliseconds. Default: 60000 (1 minute).
 
 - `batchAcks` (boolean | IConsumerBatchConfig): Configuration for acknowledgment batching.
   - If `true`: Enables batch acknowledgments with default settings.
