@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** integrate Backoff into existing components ([1f760e6](https://github.com/weyoss/redis-smq/commit/1f760e69432b551315724dbd332264be8ebc1210))
+- **redis-smq-common:** modularize Backoff strategies for better integration ([15e2280](https://github.com/weyoss/redis-smq/commit/15e22804a285583b77fd0485c56a82935161f8db))
+- **redis-smq-common:** simplify Timer utility ([3d26631](https://github.com/weyoss/redis-smq/commit/3d26631c43e452c5ea59c294d75c057d5dd97e61))
+- **redis-smq-common:** update API reference ([28e6d86](https://github.com/weyoss/redis-smq/commit/28e6d86357289f5954b156ce49f993f6e2ef5094))
+
 ## [9.1.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.3...v9.1.0-next.4) (2026-03-03)
 
 **Note:** Version bump only for package redis-smq-common

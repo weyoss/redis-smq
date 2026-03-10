@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** integrate updates from redis-smq-common into codebase ([d0e23c6](https://github.com/weyoss/redis-smq/commit/d0e23c6ed64d8287e98e59f1345a4000c9e7b2d6))
+- **redis-smq:** update Consumer API reference, fix a minor typo in configuration.md ([797214d](https://github.com/weyoss/redis-smq/commit/797214d6f79eca700a766c317b2a7520531d8d20))
+
 ## [9.1.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.3...v9.1.0-next.4) (2026-03-03)
 
 ### 🐛 Bug Fixes

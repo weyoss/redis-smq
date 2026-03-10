@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
+
+### 🚀 Chore
+
+- **redis-smq-rest-api:** update koa to v3.1.2 to address security vulnerability ([a20db1c](https://github.com/weyoss/redis-smq/commit/a20db1c2b3dfdd0b9180a34fb3515d19fe3508fb))
+
 ## [9.1.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.3...v9.1.0-next.4) (2026-03-03)
 
 **Note:** Version bump only for package redis-smq-rest-api
