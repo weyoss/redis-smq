@@ -24,3 +24,4 @@ export * from './src/redis-server/index.js';
 export * from './src/archive/index.js';
 export * from './src/file-lock/index.js';
 export * from './src/heartbeat/index.js';
+export * from './src/backoff/index.js';
