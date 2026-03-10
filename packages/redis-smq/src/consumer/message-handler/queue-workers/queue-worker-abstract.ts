@@ -9,11 +9,12 @@
 
 import { createLogger, ILogger } from 'redis-smq-common';
 import { WorkerAbstract } from '../../../common/abstract/worker/worker-abstract.js';
-import { IQueueWorkerPayload } from '../../../common/abstract/worker/types/message-handler-worker.js';
+import { IQueueWorkerPayload } from './types/queue-worker.js';
 
 export abstract class QueueWorkerAbstract extends WorkerAbstract {
   protected queueParsedParams;
   protected loggerContext;
+  protected consumerId;
   protected override logger: ILogger;
 
   constructor(payload: IQueueWorkerPayload) {
@@ -22,9 +23,10 @@ export abstract class QueueWorkerAbstract extends WorkerAbstract {
       ...payload.loggerContext.namespaces,
       this.constructor.name,
     ]);
-    const { loggerContext, queueParsedParams } = payload;
+    const { loggerContext, queueParsedParams, consumerId } = payload;
     this.queueParsedParams = queueParsedParams;
     this.loggerContext = loggerContext;
+    this.consumerId = consumerId;
     this.logger.debug(`Queue worker ${this.constructor.name} initialized.`);
   }
 }

@@ -7,20 +7,25 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, Runnable, Timer } from 'redis-smq-common';
+import { ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
 import { RedisSMQ } from '../../../redis-smq/index.js';
 import { IRedisSMQParsedConfig } from '../../../config/index.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
-  private timer;
+  private timer: Timer | null = null;
   protected initialized = false;
   protected config;
+
+  protected abstract override readonly logger: ILogger;
 
   constructor(config: IRedisSMQParsedConfig) {
     super();
     this.config = config;
-    this.timer = new Timer();
-    this.timer.on('error', (err: Error) => this.handleError(err));
+  }
+
+  protected override finalizeUp() {
+    this.timer?.schedule(this.onTick, 1000);
+    super.finalizeUp();
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
@@ -31,8 +36,9 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
       },
       (cb) => {
         this.logger.debug('Setting up worker timer');
-        this.timer.setTimeout(this.onTick, 1000);
-        cb();
+        // TS2715: Abstract property logger in class WorkerAbstract cannot be accessed in the constructor.
+        this.timer = new Timer(this.logger);
+        this.timer.run(cb);
       },
     ]);
   }
@@ -41,7 +47,10 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
     return [
       (cb: ICallback) => {
         this.logger.debug('Resetting worker timer');
-        this.timer.reset();
+        if (this.timer) {
+          this.timer.shutdown(cb);
+          return;
+        }
         cb();
       },
     ].concat(super.goingDown());
@@ -49,15 +58,14 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
 
   protected onTick = () => {
     if (this.isOperational()) {
-      this.logger.debug('Worker tick triggered');
       this.work((err) => {
         if (err) {
           this.logger.error('Error during worker execution', err);
           this.handleError(err);
-        } else {
-          this.logger.debug('Scheduling next worker tick');
-          this.timer.setTimeout(this.onTick, 1000);
+          return;
         }
+
+        this.timer?.schedule(this.onTick, 1000);
       });
     }
   };

@@ -19,6 +19,7 @@ import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { startScheduleWorker } from '../../common/schedule-worker.js';
 import { validateTime } from '../../common/validate-time.js';
+import { randomUUID } from 'node:crypto';
 
 test('Schedule a message: DELAY', async () => {
   const defaultQueue = getDefaultQueue();
@@ -50,7 +51,7 @@ test('Schedule a message: DELAY', async () => {
     scheduled: 1,
   });
 
-  await startScheduleWorker(getDefaultQueue());
+  await startScheduleWorker(getDefaultQueue(), randomUUID());
   await bluebird.delay(30000);
 
   const pendingMessages = await getQueuePendingMessages();

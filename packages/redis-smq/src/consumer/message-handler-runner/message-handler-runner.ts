@@ -50,8 +50,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       this.logger,
     );
     eventPublisher(this);
-    this.supervisorTimer = new Timer();
-    this.supervisorTimer.on('error', (err) => this.handleError(err));
+    this.supervisorTimer = new Timer(this.logger);
     this.logger.debug(`MessageHandlerRunner with ID: ${this.id} initialized.`);
   }
 
@@ -105,7 +104,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
    */
   protected scheduleReconciliation = (): void => {
     if (this.isOperational()) {
-      this.supervisorTimer.setTimeout(
+      this.supervisorTimer.schedule(
         this.reconcileHandlers,
         this.handlerReconciliationInterval,
       );
@@ -313,6 +312,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
 
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
+      (cb: ICallback) => this.supervisorTimer.run(cb),
       this.runMessageHandlers,
       (cb: ICallback) => {
         this.reconcileHandlers();
@@ -323,10 +323,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
 
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
-      (cb: ICallback) => {
-        this.supervisorTimer.reset();
-        cb();
-      },
+      (cb: ICallback) => this.supervisorTimer.shutdown(cb),
       this.queueStateChangeHandler.shutdown,
       this.shutDownMessageHandlers,
     ].concat(super.goingDown());

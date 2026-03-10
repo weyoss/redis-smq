@@ -54,6 +54,6 @@ process.on('message', function (payload: unknown) {
 
     setTimeout(() => {
       process.exit(0);
-    }, 10000);
+    }, 10_000);
   });
 });

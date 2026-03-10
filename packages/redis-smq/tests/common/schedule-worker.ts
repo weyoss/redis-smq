@@ -16,6 +16,7 @@ const scheduleWorker: Record<string, PublishScheduledWorker> = {};
 
 export async function startScheduleWorker(
   queueParams: IQueueParams,
+  consumerId: string,
 ): Promise<void> {
   const key = `${queueParams.ns}${queueParams.name}`;
   if (!scheduleWorker[key]) {
@@ -26,6 +27,7 @@ export async function startScheduleWorker(
         groupId: null,
       },
       loggerContext: { namespaces: [] },
+      consumerId,
     });
     await bluebird.promisifyAll(scheduleWorker[key]).runAsync();
   }

@@ -18,6 +18,7 @@ import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { startScheduleWorker } from '../../common/schedule-worker.js';
 import { validateTime } from '../../common/validate-time.js';
+import { randomUUID } from 'node:crypto';
 
 test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () => {
   const defaultQueue = getDefaultQueue();
@@ -36,7 +37,7 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () 
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 
-  await startScheduleWorker(getDefaultQueue());
+  await startScheduleWorker(getDefaultQueue(), randomUUID());
   await bluebird.delay(60000);
 
   const pendingMessages = await getQueuePendingMessages();

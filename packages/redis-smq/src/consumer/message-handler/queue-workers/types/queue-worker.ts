@@ -8,11 +8,9 @@
  */
 
 import { IQueueParsedParams } from '../../../../queue-manager/index.js';
-import { TRedisSMQWorkerPayload } from './worker.js';
+import { IWorkerPayload } from '../../../../common/abstract/worker/types/worker.js';
 
-export interface IQueueWorkerPayload extends TRedisSMQWorkerPayload {
+export interface IQueueWorkerPayload extends IWorkerPayload {
+  consumerId: string;
   queueParsedParams: IQueueParsedParams;
-  loggerContext: {
-    namespaces: string[];
-  };
 }

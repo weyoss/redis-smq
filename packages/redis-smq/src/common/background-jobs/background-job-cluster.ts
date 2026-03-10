@@ -19,9 +19,9 @@ import {
 import { Configuration } from '../../config/index.js';
 import { RedisConnectionPool } from '../redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/types/connection-pool.js';
-import { IGlobalWorkerPayload } from '../abstract/worker/types/global-worker.js';
 import path from 'path';
 import { isMainThread } from 'node:worker_threads';
+import { IWorkerPayload } from '../abstract/worker/types/worker.js';
 
 const curDir = env.getCurrentDir();
 const workersPath = path.resolve(curDir, 'jobs');
@@ -83,7 +83,7 @@ export class BackgroundJobCluster extends Runnable<never> {
             this.workerCluster.on('workerCluster.error', (err) => {
               this.logger.error(err);
             });
-            this.workerCluster.loadFromDir<IGlobalWorkerPayload>(
+            this.workerCluster.loadFromDir<IWorkerPayload>(
               workersPath,
               {
                 config: this.config,

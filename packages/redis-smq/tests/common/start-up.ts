@@ -11,6 +11,7 @@ import bluebird from 'bluebird';
 import { Consumer, ProducibleMessage, RedisSMQ } from '../../src/index.js';
 import { config } from './config.js';
 import { RedisClient } from '../../src/common/redis/redis-client/redis-client.js';
+import { BackoffConfig } from 'redis-smq-common';
 
 const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
@@ -32,7 +33,7 @@ export async function startUp(): Promise<void> {
   });
 
   Consumer.setDefaultOptions({
-    heartbeatTTL: 6000,
+    heartbeatTTL: 3_000,
     batchAcks: {
       enabled: true,
       batchSize: 100,
@@ -43,5 +44,11 @@ export async function startUp(): Promise<void> {
       batchSize: 100,
       batchTimeoutMs: 1000,
     },
+  });
+
+  BackoffConfig.setDefaultConfig({
+    baseDelay: 1000,
+    maxDelay: 3_000,
+    jitter: false,
   });
 }

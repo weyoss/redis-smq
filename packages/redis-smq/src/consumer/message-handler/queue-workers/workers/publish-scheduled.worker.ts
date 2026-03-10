@@ -28,8 +28,6 @@ import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 
 export class PublishScheduledWorker extends QueueWorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
-    this.logger.debug('Fetching scheduled message IDs');
-
     withSharedPoolConnection((redisClient, cb) => {
       const { keyQueueScheduled } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams.ns,
@@ -37,7 +35,6 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         this.queueParsedParams.groupId,
       );
 
-      this.logger.debug(`Using scheduled queue key: ${keyQueueScheduled}`);
       const currentTimestamp = Date.now();
 
       redisClient.zrangebyscore(
@@ -51,10 +48,6 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
             this.logger.error('Error fetching scheduled message IDs', err);
             return cb(err);
           }
-          const messageCount = ids?.length || 0;
-          this.logger.debug(
-            `Found ${messageCount} scheduled messages ready for publishing (current timestamp: ${currentTimestamp})`,
-          );
           cb(null, ids || []);
         },
       );
@@ -66,7 +59,6 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
     cb: ICallback<MessageEnvelope[]>,
   ): void => {
     if (!ids.length) {
-      this.logger.debug('No message IDs to fetch, skipping message retrieval');
       cb(null, []);
       return;
     }
@@ -91,11 +83,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
     messages: MessageEnvelope[],
     cb: ICallback,
   ): void => {
-    if (!messages.length) {
-      this.logger.debug('No messages to enqueue, work cycle complete');
-      cb();
-      return;
-    }
+    if (!messages.length) return cb();
 
     this.logger.debug(`Preparing to enqueue ${messages.length} messages`);
 
@@ -324,11 +312,6 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
   };
 
   work = (cb: ICallback): void => {
-    this.logger.debug('Starting publish scheduled messages work cycle');
-    this.logger.debug(
-      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
-    );
-
     async.waterfall(
       [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
       (err) => {
@@ -337,8 +320,6 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
             'Error in publish scheduled messages workflow',
             err,
           );
-        } else {
-          this.logger.debug('Completed publish scheduled messages work cycle');
         }
         cb(err);
       },

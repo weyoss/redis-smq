@@ -46,7 +46,7 @@ import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/re
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
-import { IQueueWorkerPayload } from '../../common/abstract/worker/types/message-handler-worker.js';
+import { IQueueWorkerPayload } from './queue-workers/types/queue-worker.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
 import { _unsubscribeConsumer } from './_/_unsubscribe-consumer.js';
 
@@ -86,10 +86,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.queue = queue;
     this.messageHandler = messageHandler;
     this.autoDequeue = autoDequeue;
-
-    this.timer = new Timer();
-    this.timer.on('error', (err) => this.handleError(err));
-
+    this.timer = new Timer(this.logger);
     eventPublisher(this);
   }
 
@@ -108,7 +105,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected onMessageNext: TRedisSMQEvent['consumer.dequeueMessage.nextMessage'] =
     () => {
       // This event means the queue is empty or rate-limited.
-      this.timer.setTimeout(() => this.next(), 1000);
+      this.timer.schedule(() => this.next(), 1000);
     };
 
   protected override handleError(err: Error) {
@@ -151,6 +148,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         loggerContext: {
           namespaces: this.logger.getNamespaces(),
         },
+        consumerId: this.consumerContext.consumerId,
       },
       (err) => {
         if (err) return cb(err);
@@ -182,6 +180,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
+      (cb: ICallback) => this.timer.run(cb),
       (cb: ICallback) => {
         RedisConnectionPool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
@@ -253,8 +252,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
+      (cb: ICallback) => this.timer.shutdown(cb),
       (cb: ICallback): void => {
-        this.timer.reset();
         const ephemeral = this.ephemeralConsumerGroupId;
         if (!ephemeral) return cb();
         _deleteEphemeralConsumerGroup(

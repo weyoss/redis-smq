@@ -27,8 +27,6 @@ import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 
 export class RequeueDelayedWorker extends QueueWorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
-    this.logger?.debug('Fetching delayed message IDs.');
-
     withSharedPoolConnection((redisClient, cb) => {
       const { keyQueueDelayed } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams.ns,
@@ -36,7 +34,6 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
         this.queueParsedParams.groupId,
       );
 
-      this.logger.debug(`Using delayed queue key: ${keyQueueDelayed}`);
       const currentTimestamp = Date.now();
 
       redisClient.zrangebyscore(
@@ -50,10 +47,6 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
             this.logger.error('Error fetching delayed message IDs.', err);
             return cb(err);
           }
-          const messageCount = ids?.length || 0;
-          this.logger.debug(
-            `Found ${messageCount} delayed messages ready for requeue (current timestamp: ${currentTimestamp}).`,
-          );
           cb(null, ids || []);
         },
       );
@@ -64,10 +57,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
     ids: string[],
     cb: ICallback<MessageEnvelope[]>,
   ): void => {
-    if (!ids.length) {
-      this.logger.debug('No message IDs to fetch, skipping message retrieval.');
-      return cb(null, []);
-    }
+    if (!ids.length) return cb(null, []);
 
     this.logger.debug(`Fetching ${ids.length} messages from storage.`);
 
@@ -88,10 +78,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
     messages: MessageEnvelope[],
     cb: ICallback,
   ): void => {
-    if (!messages.length) {
-      this.logger.debug('No messages to enqueue, work cycle complete.');
-      return cb();
-    }
+    if (!messages.length) return cb();
 
     this.logger.debug(`Preparing to enqueue ${messages.length} messages.`);
 
@@ -192,18 +179,11 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
   };
 
   work = (cb: ICallback): void => {
-    this.logger?.debug('Starting requeue delayed messages cycle.');
-    this.logger?.debug(
-      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
-    );
-
     async.waterfall(
       [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
       (err) => {
         if (err) {
-          this.logger?.error('Error in work cycle.', err);
-        } else {
-          this.logger?.debug('Completed work cycle.');
+          this.logger.error('Error in work cycle.', err);
         }
         cb(err);
       },

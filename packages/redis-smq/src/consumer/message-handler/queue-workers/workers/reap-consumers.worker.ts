@@ -149,13 +149,9 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
    * Main work function that checks for offline consumers and triggers recovery.
    */
   work = (cb: ICallback<void>): void => {
-    this.logger.debug('Starting reap consumers work cycle');
-
     withSharedPoolConnection((redisClient, connCb) => {
       const queue = this.queueParsedParams.queueParams;
       const queueRef = `${queue.name}@${queue.ns}`;
-
-      this.logger.debug(`Checking consumers for queue: ${queueRef}`);
 
       _getQueueConsumerIds(redisClient, queue, (err, consumerIds) => {
         if (err) {
@@ -165,18 +161,16 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
           return connCb(err);
         }
 
-        const consumers = consumerIds || [];
+        const consumers = (consumerIds || []).filter(
+          (i) => i !== this.consumerId,
+        );
         if (consumers.length === 0) {
-          this.logger.debug(`No consumers found for queue ${queueRef}`);
           return connCb();
         }
 
         this.logger.debug(
           `Found ${consumers.length} consumers for queue ${queueRef}`,
         );
-
-        let offlineCount = 0;
-        let errorCount = 0;
 
         // Check each consumer's heartbeat
         async.eachOf(
@@ -191,7 +185,6 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
                 this.logger.error(
                   `Heartbeat check failed for ${consumerId}: ${err.message}`,
                 );
-                errorCount++;
                 return done(err);
               }
 
@@ -201,7 +194,6 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
               }
 
               // Consumer is offline - recover it
-              offlineCount++;
               this.logger.info(
                 `Consumer ${consumerId} is offline, starting recovery`,
               );
@@ -217,7 +209,6 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
                     this.logger.error(
                       `Recovery failed for consumer ${consumerId}: ${recoveryErr.message}`,
                     );
-                    errorCount++;
                   } else {
                     this.logger.info(
                       `Successfully recovered consumer ${consumerId}`,
@@ -228,15 +219,7 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
               );
             });
           },
-          (err) => {
-            this.logger.info(
-              `Reap cycle complete for ${queueRef}: ` +
-                `checked=${consumers.length}, ` +
-                `offline=${offlineCount}, ` +
-                `errors=${errorCount}`,
-            );
-            connCb(err);
-          },
+          connCb,
         );
       });
     }, cb);

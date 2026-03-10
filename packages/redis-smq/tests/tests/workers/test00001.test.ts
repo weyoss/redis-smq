@@ -26,6 +26,7 @@ import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
 import { config } from '../../common/config.js';
+import { randomUUID } from 'node:crypto';
 
 test('An unacked message with retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queueDelayed. RequeueDelayedWorker should move the message from queueDelayed to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
@@ -66,6 +67,7 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
       loggerContext: {
         namespaces: [],
       },
+      consumerId: randomUUID(),
     }),
   );
   await requeueImmediateWorker.runAsync();
@@ -85,6 +87,7 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
         namespaces: [],
       },
       config,
+      consumerId: randomUUID(),
     }),
   );
   await requeueDelayedWorker.runAsync();

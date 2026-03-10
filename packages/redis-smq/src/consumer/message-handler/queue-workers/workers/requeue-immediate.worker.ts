@@ -35,8 +35,11 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
       );
       // Fetch up to 100 messages at a time
       redisClient.lrange(keyQueueRequeued, 0, 99, (err, reply) => {
-        if (err) cb(err);
-        else cb(null, reply ?? []);
+        if (err) {
+          this.logger.error('Error fetching message IDs.', err);
+          return cb(err);
+        }
+        cb(null, reply ?? []);
       });
     }, cb);
   };
@@ -45,10 +48,10 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
     ids: string[],
     cb: ICallback<MessageEnvelope[]>,
   ): void => {
-    if (!ids.length) {
-      cb(null, []);
-      return;
-    }
+    if (!ids.length) return cb(null, []);
+
+    this.logger.debug(`Fetching ${ids.length} messages from storage.`);
+
     withSharedPoolConnection((redisClient, cb) => {
       _getMessages(redisClient, ids, cb);
     }, cb);
@@ -58,11 +61,9 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
     messages: MessageEnvelope[],
     cb: ICallback,
   ): void => {
-    if (!messages.length) {
-      this.logger.debug('No messages to requeue, work cycle complete');
-      cb();
-      return;
-    }
+    if (!messages.length) return cb();
+
+    this.logger.debug(`Preparing to enqueue ${messages.length} messages.`);
 
     const {
       keyQueueProperties,
@@ -156,7 +157,7 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
                 `Script reported processing ${reply} messages, but expected ${messages.length}. This may be due to a message being moved or deleted before the worker could process it.`,
               );
             }
-            this.logger.info(
+            this.logger.debug(
               `Successfully re-queued ${reply} messages for immediate processing.`,
             );
             return cb();
@@ -173,12 +174,6 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
   };
 
   work = (cb: ICallback): void => {
-    this.logger.debug('Starting requeue unacknowledged messages work cycle');
-
-    this.logger.debug(
-      `Queue: ${this.queueParsedParams.queueParams.ns}:${this.queueParsedParams.queueParams.name}, GroupId: ${this.queueParsedParams.groupId || 'none'}`,
-    );
-
     async.waterfall(
       [this.fetchMessageIds, this.fetchMessages, this.requeueMessages],
       (err) => {

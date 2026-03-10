@@ -17,20 +17,19 @@ import {
   PanicError,
 } from 'redis-smq-common';
 import { WorkerAbstract } from '../worker/worker-abstract.js';
-import { IGlobalWorkerPayload } from '../worker/types/global-worker.js';
 import { RedisConnectionPool } from '../../redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../../redis/redis-connection-pool/types/connection-pool.js';
 import { redisKeys } from '../../redis/redis-keys/redis-keys.js';
-import { withSharedPoolConnection } from '../../redis/redis-connection-pool/with-shared-pool-connection.js';
 import { HeartbeatFactory } from '../../heartbeat/heartbeat.js';
 import { IHeartbeatPayload } from '../../heartbeat/types/index.js';
+import { IWorkerPayload } from '../worker/types/worker.js';
 
 export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
   protected override logger: ILogger;
   protected redisClient: IRedisClient | null = null;
   protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
 
-  protected constructor(payload: IGlobalWorkerPayload) {
+  protected constructor(payload: IWorkerPayload) {
     super(payload.config);
     this.logger = createLogger(payload.config.logger, [
       ...payload.loggerContext.namespaces,
@@ -40,16 +39,26 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
   }
 
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    withSharedPoolConnection((client, cb) => {
+    if (!this.redisClient)
+      return cb(
+        new PanicError({
+          message: 'Redis client is not initialized',
+        }),
+      );
+
+    try {
       const { keyBackgroundJobWorkerHeartbeat } =
         redisKeys.getBackgroundJobWorkerKeys(this.id);
-      this.heartbeat = HeartbeatFactory(client, this.logger, {
+      this.heartbeat = HeartbeatFactory(this.redisClient, this.logger, {
         heartbeatKey: keyBackgroundJobWorkerHeartbeat,
         componentId: this.id,
         componentType: this.constructor.name,
       });
       this.heartbeat.run(cb);
-    }, cb);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      cb(err);
+    }
   };
 
   protected shutdownHeartbeat = (cb: ICallback): void => {
@@ -64,7 +73,6 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
 
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
-      this.setUpHeartbeat,
       (cb: ICallback) => {
         RedisConnectionPool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
@@ -76,6 +84,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
           },
         );
       },
+      this.setUpHeartbeat,
     ]);
   }
 

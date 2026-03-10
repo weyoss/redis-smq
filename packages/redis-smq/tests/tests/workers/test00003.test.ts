@@ -19,6 +19,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { config } from '../../common/config.js';
+import { randomUUID } from 'node:crypto';
 
 test('ReapConsumersWorker', async () => {
   const defaultQueue = getDefaultQueue();
@@ -39,6 +40,7 @@ test('ReapConsumersWorker', async () => {
       config,
       queueParsedParams,
       loggerContext: { namespaces: ['workers-test00003'] },
+      consumerId: randomUUID(),
     }),
   );
   await reapConsumerWorker.runAsync();
@@ -48,6 +50,7 @@ test('ReapConsumersWorker', async () => {
       config,
       queueParsedParams,
       loggerContext: { namespaces: [] },
+      consumerId: randomUUID(),
     }),
   );
   await requeueWorker.runAsync();

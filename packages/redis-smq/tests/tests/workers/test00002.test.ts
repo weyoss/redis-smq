@@ -25,6 +25,7 @@ import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
 import { config } from '../../common/config.js';
+import { randomUUID } from 'node:crypto';
 
 test('An unacked message without retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
@@ -62,6 +63,7 @@ test('An unacked message without retryDelay should be moved to queueRequeued. Re
       queueParsedParams,
       loggerContext: { namespaces: [] },
       config,
+      consumerId: randomUUID(),
     }),
   );
   await requeueImmediateWorker.runAsync();

@@ -9,6 +9,9 @@
 
 import { IRedisSMQParsedConfig } from '../../../../config/index.js';
 
-export type TRedisSMQWorkerPayload = {
+export interface IWorkerPayload {
   config: IRedisSMQParsedConfig;
-};
+  loggerContext: {
+    namespaces: string[];
+  };
+}

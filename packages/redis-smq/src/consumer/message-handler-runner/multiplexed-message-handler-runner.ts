@@ -26,8 +26,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
 
   constructor(consumerContext: IConsumerContext) {
     super(consumerContext);
-    this.schedulerTimer = new Timer();
-    this.schedulerTimer.on('error', (err) => this.handleError(err));
+    this.schedulerTimer = new Timer(this.logger);
   }
 
   /**
@@ -37,7 +36,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected scheduleNextTick = (): void => {
     if (!this.isOperational()) return;
     this.schedulerTimer.reset();
-    this.schedulerTimer.setTimeout(
+    this.schedulerTimer.schedule(
       () => this.execNextMessageHandler(),
       this.multiplexingTickIntervalMs,
     );
@@ -151,6 +150,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
    */
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
+      (cb: ICallback) => this.schedulerTimer.run(cb),
+
       (cb: ICallback<void>) => {
         // Start the cycle by executing the first tick immediately.
         this.execNextMessageHandler();
@@ -164,10 +165,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
    */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     return [
-      (cb: ICallback<void>) => {
-        this.schedulerTimer.reset();
-        cb();
-      },
+      (cb: ICallback<void>) => this.schedulerTimer.shutdown(cb),
       // The parent's goingDown() sequence will handle shutting down handlers
       // and resetting the supervisor timer.
     ].concat(super.goingDown());

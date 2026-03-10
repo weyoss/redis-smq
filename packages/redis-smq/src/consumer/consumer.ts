@@ -7,7 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { createLogger, Heartbeat, ICallback, Runnable } from 'redis-smq-common';
+import {
+  CallbackEmptyReplyError,
+  createLogger,
+  Heartbeat,
+  ICallback,
+  IRedisClient,
+  PanicError,
+  Runnable,
+} from 'redis-smq-common';
 import { IHeartbeatPayload, TConsumerEvent } from '../common/index.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
@@ -20,12 +28,13 @@ import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multip
 import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { HeartbeatFactory } from '../common/heartbeat/heartbeat.js';
 import { heartbeatEventPublisher } from './heartbeat-event-publisher.js';
 import { IConsumerOptions, IConsumerParsedOptions } from './types/index.js';
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
+import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
 
 /**
  * Consumer class responsible for receiving and processing messages from message queues.
@@ -45,7 +54,7 @@ import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 export class Consumer extends Runnable<TConsumerEvent> {
   private static defaultOptions: IConsumerParsedOptions = {
     enableMultiplexing: false,
-    heartbeatTTL: 120_000,
+    heartbeatTTL: 60_000, // 1 min
     batchAcks: {
       enabled: true,
       batchSize: 100,
@@ -79,6 +88,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected consumerOptions: IConsumerParsedOptions;
 
   /**
+   *
+   */
+  protected redisClient: IRedisClient | null = null;
+
+  /**
    * Creates a new Consumer instance with the specified options.
    *
    * @param {IConsumerOptions} [consumerOptions] - Configuration options for the consumer.
@@ -87,7 +101,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *
    * - `enableMultiplexing` (boolean): When true, enables handling multiple queues with a single connection. Default: false.
    *
-   * - `heartbeatTTL` (number): Consumer heartbeat TTL in milliseconds. Default: 120000 (2 minutes).
+   * - `heartbeatTTL` (number): Consumer heartbeat TTL in milliseconds. Default: 60000 (1 minute).
    *
    * - `batchAcks` (boolean | IConsumerBatchConfig): Configuration for acknowledgment batching.
    *   - If `true`: Enables batch acknowledgments with default settings.
@@ -206,18 +220,44 @@ export class Consumer extends Runnable<TConsumerEvent> {
     );
   }
 
+  protected initRedisClient = (cb: ICallback) => {
+    RedisConnectionPool.getInstance().acquire(
+      ERedisConnectionAcquisitionMode.SHARED,
+      (err, client) => {
+        if (err) return cb(err);
+        if (!client) return cb(new CallbackEmptyReplyError());
+        this.redisClient = client;
+        cb();
+      },
+    );
+  };
+
+  protected releaseRedisClient = (cb: ICallback) => {
+    if (this.redisClient) {
+      RedisConnectionPool.getInstance().release(this.redisClient);
+      this.redisClient = null;
+    }
+    cb();
+  };
+
   /**
    * Sets up the consumer's heartbeat mechanism to monitor its health.
    *
    * @param {ICallback<void>} cb - Callback invoked when heartbeat setup completes or fails.
    */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    this.logger.debug('Setting up consumer heartbeat');
+    if (!this.redisClient)
+      return cb(
+        new PanicError({
+          message: 'Redis client is not initialized',
+        }),
+      );
 
-    withSharedPoolConnection((client, cb) => {
-      const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(this.id);
+    this.logger.debug('Setting up consumer heartbeat');
+    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(this.id);
+    try {
       this.heartbeat = HeartbeatFactory(
-        client,
+        this.redisClient,
         this.logger,
         {
           heartbeatKey: keyConsumerHeartbeat,
@@ -241,7 +281,10 @@ export class Consumer extends Runnable<TConsumerEvent> {
           cb();
         }
       });
-    }, cb);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      cb(err);
+    }
   };
 
   /**
@@ -319,6 +362,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
         this.emit('consumer.goingUp', this.id);
         cb();
       },
+      this.initRedisClient,
       this.setUpHeartbeat,
       this.runMessageHandlers,
     ]);
@@ -331,9 +375,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
    */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.emit('consumer.goingDown', this.id);
-    return [this.shutdownMessageHandlers, this.shutdownHeartbeat].concat(
-      super.goingDown(),
-    );
+    return [
+      this.shutdownMessageHandlers,
+      this.shutdownHeartbeat,
+      this.releaseRedisClient,
+    ].concat(super.goingDown());
   }
 
   /**
