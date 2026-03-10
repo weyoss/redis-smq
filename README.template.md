@@ -10,9 +10,9 @@ A high-performance Redis message queue for Node.js — simple to use, built for 
 
 ## ✨ Features
 
-- 📬 [Reliable delivery](packages/redis-smq/docs/queue-delivery-models.md) with retries
+- 📬 [Reliable delivery](packages/redis-smq/docs/message-reliability.md) with retries
 - 📊 [Multiple queue types](packages/redis-smq/docs/queues.md): FIFO, LIFO, Priority
-- 🔀 [Flexible routing](packages/redis-smq/docs/message-exchanges.md): Direct/Topic/Fanout exchanges+ Direct queue publishing
+- 🔀 [Flexible routing](packages/redis-smq/docs/message-exchanges.md): Direct/Topic/Fanout exchanges + Direct queue publishing
 - 👥 [Pub/Sub & Point-to-Point](packages/redis-smq/docs/queue-delivery-models.md) delivery models with native consumer groups
 - 🚦 [Queue-level rate limiting](packages/redis-smq/docs/queue-rate-limiting.md)
 - ⏰ [Built-in scheduler](packages/redis-smq/docs/scheduling-messages.md): delays, CRON, repeating

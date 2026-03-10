@@ -31,6 +31,8 @@ message auditing, worker threads, and more — all while keeping operations atom
 - [RedisSMQ Architecture Overview](redis-smq-architecture.md) — _High-level design, message flow, lifecycle_
 - [Queues](queues.md) — _FIFO, LIFO, Priority queues_
 - [Messages](messages.md) — _ProducibleMessage, TTL, priority, retries_
+- [Message Lifecycle](message-lifecycle.md) — _Complete walkthrough of a message's journey through RedisSMQ_
+- [Message Reliability](message-reliability.md) — _How RedisSMQ guarantees at-least-once delivery_
 - [Producing Messages](producing-messages.md) — _Direct queues vs exchanges_
 - [Consuming Messages](consuming-messages.md) — _Handlers, acknowledgments, consumer groups_
 - [Message Exchanges](message-exchanges.md) — _Direct, Topic, Fanout routing_
