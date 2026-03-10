@@ -10,37 +10,45 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import { Timer } from '../../src/timer/timer.js';
+import { getDummyLogger } from '../../src/logger/index.js';
 
 it('Timer.setTimeout()', async () => {
   let count = 0;
-  const ticker = new Timer();
-  const r = ticker.setTimeout(() => (count += 1), 5000);
-  expect(r).toBe(true);
+  const timer = bluebird.promisifyAll(new Timer(getDummyLogger()));
 
-  const r2 = ticker.setTimeout(() => (count += 1), 1000);
+  const r = timer.schedule(() => (count += 1), 5000);
+  expect(r).toBe(false);
+
+  await timer.runAsync();
+
+  const r1 = timer.schedule(() => (count += 1), 5000);
+  expect(r1).toBe(true);
+
+  const r2 = timer.schedule(() => (count += 1), 1000);
   expect(r2).toBe(false);
 
   await bluebird.delay(10000);
 
   expect(count).toBe(1);
 
-  const r3 = ticker.setTimeout(() => (count += 1), 5000);
+  const r3 = timer.schedule(() => (count += 1), 5000);
   expect(r3).toBe(true);
-  ticker.reset();
+  timer.reset();
 
   await bluebird.delay(10000);
 
   expect(count).toBe(1);
-  const r4 = ticker.setTimeout(() => (count += 1), 5000);
+
+  const r4 = timer.schedule(() => (count += 1), 5000);
   expect(r4).toBe(true);
 
-  const r5 = ticker.setTimeout(() => (count += 1), 60000);
+  const r5 = timer.schedule(() => (count += 1), 60000);
   expect(r5).toBe(false);
 
-  ticker.reset();
+  timer.reset();
 
-  const r6 = ticker.setTimeout(() => (count += 1), 5000);
+  const r6 = timer.schedule(() => (count += 1), 5000);
   expect(r6).toBe(true);
 
-  ticker.reset();
+  timer.reset();
 });

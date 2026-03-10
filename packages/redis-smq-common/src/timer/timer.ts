@@ -7,52 +7,66 @@
  * in the root directory of this source tree.
  */
 
-import { TFunction } from '../async/index.js';
-import { EventEmitter } from '../event/index.js';
-import { TimerNotSetError } from './errors/index.js';
-import { TTimer, TTimerEvent } from './types/index.js';
+import { clearTimeout } from 'node:timers';
+import { ICallback } from '../async/index.js';
+import { ILogger } from '../logger/index.js';
+import { Runnable } from '../runnable/index.js';
 
-export class Timer extends EventEmitter<TTimerEvent> {
-  protected timer: TTimer | null = null;
+export class Timer extends Runnable {
+  private timer: NodeJS.Timeout | null = null;
 
-  protected onTick = () => {
-    if (!this.timer) this.emit('error', new TimerNotSetError());
-    else {
-      const { fn, periodic } = this.timer;
-      if (!periodic) this.timer = null;
-      fn();
+  protected override readonly logger: ILogger;
+
+  constructor(logger: ILogger) {
+    super();
+    this.logger = logger.createLogger(this.constructor.name);
+  }
+
+  protected override goingUp(): Array<(cb: ICallback) => void> {
+    return super.goingUp().concat([
+      (cb: ICallback) => {
+        this.reset();
+        cb();
+      },
+    ]);
+  }
+
+  protected override goingDown(): Array<(cb: ICallback) => void> {
+    return [
+      (cb: ICallback) => {
+        this.reset();
+        cb();
+      },
+    ].concat(super.goingDown());
+  }
+
+  schedule = (fn: () => void, delayMs: number): boolean => {
+    if (!this.isRunning()) {
+      this.logger.debug(
+        'Instance not operational - Skipping next tick scheduling',
+      );
+      return false;
     }
+
+    if (this.timer) {
+      this.logger.debug(
+        'Could not schedule the requested operation: timer is busy',
+      );
+      return false;
+    }
+
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      if (this.isRunning()) fn();
+    }, delayMs);
+
+    return true;
   };
 
-  setTimeout(fn: TFunction, timeout: number): boolean {
+  reset(): void {
     if (this.timer) {
-      return false;
-    }
-    this.timer = {
-      timer: setTimeout(() => this.onTick(), timeout),
-      periodic: false,
-      fn,
-    };
-    return true;
-  }
-
-  setInterval(fn: TFunction, interval = 1000): boolean {
-    if (this.timer) {
-      return false;
-    }
-    this.timer = {
-      timer: setInterval(() => this.onTick(), interval),
-      periodic: true,
-      fn,
-    };
-    return true;
-  }
-
-  reset() {
-    if (this.timer) {
-      const { timer, periodic } = this.timer;
-      if (periodic) clearInterval(timer);
-      else clearTimeout(timer);
+      this.logger.debug('Resetting nextTick schedule...');
+      clearTimeout(this.timer);
       this.timer = null;
     }
   }
