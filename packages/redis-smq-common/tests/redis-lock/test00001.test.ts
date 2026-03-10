@@ -9,10 +9,7 @@
 
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
-import {
-  ExtendLockError,
-  LockNotAcquiredError,
-} from '../../src/redis-lock/index.js';
+import { ExtendLockError, NotLockedError } from '../../src/redis-lock/index.js';
 import { RedisLock } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 import { getDummyLogger } from '../../src/logger/index.js';
@@ -38,7 +35,7 @@ it('Locker: locker(), extend(), releaseLock()', async () => {
   expect(lock.isReleased()).toBe(true);
   await lock.releaseLockAsync();
   expect(lock.isReleased()).toBe(true);
-  await expect(lock.extendLockAsync()).rejects.toThrow(LockNotAcquiredError);
+  await expect(lock.extendLockAsync()).rejects.toThrow(NotLockedError);
   await lock.acquireLockAsync();
   await lock.releaseLockAsync();
 });

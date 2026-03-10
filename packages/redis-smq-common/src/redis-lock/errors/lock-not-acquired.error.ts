@@ -12,9 +12,8 @@ import { RedisSMQError } from '../../errors/index.js';
 export class LockNotAcquiredError extends RedisSMQError {
   getProps() {
     return {
-      code: 'RedisSMQ.RedisLock.ExtendLock.Failed',
-      defaultMessage:
-        'Can not extend a lock which has not been yet acquired. Maybe a pending operation is in progress.',
+      code: 'RedisSMQ.RedisLock.AcquireLock.Failed',
+      defaultMessage: 'Failed to acquire a lock.',
     };
   }
 }

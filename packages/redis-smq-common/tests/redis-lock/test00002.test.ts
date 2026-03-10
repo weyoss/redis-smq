@@ -9,7 +9,7 @@
 
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
-import { AcquireLockError, RedisLock } from '../../src/redis-lock/index.js';
+import { LockNotAcquiredError, RedisLock } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 import { getDummyLogger } from '../../src/logger/index.js';
 
@@ -23,7 +23,7 @@ it('Locker: retryOnFail', async () => {
   const lock2 = bluebird.promisifyAll(
     new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false),
   );
-  await expect(lock2.acquireLockAsync()).rejects.toThrow(AcquireLockError);
+  await expect(lock2.acquireLockAsync()).rejects.toThrow(LockNotAcquiredError);
 
   const lock3 = bluebird.promisifyAll(
     new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, true),

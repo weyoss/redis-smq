@@ -9,7 +9,7 @@
 
 import { ICallback } from '../../async/index.js';
 import { AbortError } from '../../errors/index.js';
-import { AcquireLockError, RedisLock } from '../../redis-lock/index.js';
+import { LockNotAcquiredError, RedisLock } from '../../redis-lock/index.js';
 import { ILogger } from '../../logger/index.js';
 import { IRedisClient } from '../../redis-client/index.js';
 import { Runnable } from '../../runnable/index.js';
@@ -28,6 +28,7 @@ export type TWorkerClusterEvent = {
  * using Redis locks for exclusive access
  */
 export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
+  protected static LOCK_TTL = 60_000;
   private readonly uniqueGroupIdentifier: string | null = null;
   private readonly workerHandler: WorkerHandler;
   private readonly workerLoader: WorkerLoader;
@@ -53,29 +54,24 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
       this.workerHandler,
     );
     this.uniqueGroupIdentifier = uniqueGroupIdentifier;
-    this.logger.debug(`WorkerCluster initialized`);
-  }
-
-  private getLockerInstance(uniqueGroupIdentifier: string): RedisLock {
-    if (!this.locker) {
+    if (this.uniqueGroupIdentifier) {
       this.logger.debug(
         `Creating RedisLock for resource group: ${this.uniqueGroupIdentifier}`,
       );
       this.locker = new RedisLock(
         this.redisClient,
         this.logger,
-        uniqueGroupIdentifier,
-        60000, // lock TTL
+        this.uniqueGroupIdentifier,
+        WorkerCluster.LOCK_TTL,
         true, // retry on failure
-        15000, // retry interval
+        true, // auto extend
       );
-
       this.locker.on('locker.error', (err) => {
         this.logger.error(`Locker error: ${err.message}`, err);
         this.handleError(err);
       });
     }
-    return this.locker;
+    this.logger.debug(`WorkerCluster initialized`);
   }
 
   private handleWorkerError(err: Error, filename: string): void {
@@ -84,7 +80,7 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
   }
 
   private acquireLock = (cb: ICallback): void => {
-    if (!this.uniqueGroupIdentifier) return cb();
+    if (!this.locker) return cb();
 
     if (!this.isOperational()) {
       cb(new Error('Resource group is shutting down'));
@@ -92,33 +88,31 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
     }
 
     this.logger.debug('Attempting to acquire lock...');
-    const locker = this.getLockerInstance(this.uniqueGroupIdentifier);
-    locker.acquireLock((err) => {
+    this.locker.acquireLock((err) => {
       if (!err) {
         this.logger.debug(
-          `Lock acquired successfully (Lock ID: ${locker.getId()})`,
+          `Lock acquired successfully (Lock ID: ${this.locker?.getId()})`,
         );
-        cb();
-        return;
+        return cb();
       }
 
-      if (err instanceof AcquireLockError) {
+      if (err instanceof LockNotAcquiredError) {
         this.logger.warn(
           'Could not acquire lock (already locked by another instance)',
         );
-        cb(new AbortError());
-      } else {
-        this.logger.error(`Failed to acquire lock: ${err.message}`, err);
-        cb(err);
+        return cb(new AbortError());
       }
+
+      this.logger.error(`Failed to acquire lock: ${err.message}`, err);
+      cb(err);
     });
   };
 
   private releaseLock = (cb: ICallback): void => {
-    if (!this.uniqueGroupIdentifier) return cb();
+    if (!this.locker) return cb();
 
     this.logger.debug('Releasing lock...');
-    this.getLockerInstance(this.uniqueGroupIdentifier).releaseLock((err) => {
+    this.locker.releaseLock((err) => {
       if (err) {
         this.logger.error(`Failed to release lock: ${err.message}`, err);
       } else {

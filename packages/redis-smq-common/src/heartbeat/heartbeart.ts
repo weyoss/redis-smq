@@ -16,31 +16,30 @@ import {
 import { Runnable } from '../runnable/index.js';
 import { IRedisClient } from '../redis-client/index.js';
 import { ILogger } from '../logger/index.js';
-import { Timer } from '../timer/index.js';
 import { ICallback } from '../async/index.js';
 import { CallbackEmptyReplyError } from '../errors/index.js';
-import { _calculateConfigFromTTL } from './_/_calculate-config-from-ttl.js';
+import { Backoff } from '../backoff/backoff.js';
+import { ExponentialBackoff } from '../backoff/index.js';
+import { Timer } from '../timer/index.js';
 
 export class Heartbeat<T = Record<string, unknown>> extends Runnable<
   THeartbeatEvent<T>
 > {
-  protected static readonly DEFAULT_HEARTBEAT_TTL = 120_000;
+  protected static readonly MIN_HEARTBEAT_TTL = 3_000;
+  protected static readonly DEFAULT_HEARTBEAT_TTL =
+    Heartbeat.MIN_HEARTBEAT_TTL * 20; // 60 secs
 
   protected readonly redisClient: IRedisClient;
   protected readonly componentId: string;
   protected readonly componentType: string;
   protected readonly heartbeatKey: string;
   protected readonly heartbeatTTL: number;
-  protected readonly baseIntervalMs: number;
-  protected readonly maxBackoffMs: number;
+  protected readonly heartbeatInterval: number;
   protected readonly logger: ILogger;
   protected readonly dataFn: THeartbeatDataFn<T>;
-  protected readonly waitForInitialHeartbeat: boolean;
 
   protected timer: Timer;
-  protected currentDelayMs: number;
-
-  private readonly onTimerError: (err: Error) => void;
+  protected backoff: Backoff;
 
   constructor(
     redisClient: IRedisClient,
@@ -62,48 +61,29 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     this.componentType = config.componentType;
     this.heartbeatKey = config.heartbeatKey;
 
-    const { ttl, interval, maxBackoff } = _calculateConfigFromTTL(
-      config.heartbeatTTL ?? Heartbeat.DEFAULT_HEARTBEAT_TTL,
-    );
-    this.heartbeatTTL = ttl;
-    this.baseIntervalMs = interval;
-    this.maxBackoffMs = maxBackoff;
-    this.waitForInitialHeartbeat = config.waitForInitialHeartbeat ?? true;
-    this.dataFn = dataFn;
-
-    this.currentDelayMs = this.baseIntervalMs;
     this.logger = logger.createLogger(this.constructor.name);
 
-    this.validateConfig();
+    //
+    if (
+      config.heartbeatTTL &&
+      config.heartbeatTTL < Heartbeat.MIN_HEARTBEAT_TTL
+    ) {
+      throw new Error('heartbeatTTL must be not longer than 3000 milliseconds');
+    }
+    this.heartbeatTTL = config.heartbeatTTL ?? Heartbeat.DEFAULT_HEARTBEAT_TTL;
+    this.heartbeatInterval = Math.floor(Math.max(1, this.heartbeatTTL / 3));
 
-    this.onTimerError = (err) => {
-      this.logger.error(`Timer error: ${err.message}`);
-      this.emit('heartbeat.error', err, this.componentId, this.componentType);
-    };
+    this.backoff = new ExponentialBackoff(this.logger, { maxAttempts: 3 });
+    this.timer = new Timer(this.logger);
 
-    this.timer = new Timer();
-    this.timer.on('error', this.onTimerError);
+    this.dataFn = dataFn;
 
     this.logger.debug(
-      `Heartbeat initialized for ${this.componentType}:${this.componentId}`,
+      `Heartbeat initialized for ${this.componentType}:${this.componentId} (interval: ${this.heartbeatInterval}ms, TTL: ${this.heartbeatTTL}ms)`,
     );
   }
 
-  private validateConfig(): void {
-    if (this.baseIntervalMs <= 0) {
-      throw new Error('baseIntervalMs must be > 0');
-    }
-    if (this.maxBackoffMs < this.baseIntervalMs) {
-      throw new Error('maxBackoffMs must be >= baseIntervalMs');
-    }
-    if (this.heartbeatTTL < this.baseIntervalMs * 1.5) {
-      this.logger.warn(
-        `heartbeatTTL (${this.heartbeatTTL}ms) is low compared to interval (${this.baseIntervalMs}ms). Consider increasing for reliability.`,
-      );
-    }
-  }
-
-  // Static helpers unchanged (with tiny defensive improvement)
+  // Static helpers unchanged
   static isComponentAlive(
     redisClient: IRedisClient,
     heartbeatKey: string,
@@ -155,44 +135,31 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     });
   }
 
-  private handleBeatError(err: Error): void {
-    this.logger.error(`Heartbeat failed: ${err.message}`);
-    this.emit('heartbeat.error', err, this.componentId, this.componentType);
-    this.currentDelayMs = Math.min(this.currentDelayMs * 2, this.maxBackoffMs);
-    this.scheduleNextBeat();
-  }
-
-  private handleBeatSuccess(payload: IHeartbeatPayload<T>): void {
-    this.currentDelayMs = this.baseIntervalMs;
-    this.emit(
-      'heartbeat.beat',
-      this.componentId,
-      this.componentType,
-      payload.timestamp,
-      payload,
-    );
-    this.scheduleNextBeat();
-  }
-
   private scheduleNextBeat(): void {
     if (!this.isOperational()) {
       this.logger.debug('Not scheduling next beat – component not operational');
       return;
     }
 
-    const scheduled = this.timer.setTimeout(
-      () => this.beat(),
-      this.currentDelayMs,
-    );
-
-    if (!scheduled) {
-      this.logger.warn('Timer.setTimeout failed, resetting timer');
-      this.timer.reset();
-      this.timer.setTimeout(() => this.beat(), this.currentDelayMs);
-    }
+    this.timer.schedule(() => {
+      // Use backoff to execute the next beat
+      this.backoff.execute(this.beat, (err, payload) => {
+        if (err) return this.handleError(err);
+        if (payload) {
+          this.emit(
+            'heartbeat.beat',
+            this.componentId,
+            this.componentType,
+            payload.timestamp,
+            payload,
+          );
+          this.scheduleNextBeat();
+        }
+      });
+    }, this.heartbeatInterval);
   }
 
-  protected beat(): void {
+  protected beat = (cb: ICallback<IHeartbeatPayload<T>>): void => {
     if (!this.isOperational()) {
       this.logger.debug('Skipping heartbeat – component not operational');
       return;
@@ -200,7 +167,7 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
 
     this.getPayload((err, payload) => {
       if (err || !payload) {
-        this.handleBeatError(err || new CallbackEmptyReplyError());
+        cb(err || new CallbackEmptyReplyError());
         return;
       }
 
@@ -214,9 +181,7 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
       try {
         payloadStr = JSON.stringify(payload);
       } catch (serializeErr) {
-        this.handleBeatError(
-          new Error(`Failed to serialize payload: ${serializeErr}`),
-        );
+        cb(new Error(`Failed to serialize payload: ${serializeErr}`));
         return;
       }
 
@@ -224,17 +189,25 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
         this.heartbeatKey,
         payloadStr,
         { expire: { mode: 'PX', value: this.heartbeatTTL } },
-        (setErr) => {
-          if (setErr) return this.handleBeatError(setErr);
-          this.handleBeatSuccess(payload);
+        (err) => {
+          if (err) return cb(err);
+          cb(null, payload);
         },
       );
     });
+  };
+
+  protected override handleError(err: Error) {
+    if (!this.isOperational()) return;
+
+    this.emit('heartbeat.error', err, this.componentId, this.componentType);
+    super.handleError(err);
   }
 
   protected override finalizeUp() {
     super.finalizeUp();
     this.emit('heartbeat.up', this.componentId, this.componentType);
+    this.scheduleNextBeat();
   }
 
   protected override finalizeDown() {
@@ -246,12 +219,9 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     this.emit('heartbeat.goingUp', this.componentId, this.componentType);
 
     return super.goingUp().concat([
+      (cb) => this.timer.run(cb),
+      (cb) => this.backoff.run(cb),
       (cb: ICallback) => {
-        if (!this.waitForInitialHeartbeat) {
-          this.beat(); // fire-and-forget
-          return cb();
-        }
-
         const onHeartbeat = () => {
           cleanup();
           cb();
@@ -270,7 +240,7 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
         this.once('heartbeat.beat', onHeartbeat);
         this.once('heartbeat.error', onError);
 
-        this.beat(); // first beat must succeed
+        this.beat((err) => cb(err)); // first beat must succeed
       },
     ]);
   }
@@ -279,10 +249,9 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     this.emit('heartbeat.goingDown', this.componentId, this.componentType);
 
     return [
+      (cb: ICallback) => this.timer.shutdown(cb),
+      (cb: ICallback) => this.backoff.shutdown(cb),
       (cb: ICallback) => {
-        this.timer.removeListener('error', this.onTimerError);
-        this.timer.reset();
-
         this.logger.debug(`Deleting heartbeat key ${this.heartbeatKey}`);
         this.redisClient.del(this.heartbeatKey, (err) => {
           if (err)
@@ -291,10 +260,5 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
         });
       },
     ].concat(super.goingDown());
-  }
-
-  /** Useful for tests or manual immediate heartbeats */
-  public triggerBeat(): void {
-    this.beat();
   }
 }

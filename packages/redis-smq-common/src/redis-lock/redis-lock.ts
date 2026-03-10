@@ -13,14 +13,16 @@ import { env } from '../env/index.js';
 import { AbortError } from '../errors/index.js';
 import { ILogger } from '../logger/index.js';
 import { IRedisClient } from '../redis-client/index.js';
-import { Runnable } from '../runnable/index.js';
-import { Timer } from '../timer/index.js';
 import {
-  AcquireLockError,
+  LockNotAcquiredError,
   ExtendLockError,
   AcquireLockNotAllowedError,
-  LockNotAcquiredError,
+  NotLockedError,
 } from './errors/index.js';
+import { Runnable } from '../runnable/index.js';
+import { Timer } from '../timer/index.js';
+import { Backoff } from '../backoff/backoff.js';
+import { ExponentialBackoff } from '../backoff/index.js';
 
 const dir = env.getCurrentDir();
 
@@ -48,12 +50,12 @@ const luaScriptMap = {
  */
 export class RedisLock extends Runnable<TLockerEvent> {
   protected readonly lockKey;
-  protected readonly retryOnFail;
   protected readonly ttl;
   protected readonly redisClient;
-  protected readonly autoExtendInterval;
-  protected readonly timer;
+  protected readonly autoExtendInterval: number = 0;
+  protected readonly timer: Timer;
   protected logger;
+  protected backoff: Backoff | null = null;
 
   constructor(
     redisClient: IRedisClient,
@@ -61,20 +63,29 @@ export class RedisLock extends Runnable<TLockerEvent> {
     lockKey: string,
     ttl: number,
     retryOnFail = false,
-    autoExtendInterval: number = 0,
+    autoExtend = false,
   ) {
     super();
     this.lockKey = lockKey;
+
+    if (ttl < 3_000) {
+      throw new Error(`Lock TTL is too small`);
+    }
     this.ttl = ttl;
-    this.retryOnFail = retryOnFail;
-    this.autoExtendInterval = autoExtendInterval;
+    if (autoExtend) {
+      this.autoExtendInterval = Math.floor(ttl / 3); // update 3 times
+    }
+
     this.logger = logger.createLogger(this.constructor.name);
+    this.timer = new Timer(this.logger);
 
     this.redisClient = redisClient;
     this.redisClient.on('error', this.handleError);
 
-    this.timer = new Timer();
-    this.timer.on('error', this.handleError);
+    // Initialize backoff if retry is enabled
+    if (retryOnFail) {
+      this.backoff = new ExponentialBackoff(logger, { maxAttempts: 0 }); // unlimited retries
+    }
 
     this.logger.debug('RedisLock initialization complete');
   }
@@ -84,83 +95,72 @@ export class RedisLock extends Runnable<TLockerEvent> {
    *
    * @param cb - A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
    *
-   * @remarks
-   * This function uses the Redis client to set a key with an expiration time (TTL).
-   * If the key already exists, the function will return an error unless the `exists` option is set to 'NX'.
-   * If the lock is acquired successfully, the callback is invoked with `undefined`.
-   * If the lock acquisition fails due to a lock already being held by another instance,
-   * the function will retry acquiring the lock after a delay if `retryOnFail` is enabled.
-   * If the lock acquisition process is aborted due to the instance transitioning to a different state,
-   * the function will return an `AbortError`.
-   *
    * @returns {void}
    */
   protected lock = (cb: ICallback): void => {
     this.logger.debug(`Attempting to acquire lock for key: ${this.lockKey}`);
 
-    this.redisClient.set(
-      this.lockKey,
-      this.id,
-      {
-        expire: { mode: 'PX', value: this.ttl },
-        exists: 'NX',
-      },
-      (err, reply) => {
-        if (err) {
-          this.logger.error(`Error acquiring lock: ${err.message}`, err);
-          return cb(err);
-        }
-
-        if (!this.powerSwitch.isGoingUp()) {
-          this.logger.warn(
-            'Lock acquisition aborted: power switch is no longer in going-up state',
-          );
-          return cb(new AbortError());
-        }
-
-        if (!reply) {
-          if (this.retryOnFail) {
-            this.logger.debug(
-              'Lock already held by another instance, retrying in 1 second',
+    const execFn = (done: ICallback) => {
+      this.redisClient.set(
+        this.lockKey,
+        this.id,
+        {
+          expire: { mode: 'PX', value: this.ttl },
+          exists: 'NX',
+        },
+        (err, reply) => {
+          if (!this.isGoingUp()) {
+            this.logger.warn(
+              'Lock acquisition aborted: instance is no longer in going-up state',
             );
-            return this.timer.setTimeout(() => this.lock(cb), 1000);
-          } else {
+            return done(new AbortError());
+          }
+
+          if (err) {
+            this.logger.error(`Error acquiring lock: ${err.message}`, err);
+            return done(
+              new AbortError({
+                message: err.message,
+              }),
+            );
+          }
+
+          if (!reply) {
             this.logger.warn(
               'Failed to acquire lock: already held by another instance',
             );
-            return cb(new AcquireLockError());
+            return done(new LockNotAcquiredError());
           }
-        }
 
-        this.logger.debug(
-          `Lock acquired successfully for key: ${this.lockKey}`,
-        );
-        cb();
-      },
-    );
+          this.logger.debug(
+            `Lock acquired successfully for key: ${this.lockKey}`,
+          );
+
+          done();
+        },
+      );
+    };
+
+    // Use backoff for retries if enabled
+    if (this.backoff) {
+      return this.backoff.execute(execFn, cb);
+    }
+
+    execFn(cb);
   };
 
   /**
    * Attempts to extend the lock's time-to-live (TTL) in Redis.
    *
-   * This function uses the provided Redis client to execute a Lua script that extends the lock's TTL.
-   * If the lock is not currently held by this instance, an error is returned.
-   * If the lock cannot be extended due to an error or an abort signal, the error is passed to the callback.
-   * If the lock is successfully extended, the callback is invoked with `undefined`.
-   *
    * @param cb - A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
-   *
-   * @throws {LockNotAcquiredError} - If the lock is not currently held by this instance.
    *
    * @returns {void}
    */
   protected extend = (cb: ICallback): void => {
     if (!this.isRunning()) {
       this.logger.warn('Cannot extend lock: lock is not currently held');
-      return cb(new LockNotAcquiredError());
+      return cb(new NotLockedError());
     }
-
-    this.logger.debug(`Attempting to extend lock TTL for key: ${this.lockKey}`);
 
     this.redisClient.runScript(
       ELuaScript.EXTEND_LOCK,
@@ -186,9 +186,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
           return this.shutdown(() => cb(new ExtendLockError()));
         }
 
-        this.logger.debug(
-          `Lock TTL extended successfully for key: ${this.lockKey}`,
-        );
         cb();
       },
     );
@@ -196,10 +193,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
 
   /**
    * Releases the lock held by the current instance.
-   *
-   * This method attempts to release the lock held by the current instance.
-   * If the lock is not currently held, the method does nothing and invokes the callback with `undefined`.
-   * If an error occurs during the release process, the callback is invoked with the corresponding error.
    *
    * @param cb - A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
    *
@@ -226,86 +219,41 @@ export class RedisLock extends Runnable<TLockerEvent> {
   };
 
   /**
-   * Resets the timer used for lock auto-extension.
-   *
-   * This function resets the timer that is used to periodically extend the lock's time-to-live (TTL) in Redis.
-   * It does not release the lock held by the current instance.
-   *
-   * @param cb - A callback function that will be invoked with `undefined` upon successful execution.
-   *
-   * @returns {void}
-   *
-   * @remarks
-   * This method is called internally by the `goingDown` method to ensure that the timer is reset when the locker transitions to the 'down' state.
-   * It is also used by the `run` method to reset the timer before attempting to acquire a new lock.
-   */
-  protected resetTimer = (cb: ICallback): void => {
-    this.logger.debug('Resetting auto-extension timer');
-    this.timer.reset();
-    this.logger.debug('Auto-extension timer reset successfully');
-    cb();
-  };
-
-  /**
    * Automatically extends the lock's time-to-live (TTL) if auto-extension is enabled.
-   * This method checks if auto-extension is enabled and if so, it sets a timeout to extend the lock.
-   * If the lock cannot be extended due to an error or an abort signal, the error is handled and the method is called recursively.
-   *
-   * @remarks
-   * This method is called internally by the `goingUp` method and is responsible for managing the automatic lock extension process.
    *
    * @returns {void}
    */
   protected autoExtendLock(): void {
-    if (this.autoExtendInterval) {
-      this.logger.debug(
-        `Scheduling auto-extension of lock in ${this.autoExtendInterval}ms`,
-      );
-
-      this.timer.setTimeout(
-        () =>
-          this.extend((err) => {
-            if (err && !(err instanceof AbortError)) {
-              this.logger.error(
-                `Auto-extension of lock failed: ${err.message}`,
-                err,
-              );
-              this.handleError(err);
-            } else if (!err) {
-              this.logger.debug(
-                'Auto-extension of lock successful, scheduling next extension',
-              );
-              this.autoExtendLock();
-            } else {
-              this.logger.debug('Auto-extension of lock aborted');
-            }
-          }),
-        this.autoExtendInterval,
-      );
-    } else {
-      this.logger.debug('Auto-extension of lock is disabled');
+    if (!this.autoExtendInterval || !this.isRunning()) {
+      return;
     }
+
+    this.timer.schedule(() => {
+      this.extend((err) => {
+        if (err) {
+          if (err instanceof AbortError) return;
+          this.handleError(err);
+        }
+        this.autoExtendLock();
+      });
+    }, this.autoExtendInterval);
   }
 
   /**
    * Overrides the `goingUp` method from the `Runnable` class to handle the lock acquisition process.
    *
-   * @returns {Array<(cb: ICallback<void>) => void>} - An array of functions that will be executed
-   * when the locker transitions to the 'up' state. The array includes the parent class's `goingUp` method
-   * and the `lock` method.
-   *
-   * @remarks
-   * This method attempts to acquire a lock for the current instance using the Redis client.
-   * If the lock is successfully acquired, the callback is invoked with `undefined`.
-   * If the lock acquisition fails due to a lock already being held by another instance,
-   * the function will retry acquiring the lock after a delay if `retryOnFail` is enabled.
-   * If the lock acquisition process is aborted due to the instance transitioning to a different state,
-   * the function will return an `AbortError`.
+   * @returns {Array<(cb: ICallback<void>) => void>} - An array of functions to execute during startup.
    */
   protected override goingUp(): Array<(cb: ICallback) => void> {
     this.logger.debug('RedisLock transitioning to going-up state');
     this.emit('locker.goingUp', this.id);
+
     return super.goingUp().concat([
+      (cb) => this.timer.run(cb),
+      (cb) => {
+        if (this.backoff) this.backoff.run(cb);
+        else cb();
+      },
       (cb) => {
         this.logger.debug('Loading Redis Lua scripts');
         this.redisClient.loadScriptFiles(luaScriptMap, (err) => {
@@ -328,19 +276,19 @@ export class RedisLock extends Runnable<TLockerEvent> {
   /**
    * Overrides the `goingDown` method from the `Runnable` class to handle the lock release process.
    *
-   * @returns {Array<(cb: ICallback<void>) => void>} - An array of functions that will be executed
-   * when the locker transitions to the 'down' state. The array includes the `resetTimer` method,
-   * the `release` method, and the parent class's `goingDown` method.
-   *
-   * @remarks
-   * This method releases the lock held by the current instance and resets the timer used for lock auto-extension.
-   * If the lock is not currently held, the method does nothing and invokes the callback with `undefined`.
-   * If an error occurs during the release process, the callback is invoked with the corresponding error.
+   * @returns {Array<(cb: ICallback<void>) => void>} - An array of functions to execute during shutdown.
    */
   protected override goingDown(): Array<(cb: ICallback) => void> {
     this.logger.debug('RedisLock transitioning to going-down state');
     this.emit('locker.goingDown', this.id);
-    return [this.resetTimer, this.release].concat(super.goingDown());
+
+    return [
+      (cb: ICallback) => {
+        if (this.backoff) this.backoff.shutdown(cb);
+        else cb();
+      },
+      this.release,
+    ].concat(super.goingDown());
   }
 
   /**
@@ -369,6 +317,14 @@ export class RedisLock extends Runnable<TLockerEvent> {
       `RedisLock transitioned to up state for key: ${this.lockKey}`,
     );
     this.emit('locker.up', this.id);
+
+    // Start auto-extension if enabled
+    if (this.autoExtendInterval) {
+      this.logger.debug(
+        `Auto-extension enabled with interval: ${this.autoExtendInterval}ms`,
+      );
+      this.autoExtendLock();
+    }
   }
 
   /**
@@ -387,25 +343,15 @@ export class RedisLock extends Runnable<TLockerEvent> {
   /**
    * Overrides the `run` method from the `Runnable` class to handle the lock acquisition process.
    *
-   * @param cb - A callback function that will be invoked with a boolean indicating the lock acquisition result,
-   * or an error (if any) upon successful execution.
+   * @param cb - A callback function that will be invoked with an error (if any) upon successful execution.
    *
    * @returns {void}
-   *
-   * @remarks
-   * This method attempts to acquire a lock for the current instance using the Redis client.
-   * - If the lock is successfully acquired, the callback is invoked without arguments.
-   * - If the lock acquisition fails due to a lock already being held by another instance,
-   * the callback is invoked with `AcquireLockError` error.
-   * - If an error occurs during the lock acquisition process, the callback is invoked with the corresponding error.
-   *
-   * If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
    */
   override run(cb: ICallback): void {
     this.logger.debug(`Attempting to run RedisLock for key: ${this.lockKey}`);
 
     super.run((err) => {
-      if (err instanceof AcquireLockError) {
+      if (err instanceof LockNotAcquiredError) {
         this.logger.debug(
           `Lock already held by another instance for key: ${this.lockKey}`,
         );
@@ -420,12 +366,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
       this.logger.debug(
         `RedisLock running successfully for key: ${this.lockKey}`,
       );
-      if (this.autoExtendInterval) {
-        this.logger.debug(
-          `Auto-extension enabled with interval: ${this.autoExtendInterval}ms`,
-        );
-        this.autoExtendLock();
-      }
 
       cb(null);
     });
@@ -434,15 +374,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
   /**
    * Attempts to acquire a lock for the current instance.
    *
-   * This method attempts to acquire a lock for the current instance using the Redis client.
-   * - If the lock is successfully acquired, the callback is invoked without arguments.
-   * - If the lock acquisition fails due to a lock already being held by another instance, the callback is invoked with `AcquireLockError` error.
-   * - If an error occurs during the lock acquisition process, the callback is invoked with the corresponding error.
-   *
-   * If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
-   *
-   * @param cb - A callback function that will be invoked with a boolean indicating the lock acquisition result,
-   * or an error (if any) upon successful execution.
+   * @param cb - A callback function that will be invoked with an error (if any) upon successful execution.
    *
    * @returns {void}
    */
@@ -453,10 +385,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
 
   /**
    * Releases the lock held by the current instance.
-   *
-   * This method attempts to release the lock held by the current instance.
-   * If the lock is not currently held, the method does nothing and invokes the callback with `undefined`.
-   * If an error occurs during the release process, the callback is invoked with the corresponding error.
    *
    * @param cb - A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
    *
@@ -470,13 +398,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
   /**
    * Attempts to extend the lock's time-to-live (TTL) if auto-extension is not enabled.
    *
-   * This function extends the lock's TTL by the specified time, provided that auto-extension is not enabled.
-   * If auto-extension is enabled, an error is returned. If the lock is not currently held, an error is returned.
-   *
    * @param cb - A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
-   *
-   * @throws {AcquireLockNotAllowedError} - If auto-extension is enabled.
-   * @throws {LockNotAcquiredError} - If the lock is not currently held.
    *
    * @returns {void}
    */
@@ -494,7 +416,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
 
     if (!this.isRunning()) {
       this.logger.warn('Cannot extend lock: lock is not currently held');
-      return cb(new LockNotAcquiredError());
+      return cb(new NotLockedError());
     }
 
     this.logger.debug('Extending lock TTL');
@@ -503,8 +425,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
 
   /**
    * Checks if the lock is currently held.
-   *
-   * This method returns a boolean indicating whether the lock is currently held by this instance.
    *
    * @returns {boolean} - Returns `true` if the lock is held, `false` otherwise.
    */
@@ -519,8 +439,6 @@ export class RedisLock extends Runnable<TLockerEvent> {
   /**
    * Checks if the lock is released.
    *
-   * This method returns a boolean indicating whether the lock is currently released.
-   *
    * @returns {boolean} - Returns `true` if the lock is released, `false` otherwise.
    */
   isReleased(): boolean {
@@ -529,5 +447,14 @@ export class RedisLock extends Runnable<TLockerEvent> {
       `Lock release status check for key ${this.lockKey}: ${released ? 'released' : 'not released'}`,
     );
     return released;
+  }
+
+  /**
+   * Gets the current retry attempt count if backoff is enabled.
+   *
+   * @returns {number} - The current attempt count, or 0 if backoff is not enabled.
+   */
+  getRetryAttempts(): number {
+    return this.backoff?.getAttempts() ?? 0;
   }
 }

@@ -12,7 +12,7 @@ import bluebird from 'bluebird';
 import {
   RedisLock,
   AcquireLockNotAllowedError,
-  AcquireLockError,
+  LockNotAcquiredError,
 } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 import { getDummyLogger } from '../../src/logger/index.js';
@@ -20,7 +20,7 @@ import { getDummyLogger } from '../../src/logger/index.js';
 it('Locker: autoExtend', async () => {
   const redisClient = await getRedisInstance();
   const lock = bluebird.promisifyAll(
-    new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false, 3000),
+    new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false, true),
   );
   await lock.acquireLockAsync();
   await expect(lock.extendLockAsync()).rejects.toThrowError(
@@ -32,7 +32,7 @@ it('Locker: autoExtend', async () => {
   const lock2 = bluebird.promisifyAll(
     new RedisLock(redisClient, getDummyLogger(), 'key1', 10000, false),
   );
-  await expect(lock2.acquireLockAsync()).rejects.toThrow(AcquireLockError);
+  await expect(lock2.acquireLockAsync()).rejects.toThrow(LockNotAcquiredError);
 
   await lock.releaseLockAsync();
   await lock2.releaseLockAsync();

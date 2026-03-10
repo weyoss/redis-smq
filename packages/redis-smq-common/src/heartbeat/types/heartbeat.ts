@@ -21,7 +21,6 @@ export interface IHeartbeatConfig {
   componentType: string;
   heartbeatKey: string;
   heartbeatTTL?: number;
-  waitForInitialHeartbeat?: boolean;
 }
 
 export type THeartbeatDataFn<T> = (cb: ICallback<T>) => void;
