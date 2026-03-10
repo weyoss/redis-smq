@@ -423,18 +423,6 @@ If the shutdown process is successful, the callback will be called with no argum
 
 ---
 
-### triggerBeat()
-
-> **triggerBeat**(): `void`
-
-Useful for tests or manual immediate heartbeats
-
-#### Returns
-
-`void`
-
----
-
 ### areComponentsAlive()
 
 > `static` **areComponentsAlive**(`redisClient`, `heartbeatKeys`, `cb`): `void`

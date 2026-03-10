@@ -138,11 +138,11 @@ not capture any frames.
 
 ##### code
 
-> **code**: `string` = `'RedisSMQ.RedisLock.ExtendLock.Failed'`
+> **code**: `string` = `'RedisSMQ.RedisLock.AcquireLock.Failed'`
 
 ##### defaultMessage
 
-> **defaultMessage**: `string` = `'Can not extend a lock which has not been yet acquired. Maybe a pending operation is in progress.'`
+> **defaultMessage**: `string` = `'Failed to acquire a lock.'`
 
 #### Overrides
 

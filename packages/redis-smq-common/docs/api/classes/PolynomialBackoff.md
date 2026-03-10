@@ -1,24 +1,16 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Timer
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / PolynomialBackoff
 
-# Class: Timer
-
-A robust base class for long-running components/services with explicit lifecycle management.
-
-Features:
-
-- `goingUp()` / `goingDown()` hooks returning callback-based tasks (executed in series)
-- Safe concurrent `run()` / `shutdown()` / `ensureIsOperational()` calls
-- Automatic abort of startup when shutdown is requested
+# Class: PolynomialBackoff
 
 ## Extends
 
-- [`Runnable`](Runnable.md)
+- `Backoff`
 
 ## Constructors
 
 ### Constructor
 
-> **new Timer**(`logger`): `Timer`
+> **new PolynomialBackoff**(`logger`, `config`): `PolynomialBackoff`
 
 #### Parameters
 
@@ -26,13 +18,17 @@ Features:
 
 [`ILogger`](../interfaces/ILogger.md)
 
+##### config
+
+[`IBackoffConfig`](../interfaces/IBackoffConfig.md) = `{}`
+
 #### Returns
 
-`Timer`
+`PolynomialBackoff`
 
-#### Overrides
+#### Inherited from
 
-`Runnable.constructor`
+`Backoff.constructor`
 
 ## Methods
 
@@ -62,7 +58,7 @@ Features:
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`emit`](Runnable.md#emit)
+`Backoff.emit`
 
 ---
 
@@ -88,7 +84,67 @@ Callback function to be called when the instance is operational.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`ensureIsOperational`](Runnable.md#ensureisoperational)
+`Backoff.ensureIsOperational`
+
+---
+
+### execute()
+
+> **execute**\<`TResult`\>(`task`, `callback`): `void`
+
+Execute a task with backoff retry
+
+#### Type Parameters
+
+##### TResult
+
+`TResult`
+
+#### Parameters
+
+##### task
+
+(`cb`) => `void`
+
+##### callback
+
+[`ICallback`](../interfaces/ICallback.md)\<`TResult`\>
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`Backoff.execute`
+
+---
+
+### getAttempts()
+
+> **getAttempts**(): `number`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+`Backoff.getAttempts`
+
+---
+
+### getConfig()
+
+> **getConfig**(): [`IBackoffParsedConfig`](../type-aliases/IBackoffParsedConfig.md)
+
+#### Returns
+
+[`IBackoffParsedConfig`](../type-aliases/IBackoffParsedConfig.md)
+
+#### Inherited from
+
+`Backoff.getConfig`
 
 ---
 
@@ -106,7 +162,7 @@ Retrieves the unique identifier of the Runnable instance.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`getId`](Runnable.md#getid)
+`Backoff.getId`
 
 ---
 
@@ -124,7 +180,7 @@ Checks if the Runnable instance is currently down.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`isDown`](Runnable.md#isdown)
+`Backoff.isDown`
 
 ---
 
@@ -142,7 +198,7 @@ Checks if the Runnable instance is currently going down.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`isGoingDown`](Runnable.md#isgoingdown)
+`Backoff.isGoingDown`
 
 ---
 
@@ -160,7 +216,7 @@ Checks if the Runnable instance is currently going up.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`isGoingUp`](Runnable.md#isgoingup)
+`Backoff.isGoingUp`
 
 ---
 
@@ -185,7 +241,7 @@ Non-operational states:
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`isOperational`](Runnable.md#isoperational)
+`Backoff.isOperational`
 
 ---
 
@@ -203,7 +259,7 @@ Checks if the Runnable instance is currently running (fully up with no pending t
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`isRunning`](Runnable.md#isrunning)
+`Backoff.isRunning`
 
 ---
 
@@ -221,7 +277,7 @@ Checks if the Runnable instance is currently up.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
+`Backoff.isUp`
 
 ---
 
@@ -251,7 +307,7 @@ Checks if the Runnable instance is currently up.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`on`](Runnable.md#on)
+`Backoff.on`
 
 ---
 
@@ -281,7 +337,7 @@ Checks if the Runnable instance is currently up.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`once`](Runnable.md#once)
+`Backoff.once`
 
 ---
 
@@ -307,7 +363,7 @@ Checks if the Runnable instance is currently up.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`removeAllListeners`](Runnable.md#removealllisteners)
+`Backoff.removeAllListeners`
 
 ---
 
@@ -337,7 +393,7 @@ Checks if the Runnable instance is currently up.
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`removeListener`](Runnable.md#removelistener)
+`Backoff.removeListener`
 
 ---
 
@@ -345,9 +401,15 @@ Checks if the Runnable instance is currently up.
 
 > **reset**(): `void`
 
+Reset backoff state
+
 #### Returns
 
 `void`
+
+#### Inherited from
+
+`Backoff.reset`
 
 ---
 
@@ -376,27 +438,7 @@ If the execution process is successful, the callback will be called with no argu
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`run`](Runnable.md#run)
-
----
-
-### schedule()
-
-> **schedule**(`fn`, `delayMs`): `boolean`
-
-#### Parameters
-
-##### fn
-
-() => `void`
-
-##### delayMs
-
-`number`
-
-#### Returns
-
-`boolean`
+`Backoff.run`
 
 ---
 
@@ -429,4 +471,4 @@ If the shutdown process is successful, the callback will be called with no argum
 
 #### Inherited from
 
-[`Runnable`](Runnable.md).[`shutdown`](Runnable.md#shutdown)
+`Backoff.shutdown`

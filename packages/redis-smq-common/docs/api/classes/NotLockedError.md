@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TimerNotSetError
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / NotLockedError
 
-# Class: TimerNotSetError
+# Class: NotLockedError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new TimerNotSetError**(...`args`): `TimerNotSetError`
+> **new NotLockedError**(...`args`): `NotLockedError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`TimerNotSetError`
+`NotLockedError`
 
 #### Inherited from
 
@@ -130,11 +130,19 @@ not capture any frames.
 
 ### getProps()
 
-> **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+> **getProps**(): `object`
 
 #### Returns
 
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.RedisLock.ExtendLock.Failed'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'Can not extend a lock which has not been yet acquired. Maybe a pending operation is in progress.'`
 
 #### Overrides
 

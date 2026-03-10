@@ -13,13 +13,18 @@
 
 ## Classes
 
+- [BackoffConfig](classes/BackoffConfig.md)
 - [CallableWorker](classes/CallableWorker.md)
 - [ConsoleLogger](classes/ConsoleLogger.md)
 - [EventBus](classes/EventBus.md)
 - [EventBusRedis](classes/EventBusRedis.md)
 - [EventEmitter](classes/EventEmitter.md)
+- [ExponentialBackoff](classes/ExponentialBackoff.md)
 - [FileLock](classes/FileLock.md)
 - [Heartbeat](classes/Heartbeat.md)
+- [LinearBackoff](classes/LinearBackoff.md)
+- [LogarithmicBackoff](classes/LogarithmicBackoff.md)
+- [PolynomialBackoff](classes/PolynomialBackoff.md)
 - [PowerSwitch](classes/PowerSwitch.md)
 - [RedisClientFactory](classes/RedisClientFactory.md)
 - [RedisLock](classes/RedisLock.md)
@@ -33,7 +38,6 @@
 ## Error Classes
 
 - [AbortError](classes/AbortError.md)
-- [AcquireLockError](classes/AcquireLockError.md)
 - [AcquireLockNotAllowedError](classes/AcquireLockNotAllowedError.md)
 - [AsyncCallbackTimeoutError](classes/AsyncCallbackTimeoutError.md)
 - [CallbackEmptyReplyError](classes/CallbackEmptyReplyError.md)
@@ -46,6 +50,7 @@
 - [InvalidArgumentsError](classes/InvalidArgumentsError.md)
 - [LockNotAcquiredError](classes/LockNotAcquiredError.md)
 - [LoggerInvalidNamespaceError](classes/LoggerInvalidNamespaceError.md)
+- [NotLockedError](classes/NotLockedError.md)
 - [OperationNotAllowedError](classes/OperationNotAllowedError.md)
 - [PanicError](classes/PanicError.md)
 - [RedisClientNotInstalledError](classes/RedisClientNotInstalledError.md)
@@ -53,7 +58,6 @@
 - [RedisServerStartupFailedError](classes/RedisServerStartupFailedError.md)
 - [RedisServerUnsupportedPlatformError](classes/RedisServerUnsupportedPlatformError.md)
 - [RedisSMQError](classes/RedisSMQError.md)
-- [TimerNotSetError](classes/TimerNotSetError.md)
 - [UnknownRedisServerVersionError](classes/UnknownRedisServerVersionError.md)
 - [UnsupportedClientError](classes/UnsupportedClientError.md)
 - [UnsupportedRedisServerVersionError](classes/UnsupportedRedisServerVersionError.md)
@@ -67,12 +71,14 @@
 
 ## Interfaces
 
+- [IBackoffConfig](interfaces/IBackoffConfig.md)
 - [ICallableWorker](interfaces/ICallableWorker.md)
 - [ICallback](interfaces/ICallback.md)
 - [IConsoleLoggerOptions](interfaces/IConsoleLoggerOptions.md)
 - [IEventBusConfig](interfaces/IEventBusConfig.md)
 - [IEventBusRedisConfig](interfaces/IEventBusRedisConfig.md)
 - [IEventEmitter](interfaces/IEventEmitter.md)
+- [IExponentialBackoffConfig](interfaces/IExponentialBackoffConfig.md)
 - [IHeartbeatConfig](interfaces/IHeartbeatConfig.md)
 - [IHeartbeatPayload](interfaces/IHeartbeatPayload.md)
 - [ILogger](interfaces/ILogger.md)
@@ -89,6 +95,7 @@
 ## Type Aliases
 
 - [ExtractAsyncOperationReturnType](type-aliases/ExtractAsyncOperationReturnType.md)
+- [IBackoffParsedConfig](type-aliases/IBackoffParsedConfig.md)
 - [IRedisSMQErrorOptions](type-aliases/IRedisSMQErrorOptions.md)
 - [MapAsyncOperationReturnTypeToResult](type-aliases/MapAsyncOperationReturnTypeToResult.md)
 - [TAsyncFunction](type-aliases/TAsyncFunction.md)
@@ -106,8 +113,6 @@
 - [TRedisClientEvent](type-aliases/TRedisClientEvent.md)
 - [TRunnableWorkerClass](type-aliases/TRunnableWorkerClass.md)
 - [TRunnableWorkerFactory](type-aliases/TRunnableWorkerFactory.md)
-- [TTimer](type-aliases/TTimer.md)
-- [TTimerEvent](type-aliases/TTimerEvent.md)
 - [TWorkerClusterEvent](type-aliases/TWorkerClusterEvent.md)
 - [TWorkerDefinition](type-aliases/TWorkerDefinition.md)
 - [TWorkerThreadChildMessage](type-aliases/TWorkerThreadChildMessage.md)

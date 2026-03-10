@@ -25,9 +25,3 @@
 ### heartbeatTTL?
 
 > `optional` **heartbeatTTL**: `number`
-
----
-
-### waitForInitialHeartbeat?
-
-> `optional` **waitForInitialHeartbeat**: `boolean`

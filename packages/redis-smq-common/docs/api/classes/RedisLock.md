@@ -13,7 +13,7 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 ### Constructor
 
-> **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail`, `autoExtendInterval`): `RedisLock`
+> **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail`, `autoExtend`): `RedisLock`
 
 #### Parameters
 
@@ -37,9 +37,9 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 `boolean` = `false`
 
-##### autoExtendInterval
+##### autoExtend
 
-`number` = `0`
+`boolean` = `false`
 
 #### Returns
 
@@ -57,22 +57,13 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 Attempts to acquire a lock for the current instance.
 
-This method attempts to acquire a lock for the current instance using the Redis client.
-
-- If the lock is successfully acquired, the callback is invoked without arguments.
-- If the lock acquisition fails due to a lock already being held by another instance, the callback is invoked with `AcquireLockError` error.
-- If an error occurs during the lock acquisition process, the callback is invoked with the corresponding error.
-
-If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
-
 #### Parameters
 
 ##### cb
 
 [`ICallback`](../interfaces/ICallback.md)
 
-A callback function that will be invoked with a boolean indicating the lock acquisition result,
-or an error (if any) upon successful execution.
+A callback function that will be invoked with an error (if any) upon successful execution.
 
 #### Returns
 
@@ -142,9 +133,6 @@ Callback function to be called when the instance is operational.
 
 Attempts to extend the lock's time-to-live (TTL) if auto-extension is not enabled.
 
-This function extends the lock's TTL by the specified time, provided that auto-extension is not enabled.
-If auto-extension is enabled, an error is returned. If the lock is not currently held, an error is returned.
-
 #### Parameters
 
 ##### cb
@@ -156,14 +144,6 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 #### Returns
 
 `void`
-
-#### Throws
-
-- If auto-extension is enabled.
-
-#### Throws
-
-- If the lock is not currently held.
 
 ---
 
@@ -182,6 +162,20 @@ Retrieves the unique identifier of the Runnable instance.
 #### Inherited from
 
 [`Runnable`](Runnable.md).[`getId`](Runnable.md#getid)
+
+---
+
+### getRetryAttempts()
+
+> **getRetryAttempts**(): `number`
+
+Gets the current retry attempt count if backoff is enabled.
+
+#### Returns
+
+`number`
+
+- The current attempt count, or 0 if backoff is not enabled.
 
 ---
 
@@ -245,8 +239,6 @@ Checks if the Runnable instance is currently going up.
 
 Checks if the lock is currently held.
 
-This method returns a boolean indicating whether the lock is currently held by this instance.
-
 #### Returns
 
 `boolean`
@@ -285,8 +277,6 @@ Non-operational states:
 > **isReleased**(): `boolean`
 
 Checks if the lock is released.
-
-This method returns a boolean indicating whether the lock is currently released.
 
 #### Returns
 
@@ -398,10 +388,6 @@ Checks if the Runnable instance is currently up.
 
 Releases the lock held by the current instance.
 
-This method attempts to release the lock held by the current instance.
-If the lock is not currently held, the method does nothing and invokes the callback with `undefined`.
-If an error occurs during the release process, the callback is invoked with the corresponding error.
-
 #### Parameters
 
 ##### cb
@@ -484,23 +470,11 @@ Overrides the `run` method from the `Runnable` class to handle the lock acquisit
 
 [`ICallback`](../interfaces/ICallback.md)
 
-A callback function that will be invoked with a boolean indicating the lock acquisition result,
-or an error (if any) upon successful execution.
+A callback function that will be invoked with an error (if any) upon successful execution.
 
 #### Returns
 
 `void`
-
-#### Remarks
-
-This method attempts to acquire a lock for the current instance using the Redis client.
-
-- If the lock is successfully acquired, the callback is invoked without arguments.
-- If the lock acquisition fails due to a lock already being held by another instance,
-  the callback is invoked with `AcquireLockError` error.
-- If an error occurs during the lock acquisition process, the callback is invoked with the corresponding error.
-
-If auto-extension is enabled, the lock's TTL will be extended automatically at regular intervals.
 
 #### Overrides
 

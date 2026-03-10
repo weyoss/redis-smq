@@ -7,13 +7,12 @@
 - [`IRedisClient`](../interfaces/IRedisClient.md)
 - [`RedisClientFactory`](RedisClientFactory.md)
 - [`Runnable`](Runnable.md)
-- [`Timer`](Timer.md)
 
 ## Type Parameters
 
 ### Events
 
-`Events` *extends* [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
+`Events` _extends_ [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
 
 ## Implements
 
@@ -39,7 +38,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -59,7 +58,7 @@
 
 [`IEventEmitter`](../interfaces/IEventEmitter.md).[`emit`](../interfaces/IEventEmitter.md#emit)
 
-***
+---
 
 ### on()
 
@@ -69,7 +68,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -89,7 +88,7 @@
 
 [`IEventEmitter`](../interfaces/IEventEmitter.md).[`on`](../interfaces/IEventEmitter.md#on)
 
-***
+---
 
 ### once()
 
@@ -99,7 +98,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -119,7 +118,7 @@
 
 [`IEventEmitter`](../interfaces/IEventEmitter.md).[`once`](../interfaces/IEventEmitter.md#once)
 
-***
+---
 
 ### removeAllListeners()
 
@@ -129,7 +128,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -145,7 +144,7 @@
 
 [`IEventEmitter`](../interfaces/IEventEmitter.md).[`removeAllListeners`](../interfaces/IEventEmitter.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -155,7 +154,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
