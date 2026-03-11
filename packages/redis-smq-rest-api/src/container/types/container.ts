@@ -24,6 +24,7 @@ import {
   ExchangeDirect,
   ExchangeTopic,
   Configuration,
+  QueueStateManager,
 } from 'redis-smq';
 import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
 import { ConsumerGroupsService } from '../../services/ConsumerGroupsService.js';
@@ -44,6 +45,7 @@ import { ConfigurationService } from '../../services/ConfigurationService.js';
 
 export interface IContainer {
   queueManager: QueueManager;
+  queueStateManager: QueueStateManager;
   queueMessages: QueueMessages;
   queuePendingMessages: QueuePendingMessages;
   queueAcknowledgedMessages: QueueAcknowledgedMessages;

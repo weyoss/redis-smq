@@ -13,15 +13,22 @@ import {
   EQueueType,
   IQueueParams,
   QueueManager,
+  QueueStateManager,
+  TQueueStateCommonOptions,
 } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export class QueuesService {
-  protected queue;
+  protected queueManager;
+  protected queueStateManager;
 
-  constructor(queueManager: QueueManager) {
-    this.queue = promisifyAll(queueManager);
+  constructor(
+    queueManager: QueueManager,
+    queueStateManager: QueueStateManager,
+  ) {
+    this.queueManager = promisifyAll(queueManager);
+    this.queueStateManager = promisifyAll(queueStateManager);
   }
 
   async createQueue(
@@ -29,26 +36,51 @@ export class QueuesService {
     queueType: EQueueType,
     queueDeliveryModel: EQueueDeliveryModel,
   ) {
-    return this.queue.saveAsync(queueParams, queueType, queueDeliveryModel);
+    return this.queueManager.saveAsync(
+      queueParams,
+      queueType,
+      queueDeliveryModel,
+    );
   }
 
   async exists(queueParams: IQueueParams) {
-    return this.queue.existsAsync(queueParams);
+    return this.queueManager.existsAsync(queueParams);
   }
 
   async getProperties(queueParams: IQueueParams) {
-    return this.queue.getPropertiesAsync(queueParams);
+    return this.queueManager.getPropertiesAsync(queueParams);
   }
 
   async getConsumers(queueParams: IQueueParams) {
-    return this.queue.getConsumersAsync(queueParams);
+    return this.queueManager.getConsumersAsync(queueParams);
   }
 
   async delete(queueParams: IQueueParams) {
-    return this.queue.deleteAsync(queueParams);
+    return this.queueManager.deleteAsync(queueParams);
   }
 
   async getQueues() {
-    return this.queue.getQueuesAsync();
+    return this.queueManager.getQueuesAsync();
+  }
+
+  async pauseQueue(
+    queueParams: IQueueParams,
+    options: TQueueStateCommonOptions,
+  ) {
+    return this.queueStateManager.pauseAsync(queueParams, options);
+  }
+
+  async stopQueue(
+    queueParams: IQueueParams,
+    options: TQueueStateCommonOptions,
+  ) {
+    return this.queueStateManager.stopAsync(queueParams, options);
+  }
+
+  async resumeQueue(
+    queueParams: IQueueParams,
+    options: TQueueStateCommonOptions,
+  ) {
+    return this.queueStateManager.resumeAsync(queueParams, options);
   }
 }

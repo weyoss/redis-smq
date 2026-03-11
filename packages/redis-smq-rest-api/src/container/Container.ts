@@ -31,6 +31,7 @@ import {
   ExchangeDirect,
   Exchange,
   Configuration,
+  QueueStateManager,
 } from 'redis-smq';
 import { ConsumerGroupsService } from '../services/ConsumerGroupsService.js';
 import { ExchangeDirectService } from '../services/ExchangeDirectService.js';
@@ -57,6 +58,7 @@ export class Container {
     instance.register({
       // RedisSMQ classes
       queueManager: asClass(QueueManager).singleton(),
+      queueStateManager: asClass(QueueStateManager).singleton(),
       queueMessages: asClass(QueueMessages).singleton(),
       queuePendingMessages: asClass(QueuePendingMessages).singleton(),
       queueAcknowledgedMessages: asClass(QueueAcknowledgedMessages).singleton(),

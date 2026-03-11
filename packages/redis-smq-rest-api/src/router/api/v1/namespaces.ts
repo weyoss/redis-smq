@@ -61,6 +61,9 @@ import {
 } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { getNamespaceExchangesController } from '../../../controllers/namespace/getNamespaceExchangesController.js';
+import { pauseQueueController } from '../../../controllers/queue/pauseQueueController.js';
+import { resumeQueueController } from '../../../controllers/queue/resumeQueueController.js';
+import { stopQueueController } from '../../../controllers/queue/stopQueueController.js';
 
 export const namespaces: TRouterResourceMap = {
   path: 'namespaces',
@@ -108,6 +111,48 @@ export const namespaces: TRouterResourceMap = {
                       handler: queueExistsController,
                       method: EControllerRequestMethod.GET,
                       payload: [EControllerRequestPayload.PATH],
+                    },
+                  ],
+                },
+                {
+                  path: 'pause',
+                  tags: ['Queue State'],
+                  resource: [
+                    {
+                      handler: pauseQueueController,
+                      method: EControllerRequestMethod.POST,
+                      payload: [
+                        EControllerRequestPayload.PATH,
+                        EControllerRequestPayload.BODY,
+                      ],
+                    },
+                  ],
+                },
+                {
+                  path: 'stop',
+                  tags: ['Queue State'],
+                  resource: [
+                    {
+                      handler: stopQueueController,
+                      method: EControllerRequestMethod.POST,
+                      payload: [
+                        EControllerRequestPayload.PATH,
+                        EControllerRequestPayload.BODY,
+                      ],
+                    },
+                  ],
+                },
+                {
+                  path: 'resume',
+                  tags: ['Queue State'],
+                  resource: [
+                    {
+                      handler: resumeQueueController,
+                      method: EControllerRequestMethod.POST,
+                      payload: [
+                        EControllerRequestPayload.PATH,
+                        EControllerRequestPayload.BODY,
+                      ],
                     },
                   ],
                 },
