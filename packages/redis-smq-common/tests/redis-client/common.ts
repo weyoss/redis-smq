@@ -60,8 +60,9 @@ export async function standardCommands(config: IRedisConfig) {
   await client.zaddAsync('zset1', 100, 'zvalue1');
   await client.zaddAsync('zset1', 200, 'zvalue2');
   await client.zaddAsync('zset1', 300, 'zvalue3');
+  await client.zaddAsync('zset1', 400, 'zvalue4');
   const rZcard = await client.zcardAsync('zset1');
-  expect(rZcard).toBe(3);
+  expect(rZcard).toBe(4);
 
   const rZscore = await client.zscoreAsync('zset1', 'zvalue2');
   expect(rZscore).toBe('200');
@@ -69,15 +70,15 @@ export async function standardCommands(config: IRedisConfig) {
   const rZscoreNull = await client.zscoreAsync('zset1', 'zvalue_invalid');
   expect(rZscoreNull).toBe(null);
 
-  const rZrange = await client.zrangeAsync('zset1', 0, 2);
-  expect(rZrange).toEqual(['zvalue1', 'zvalue2', 'zvalue3']);
+  const rZrange = await client.zrangeAsync('zset1', 0, 3);
+  expect(rZrange).toEqual(['zvalue1', 'zvalue2', 'zvalue3', 'zvalue4']);
 
   const rZscan = await client.zscanAsync('zset1', '0', {});
   expect(rZscan.items).toBeDefined();
   expect(rZscan.cursor).toBeDefined();
 
-  const rZrevrange = await client.zrevrangeAsync('zset1', 0, 2);
-  expect(rZrevrange).toEqual(['zvalue3', 'zvalue2', 'zvalue1']);
+  const rZrevrange = await client.zrevrangeAsync('zset1', 0, 3);
+  expect(rZrevrange).toEqual(['zvalue4', 'zvalue3', 'zvalue2', 'zvalue1']);
 
   const rZrangebyscore = await client.zrangebyscoreAsync(
     'zset1',
@@ -97,6 +98,7 @@ export async function standardCommands(config: IRedisConfig) {
     100: 'zvalue1',
     200: 'zvalue2',
     300: 'zvalue3',
+    400: 'zvalue4',
   });
 
   const rZcount = await client.zcountAsync('zset1', 100, 200);
@@ -104,14 +106,19 @@ export async function standardCommands(config: IRedisConfig) {
 
   const rZrem = await client.zremAsync('zset1', 'zvalue2');
   expect(rZrem).toBe(1);
-  expect(await client.zcardAsync('zset1')).toBe(2);
+  expect(await client.zcardAsync('zset1')).toBe(3);
 
   const rZpoprpush = await client.zpoprpushAsync('zset1', 'list0');
   expect(rZpoprpush).toBe('zvalue1');
-  expect(await client.zcardAsync('zset1')).toBe(1);
+  expect(await client.zcardAsync('zset1')).toBe(2);
   expect(await client.llenAsync('list0')).toBe(1);
 
-  const rZremrangebyscore = await client.zremrangebyscoreAsync('zset1', 0, 300);
+  const rZpoplpush = await client.zpoplpushAsync('zset1', 'list0');
+  expect(rZpoplpush).toBe('zvalue3');
+  expect(await client.zcardAsync('zset1')).toBe(1);
+  expect(await client.llenAsync('list0')).toBe(2);
+
+  const rZremrangebyscore = await client.zremrangebyscoreAsync('zset1', 0, 400);
   expect(rZremrangebyscore).toEqual(1);
 
   // set commands

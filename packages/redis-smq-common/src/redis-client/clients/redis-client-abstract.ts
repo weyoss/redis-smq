@@ -28,11 +28,13 @@ const dir = env.getCurrentDir();
 export enum ELuaScriptName {
   LPOPRPUSH = 'LPOPRPUSH',
   ZPOPRPUSH = 'ZPOPRPUSH',
+  ZPOPLPUSH = 'ZPOPLPUSH',
 }
 
 const luaScriptMap = {
   [ELuaScriptName.LPOPRPUSH]: resolve(dir, '../lua-scripts/lpoprpush.lua'),
   [ELuaScriptName.ZPOPRPUSH]: resolve(dir, '../lua-scripts/zpoprpush.lua'),
+  [ELuaScriptName.ZPOPLPUSH]: resolve(dir, '../lua-scripts/zpoplpush.lua'),
 };
 
 const minimalSupportedVersion: [number, number, number] = [4, 0, 0];
@@ -318,6 +320,22 @@ export abstract class RedisClientAbstract
   ): void {
     this.runScript(
       ELuaScriptName.ZPOPRPUSH,
+      [source, destination],
+      [],
+      (err, res?: unknown) => {
+        if (err) cb(err);
+        else cb(null, typeof res === 'string' ? res : null);
+      },
+    );
+  }
+
+  zpoplpush(
+    source: string,
+    destination: string,
+    cb: ICallback<string | null>,
+  ): void {
+    this.runScript(
+      ELuaScriptName.ZPOPLPUSH,
       [source, destination],
       [],
       (err, res?: unknown) => {

@@ -206,6 +206,11 @@ export interface IRedisClient extends EventEmitter<TRedisClientEvent> {
     destination: string,
     cb: ICallback<string | null>,
   ): void;
+  zpoplpush(
+    source: string,
+    destination: string,
+    cb: ICallback<string | null>,
+  ): void;
   zscan(
     key: string,
     cursor: string,
