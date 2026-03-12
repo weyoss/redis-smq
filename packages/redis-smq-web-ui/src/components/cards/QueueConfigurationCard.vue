@@ -130,19 +130,6 @@ function getDeliveryModelDescription(model: number): string {
       return 'Unknown message delivery pattern';
   }
 }
-
-/**
- * Format rate limit for display
- */
-function formatRateLimit(
-  rateLimit: { limit: number; interval: number } | null,
-): string {
-  if (!rateLimit || !rateLimit.limit || !rateLimit.interval) {
-    return 'None';
-  }
-  const intervalInSeconds = rateLimit.interval / 1000;
-  return `${rateLimit.limit} msg / ${intervalInSeconds}s`;
-}
 </script>
 
 <template>
@@ -289,31 +276,6 @@ function formatRateLimit(
                     >
                       {{ formatDeliveryModel(queueProperties.deliveryModel) }}
                     </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Rate Limit Section -->
-        <section class="info-section">
-          <h4 class="section-title">
-            <i class="bi bi-speedometer2" aria-hidden="true"></i>
-            Rate Limiting
-          </h4>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-content">
-                <div class="info-icon rate-limit-icon">
-                  <i class="bi bi-speedometer2" aria-hidden="true"></i>
-                </div>
-                <div class="info-details">
-                  <div class="info-label">Current Limit</div>
-                  <div class="info-value">
-                    <span class="rate-limit">{{
-                      formatRateLimit(queueProperties.rateLimit)
-                    }}</span>
                   </div>
                 </div>
               </div>
