@@ -197,8 +197,15 @@ function getPercentage(value: number | null | undefined): number {
 
       <!-- Statistics -->
       <div v-else-if="queue && queueProperties" class="stats-wrapper">
-        <!-- Total Messages Highlight -->
-        <div class="total-messages-card">
+        <!-- Total Messages -->
+        <div
+          class="total-messages-card clickable"
+          role="link"
+          tabindex="0"
+          :title="'View all messages in this queue'"
+          @click="navigateToMessages('Messages')"
+          @keydown.enter="navigateToMessages('Messages')"
+        >
           <div class="total-content">
             <div class="total-icon-wrapper">
               <i class="bi bi-envelope-paper-fill"></i>
@@ -209,6 +216,13 @@ function getPercentage(value: number | null | undefined): number {
                 {{ formatNumber(queueProperties.messagesCount) }}
               </div>
             </div>
+            <div class="total-arrow" aria-hidden="true">
+              <i class="bi bi-chevron-right"></i>
+            </div>
+          </div>
+          <div class="total-hint">
+            <i class="bi bi-eye me-1"></i>
+            Click to view all messages
           </div>
         </div>
 
@@ -413,12 +427,32 @@ function getPercentage(value: number | null | undefined): number {
   padding: 1.25rem;
   color: white;
   margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.total-messages-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.total-messages-card.clickable:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.total-messages-card.clickable:active {
+  transform: translateY(0);
 }
 
 .total-content {
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
 }
 
 .total-icon-wrapper {
@@ -430,6 +464,11 @@ function getPercentage(value: number | null | undefined): number {
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
+  transition: transform 0.2s ease;
+}
+
+.total-messages-card:hover .total-icon-wrapper {
+  transform: scale(1.05);
 }
 
 .total-details {
@@ -448,6 +487,32 @@ function getPercentage(value: number | null | undefined): number {
   font-size: 1.8rem;
   font-weight: 700;
   line-height: 1.2;
+}
+
+.total-arrow {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.total-messages-card:hover .total-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.total-hint {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  transition: opacity 0.2s ease;
+}
+
+.total-messages-card:hover .total-hint {
+  opacity: 1;
 }
 
 /* Statistics Grid */
@@ -691,6 +756,19 @@ function getPercentage(value: number | null | undefined): number {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .total-content {
+    flex-wrap: wrap;
+  }
+
+  .total-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .total-hint {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 576px) {
@@ -721,11 +799,21 @@ function getPercentage(value: number | null | undefined): number {
 @media (prefers-reduced-motion: reduce) {
   .stats-card,
   .btn-refresh,
+  .total-messages-card,
   .stat-item,
-  .progress-bar {
+  .progress-bar,
+  .total-icon-wrapper,
+  .total-arrow {
+    animation: none;
     transition: none;
   }
+
+  .total-messages-card.clickable:hover,
   .stat-item.clickable:hover {
+    transform: none;
+  }
+
+  .total-messages-card:hover .total-icon-wrapper {
     transform: none;
   }
 }
