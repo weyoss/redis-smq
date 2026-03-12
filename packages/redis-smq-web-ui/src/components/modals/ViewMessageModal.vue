@@ -8,7 +8,11 @@
   -->
 
 <script setup lang="ts">
-import { EExchangeType, type IMessageTransferable } from '@/types';
+import {
+  EExchangeType,
+  EMessagePropertyStatus,
+  type IMessageTransferable,
+} from '@/types';
 import { computed, ref } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
 import { formatDate } from '@/lib/format.ts';
@@ -94,20 +98,20 @@ const formattedLastRequeuedAt = computed(() => {
 const statusBadgeClass = computed(() => {
   if (!props.message) return '';
   switch (props.message.status) {
-    case 0:
-      return 'badge bg-secondary'; // SCHEDULED
-    case 1:
-      return 'badge bg-warning'; // PENDING
-    case 2:
-      return 'badge bg-info'; // PROCESSING
-    case 3:
-      return 'badge bg-success'; // ACKNOWLEDGED
-    case 4:
-      return 'badge bg-warning'; // UNACK_DELAYING
-    case 5:
-      return 'badge bg-warning'; // UNACK_REQUEUING
-    case 6:
-      return 'badge bg-danger'; // DEAD_LETTERED
+    case EMessagePropertyStatus.SCHEDULED:
+      return 'badge bg-secondary';
+    case EMessagePropertyStatus.PENDING:
+      return 'badge bg-warning';
+    case EMessagePropertyStatus.PROCESSING:
+      return 'badge bg-info';
+    case EMessagePropertyStatus.ACKNOWLEDGED:
+      return 'badge bg-success';
+    case EMessagePropertyStatus.UNACK_DELAYING:
+      return 'badge bg-warning';
+    case EMessagePropertyStatus.UNACK_REQUEUING:
+      return 'badge bg-warning';
+    case EMessagePropertyStatus.DEAD_LETTERED:
+      return 'badge bg-danger';
     default:
       return 'badge bg-secondary';
   }
@@ -116,19 +120,19 @@ const statusBadgeClass = computed(() => {
 const statusText = computed(() => {
   if (!props.message) return '';
   switch (props.message.status) {
-    case 0:
+    case EMessagePropertyStatus.SCHEDULED:
       return 'Scheduled';
-    case 1:
+    case EMessagePropertyStatus.PENDING:
       return 'Pending';
-    case 2:
+    case EMessagePropertyStatus.PROCESSING:
       return 'Processing';
-    case 3:
+    case EMessagePropertyStatus.ACKNOWLEDGED:
       return 'Acknowledged';
-    case 4:
+    case EMessagePropertyStatus.UNACK_DELAYING:
       return 'Unack Delaying';
-    case 5:
+    case EMessagePropertyStatus.UNACK_REQUEUING:
       return 'Unack Requeuing';
-    case 6:
+    case EMessagePropertyStatus.DEAD_LETTERED:
       return 'Dead Lettered';
     default:
       return 'Unknown';

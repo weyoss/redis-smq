@@ -28,13 +28,13 @@ export enum EMessageProperty {
 }
 
 export enum EMessagePropertyStatus {
-  UNPUBLISHED = -1,
-  SCHEDULED,
+  NEW = 0,
   PENDING,
   PROCESSING,
+  SCHEDULED,
   ACKNOWLEDGED,
-  UNACK_DELAYING,
   UNACK_REQUEUING,
+  UNACK_DELAYING,
   DEAD_LETTERED,
 }
 
