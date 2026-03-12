@@ -26,7 +26,7 @@ describe('getQueueStateController', () => {
     expect(response1.status).toEqual(200);
     expect(response1.body?.data).toEqual({
       timestamp: response1.body?.data?.timestamp,
-      from: 0,
+      from: null,
       to: 0,
       reason: 'SYSTEM_INIT',
       metadata: { queueType: 0, deliveryModel: 0 },

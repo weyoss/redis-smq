@@ -27,7 +27,7 @@ describe('getQueueStateHistoryController', () => {
     expect(response1.body?.data).toEqual([
       {
         timestamp: response1.body?.data?.[0].timestamp,
-        from: 0,
+        from: null,
         to: 0,
         reason: 'SYSTEM_INIT',
         metadata: { queueType: 0, deliveryModel: 0 },

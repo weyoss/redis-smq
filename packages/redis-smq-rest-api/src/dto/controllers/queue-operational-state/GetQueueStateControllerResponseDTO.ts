@@ -13,5 +13,4 @@ import { TErrors } from '../../../errors/errors.js';
 export type GetQueueStateControllerResponseDTO =
   | readonly [200, IQueueStateTransition]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['QueueNotFoundError']
-  | TErrors['QueueStateTransitionError'];
+  | TErrors['QueueNotFoundError'];

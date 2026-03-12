@@ -9,4 +9,4 @@
 
 import { Ajv } from 'ajv';
 
-export const ajv = new Ajv({ coerceTypes: true });
+export const ajv = new Ajv({ coerceTypes: false });
