@@ -14,7 +14,7 @@ import { EControllerRequestPayload } from '../controller/types/index.js';
 import { RequestValidationError } from '../router/errors/RequestValidationError.js';
 import { ResponseValidationError } from '../router/errors/ResponseValidationError.js';
 import { TResponseSchemaMap, TResponseSchemaMapItem } from './types/index.js';
-import { ajv } from './validator.js';
+import { Ajv } from 'ajv';
 
 const payloadSources = [
   EControllerRequestPayload.PATH,
@@ -147,6 +147,7 @@ export function SchemaGenerator() {
       >((accumulator, currentValue) => {
         const schema = map.get(currentValue);
         if (!schema) throw new Error();
+        const ajv = new Ajv({ coerceTypes: true });
         const validator = ajv.compile(schema);
         const validatorFn = (data: unknown) => {
           const isValid = validator(data);
@@ -168,6 +169,7 @@ export function SchemaGenerator() {
     getResponseValidators(map: TResponseSchemaMap) {
       const m = new Map<string, (data: unknown) => void>();
       map.forEach((value, key) => {
+        const ajv = new Ajv({ coerceTypes: false });
         const validator = ajv.compile(value.schema);
         const validatorFn = (data: unknown) => {
           const isValid = validator(data);
