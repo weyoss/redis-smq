@@ -38,6 +38,7 @@ import type {
 } from '@/api/model';
 import QueueMessageStatsCard from '@/components/cards/QueueMessageStatsCard.vue';
 import QueueConfigurationCard from '@/components/cards/QueueConfigurationCard.vue';
+import QueueOperationalStateHistoryCard from '@/components/cards/QueueOperationalStateHistoryCard.vue';
 
 // Core State & Route Params
 const route = useRoute();
@@ -419,6 +420,7 @@ watch(
         <div class="details-column-secondary">
           <QueueMessageStatsCard />
           <QueueRateLimitCard />
+          <QueueOperationalStateHistoryCard />
         </div>
       </div>
     </PageContent>
