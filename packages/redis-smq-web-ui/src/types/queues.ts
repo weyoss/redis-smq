@@ -22,3 +22,10 @@ export enum EQueueType {
   FIFO_QUEUE,
   PRIORITY_QUEUE,
 }
+
+export enum EQueueOperationalState {
+  ACTIVE,
+  PAUSED,
+  STOPPED,
+  LOCKED,
+}

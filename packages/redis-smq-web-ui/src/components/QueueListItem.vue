@@ -60,13 +60,6 @@ function handleDelete() {
       </div>
     </div>
 
-    <!-- Status Indicator -->
-    <div class="queue-status">
-      <span class="status-indicator active" title="Queue is active">
-        <i class="bi bi-circle-fill"></i>
-      </span>
-    </div>
-
     <!-- Action Buttons -->
     <div class="queue-actions">
       <button
@@ -205,22 +198,6 @@ function handleDelete() {
   overflow: hidden;
   white-space: nowrap;
   flex: 1;
-}
-
-.queue-status {
-  flex-shrink: 0;
-  margin: 0 1rem;
-}
-
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.6rem;
-  color: #198754;
-}
-
-.status-indicator.active {
-  color: #198754;
 }
 
 .queue-details {
