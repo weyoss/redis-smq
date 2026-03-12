@@ -12,33 +12,33 @@ import { describe, expect, it } from 'vitest';
 import { config } from '../../../tests/common/config.js';
 import { createQueue } from '../../../tests/common/create-queue.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { pauseQueue } from '../../../tests/common/pause-queue.js';
-import { ResumeQueueControllerResponseDTO } from '../../dto/controllers/queues/ResumeQueueControllerResponseDTO.js';
-import { ResumeQueueControllerRequestBodyDTO } from '../../dto/controllers/queues/ResumeQueueControllerRequestBodyDTO.js';
+import { StopQueueControllerRequestBodyDTO } from '../../dto/controllers/queue-operational-state/StopQueueControllerRequestBodyDTO.js';
+import { StopQueueControllerResponseDTO } from '../../dto/controllers/queue-operational-state/StopQueueControllerResponseDTO.js';
+import { EQueueOperationalState } from 'redis-smq';
 
-describe('resumeQueueController', () => {
+describe('stopQueueController', () => {
   it('HTTP 200 OK', async () => {
     const { queue } = await createQueue('my-queue');
-    await pauseQueue(queue);
-
-    const requestBody: ResumeQueueControllerRequestBodyDTO = {
-      description: 'resume pause',
+    const requestBody: StopQueueControllerRequestBodyDTO = {
+      description: 'test stop',
       metadata: {
         hello: 'world',
       },
     };
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
-    const response1: TResponse<ResumeQueueControllerResponseDTO> = await request
-      .post(`/api/v1/namespaces/${queue.ns}/queues/${queue.name}/resume`)
+    const response1: TResponse<StopQueueControllerResponseDTO> = await request
+      .post(
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/operational-state/stop`,
+      )
       .send(requestBody);
 
     expect(response1.status).toEqual(200);
     expect(response1.body?.data).toEqual({
-      from: 1,
-      to: 0,
+      from: 0,
+      to: EQueueOperationalState.STOPPED,
       reason: 'MANUAL',
-      description: 'resume pause',
+      description: 'test stop',
       timestamp: response1.body?.data?.timestamp,
       metadata: { hello: 'world' },
     });

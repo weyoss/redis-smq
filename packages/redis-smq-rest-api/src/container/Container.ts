@@ -49,6 +49,7 @@ import { QueueScheduledMessagesService } from '../services/QueueScheduledMessage
 import { QueuesService } from '../services/QueuesService.js';
 import { IContainer } from './types/container.js';
 import { ConfigurationService } from '../services/ConfigurationService.js';
+import { QueueOperationalStateService } from '../services/QueueOperationalStateService.js';
 
 export class Container {
   private static instance: AwilixContainer<IContainer> | null = null;
@@ -97,6 +98,7 @@ export class Container {
       exchangesService: asClass(ExchangesService),
       consumerGroupsService: asClass(ConsumerGroupsService),
       configurationService: asClass(ConfigurationService),
+      queueOperationalStateService: asClass(QueueOperationalStateService),
     });
   }
 

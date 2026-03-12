@@ -12,31 +12,32 @@ import { describe, expect, it } from 'vitest';
 import { config } from '../../../tests/common/config.js';
 import { createQueue } from '../../../tests/common/create-queue.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { StopQueueControllerRequestBodyDTO } from '../../dto/controllers/queues/StopQueueControllerRequestBodyDTO.js';
-import { StopQueueControllerResponseDTO } from '../../dto/controllers/queues/StopQueueControllerResponseDTO.js';
-import { EQueueOperationalState } from 'redis-smq';
+import { PauseQueueControllerResponseDTO } from '../../dto/controllers/queue-operational-state/PauseQueueControllerResponseDTO.js';
+import { PauseQueueControllerRequestBodyDTO } from '../../dto/controllers/queue-operational-state/PauseQueueControllerRequestBodyDTO.js';
 
-describe('stopQueueController', () => {
+describe('pauseQueueController', () => {
   it('HTTP 200 OK', async () => {
     const { queue } = await createQueue('my-queue');
-    const requestBody: StopQueueControllerRequestBodyDTO = {
-      description: 'test stop',
+    const requestBody: PauseQueueControllerRequestBodyDTO = {
+      description: 'test pause',
       metadata: {
         hello: 'world',
       },
     };
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
-    const response1: TResponse<StopQueueControllerResponseDTO> = await request
-      .post(`/api/v1/namespaces/${queue.ns}/queues/${queue.name}/stop`)
+    const response1: TResponse<PauseQueueControllerResponseDTO> = await request
+      .post(
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/operational-state/pause`,
+      )
       .send(requestBody);
 
     expect(response1.status).toEqual(200);
     expect(response1.body?.data).toEqual({
       from: 0,
-      to: EQueueOperationalState.STOPPED,
+      to: 1,
       reason: 'MANUAL',
-      description: 'test stop',
+      description: 'test pause',
       timestamp: response1.body?.data?.timestamp,
       metadata: { hello: 'world' },
     });

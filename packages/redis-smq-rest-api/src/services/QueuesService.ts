@@ -13,22 +13,15 @@ import {
   EQueueType,
   IQueueParams,
   QueueManager,
-  QueueStateManager,
-  TQueueStateCommonOptions,
 } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export class QueuesService {
   protected queueManager;
-  protected queueStateManager;
 
-  constructor(
-    queueManager: QueueManager,
-    queueStateManager: QueueStateManager,
-  ) {
+  constructor(queueManager: QueueManager) {
     this.queueManager = promisifyAll(queueManager);
-    this.queueStateManager = promisifyAll(queueStateManager);
   }
 
   async createQueue(
@@ -61,26 +54,5 @@ export class QueuesService {
 
   async getQueues() {
     return this.queueManager.getQueuesAsync();
-  }
-
-  async pauseQueue(
-    queueParams: IQueueParams,
-    options: TQueueStateCommonOptions,
-  ) {
-    return this.queueStateManager.pauseAsync(queueParams, options);
-  }
-
-  async stopQueue(
-    queueParams: IQueueParams,
-    options: TQueueStateCommonOptions,
-  ) {
-    return this.queueStateManager.stopAsync(queueParams, options);
-  }
-
-  async resumeQueue(
-    queueParams: IQueueParams,
-    options: TQueueStateCommonOptions,
-  ) {
-    return this.queueStateManager.resumeAsync(queueParams, options);
   }
 }

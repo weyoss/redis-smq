@@ -12,9 +12,9 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { StopQueueControllerRequestPathDTO } from '../../dto/controllers/queues/StopQueueControllerRequestPathDTO.js';
-import { StopQueueControllerRequestBodyDTO } from '../../dto/controllers/queues/StopQueueControllerRequestBodyDTO.js';
-import { StopQueueControllerResponseDTO } from '../../dto/controllers/queues/StopQueueControllerResponseDTO.js';
+import { StopQueueControllerRequestPathDTO } from '../../dto/controllers/queue-operational-state/StopQueueControllerRequestPathDTO.js';
+import { StopQueueControllerRequestBodyDTO } from '../../dto/controllers/queue-operational-state/StopQueueControllerRequestBodyDTO.js';
+import { StopQueueControllerResponseDTO } from '../../dto/controllers/queue-operational-state/StopQueueControllerResponseDTO.js';
 
 export const stopQueueController: TControllerRequestHandler<
   StopQueueControllerRequestPathDTO,
@@ -22,10 +22,12 @@ export const stopQueueController: TControllerRequestHandler<
   StopQueueControllerRequestBodyDTO,
   StopQueueControllerResponseDTO
 > = async (ctx) => {
-  const queueService = Container.getInstance().resolve('queuesService');
+  const service = Container.getInstance().resolve(
+    'queueOperationalStateService',
+  );
   const queueParams = ctx.scope.resolve('requestPathDTO');
   const options = ctx.scope.resolve('requestBodyDTO');
 
-  const r = await queueService.stopQueue(queueParams, options);
+  const r = await service.stopQueue(queueParams, options);
   return [200, r];
 };

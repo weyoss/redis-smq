@@ -42,6 +42,7 @@ import { QueueRateLimitService } from '../../services/QueueRateLimitService.js';
 import { QueueScheduledMessagesService } from '../../services/QueueScheduledMessagesService.js';
 import { QueuesService } from '../../services/QueuesService.js';
 import { ConfigurationService } from '../../services/ConfigurationService.js';
+import { QueueOperationalStateService } from '../../services/QueueOperationalStateService.js';
 
 export interface IContainer {
   queueManager: QueueManager;
@@ -71,6 +72,7 @@ export interface IContainer {
   queueDeadLetteredMessagesService: QueueDeadLetteredMessagesService;
   messagesService: MessagesService;
   queueRateLimitService: QueueRateLimitService;
+  queueOperationalStateService: QueueOperationalStateService;
   namespacesService: NamespacesService;
   exchangesService: ExchangesService;
   exchangeFanoutService: ExchangeFanoutService;

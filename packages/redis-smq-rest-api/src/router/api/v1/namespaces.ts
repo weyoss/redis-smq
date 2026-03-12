@@ -61,9 +61,11 @@ import {
 } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { getNamespaceExchangesController } from '../../../controllers/namespace/getNamespaceExchangesController.js';
-import { pauseQueueController } from '../../../controllers/queue/pauseQueueController.js';
-import { resumeQueueController } from '../../../controllers/queue/resumeQueueController.js';
-import { stopQueueController } from '../../../controllers/queue/stopQueueController.js';
+import { pauseQueueController } from '../../../controllers/queue-operational-state/pauseQueueController.js';
+import { resumeQueueController } from '../../../controllers/queue-operational-state/resumeQueueController.js';
+import { stopQueueController } from '../../../controllers/queue-operational-state/stopQueueController.js';
+import { getQueueStateController } from '../../../controllers/queue-operational-state/getQueueStateController.js';
+import { getQueueStateHistoryController } from '../../../controllers/queue-operational-state/getQueueStateHistoryController.js';
 
 export const namespaces: TRouterResourceMap = {
   path: 'namespaces',
@@ -115,43 +117,61 @@ export const namespaces: TRouterResourceMap = {
                   ],
                 },
                 {
-                  path: 'pause',
-                  tags: ['Queue State'],
+                  path: 'operational-state',
+                  tags: ['Queue Operational State'],
                   resource: [
                     {
-                      handler: pauseQueueController,
-                      method: EControllerRequestMethod.POST,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.BODY,
+                      handler: getQueueStateController,
+                      method: EControllerRequestMethod.GET,
+                      payload: [EControllerRequestPayload.PATH],
+                    },
+                    {
+                      path: 'get-history',
+                      resource: [
+                        {
+                          handler: getQueueStateHistoryController,
+                          method: EControllerRequestMethod.GET,
+                          payload: [EControllerRequestPayload.PATH],
+                        },
                       ],
                     },
-                  ],
-                },
-                {
-                  path: 'stop',
-                  tags: ['Queue State'],
-                  resource: [
                     {
-                      handler: stopQueueController,
-                      method: EControllerRequestMethod.POST,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.BODY,
+                      path: 'pause',
+                      resource: [
+                        {
+                          handler: pauseQueueController,
+                          method: EControllerRequestMethod.POST,
+                          payload: [
+                            EControllerRequestPayload.PATH,
+                            EControllerRequestPayload.BODY,
+                          ],
+                        },
                       ],
                     },
-                  ],
-                },
-                {
-                  path: 'resume',
-                  tags: ['Queue State'],
-                  resource: [
                     {
-                      handler: resumeQueueController,
-                      method: EControllerRequestMethod.POST,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.BODY,
+                      path: 'stop',
+                      resource: [
+                        {
+                          handler: stopQueueController,
+                          method: EControllerRequestMethod.POST,
+                          payload: [
+                            EControllerRequestPayload.PATH,
+                            EControllerRequestPayload.BODY,
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      path: 'resume',
+                      resource: [
+                        {
+                          handler: resumeQueueController,
+                          method: EControllerRequestMethod.POST,
+                          payload: [
+                            EControllerRequestPayload.PATH,
+                            EControllerRequestPayload.BODY,
+                          ],
+                        },
                       ],
                     },
                   ],

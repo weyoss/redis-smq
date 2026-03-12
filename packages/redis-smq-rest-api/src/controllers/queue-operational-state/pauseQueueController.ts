@@ -12,9 +12,9 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { PauseQueueControllerRequestPathDTO } from '../../dto/controllers/queues/PauseQueueControllerRequestPathDTO.js';
-import { PauseQueueControllerResponseDTO } from '../../dto/controllers/queues/PauseQueueControllerResponseDTO.js';
-import { PauseQueueControllerRequestBodyDTO } from '../../dto/controllers/queues/PauseQueueControllerRequestBodyDTO.js';
+import { PauseQueueControllerRequestPathDTO } from '../../dto/controllers/queue-operational-state/PauseQueueControllerRequestPathDTO.js';
+import { PauseQueueControllerResponseDTO } from '../../dto/controllers/queue-operational-state/PauseQueueControllerResponseDTO.js';
+import { PauseQueueControllerRequestBodyDTO } from '../../dto/controllers/queue-operational-state/PauseQueueControllerRequestBodyDTO.js';
 
 export const pauseQueueController: TControllerRequestHandler<
   PauseQueueControllerRequestPathDTO,
@@ -22,10 +22,12 @@ export const pauseQueueController: TControllerRequestHandler<
   PauseQueueControllerRequestBodyDTO,
   PauseQueueControllerResponseDTO
 > = async (ctx) => {
-  const queueService = Container.getInstance().resolve('queuesService');
+  const service = Container.getInstance().resolve(
+    'queueOperationalStateService',
+  );
   const queueParams = ctx.scope.resolve('requestPathDTO');
   const options = ctx.scope.resolve('requestBodyDTO');
 
-  const r = await queueService.pauseQueue(queueParams, options);
+  const r = await service.pauseQueue(queueParams, options);
   return [200, r];
 };

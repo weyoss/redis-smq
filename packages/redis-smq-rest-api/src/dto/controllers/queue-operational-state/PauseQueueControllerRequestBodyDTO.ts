@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { TQueueStateCommonOptions } from 'redis-smq';
+import { TQueueStateTransitionUserOptions } from 'redis-smq';
 
-export interface PauseQueueControllerRequestBodyDTO extends TQueueStateCommonOptions {}
+export interface PauseQueueControllerRequestBodyDTO extends TQueueStateTransitionUserOptions {}
