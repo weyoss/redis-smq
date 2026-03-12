@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
+
+### ✨ Features
+
+- **redis-smq-web-ui:** add operational state history tracking ([40d6283](https://github.com/weyoss/redis-smq/commit/40d6283e05b0d6872acd346369d039236c839d46))
+- **redis-smq-web-ui:** add queue operational state management ([d56eb97](https://github.com/weyoss/redis-smq/commit/d56eb970dc553d6a2d0ccfb20ecd08e4ae9df059))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** make formatDateSince() output more human ([519c316](https://github.com/weyoss/redis-smq/commit/519c31675fe5c660567ac168db7b2f12f3f27649))
+- **redis-smq-web-ui:** remove queue rate limit section in QueueConfigurationCard ([ea82d3f](https://github.com/weyoss/redis-smq/commit/ea82d3f711c5922ea80f2659c1bd83b08e061e35))
+
 ## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
 
 **Note:** Version bump only for package redis-smq-web-ui

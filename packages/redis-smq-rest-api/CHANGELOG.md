@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
+
+### ✨ Features
+
+- **redis-smq-rest-api:** add pause/stop/resume queue API endpoints ([6580563](https://github.com/weyoss/redis-smq/commit/6580563f6ce4fe83692ff85288def884d10f702e))
+- **redis-smq-rest-api:** add queue operational state module ([9016c0b](https://github.com/weyoss/redis-smq/commit/9016c0b3e46e68f22bf22dde84448f78def293d1))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** disable type coercion in AJV validator ([861f66d](https://github.com/weyoss/redis-smq/commit/861f66d39817f013f8a34d82aa075cd7fb8e53d6))
+- **redis-smq-rest-api:** enable type coercion selectively in AJV request validation ([cade7f5](https://github.com/weyoss/redis-smq/commit/cade7f5dc1c7cd084d380170976cdc0c011f3d86))
+
 ## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
 
 ### 🚀 Chore

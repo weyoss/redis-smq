@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
+
+### 📝 Documentation
+
+- **redis-smq:** add message lifecycle and reliability documents ([847b0de](https://github.com/weyoss/redis-smq/commit/847b0de949720d46aec82e6eb3a28c05f1e5eb6a))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** separate system and user state transition reasons ([c10b922](https://github.com/weyoss/redis-smq/commit/c10b9224bb26e83c735d36dd651c160b53ab05e5))
+
 ## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
 
 ### ♻️ Code Refactoring

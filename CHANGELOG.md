@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
+
+### ✨ Features
+
+- **redis-smq-rest-api:** add pause/stop/resume queue API endpoints ([6580563](https://github.com/weyoss/redis-smq/commit/6580563f6ce4fe83692ff85288def884d10f702e))
+- **redis-smq-rest-api:** add queue operational state module ([9016c0b](https://github.com/weyoss/redis-smq/commit/9016c0b3e46e68f22bf22dde84448f78def293d1))
+- **redis-smq-web-ui:** add operational state history tracking ([40d6283](https://github.com/weyoss/redis-smq/commit/40d6283e05b0d6872acd346369d039236c839d46))
+- **redis-smq-web-ui:** add queue operational state management ([d56eb97](https://github.com/weyoss/redis-smq/commit/d56eb970dc553d6a2d0ccfb20ecd08e4ae9df059))
+
+### 📝 Documentation
+
+- **redis-smq:** add message lifecycle and reliability documents ([847b0de](https://github.com/weyoss/redis-smq/commit/847b0de949720d46aec82e6eb3a28c05f1e5eb6a))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** disable type coercion in AJV validator ([861f66d](https://github.com/weyoss/redis-smq/commit/861f66d39817f013f8a34d82aa075cd7fb8e53d6))
+- **redis-smq-rest-api:** enable type coercion selectively in AJV request validation ([cade7f5](https://github.com/weyoss/redis-smq/commit/cade7f5dc1c7cd084d380170976cdc0c011f3d86))
+- **redis-smq-web-ui:** make formatDateSince() output more human ([519c316](https://github.com/weyoss/redis-smq/commit/519c31675fe5c660567ac168db7b2f12f3f27649))
+- **redis-smq-web-ui:** remove queue rate limit section in QueueConfigurationCard ([ea82d3f](https://github.com/weyoss/redis-smq/commit/ea82d3f711c5922ea80f2659c1bd83b08e061e35))
+- **redis-smq:** separate system and user state transition reasons ([c10b922](https://github.com/weyoss/redis-smq/commit/c10b9224bb26e83c735d36dd651c160b53ab05e5))
+
 ## [9.1.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.4...v9.1.0-next.5) (2026-03-10)
 
 ### 🚀 Chore
