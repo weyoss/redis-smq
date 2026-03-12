@@ -13,9 +13,9 @@ import {
 } from '../../queue-manager/index.js';
 import {
   EQueueStateLockOwner,
-  EQueueStateTransitionReason,
+  EStateTransitionReason,
   IQueueStateTransition,
-  TQueueStateCommonOptions,
+  TQueueStateTransitionOptions,
 } from '../types/index.js';
 import { ICallback, ILogger } from 'redis-smq-common';
 import { _transitQueueTo } from './_transit-queue-to.js';
@@ -24,7 +24,7 @@ export function _lockQueuelock(
   queue: string | IQueueParams,
   lockOwner: EQueueStateLockOwner,
   lockId: string,
-  options: TQueueStateCommonOptions | null,
+  options: TQueueStateTransitionOptions | null,
   logger: ILogger,
   cb: ICallback<IQueueStateTransition>,
 ): void {
@@ -39,7 +39,7 @@ export function _lockQueuelock(
     queue,
     EQueueOperationalState.LOCKED,
     {
-      reason: options?.reason || EQueueStateTransitionReason.MANUAL,
+      reason: options?.reason || EStateTransitionReason.MANUAL,
       description: options?.description || 'Exclusive lock',
       lockId,
       lockOwner,

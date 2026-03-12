@@ -16,7 +16,7 @@ import {
 import {
   EQueueStateTransitionReason,
   IQueueStateTransition,
-  TQueueStateFullOptions,
+  TQueueStateTransitionOptions,
 } from '../types/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _createQueueStateTransition } from './_create-queue-state-transition.js';
@@ -35,7 +35,7 @@ export function _setQueueState(
   from: EQueueOperationalState,
   to: EQueueOperationalState,
   reason: EQueueStateTransitionReason,
-  options: TQueueStateFullOptions | null,
+  options: TQueueStateTransitionOptions | null,
   cb: ICallback<IQueueStateTransition>,
 ): void {
   const { keyQueueProperties, keyQueueStateHistory } = redisKeys.getQueueKeys(

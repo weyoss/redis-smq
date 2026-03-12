@@ -21,9 +21,9 @@ import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import {
-  EQueueStateTransitionReason,
+  EStateTransitionReason,
   IQueueStateTransition,
-  TQueueStateCommonOptions,
+  TQueueStateTransitionUserOptions,
 } from './types/index.js';
 import { _getQueueState } from './helpers/_get-queue-state.js';
 import { _transitQueueTo } from './helpers/_transit-queue-to.js';
@@ -196,7 +196,7 @@ export class QueueStateManager {
    */
   pause(
     queue: string | IQueueParams,
-    options: TQueueStateCommonOptions | null,
+    options: TQueueStateTransitionUserOptions | null,
     cb: ICallback<IQueueStateTransition>,
   ): void {
     const queueDesc =
@@ -208,7 +208,7 @@ export class QueueStateManager {
       EQueueOperationalState.PAUSED,
       {
         ...options,
-        reason: options?.reason || EQueueStateTransitionReason.MANUAL,
+        reason: options?.reason || EStateTransitionReason.MANUAL,
         description: options?.description || 'Manual pause',
       },
       this.logger,
@@ -270,7 +270,7 @@ export class QueueStateManager {
    */
   resume(
     queue: string | IQueueParams,
-    options: TQueueStateCommonOptions | null,
+    options: TQueueStateTransitionUserOptions | null,
     cb: ICallback<IQueueStateTransition>,
   ): void {
     const queueDesc =
@@ -282,7 +282,7 @@ export class QueueStateManager {
       EQueueOperationalState.ACTIVE,
       {
         ...options,
-        reason: options?.reason || EQueueStateTransitionReason.MANUAL,
+        reason: options?.reason || EStateTransitionReason.MANUAL,
         description: options?.description || 'Manual resume',
       },
       this.logger,
@@ -355,7 +355,7 @@ export class QueueStateManager {
    */
   stop(
     queue: string | IQueueParams,
-    options: TQueueStateCommonOptions | null,
+    options: TQueueStateTransitionUserOptions | null,
     cb: ICallback<IQueueStateTransition>,
   ): void {
     const queueDesc =
@@ -367,7 +367,7 @@ export class QueueStateManager {
       EQueueOperationalState.STOPPED,
       {
         ...options,
-        reason: options?.reason || EQueueStateTransitionReason.MANUAL,
+        reason: options?.reason || EStateTransitionReason.MANUAL,
         description: options?.description || 'Manual stop',
       },
       this.logger,

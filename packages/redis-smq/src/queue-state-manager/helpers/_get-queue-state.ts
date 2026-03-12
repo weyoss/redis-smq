@@ -14,7 +14,7 @@ import {
   IQueueParams,
 } from '../../queue-manager/index.js';
 import {
-  EQueueStateTransitionReason,
+  ESystemStateTransitionReason,
   IQueueStateTransition,
 } from '../types/index.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
@@ -72,7 +72,7 @@ export function _getQueueState(
           transition = _createQueueStateTransition(
             EQueueOperationalState.ACTIVE,
             currentState,
-            EQueueStateTransitionReason.SYSTEM_INIT,
+            ESystemStateTransitionReason.SYSTEM_INIT,
           );
         }
 

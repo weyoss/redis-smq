@@ -10,8 +10,10 @@
 import { EQueueOperationalState } from '../../queue-manager/index.js';
 import {
   EQueueStateTransitionReason,
+  ESystemStateTransitionReason,
+  EStateTransitionReason,
   IQueueStateTransition,
-  TQueueStateFullOptions,
+  TQueueStateTransitionOptions,
 } from '../types/index.js';
 
 /**
@@ -21,7 +23,7 @@ export function _createQueueStateTransition(
   from: EQueueOperationalState,
   to: EQueueOperationalState,
   reason: EQueueStateTransitionReason,
-  options?: TQueueStateFullOptions,
+  options?: TQueueStateTransitionOptions,
 ): IQueueStateTransition {
   const transition: IQueueStateTransition = {
     from,
@@ -54,34 +56,34 @@ function getDefaultDescription(
   const toState = EQueueOperationalState[to].toLowerCase();
 
   switch (reason) {
-    case EQueueStateTransitionReason.SYSTEM_INIT:
+    case ESystemStateTransitionReason.SYSTEM_INIT:
       return `System initialized queue from ${fromState} to ${toState}`;
 
-    case EQueueStateTransitionReason.MANUAL:
-      return `Manual transition from ${fromState} to ${toState}`;
-
-    case EQueueStateTransitionReason.SCHEDULED:
-      return `Scheduled transition from ${fromState} to ${toState}`;
-
-    case EQueueStateTransitionReason.EMERGENCY:
-      return `Emergency transition from ${fromState} to ${toState}`;
-
-    case EQueueStateTransitionReason.PERFORMANCE:
-      return `Performance-related transition from ${fromState} to ${toState}`;
-
-    case EQueueStateTransitionReason.ERROR:
-      return `Error-triggered transition from ${fromState} to ${toState}`;
-
-    case EQueueStateTransitionReason.RECOVERY:
+    case ESystemStateTransitionReason.RECOVERY:
       return `Recovery transition from ${fromState} to ${toState}`;
 
-    case EQueueStateTransitionReason.CONFIG_CHANGE:
+    case EStateTransitionReason.MANUAL:
+      return `Manual transition from ${fromState} to ${toState}`;
+
+    case EStateTransitionReason.SCHEDULED:
+      return `Scheduled transition from ${fromState} to ${toState}`;
+
+    case EStateTransitionReason.EMERGENCY:
+      return `Emergency transition from ${fromState} to ${toState}`;
+
+    case EStateTransitionReason.PERFORMANCE:
+      return `Performance-related transition from ${fromState} to ${toState}`;
+
+    case EStateTransitionReason.ERROR:
+      return `Error-triggered transition from ${fromState} to ${toState}`;
+
+    case EStateTransitionReason.CONFIG_CHANGE:
       return `Configuration change triggered transition from ${fromState} to ${toState}`;
 
-    case EQueueStateTransitionReason.TESTING:
+    case EStateTransitionReason.TESTING:
       return `Testing transition from ${fromState} to ${toState}`;
 
-    case EQueueStateTransitionReason.UNKNOWN:
+    case EStateTransitionReason.OTHER:
       return `Unknown reason for transition from ${fromState} to ${toState}`;
 
     default:

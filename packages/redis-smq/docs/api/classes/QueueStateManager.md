@@ -228,7 +228,7 @@ Queue identifier (string or IQueueParams)
 
 Configuration options for the pause operation
 
-[`TQueueStateCommonOptions`](../type-aliases/TQueueStateCommonOptions.md) | `null`
+[`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
 
 ##### cb
 
@@ -313,7 +313,7 @@ Queue identifier (string or IQueueParams)
 
 Configuration options for the resume operation
 
-[`TQueueStateCommonOptions`](../type-aliases/TQueueStateCommonOptions.md) | `null`
+[`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
 
 ##### cb
 
@@ -392,7 +392,7 @@ Queue identifier (string or IQueueParams)
 
 Configuration options for the stop operation
 
-[`TQueueStateCommonOptions`](../type-aliases/TQueueStateCommonOptions.md) | `null`
+[`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
 
 ##### cb
 

@@ -14,7 +14,7 @@ import {
   produceMessage,
 } from '../../common/message-producing-consuming.js';
 import {
-  EQueueStateTransitionReason,
+  EStateTransitionReason,
   EQueueType,
   QueueStateManager,
   QueueOperationValidator,
@@ -35,7 +35,7 @@ describe('QueueOperationValidator: PAUSED state operations', () => {
     await createQueue(queue, EQueueType.FIFO_QUEUE);
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
     await stateManager.pauseAsync(queue, {
-      reason: EQueueStateTransitionReason.MANUAL,
+      reason: EStateTransitionReason.MANUAL,
       description: 'Testing paused state',
     });
   });

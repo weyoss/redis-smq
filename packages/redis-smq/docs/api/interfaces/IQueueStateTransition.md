@@ -48,7 +48,7 @@ Additional context/metadata
 
 ### reason
 
-> **reason**: [`EQueueStateTransitionReason`](../enumerations/EQueueStateTransitionReason.md)
+> **reason**: [`EQueueStateTransitionReason`](../type-aliases/EQueueStateTransitionReason.md)
 
 Reason for the transition
 

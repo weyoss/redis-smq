@@ -13,7 +13,7 @@ import { _getQueueState } from '../../../../queue-state-manager/helpers/_get-que
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import {
   EQueueStateLockOwner,
-  EQueueStateTransitionReason,
+  ESystemStateTransitionReason,
   IQueueStateTransition,
 } from '../../../../queue-state-manager/index.js';
 import { EQueueOperationalState } from '../../../../queue-manager/index.js';
@@ -47,7 +47,7 @@ export class RecoverOrphanedQueueLockWorker extends QueueWorkerAbstract {
                     EQueueStateLockOwner.PURGE_JOB,
                     jobId,
                     {
-                      reason: EQueueStateTransitionReason.RECOVERY,
+                      reason: ESystemStateTransitionReason.RECOVERY,
                     },
                     this.logger,
                     (err) => {

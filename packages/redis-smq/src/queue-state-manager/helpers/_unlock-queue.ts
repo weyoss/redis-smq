@@ -14,9 +14,9 @@ import {
 } from '../../queue-manager/index.js';
 import {
   EQueueStateLockOwner,
-  EQueueStateTransitionReason,
+  EStateTransitionReason,
   IQueueStateTransition,
-  TQueueStateCommonOptions,
+  TQueueStateTransitionOptions,
 } from '../types/index.js';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _parseQueueParamsAndValidate } from '../../queue-manager/_/_parse-queue-params-and-validate.js';
@@ -31,7 +31,7 @@ export function _unlockQueue(
   queue: string | IQueueParams,
   lockOwner: EQueueStateLockOwner,
   lockId: string,
-  options: TQueueStateCommonOptions | null,
+  options: TQueueStateTransitionOptions | null,
   logger: ILogger,
   cb: ICallback<IQueueStateTransition>,
 ): void {
@@ -93,7 +93,7 @@ export function _unlockQueue(
           queue,
           EQueueOperationalState.ACTIVE,
           {
-            reason: options?.reason || EQueueStateTransitionReason.MANUAL,
+            reason: options?.reason || EStateTransitionReason.MANUAL,
             description: options?.description || 'Manual unlock',
             lockId, // Pass lockId for Lua validation
             metadata: options?.metadata,

@@ -21,8 +21,9 @@
 - [EQueueOperationalState](enumerations/EQueueOperationalState.md)
 - [EQueueProperty](enumerations/EQueueProperty.md)
 - [EQueueStateLockOwner](enumerations/EQueueStateLockOwner.md)
-- [EQueueStateTransitionReason](enumerations/EQueueStateTransitionReason.md)
 - [EQueueType](enumerations/EQueueType.md)
+- [EStateTransitionReason](enumerations/EStateTransitionReason.md)
+- [ESystemStateTransitionReason](enumerations/ESystemStateTransitionReason.md)
 
 ## Classes
 
@@ -86,6 +87,7 @@
 
 ## Type Aliases
 
+- [EQueueStateTransitionReason](type-aliases/EQueueStateTransitionReason.md)
 - [TConsumerConsumeMessageEvent](type-aliases/TConsumerConsumeMessageEvent.md)
 - [TConsumerDequeueMessageEvent](type-aliases/TConsumerDequeueMessageEvent.md)
 - [TConsumerEvent](type-aliases/TConsumerEvent.md)
@@ -107,8 +109,8 @@
 - [TQueueConsumer](type-aliases/TQueueConsumer.md)
 - [TQueueEvent](type-aliases/TQueueEvent.md)
 - [TQueueExtendedParams](type-aliases/TQueueExtendedParams.md)
-- [TQueueStateCommonOptions](type-aliases/TQueueStateCommonOptions.md)
-- [TQueueStateFullOptions](type-aliases/TQueueStateFullOptions.md)
+- [TQueueStateTransitionOptions](type-aliases/TQueueStateTransitionOptions.md)
+- [TQueueStateTransitionUserOptions](type-aliases/TQueueStateTransitionUserOptions.md)
 - [TRedisSMQEvent](type-aliases/TRedisSMQEvent.md)
 
 ## Variables

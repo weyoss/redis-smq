@@ -12,9 +12,9 @@ import {
   IQueueParams,
 } from '../../queue-manager/index.js';
 import {
-  EQueueStateTransitionReason,
+  EStateTransitionReason,
   IQueueStateTransition,
-  TQueueStateFullOptions,
+  TQueueStateTransitionOptions,
 } from '../types/index.js';
 import { CallbackEmptyReplyError, ICallback, ILogger } from 'redis-smq-common';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
@@ -28,7 +28,7 @@ import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 export function _transitQueueTo(
   queue: string | IQueueParams,
   newState: EQueueOperationalState,
-  options: TQueueStateFullOptions | null,
+  options: TQueueStateTransitionOptions | null,
   logger: ILogger,
   cb: ICallback<IQueueStateTransition>,
 ): void {
@@ -61,7 +61,7 @@ export function _transitQueueTo(
         }
 
         // Determine reason if not provided
-        const reason = options?.reason || EQueueStateTransitionReason.MANUAL;
+        const reason = options?.reason || EStateTransitionReason.MANUAL;
 
         // Perform state transition
         _setQueueState(

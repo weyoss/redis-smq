@@ -35,7 +35,7 @@ import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
 import { maxQueueStateHistorySize } from '../queue-state-manager/helpers/_set-queue-state.js';
 import {
-  EQueueStateTransitionReason,
+  ESystemStateTransitionReason,
   IQueueStateTransition,
 } from '../queue-state-manager/index.js';
 
@@ -114,7 +114,7 @@ export class QueueManager {
         timestamp: now,
         from: null, // No previous state for initial transition
         to: EQueueOperationalState.ACTIVE,
-        reason: EQueueStateTransitionReason.SYSTEM_INIT,
+        reason: ESystemStateTransitionReason.SYSTEM_INIT,
         metadata: {
           queueType,
           deliveryModel,

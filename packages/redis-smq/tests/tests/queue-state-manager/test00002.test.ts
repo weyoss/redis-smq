@@ -16,7 +16,7 @@ import {
 import {
   Consumer,
   EQueueOperationalState,
-  EQueueStateTransitionReason,
+  EStateTransitionReason,
   EQueueType,
   QueueManager,
   QueueStateManager,
@@ -40,7 +40,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Stop the queue with metadata
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'Planned maintenance',
       metadata: {
         estimatedDowntime: '30 minutes',
@@ -60,7 +60,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // First pause the queue
     await stateManager.pauseAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.MANUAL,
+      reason: EStateTransitionReason.MANUAL,
       description: 'Initial pause',
     });
 
@@ -69,7 +69,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Then stop it
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'Stopping from paused state',
     });
 
@@ -84,12 +84,12 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
 
     await expect(
       stateManager.stopAsync(defaultQueue, {
-        reason: EQueueStateTransitionReason.SCHEDULED,
+        reason: EStateTransitionReason.SCHEDULED,
       }),
     ).rejects.toThrow(QueueStateTransitionError);
   });
@@ -102,17 +102,17 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Create a sequence of state changes including stop
     await stateManager.pauseAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.MANUAL,
+      reason: EStateTransitionReason.MANUAL,
       description: 'Pause before stop',
     });
 
     await stateManager.resumeAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.MANUAL,
+      reason: EStateTransitionReason.MANUAL,
       description: 'Resume before stop',
     });
 
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'Final stop',
       metadata: {
         ticket: 'INC-67890',
@@ -130,9 +130,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
     expect(stopTransition.from).toEqual(EQueueOperationalState.ACTIVE);
     expect(stopTransition.to).toEqual(EQueueOperationalState.STOPPED);
     expect(stopTransition.metadata).toBeDefined();
-    expect(stopTransition.reason).toEqual(
-      EQueueStateTransitionReason.SCHEDULED,
-    );
+    expect(stopTransition.reason).toEqual(EStateTransitionReason.SCHEDULED);
     expect(stopTransition.description).toEqual('Final stop');
     expect(stopTransition.metadata?.ticket).toEqual('INC-67890');
   });
@@ -143,7 +141,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
 
     // Try to produce message
@@ -168,12 +166,12 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
 
     await expect(
       stateManager.pauseAsync(defaultQueue, {
-        reason: EQueueStateTransitionReason.MANUAL,
+        reason: EStateTransitionReason.MANUAL,
       }),
     ).rejects.toThrow(QueueStateTransitionError);
   });
@@ -187,7 +185,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Stop the queue
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'System maintenance',
     });
 
@@ -196,7 +194,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Force restart (resume from stopped state)
     await stateManager.resumeAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.MANUAL,
+      reason: EStateTransitionReason.MANUAL,
       description: 'Restart after maintenance',
     });
 
@@ -234,10 +232,10 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Stop queue1 and queue2, leave queue3 active
     await stateManager.stopAsync(queue1, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
     await stateManager.stopAsync(queue2, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
 
     const props1 = await queueManager.getPropertiesAsync(queue1);
@@ -256,7 +254,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
     const options = {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'Emergency maintenance',
       metadata: {
         operator: 'system-admin',
@@ -284,7 +282,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
 
     // Attempt to produce message
@@ -302,7 +300,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Stop the priority queue
     await stateManager.stopAsync(priorityQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'Priority queue maintenance',
     });
 
@@ -330,13 +328,13 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
     await expect(
       Promise.all([
         stateManager.stopAsync(defaultQueue, {
-          reason: EQueueStateTransitionReason.SCHEDULED,
+          reason: EStateTransitionReason.SCHEDULED,
         }),
         stateManager.stopAsync(defaultQueue, {
-          reason: EQueueStateTransitionReason.SCHEDULED,
+          reason: EStateTransitionReason.SCHEDULED,
         }),
         stateManager.stopAsync(defaultQueue, {
-          reason: EQueueStateTransitionReason.SCHEDULED,
+          reason: EStateTransitionReason.SCHEDULED,
         }),
       ]),
     ).rejects.toThrow(); // Only one should succeed
@@ -363,7 +361,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
     // Stop the queue
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
     });
 
     // Wait a bit to ensure no messages are consumed after stop
@@ -384,7 +382,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
 
     // Stop the queue
     await stateManager.stopAsync(defaultQueue, {
-      reason: EQueueStateTransitionReason.SCHEDULED,
+      reason: EStateTransitionReason.SCHEDULED,
       description: 'Permanent stop',
     });
 

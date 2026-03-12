@@ -10,92 +10,55 @@
 import { EQueueOperationalState } from '../../queue-manager/index.js';
 
 /**
- * Minimal set of queue state transition reasons covering most common cases
+ * System-only reasons - used internally by the system
  */
-export enum EQueueStateTransitionReason {
-  /**
-   * System initialization - default state when queue is created
-   */
+export enum ESystemStateTransitionReason {
   SYSTEM_INIT = 'SYSTEM_INIT',
-
-  /**
-   *
-   */
-  PURGE_QUEUE_START = 'PURGE_QUEUE_START',
-
-  /**
-   *
-   */
-  PURGE_QUEUE_CANCEL = 'PURGE_QUEUE_CANCEL',
-
-  /**
-   *
-   */
-  PURGE_QUEUE_FAIL = 'PURGE_QUEUE_FAIL',
-
-  /**
-   *
-   */
-  PURGE_QUEUE_COMPLETE = 'PURGE_QUEUE_COMPLETE',
-
-  /**
-   * Manual user action via API, CLI, or UI
-   */
-  MANUAL = 'MANUAL',
-
-  /**
-   * Scheduled operation (maintenance, deployment, etc.)
-   */
-  SCHEDULED = 'SCHEDULED',
-
-  /**
-   * Emergency situation requiring immediate action
-   */
-  EMERGENCY = 'EMERGENCY',
-
-  /**
-   * Performance issue (high latency, resource exhaustion, etc.)
-   */
-  PERFORMANCE = 'PERFORMANCE',
-
-  /**
-   * Error condition requiring intervention
-   */
-  ERROR = 'ERROR',
-
-  /**
-   * Recovery from a failed or degraded state
-   */
   RECOVERY = 'RECOVERY',
-
-  /**
-   * Configuration change requiring state transition
-   */
-  CONFIG_CHANGE = 'CONFIG_CHANGE',
-
-  /**
-   * Testing or debugging activity
-   */
-  TESTING = 'TESTING',
-
-  /**
-   * Unknown or unspecified reason
-   */
-  UNKNOWN = 'UNKNOWN',
+  PURGE_QUEUE_START = 'PURGE_QUEUE_START',
+  PURGE_QUEUE_CANCEL = 'PURGE_QUEUE_CANCEL',
+  PURGE_QUEUE_FAIL = 'PURGE_QUEUE_FAIL',
+  PURGE_QUEUE_COMPLETE = 'PURGE_QUEUE_COMPLETE',
 }
+
+/**
+ * User-facing reasons - can be specified via public API
+ */
+export enum EStateTransitionReason {
+  MANUAL = 'MANUAL',
+  SCHEDULED = 'SCHEDULED',
+  EMERGENCY = 'EMERGENCY',
+  PERFORMANCE = 'PERFORMANCE',
+  ERROR = 'ERROR',
+  CONFIG_CHANGE = 'CONFIG_CHANGE',
+  TESTING = 'TESTING',
+  OTHER = 'OTHER',
+}
+
+/**
+ * Combined type for internal use
+ */
+export type EQueueStateTransitionReason =
+  | ESystemStateTransitionReason
+  | EStateTransitionReason;
+
+export type TQueueStateTransitionOptions = Partial<
+  Omit<IQueueStateTransition, 'from' | 'to' | 'timestamp'>
+>;
+
+/**
+ * User-facing options should only include user reasons
+ */
+export type TQueueStateTransitionUserOptions = Omit<
+  TQueueStateTransitionOptions,
+  'lockId' | 'lockOwner'
+> & {
+  reason?: EStateTransitionReason; // Override to restrict to user reasons
+};
 
 export enum EQueueStateLockOwner {
   PURGE_JOB,
 }
-
-export type TQueueStateFullOptions = Partial<
-  Omit<IQueueStateTransition, 'from' | 'to' | 'timestamp'>
->;
-
-export type TQueueStateCommonOptions = Omit<
-  TQueueStateFullOptions,
-  'lockId' | 'lockOwner'
->;
 
 /**
  * Queue state transition information

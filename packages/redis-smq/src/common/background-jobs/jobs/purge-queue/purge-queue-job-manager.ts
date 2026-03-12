@@ -13,7 +13,7 @@ import { redisKeys } from '../../../redis/redis-keys/redis-keys.js';
 import { TPurgeQueueJobTarget } from './types/index.js';
 import {
   EQueueStateLockOwner,
-  EQueueStateTransitionReason,
+  ESystemStateTransitionReason,
 } from '../../../../queue-state-manager/index.js';
 import { IQueueParams } from '../../../../queue-manager/index.js';
 import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
@@ -71,7 +71,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
                 EQueueStateLockOwner.PURGE_JOB,
                 jobId,
                 {
-                  reason: EQueueStateTransitionReason.PURGE_QUEUE_FAIL,
+                  reason: ESystemStateTransitionReason.PURGE_QUEUE_FAIL,
                   description: `Purge job failed`,
                   metadata: { jobId },
                 },
@@ -112,7 +112,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
             EQueueStateLockOwner.PURGE_JOB,
             jobId,
             {
-              reason: EQueueStateTransitionReason.PURGE_QUEUE_COMPLETE,
+              reason: ESystemStateTransitionReason.PURGE_QUEUE_COMPLETE,
               description: `Purge job complete`,
               metadata: { jobId },
             },
@@ -156,7 +156,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
             EQueueStateLockOwner.PURGE_JOB,
             jobId,
             {
-              reason: EQueueStateTransitionReason.PURGE_QUEUE_FAIL,
+              reason: ESystemStateTransitionReason.PURGE_QUEUE_FAIL,
               description: `Purge job failed`,
               metadata: { jobId },
             },
@@ -199,7 +199,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
             EQueueStateLockOwner.PURGE_JOB,
             jobId,
             {
-              reason: EQueueStateTransitionReason.PURGE_QUEUE_CANCEL,
+              reason: ESystemStateTransitionReason.PURGE_QUEUE_CANCEL,
               description: `Purge job cancelled`,
               metadata: { jobId },
             },
@@ -232,7 +232,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
       EQueueStateLockOwner.PURGE_JOB,
       jobId,
       {
-        reason: EQueueStateTransitionReason.PURGE_QUEUE_START,
+        reason: ESystemStateTransitionReason.PURGE_QUEUE_START,
         description: `Queue is being purged`,
       },
       this.logger,
