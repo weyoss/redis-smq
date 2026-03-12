@@ -8,7 +8,7 @@
  */
 
 import { computed, reactive, watch, type Ref, ref } from 'vue';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/vue-query';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import {
   useDeleteApiV1MessagesId,
   usePostApiV1MessagesIdRequeue,
@@ -63,32 +63,24 @@ export interface MessagesQueryConfig {
   queryKeyPrefix: string;
   enableDelete?: boolean;
   enableRequeue?: boolean;
-  enabled?: Ref<boolean | null>; // Allow external control over enabled state
+  enabled?: Ref<boolean | null>;
 }
 
-/**
- * A robust messages composable that:
- * - Fetches queue messages with variable-sized chunks (SSCAN-safe) using useInfiniteQuery.
- * - Buffers results and exposes stable page/pageSize UI pagination by slicing the buffer.
- * - Provides configurable delete and requeue mutations, with proper cache invalidation.
- * - Surfaces a single aggregated error for view components.
- * - Is reusable across different message types (regular, scheduled, dead-lettered, etc.)
- */
 export function useMessages(
   queueParams: Ref<IQueueParams | null>,
   config: MessagesQueryConfig,
   initialPageSize = 20,
-  extraParams: Ref<Record<string, unknown>> = ref({}), // 4th argument for extra parameters
+  extraParams: Ref<Record<string, unknown>> = ref({}),
 ) {
   const queryClient = useQueryClient();
 
-  // Local UI pagination state (decoupled from backend chunking)
+  // Local UI pagination state
   const pagination = reactive({
     currentPage: 1,
     pageSize: initialPageSize,
   });
 
-  // Stable query key per queue and message type
+  // Stable query key - includes page number for direct access
   const queryKey = computed(() => {
     if (!queueParams.value) return ['disabled'];
 
@@ -96,10 +88,16 @@ export function useMessages(
       config.queryKeyPrefix,
       queueParams.value.ns,
       queueParams.value.name,
+      'page',
+      pagination.currentPage,
+      'size',
+      pagination.pageSize,
     ];
 
-    // Include extra parameters in query key for proper caching
-    const extraParamsEntries = Object.entries(extraParams.value);
+    // Include extra parameters
+    const extraParamsEntries = Object.entries(extraParams.value).sort(
+      ([a], [b]) => a.localeCompare(b),
+    );
     if (extraParamsEntries.length > 0) {
       extraParamsEntries.forEach(([paramKey, paramValue]) => {
         if (paramValue !== undefined && paramValue !== null) {
@@ -111,95 +109,139 @@ export function useMessages(
     return key;
   });
 
-  // Helper to extract total count from different API payloads
+  // Helper to extract total count
   function extractTotalItems(payload: MessagesApiResponse): number {
     return payload?.data?.totalItems ?? 0;
   }
 
-  // Infinite query fetching variable-sized chunks
+  // Computed enabled state
+  const isEnabled = computed(() => {
+    const baseEnabled = !!(queueParams.value?.ns && queueParams.value?.name);
+    if (config.enabled !== undefined) {
+      return baseEnabled && config.enabled.value === true;
+    }
+    return baseEnabled;
+  });
+
+  // Single page query
   const {
     data,
     error: fetchError,
-    fetchNextPage,
-    hasNextPage,
     isLoading,
-    isFetchingNextPage,
+    isFetching,
+    isSuccess,
     refetch,
-  } = useInfiniteQuery<MessagesApiResponse>({
+  } = useQuery<MessagesApiResponse>({
     queryKey,
-    initialPageParam: 1,
-    enabled: computed(() => {
-      const baseEnabled = !!(queueParams.value?.ns && queueParams.value?.name);
-      // If an external enabled flag is provided, respect it.
-      // Treat null as 'not yet determined', so disable query.
-      if (config.enabled !== undefined) {
-        return baseEnabled && config.enabled.value === true;
-      }
-      return baseEnabled;
-    }),
+    enabled: isEnabled,
     retry: (failureCount: number, err: unknown) => {
-      // Do not retry on 422 Unprocessable Entity
       const errorWithStatus = err as ErrorWithStatus;
       const status =
         errorWithStatus?.status ?? errorWithStatus?.response?.status;
       if (status === 422) return false;
       return failureCount < 3;
     },
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async () => {
       if (!queueParams.value) {
         throw new Error('Queue parameters are required');
       }
 
-      return config.queryFn({
+      const result = await config.queryFn({
         ns: queueParams.value.ns,
         name: queueParams.value.name,
-        page: Number(pageParam),
+        page: pagination.currentPage,
         pageSize: pagination.pageSize,
-        extraParams: extraParams.value, // Pass extra parameters
+        extraParams: extraParams.value,
       });
+      return result;
     },
-    getNextPageParam: (
-      lastPage: MessagesApiResponse,
-      allPages: MessagesApiResponse[],
-    ) => {
-      const lastItems = lastPage?.data?.items ?? [];
-      const total = extractTotalItems(allPages?.[0]);
-      const buffered = allPages.flatMap(
-        (p: MessagesApiResponse) => p?.data?.items ?? [],
-      ).length;
-
-      if (!lastItems.length || (total && buffered >= total)) {
-        return undefined;
-      }
-      return allPages.length + 1;
-    },
+    // Keep previous data while fetching to avoid UI flicker - THIS IS CRITICAL!
+    placeholderData: (previousData) => previousData,
+    // Cache for 5 minutes
+    gcTime: 1000 * 60 * 5,
+    // Consider data fresh for 30 seconds
+    staleTime: 1000 * 30,
   });
 
-  // Mutations (only create if enabled)
+  watch(
+    isEnabled,
+    (enabled) => {
+      if (enabled) {
+        // Force a refetch when enabled becomes true
+        setTimeout(() => {
+          refetch();
+        }, 0);
+      }
+    },
+    { immediate: true },
+  );
+
+  // Watch for queueParams changes
+  watch(
+    () => queueParams.value,
+    (newQueue, oldQueue) => {
+      if (
+        newQueue &&
+        (!oldQueue ||
+          newQueue.ns !== oldQueue.ns ||
+          newQueue.name !== oldQueue.name)
+      ) {
+        pagination.currentPage = 1;
+        // Force a refetch when queue changes
+        setTimeout(() => {
+          refetch();
+        }, 0);
+      }
+    },
+    { immediate: true, deep: true },
+  );
+
+  // Mutations
   const onMutationSuccess = async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKey.value });
+    // Invalidate all queries for this queue
+    const baseKey = [
+      config.queryKeyPrefix,
+      queueParams.value?.ns,
+      queueParams.value?.name,
+    ];
+    await queryClient.invalidateQueries({
+      queryKey: baseKey,
+      refetchType: 'all',
+    });
   };
 
   const deleteMessageMutation = config.enableDelete
     ? useDeleteApiV1MessagesId({
-        mutation: { onSuccess: onMutationSuccess },
+        mutation: {
+          onSuccess: onMutationSuccess,
+          onError: (error) => {
+            console.error('[useMessages] Delete failed:', error);
+          },
+        },
       })
     : null;
 
   const requeueMessageMutation = config.enableRequeue
     ? usePostApiV1MessagesIdRequeue({
-        mutation: { onSuccess: onMutationSuccess },
+        mutation: {
+          onSuccess: onMutationSuccess,
+          onError: (error) => {
+            console.error('[useMessages] Requeue failed:', error);
+          },
+        },
       })
     : null;
 
-  // Buffered messages
-  const allMessages = computed<IMessageTransferable[]>(
-    () => data.value?.pages.flatMap((p) => p?.data?.items ?? []) ?? [],
-  );
+  // Current page messages - ensure we always return an array
+  const messages = computed<IMessageTransferable[]>(() => {
+    const items = data.value?.data?.items;
+    return items || [];
+  });
 
-  const totalMessages = computed<number>(() =>
-    extractTotalItems(data.value?.pages?.[0] ?? {}),
-  );
+  const totalMessages = computed<number>(() => {
+    const total = extractTotalItems(data.value ?? {});
+    return total;
+  });
 
   const isDeleting = computed<boolean>(
     () => deleteMessageMutation?.isPending.value ?? false,
@@ -213,14 +255,16 @@ export function useMessages(
       fetchError.value ||
       deleteMessageMutation?.error.value ||
       requeueMessageMutation?.error.value;
-    return getErrorMessage(err);
+    const errorMsg = getErrorMessage(err);
+    return errorMsg;
   });
 
-  // Slice buffer into fixed-size UI pages
-  const messages = computed<IMessageTransferable[]>(() => {
-    const start = (pagination.currentPage - 1) * pagination.pageSize;
-    const end = start + pagination.pageSize;
-    return allMessages.value.slice(start, end);
+  const hasNextPage = computed(() => {
+    return pagination.currentPage < paginationInfo.value.totalPages;
+  });
+
+  const hasPreviousPage = computed(() => {
+    return pagination.currentPage > 1;
   });
 
   const paginationInfo = computed<PaginationInfo>(() => {
@@ -229,6 +273,7 @@ export function useMessages(
     const start =
       total > 0 ? (pagination.currentPage - 1) * pagination.pageSize + 1 : 0;
     const end = Math.min(start + pagination.pageSize - 1, total);
+
     return {
       currentPage: pagination.currentPage,
       pageSize: pagination.pageSize,
@@ -240,25 +285,36 @@ export function useMessages(
     };
   });
 
-  // Ensure buffer covers requested page; fetch chunks until it does.
+  // Go to specific page
   async function goToPage(page: number) {
     if (page < 1) return;
-    pagination.currentPage = page;
-    const required = page * pagination.pageSize;
+    if (
+      paginationInfo.value.totalCount > 0 &&
+      page > paginationInfo.value.totalPages
+    )
+      return;
+    if (page === pagination.currentPage) return;
 
-    while (
-      allMessages.value.length < required &&
-      hasNextPage.value &&
-      !isFetchingNextPage.value
-    ) {
-      await fetchNextPage();
-    }
+    pagination.currentPage = page;
+  }
+
+  // Go to next page
+  async function goToNextPage() {
+    if (!hasNextPage.value) return;
+    await goToPage(pagination.currentPage + 1);
+  }
+
+  // Go to previous page
+  async function goToPreviousPage() {
+    if (!hasPreviousPage.value) return;
+    await goToPage(pagination.currentPage - 1);
   }
 
   async function setPageSize(size: number) {
+    if (size === pagination.pageSize) return;
+
     pagination.pageSize = size;
     pagination.currentPage = 1;
-    await refetch();
   }
 
   async function handleRefresh() {
@@ -280,37 +336,92 @@ export function useMessages(
     await requeueMessageMutation.mutateAsync({ id });
   }
 
-  // Reset when queue or extra parameters change
+  // Prefetch adjacent pages for smoother navigation
   watch(
-    () => [
-      queueParams.value && [queueParams.value.ns, queueParams.value.name],
-      extraParams.value,
-    ],
-    async () => {
-      if (queueParams.value) {
-        pagination.currentPage = 1;
-        await refetch();
+    () => [pagination.currentPage, data.value],
+    () => {
+      if (!queueParams.value) return;
+
+      const totalPages = paginationInfo.value.totalPages;
+
+      // Prefetch next page
+      if (pagination.currentPage < totalPages) {
+        const nextPageKey = [
+          config.queryKeyPrefix,
+          queueParams.value.ns,
+          queueParams.value.name,
+          'page',
+          pagination.currentPage + 1,
+          'size',
+          pagination.pageSize,
+        ];
+
+        queryClient.prefetchQuery({
+          queryKey: nextPageKey,
+          queryFn: async () => {
+            if (!queueParams.value) return { data: { items: [] } };
+            return config.queryFn({
+              ns: queueParams.value.ns,
+              name: queueParams.value.name,
+              page: pagination.currentPage + 1,
+              pageSize: pagination.pageSize,
+              extraParams: extraParams.value,
+            });
+          },
+        });
+      }
+
+      // Prefetch previous page
+      if (pagination.currentPage > 1) {
+        const prevPageKey = [
+          config.queryKeyPrefix,
+          queueParams.value.ns,
+          queueParams.value.name,
+          'page',
+          pagination.currentPage - 1,
+          'size',
+          pagination.pageSize,
+        ];
+
+        queryClient.prefetchQuery({
+          queryKey: prevPageKey,
+          queryFn: async () => {
+            if (!queueParams.value) return { data: { items: [] } };
+            return config.queryFn({
+              ns: queueParams.value.ns,
+              name: queueParams.value.name,
+              page: pagination.currentPage - 1,
+              pageSize: pagination.pageSize,
+              extraParams: extraParams.value,
+            });
+          },
+        });
       }
     },
-    { deep: true },
+    { immediate: true },
   );
 
   return {
     messages,
     pagination: paginationInfo,
     isLoading,
+    isFetching,
     isDeleting,
     isRequeuing,
     error,
     goToPage,
+    goToNextPage,
+    goToPreviousPage,
     setPageSize,
     refresh: handleRefresh,
     deleteMessage: config.enableDelete ? deleteMessage : undefined,
     requeueMessage: config.enableRequeue ? requeueMessage : undefined,
-    // Expose additional state for advanced use cases
-    hasNextPage,
-    isFetchingNextPage,
+    // Expose additional state
     totalMessages,
-    allMessages,
+    hasNextPage,
+    hasPreviousPage,
+    currentPage: computed(() => pagination.currentPage),
+    isSuccess, // Expose success state
+    data, // Expose raw data for debugging
   };
 }
