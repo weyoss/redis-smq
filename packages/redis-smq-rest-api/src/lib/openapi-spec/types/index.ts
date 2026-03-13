@@ -8,14 +8,15 @@
  */
 
 import { JSONSchema7 } from 'json-schema';
-import { EControllerRequestPayload } from '../../controller/types/index.js';
-
-export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+import {
+  ERequestMethod,
+  ERequestPayload,
+} from '../../controller/types/index.js';
 
 export interface IOpenApiRouteParams {
   path: string;
-  method: Lowercase<HTTPMethod>;
-  requestParamsSchemas: Map<EControllerRequestPayload, JSONSchema7>;
+  method: Lowercase<ERequestMethod>;
+  requestParamsSchemas: Map<ERequestPayload, JSONSchema7>;
   response: [number, JSONSchema7][];
   description?: string;
   tags?: string[];

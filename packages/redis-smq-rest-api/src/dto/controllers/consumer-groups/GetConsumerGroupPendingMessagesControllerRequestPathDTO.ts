@@ -9,7 +9,6 @@
 
 import { IQueueParams } from 'redis-smq';
 
-export interface GetConsumerGroupPendingMessagesControllerRequestPathDTO
-  extends IQueueParams {
+export interface GetConsumerGroupPendingMessagesControllerRequestPathDTO extends IQueueParams {
   consumerGroupId: string;
 }

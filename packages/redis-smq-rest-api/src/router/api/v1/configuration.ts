@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { EControllerRequestMethod } from '../../../lib/controller/types/index.js';
+import { ERequestMethod } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { getConfigurationController } from '../../../controllers/configuration/getConfigurationController.js';
 
@@ -17,7 +17,7 @@ export const configuration: TRouterResourceMap = {
   resource: [
     {
       handler: getConfigurationController,
-      method: EControllerRequestMethod.GET,
+      method: ERequestMethod.GET,
       payload: [],
     },
   ],

@@ -37,14 +37,14 @@ describe('countConsumerGroupPendingMessagesController', () => {
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<CountConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.get(
-        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup1}/total-messages`,
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup1}/messages/count`,
       );
     expect(response1.status).toEqual(200);
     expect(response1.body?.data).toEqual(2);
 
     const response2: TResponse<CountConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.get(
-        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup2}/total-messages`,
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup2}/messages/count`,
       );
     expect(response2.status).toEqual(200);
     expect(response2.body?.data).toEqual(2);
@@ -54,7 +54,7 @@ describe('countConsumerGroupPendingMessagesController', () => {
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<CountConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.get(
-        `/api/v1/namespaces/$$$/queues/@@@@/consumer-groups/******/total-messages`,
+        `/api/v1/namespaces/$$$/queues/@@@@/consumer-groups/******/messages/count`,
       );
     expect(response1.status).toEqual(errors.InvalidQueueParametersError[0]);
     expect(response1.body?.error?.code).toEqual(
@@ -74,7 +74,7 @@ describe('countConsumerGroupPendingMessagesController', () => {
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<CountConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.get(
-        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/gp1/total-messages`,
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/gp1/messages/count`,
       );
     expect(response1.status).toEqual(errors.ConsumerGroupsNotSupportedError[0]);
     expect(response1.body?.error?.code).toEqual(

@@ -32,40 +32,26 @@ import { unbindQueueTopicXController } from '../../../controllers/exchange-topic
 import { deleteNamespaceController } from '../../../controllers/namespace/deleteNamespaceController.js';
 import { getNamespaceQueuesController } from '../../../controllers/namespace/getNamespaceQueuesController.js';
 import { getNamespacesController } from '../../../controllers/namespace/getNamespacesController.js';
-import { countQueueAcknowledgedMessagesController } from '../../../controllers/queue-acknowledged-messages/countQueueAcknowledgedMessagesController.js';
-import { getQueueAcknowledgedMessagesController } from '../../../controllers/queue-acknowledged-messages/getQueueAcknowledgedMessagesController.js';
-import { purgeQueueAcknowledgedMessagesController } from '../../../controllers/queue-acknowledged-messages/purgeQueueAcknowledgedMessagesController.js';
-import { countQueueDeadLetteredMessagesController } from '../../../controllers/queue-dead-lettered-messages/countQueueDeadLetteredMessagesController.js';
-import { getQueueDeadLetteredMessagesController } from '../../../controllers/queue-dead-lettered-messages/getQueueDeadLetteredMessagesController.js';
-import { purgeQueueDeadLetteredMessagesController } from '../../../controllers/queue-dead-lettered-messages/purgeQueueDeadLetteredMessagesController.js';
 import { getQueueExchangesController } from '../../../controllers/queue-exchanges/getQueueExchangesController.js';
-import { countQueueMessagesByStatusController } from '../../../controllers/queue-messages/countQueueMessagesByStatusController.js';
-import { countQueueMessagesController } from '../../../controllers/queue-messages/countQueueMessagesController.js';
-import { getQueueMessagesController } from '../../../controllers/queue-messages/getQueueMessagesController.js';
-import { countQueuePendingMessagesController } from '../../../controllers/queue-pending-messages/countQueuePendingMessagesController.js';
-import { getQueuePendingMessagesController } from '../../../controllers/queue-pending-messages/getQueuePendingMessagesController.js';
-import { purgeQueuePendingMessagesController } from '../../../controllers/queue-pending-messages/purgeQueuePendingMessagesController.js';
 import { clearQueueRateLimitController } from '../../../controllers/queue-rate-limit/clearQueueRateLimitController.js';
 import { getQueueRateLimitController } from '../../../controllers/queue-rate-limit/getQueueRateLimitController.js';
 import { setQueueRateLimitController } from '../../../controllers/queue-rate-limit/setQueueRateLimitController.js';
-import { countQueueScheduledMessagesController } from '../../../controllers/queue-scheduled-messages/countQueueScheduledMessagesController.js';
-import { getQueueScheduledMessagesController } from '../../../controllers/queue-scheduled-messages/getQueueScheduledMessagesController.js';
-import { purgeQueueScheduledMessagesController } from '../../../controllers/queue-scheduled-messages/purgeQueueScheduledMessagesController.js';
 import { deleteQueueController } from '../../../controllers/queue/deleteQueueController.js';
 import { getQueueConsumersController } from '../../../controllers/queue/getQueueConsumersController.js';
 import { getQueuePropertiesController } from '../../../controllers/queue/getQueuePropertiesController.js';
-import { queueExistsController } from '../../../controllers/queue/queueExistsController.js';
+import { checkQueueExistenceController } from '../../../controllers/queue/checkQueueExistenceController.js';
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
 } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { getNamespaceExchangesController } from '../../../controllers/namespace/getNamespaceExchangesController.js';
-import { pauseQueueController } from '../../../controllers/queue-operational-state/pauseQueueController.js';
-import { resumeQueueController } from '../../../controllers/queue-operational-state/resumeQueueController.js';
-import { stopQueueController } from '../../../controllers/queue-operational-state/stopQueueController.js';
-import { getQueueStateController } from '../../../controllers/queue-operational-state/getQueueStateController.js';
-import { getQueueStateHistoryController } from '../../../controllers/queue-operational-state/getQueueStateHistoryController.js';
+import { getQueueStateController } from '../../../controllers/queue-state/getQueueStateController.js';
+import { getQueueStateHistoryController } from '../../../controllers/queue-state/getQueueStateHistoryController.js';
+import { countQueueMessagesController } from '../../../controllers/queue-messages/countQueueMessagesController.js';
+import { getQueueMessagesController } from '../../../controllers/queue-messages/getQueueMessagesController.js';
+import { purgeQueueMessagesController } from '../../../controllers/queue-messages/purgeQueueMessagesController.js';
+import { transitQueueStateController } from '../../../controllers/queue-state/transitQueueStateController.js';
 
 export const namespaces: TRouterResourceMap = {
   path: 'namespaces',
@@ -73,7 +59,7 @@ export const namespaces: TRouterResourceMap = {
   resource: [
     {
       handler: getNamespacesController,
-      method: EControllerRequestMethod.GET,
+      method: ERequestMethod.GET,
       payload: [],
     },
     {
@@ -81,16 +67,16 @@ export const namespaces: TRouterResourceMap = {
       resource: [
         {
           handler: deleteNamespaceController,
-          method: EControllerRequestMethod.DELETE,
-          payload: [EControllerRequestPayload.PATH],
+          method: ERequestMethod.DELETE,
+          payload: [ERequestPayload.PATH],
         },
         {
           path: 'queues',
           resource: [
             {
               handler: getNamespaceQueuesController,
-              method: EControllerRequestMethod.GET,
-              payload: [EControllerRequestPayload.PATH],
+              method: ERequestMethod.GET,
+              payload: [ERequestPayload.PATH],
             },
             {
               path: ':name',
@@ -98,79 +84,40 @@ export const namespaces: TRouterResourceMap = {
               resource: [
                 {
                   handler: getQueuePropertiesController,
-                  method: EControllerRequestMethod.GET,
-                  payload: [EControllerRequestPayload.PATH],
+                  method: ERequestMethod.GET,
+                  payload: [ERequestPayload.PATH],
                 },
                 {
                   handler: deleteQueueController,
-                  method: EControllerRequestMethod.DELETE,
-                  payload: [EControllerRequestPayload.PATH],
+                  method: ERequestMethod.DELETE,
+                  payload: [ERequestPayload.PATH],
                 },
                 {
-                  path: 'exists',
-                  resource: [
-                    {
-                      handler: queueExistsController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
-                    },
-                  ],
+                  handler: checkQueueExistenceController,
+                  method: ERequestMethod.HEAD,
+                  payload: [ERequestPayload.PATH],
                 },
                 {
-                  path: 'operational-state',
+                  path: 'state',
                   tags: ['Queue Operational State'],
                   resource: [
                     {
                       handler: getQueueStateController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.GET,
+                      payload: [ERequestPayload.PATH],
                     },
                     {
-                      path: 'get-history',
+                      handler: transitQueueStateController,
+                      method: ERequestMethod.PATCH,
+                      payload: [ERequestPayload.PATH, ERequestPayload.BODY],
+                    },
+                    {
+                      path: 'history',
                       resource: [
                         {
                           handler: getQueueStateHistoryController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'pause',
-                      resource: [
-                        {
-                          handler: pauseQueueController,
-                          method: EControllerRequestMethod.POST,
-                          payload: [
-                            EControllerRequestPayload.PATH,
-                            EControllerRequestPayload.BODY,
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'stop',
-                      resource: [
-                        {
-                          handler: stopQueueController,
-                          method: EControllerRequestMethod.POST,
-                          payload: [
-                            EControllerRequestPayload.PATH,
-                            EControllerRequestPayload.BODY,
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'resume',
-                      resource: [
-                        {
-                          handler: resumeQueueController,
-                          method: EControllerRequestMethod.POST,
-                          payload: [
-                            EControllerRequestPayload.PATH,
-                            EControllerRequestPayload.BODY,
-                          ],
+                          method: ERequestMethod.GET,
+                          payload: [ERequestPayload.PATH],
                         },
                       ],
                     },
@@ -182,162 +129,37 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: getQueueConsumersController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
-                    },
-                  ],
-                },
-                {
-                  path: 'total-messages',
-                  tags: ['Total Messages'],
-                  resource: [
-                    {
-                      handler: countQueueMessagesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
-                    },
-                    {
-                      path: 'stats',
-                      resource: [
-                        {
-                          handler: countQueueMessagesByStatusController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'pending',
-                      resource: [
-                        {
-                          handler: countQueuePendingMessagesController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [
-                            EControllerRequestPayload.PATH,
-                            EControllerRequestPayload.QUERY,
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'scheduled',
-                      resource: [
-                        {
-                          handler: countQueueScheduledMessagesController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'acknowledged',
-                      resource: [
-                        {
-                          handler: countQueueAcknowledgedMessagesController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
-                        },
-                      ],
-                    },
-                    {
-                      path: 'dead-lettered',
-                      resource: [
-                        {
-                          handler: countQueueDeadLetteredMessagesController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
-                        },
-                      ],
+                      method: ERequestMethod.GET,
+                      payload: [ERequestPayload.PATH],
                     },
                   ],
                 },
                 {
                   path: 'messages',
-                  tags: ['Queue messages'],
+                  tags: ['Messages'],
                   resource: [
                     {
                       handler: getQueueMessagesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.QUERY,
+                      method: ERequestMethod.GET,
+                      payload: [ERequestPayload.PATH, ERequestPayload.QUERY],
+                    },
+                    {
+                      handler: purgeQueueMessagesController,
+                      method: ERequestMethod.DELETE,
+                      payload: [ERequestPayload.PATH, ERequestPayload.QUERY],
+                    },
+                    {
+                      path: 'count',
+                      resource: [
+                        {
+                          handler: countQueueMessagesController,
+                          method: ERequestMethod.GET,
+                          payload: [
+                            ERequestPayload.PATH,
+                            ERequestPayload.QUERY,
+                          ],
+                        },
                       ],
-                    },
-                  ],
-                },
-                {
-                  path: 'pending-messages',
-                  tags: ['Pending messages'],
-                  resource: [
-                    {
-                      handler: getQueuePendingMessagesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.QUERY,
-                      ],
-                    },
-                    {
-                      handler: purgeQueuePendingMessagesController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
-                    },
-                  ],
-                },
-                {
-                  path: 'acknowledged-messages',
-                  tags: ['Acknowledged messages'],
-                  resource: [
-                    {
-                      handler: getQueueAcknowledgedMessagesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.QUERY,
-                      ],
-                    },
-                    {
-                      handler: purgeQueueAcknowledgedMessagesController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
-                    },
-                  ],
-                },
-                {
-                  path: 'dead-lettered-messages',
-                  tags: ['Dead-lettered messages'],
-                  resource: [
-                    {
-                      handler: getQueueDeadLetteredMessagesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.QUERY,
-                      ],
-                    },
-                    {
-                      handler: purgeQueueDeadLetteredMessagesController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
-                    },
-                  ],
-                },
-                {
-                  path: 'scheduled-messages',
-                  tags: ['Scheduled messages'],
-                  resource: [
-                    {
-                      handler: getQueueScheduledMessagesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.QUERY,
-                      ],
-                    },
-                    {
-                      handler: purgeQueueScheduledMessagesController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
                     },
                   ],
                 },
@@ -347,35 +169,21 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: getConsumerGroupsController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.GET,
+                      payload: [ERequestPayload.PATH],
                     },
                     {
                       handler: saveConsumerGroupController,
-                      method: EControllerRequestMethod.POST,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.BODY,
-                      ],
+                      method: ERequestMethod.POST,
+                      payload: [ERequestPayload.PATH, ERequestPayload.BODY],
                     },
                     {
                       path: ':consumerGroupId',
                       resource: [
                         {
                           handler: deleteConsumerGroupController,
-                          method: EControllerRequestMethod.DELETE,
-                          payload: [EControllerRequestPayload.PATH],
-                        },
-                        {
-                          path: 'total-messages',
-                          resource: [
-                            {
-                              handler:
-                                countConsumerGroupPendingMessagesController,
-                              method: EControllerRequestMethod.GET,
-                              payload: [EControllerRequestPayload.PATH],
-                            },
-                          ],
+                          method: ERequestMethod.DELETE,
+                          payload: [ERequestPayload.PATH],
                         },
                         {
                           path: 'messages',
@@ -383,17 +191,28 @@ export const namespaces: TRouterResourceMap = {
                             {
                               handler:
                                 getConsumerGroupPendingMessagesController,
-                              method: EControllerRequestMethod.GET,
+                              method: ERequestMethod.GET,
                               payload: [
-                                EControllerRequestPayload.PATH,
-                                EControllerRequestPayload.QUERY,
+                                ERequestPayload.PATH,
+                                ERequestPayload.QUERY,
                               ],
                             },
                             {
                               handler:
                                 purgeConsumerGroupPendingMessagesController,
-                              method: EControllerRequestMethod.DELETE,
-                              payload: [EControllerRequestPayload.PATH],
+                              method: ERequestMethod.DELETE,
+                              payload: [ERequestPayload.PATH],
+                            },
+                            {
+                              path: 'count',
+                              resource: [
+                                {
+                                  handler:
+                                    countConsumerGroupPendingMessagesController,
+                                  method: ERequestMethod.GET,
+                                  payload: [ERequestPayload.PATH],
+                                },
+                              ],
                             },
                           ],
                         },
@@ -407,21 +226,18 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: getQueueRateLimitController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.GET,
+                      payload: [ERequestPayload.PATH],
                     },
                     {
                       handler: setQueueRateLimitController,
-                      method: EControllerRequestMethod.PUT,
-                      payload: [
-                        EControllerRequestPayload.PATH,
-                        EControllerRequestPayload.BODY,
-                      ],
+                      method: ERequestMethod.PUT,
+                      payload: [ERequestPayload.PATH, ERequestPayload.BODY],
                     },
                     {
                       handler: clearQueueRateLimitController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.DELETE,
+                      payload: [ERequestPayload.PATH],
                     },
                   ],
                 },
@@ -430,8 +246,8 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: getQueueExchangesController,
-                      method: EControllerRequestMethod.GET,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.GET,
+                      payload: [ERequestPayload.PATH],
                     },
                   ],
                 },
@@ -444,8 +260,8 @@ export const namespaces: TRouterResourceMap = {
           resource: [
             {
               handler: getNamespaceExchangesController,
-              method: EControllerRequestMethod.GET,
-              payload: [EControllerRequestPayload.PATH],
+              method: ERequestMethod.GET,
+              payload: [ERequestPayload.PATH],
             },
             {
               path: 'fanout',
@@ -456,29 +272,29 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: deleteExchangeFanoutXController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.DELETE,
+                      payload: [ERequestPayload.PATH],
                     },
                     {
                       path: 'queues',
                       resource: [
                         {
                           handler: matchQueuesFanoutXController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
+                          method: ERequestMethod.GET,
+                          payload: [ERequestPayload.PATH],
                         },
                         {
                           path: ':queue',
                           resource: [
                             {
                               handler: bindQueueFanoutXController,
-                              method: EControllerRequestMethod.PUT,
-                              payload: [EControllerRequestPayload.PATH],
+                              method: ERequestMethod.PUT,
+                              payload: [ERequestPayload.PATH],
                             },
                             {
                               handler: unbindQueueFanoutXController,
-                              method: EControllerRequestMethod.DELETE,
-                              payload: [EControllerRequestPayload.PATH],
+                              method: ERequestMethod.DELETE,
+                              payload: [ERequestPayload.PATH],
                             },
                           ],
                         },
@@ -497,16 +313,16 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: deleteExchangeDirectXController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.DELETE,
+                      payload: [ERequestPayload.PATH],
                     },
                     {
                       path: 'routing-keys',
                       resource: [
                         {
                           handler: getRoutingKeysDirectXController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
+                          method: ERequestMethod.GET,
+                          payload: [ERequestPayload.PATH],
                         },
                         {
                           path: ':routingKey',
@@ -516,8 +332,8 @@ export const namespaces: TRouterResourceMap = {
                               resource: [
                                 {
                                   handler: getRoutingKeyQueuesDirectXController,
-                                  method: EControllerRequestMethod.GET,
-                                  payload: [EControllerRequestPayload.PATH],
+                                  method: ERequestMethod.GET,
+                                  payload: [ERequestPayload.PATH],
                                 },
                               ],
                             },
@@ -530,10 +346,10 @@ export const namespaces: TRouterResourceMap = {
                       resource: [
                         {
                           handler: matchQueuesDirectXController,
-                          method: EControllerRequestMethod.GET,
+                          method: ERequestMethod.GET,
                           payload: [
-                            EControllerRequestPayload.PATH,
-                            EControllerRequestPayload.QUERY,
+                            ERequestPayload.PATH,
+                            ERequestPayload.QUERY,
                           ],
                         },
                         {
@@ -541,18 +357,18 @@ export const namespaces: TRouterResourceMap = {
                           resource: [
                             {
                               handler: bindQueueDirectXController,
-                              method: EControllerRequestMethod.PUT,
+                              method: ERequestMethod.PUT,
                               payload: [
-                                EControllerRequestPayload.PATH,
-                                EControllerRequestPayload.QUERY,
+                                ERequestPayload.PATH,
+                                ERequestPayload.QUERY,
                               ],
                             },
                             {
                               handler: unbindQueueDirectXController,
-                              method: EControllerRequestMethod.DELETE,
+                              method: ERequestMethod.DELETE,
                               payload: [
-                                EControllerRequestPayload.PATH,
-                                EControllerRequestPayload.QUERY,
+                                ERequestPayload.PATH,
+                                ERequestPayload.QUERY,
                               ],
                             },
                           ],
@@ -572,16 +388,16 @@ export const namespaces: TRouterResourceMap = {
                   resource: [
                     {
                       handler: deleteExchangeTopicXController,
-                      method: EControllerRequestMethod.DELETE,
-                      payload: [EControllerRequestPayload.PATH],
+                      method: ERequestMethod.DELETE,
+                      payload: [ERequestPayload.PATH],
                     },
                     {
                       path: 'binding-patterns',
                       resource: [
                         {
                           handler: getBindingPatternsTopicXController,
-                          method: EControllerRequestMethod.GET,
-                          payload: [EControllerRequestPayload.PATH],
+                          method: ERequestMethod.GET,
+                          payload: [ERequestPayload.PATH],
                         },
                         {
                           path: ':pattern',
@@ -592,8 +408,8 @@ export const namespaces: TRouterResourceMap = {
                                 {
                                   handler:
                                     getBindingPatternQueuesTopicXController,
-                                  method: EControllerRequestMethod.GET,
-                                  payload: [EControllerRequestPayload.PATH],
+                                  method: ERequestMethod.GET,
+                                  payload: [ERequestPayload.PATH],
                                 },
                               ],
                             },
@@ -606,10 +422,10 @@ export const namespaces: TRouterResourceMap = {
                       resource: [
                         {
                           handler: matchQueuesTopicXController,
-                          method: EControllerRequestMethod.GET,
+                          method: ERequestMethod.GET,
                           payload: [
-                            EControllerRequestPayload.PATH,
-                            EControllerRequestPayload.QUERY,
+                            ERequestPayload.PATH,
+                            ERequestPayload.QUERY,
                           ],
                         },
                         {
@@ -617,18 +433,18 @@ export const namespaces: TRouterResourceMap = {
                           resource: [
                             {
                               handler: bindQueueTopicXController,
-                              method: EControllerRequestMethod.PUT,
+                              method: ERequestMethod.PUT,
                               payload: [
-                                EControllerRequestPayload.PATH,
-                                EControllerRequestPayload.QUERY,
+                                ERequestPayload.PATH,
+                                ERequestPayload.QUERY,
                               ],
                             },
                             {
                               handler: unbindQueueTopicXController,
-                              method: EControllerRequestMethod.DELETE,
+                              method: ERequestMethod.DELETE,
                               payload: [
-                                EControllerRequestPayload.PATH,
-                                EControllerRequestPayload.QUERY,
+                                ERequestPayload.PATH,
+                                ERequestPayload.QUERY,
                               ],
                             },
                           ],

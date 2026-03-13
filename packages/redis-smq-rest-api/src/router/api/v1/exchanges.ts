@@ -8,7 +8,7 @@
  */
 
 import { getExchangesController } from '../../../controllers/exchanges/getExchangesController.js';
-import { EControllerRequestMethod } from '../../../lib/controller/types/index.js';
+import { ERequestMethod } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 
 export const exchanges: TRouterResourceMap = {
@@ -17,7 +17,7 @@ export const exchanges: TRouterResourceMap = {
   resource: [
     {
       handler: getExchangesController,
-      method: EControllerRequestMethod.GET,
+      method: ERequestMethod.GET,
       payload: [],
     },
   ],

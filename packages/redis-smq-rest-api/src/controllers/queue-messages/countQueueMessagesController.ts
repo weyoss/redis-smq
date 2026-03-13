@@ -13,18 +13,19 @@ import {
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
 import { CountQueueMessagesControllerRequestPathDTO } from '../../dto/controllers/queue-messages/CountQueueMessagesControllerRequestPathDTO.js';
+import { CountQueueMessagesControllerRequestQueryDTO } from '../../dto/controllers/queue-messages/CountQueueMessagesControllerRequestQueryDTO.js';
 import { CountQueueMessagesControllerResponseDTO } from '../../dto/controllers/queue-messages/CountQueueMessagesControllerResponseDTO.js';
 
 export const countQueueMessagesController: TControllerRequestHandler<
   CountQueueMessagesControllerRequestPathDTO,
-  TControllerRequestPayloadEmpty,
+  CountQueueMessagesControllerRequestQueryDTO,
   TControllerRequestPayloadEmpty,
   CountQueueMessagesControllerResponseDTO
 > = async (ctx) => {
-  const queueMessagesService = Container.getInstance().resolve(
-    'queueMessagesService',
-  );
-  const dto = ctx.scope.resolve('requestPathDTO');
-  const count = await queueMessagesService.countMessagesAsync(dto);
-  return [200, count];
+  const service = Container.getInstance().resolve('queueMessagesService');
+  const queueParams = ctx.scope.resolve('requestPathDTO');
+  const queryParams = ctx.scope.resolve('requestQueryDTO');
+
+  const r = await service.countMessages(queueParams, queryParams);
+  return [200, r];
 };

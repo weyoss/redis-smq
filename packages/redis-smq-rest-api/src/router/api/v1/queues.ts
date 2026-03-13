@@ -8,8 +8,8 @@
  */
 
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
 } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { createQueueController } from '../../../controllers/queue/createQueueController.js';
@@ -21,13 +21,13 @@ export const queues: TRouterResourceMap = {
   resource: [
     {
       handler: getAllQueuesController,
-      method: EControllerRequestMethod.GET,
+      method: ERequestMethod.GET,
       payload: [],
     },
     {
       handler: createQueueController,
-      method: EControllerRequestMethod.POST,
-      payload: [EControllerRequestPayload.BODY],
+      method: ERequestMethod.POST,
+      payload: [ERequestPayload.BODY],
     },
   ],
 };

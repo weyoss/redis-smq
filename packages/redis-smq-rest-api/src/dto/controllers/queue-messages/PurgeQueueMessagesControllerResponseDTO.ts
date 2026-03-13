@@ -8,11 +8,11 @@
  */
 
 import { TErrors } from '../../../errors/errors.js';
-import { IQueuePublishedMessagesCountByStatus } from 'redis-smq';
 
-export type CountQueueMessagesControllerResponseDTO =
-  | readonly [200, number | IQueuePublishedMessagesCountByStatus]
+export type PurgeQueueMessagesControllerResponseDTO =
+  | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
   | TErrors['ConsumerGroupRequiredError']
   | TErrors['ConsumerGroupsNotSupportedError']
-  | TErrors['QueueNotFoundError'];
+  | TErrors['QueueNotFoundError']
+  | TErrors['AcknowledgedMessageAuditNotEnabledError'];

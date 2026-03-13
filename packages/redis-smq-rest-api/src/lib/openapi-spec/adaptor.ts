@@ -9,8 +9,8 @@
 
 import { JSONSchema7 } from 'json-schema';
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
   TControllerRequestHandlerGeneric,
 } from '../controller/types/index.js';
 import { parseRoutingMap } from '../router/parser.js';
@@ -24,8 +24,8 @@ let openApiRoutes: IOpenApiRouteParams[] | null = null;
 
 async function handleResource(
   controllerName: string,
-  method: EControllerRequestMethod,
-  payload: EControllerRequestPayload[],
+  method: ERequestMethod,
+  payload: ERequestPayload[],
   routePath: string,
   schema: TSchema,
   description?: string,
@@ -67,8 +67,8 @@ export async function getOpenApiRoutes(
       async (
         controller: TControllerRequestHandlerGeneric,
         controllerName: string,
-        method: EControllerRequestMethod,
-        payload: EControllerRequestPayload[],
+        method: ERequestMethod,
+        payload: ERequestPayload[],
         path: string,
         description?: string,
         tags?: string[],

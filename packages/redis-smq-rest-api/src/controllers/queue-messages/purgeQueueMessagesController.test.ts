@@ -17,8 +17,10 @@ import { publishAndDeadLetterMessage } from '../../../tests/common/publish-and-d
 import { publishMessage } from '../../../tests/common/publish-message.js';
 import { scheduleMessage } from '../../../tests/common/schedule-message.js';
 import { CountQueueMessagesControllerResponseDTO } from '../../dto/controllers/queue-messages/CountQueueMessagesControllerResponseDTO.js';
+import { PurgeQueueMessagesControllerResponseDTO } from '../../dto/controllers/queue-messages/PurgeQueueMessagesControllerResponseDTO.js';
+import bluebird from 'bluebird';
 
-describe('countQueueMessagesController', () => {
+describe('purgeQueueMessagesController', () => {
   it('HTTP 200 OK', async () => {
     const { queue } = await createQueue('my-queue');
     await publishAndAcknowledgeMessage(queue);
@@ -34,60 +36,52 @@ describe('countQueueMessagesController', () => {
     expect(response1.status).toEqual(200);
     expect(response1.body?.data).toEqual(4);
 
-    const response2: TResponse<CountQueueMessagesControllerResponseDTO> =
+    const response2: TResponse<PurgeQueueMessagesControllerResponseDTO> =
       await request
-        .get(
-          `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages/count`,
-        )
+        .delete(`/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages`)
         .query({
           status: 'pending',
         });
-    expect(response2.status).toEqual(200);
-    expect(response2.body?.data).toEqual(1);
+    expect(response2.status).toEqual(204);
 
-    const response3: TResponse<CountQueueMessagesControllerResponseDTO> =
+    await bluebird.delay(5000);
+
+    const response3: TResponse<PurgeQueueMessagesControllerResponseDTO> =
       await request
-        .get(
-          `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages/count`,
-        )
+        .delete(`/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages`)
         .query({
           status: 'acknowledged',
         });
-    expect(response3.status).toEqual(200);
-    expect(response3.body?.data).toEqual(1);
+    expect(response3.status).toEqual(204);
+
+    await bluebird.delay(5000);
 
     const response4: TResponse<CountQueueMessagesControllerResponseDTO> =
       await request
-        .get(
-          `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages/count`,
-        )
+        .delete(`/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages`)
         .query({
           status: 'dead-lettered',
         });
-    expect(response4.status).toEqual(200);
-    expect(response4.body?.data).toEqual(1);
+    expect(response4.status).toEqual(204);
+
+    await bluebird.delay(5000);
 
     const response5: TResponse<CountQueueMessagesControllerResponseDTO> =
       await request
-        .get(
-          `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages/count`,
-        )
+        .delete(`/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages`)
         .query({
           status: 'scheduled',
         });
-    expect(response5.status).toEqual(200);
-    expect(response5.body?.data).toEqual(1);
+    expect(response5.status).toEqual(204);
+
+    await bluebird.delay(5000);
 
     const response6: TResponse<CountQueueMessagesControllerResponseDTO> =
-      await request
-        .get(
-          `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages/count`,
-        )
-        .query({
-          status: 'published',
-        });
+      await request.get(
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/messages/count`,
+      );
     expect(response6.status).toEqual(200);
-    expect(response6.body?.data).toEqual(4);
+    expect(response6.body?.data).toEqual(0);
 
     const response7: TResponse<CountQueueMessagesControllerResponseDTO> =
       await request
@@ -99,10 +93,10 @@ describe('countQueueMessagesController', () => {
         });
     expect(response7.status).toEqual(200);
     expect(response7.body?.data).toEqual({
-      acknowledged: 1,
-      deadLettered: 1,
-      pending: 1,
-      scheduled: 1,
+      acknowledged: 0,
+      deadLettered: 0,
+      pending: 0,
+      scheduled: 0,
     });
   });
 });

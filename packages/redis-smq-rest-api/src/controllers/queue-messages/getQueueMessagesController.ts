@@ -15,7 +15,6 @@ import { Container } from '../../container/Container.js';
 import { GetQueueMessagesControllerRequestPathDTO } from '../../dto/controllers/queue-messages/GetQueueMessagesControllerRequestPathDTO.js';
 import { GetQueueMessagesControllerRequestQueryDTO } from '../../dto/controllers/queue-messages/GetQueueMessagesControllerRequestQueryDTO.js';
 import { GetQueueMessagesControllerResponseDTO } from '../../dto/controllers/queue-messages/GetQueueMessagesControllerResponseDTO.js';
-import { QueueMessagesService } from '../../services/QueueMessagesService.js';
 
 export const getQueueMessagesController: TControllerRequestHandler<
   GetQueueMessagesControllerRequestPathDTO,
@@ -23,12 +22,9 @@ export const getQueueMessagesController: TControllerRequestHandler<
   TControllerRequestPayloadEmpty,
   GetQueueMessagesControllerResponseDTO
 > = async (ctx) => {
-  const queueMessagesService =
-    Container.getInstance().resolve<QueueMessagesService>(
-      'queueMessagesService',
-    );
+  const service = Container.getInstance().resolve('queueMessagesService');
   const queueParams = ctx.scope.resolve('requestPathDTO');
-  const { page, pageSize } = ctx.scope.resolve('requestQueryDTO');
-  const r = await queueMessagesService.getMessages(queueParams, page, pageSize);
+  const queryParams = ctx.scope.resolve('requestQueryDTO');
+  const r = await service.getMessages(queueParams, queryParams);
   return [200, r];
 };

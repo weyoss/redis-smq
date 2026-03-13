@@ -15,4 +15,5 @@ export type GetQueueMessagesControllerResponseDTO =
   | TErrors['InvalidQueueParametersError']
   | TErrors['ConsumerGroupRequiredError']
   | TErrors['ConsumerGroupsNotSupportedError']
-  | TErrors['QueueNotFoundError'];
+  | TErrors['QueueNotFoundError']
+  | TErrors['AcknowledgedMessageAuditNotEnabledError'];

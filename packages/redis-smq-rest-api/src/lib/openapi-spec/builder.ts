@@ -14,7 +14,7 @@ import { OpenAPIV3 } from 'openapi-types';
 import { join, resolve } from 'path';
 import { env } from 'redis-smq-common';
 import { constants } from '../../config/constants.js';
-import { EControllerRequestPayload } from '../controller/types/index.js';
+import { ERequestPayload } from '../controller/types/index.js';
 import { TRouterResourceMap } from '../router/types/index.js';
 import { SchemaGenerator } from '../validator/schema-generator.js';
 import { getOpenApiRoutes } from './adaptor.js';
@@ -40,15 +40,14 @@ async function getPackageVersion(): Promise<string> {
 async function toOpenAPISchema<T extends object = JSONSchema4>(
   schema: T,
 ): Promise<OpenAPIV3.Document> {
-  const { default: toOpenApiSchema } = await import(
-    '@openapi-contrib/json-schema-to-openapi-schema'
-  );
+  const { default: toOpenApiSchema } =
+    await import('@openapi-contrib/json-schema-to-openapi-schema');
   return toOpenApiSchema(schema);
 }
 
 async function getRequestParameters(
   schema: JSONSchema7,
-  payloadSource: EControllerRequestPayload,
+  payloadSource: ERequestPayload,
 ) {
   if (schema.$ref) {
     const def = (schema.definitions || {})[schema.$ref];
@@ -58,8 +57,8 @@ async function getRequestParameters(
   }
   if (schema.definitions) delete schema.definitions;
   if (
-    payloadSource === EControllerRequestPayload.PATH ||
-    payloadSource === EControllerRequestPayload.QUERY
+    payloadSource === ERequestPayload.PATH ||
+    payloadSource === ERequestPayload.QUERY
   ) {
     const parameters: OpenAPIV3.ParameterObject[] = [];
     for (const property in schema.properties) {
@@ -68,8 +67,7 @@ async function getRequestParameters(
         const { description = '', ...propSchema } = prop;
         const param: OpenAPIV3.ParameterObject = {
           name: property,
-          in:
-            payloadSource === EControllerRequestPayload.PATH ? 'path' : 'query',
+          in: payloadSource === ERequestPayload.PATH ? 'path' : 'query',
           required: schema.required?.includes(property) || false,
           schema: await toOpenAPISchema(propSchema),
           description,
@@ -84,11 +82,11 @@ async function getRequestParameters(
 
 async function getRequestBody(
   schema: JSONSchema7,
-  payloadSource: EControllerRequestPayload,
+  payloadSource: ERequestPayload,
   contentType = 'application/json',
 ) {
   if (
-    payloadSource === EControllerRequestPayload.BODY &&
+    payloadSource === ERequestPayload.BODY &&
     schema.properties &&
     Object.keys(schema.properties).length
   ) {

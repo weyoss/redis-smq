@@ -9,5 +9,4 @@
 
 import { IQueueParams } from 'redis-smq';
 
-export interface GetQueueMessagesControllerRequestPathDTO
-  extends IQueueParams {}
+export interface GetQueueMessagesControllerRequestPathDTO extends IQueueParams {}

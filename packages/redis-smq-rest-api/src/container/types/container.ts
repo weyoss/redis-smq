@@ -16,7 +16,7 @@ import {
   QueueManager,
   QueueAcknowledgedMessages,
   QueueDeadLetteredMessages,
-  QueueMessages,
+  QueuePublishedMessages,
   QueuePendingMessages,
   QueueRateLimit,
   QueueScheduledMessages,
@@ -34,12 +34,8 @@ import { ExchangesService } from '../../services/ExchangesService.js';
 import { ExchangeTopicService } from '../../services/ExchangeTopicService.js';
 import { MessagesService } from '../../services/MessagesService.js';
 import { NamespacesService } from '../../services/NamespacesService.js';
-import { QueueAcknowledgedMessagesService } from '../../services/QueueAcknowledgedMessagesService.js';
-import { QueueDeadLetteredMessagesService } from '../../services/QueueDeadLetteredMessagesService.js';
 import { QueueMessagesService } from '../../services/QueueMessagesService.js';
-import { QueuePendingMessagesService } from '../../services/QueuePendingMessagesService.js';
 import { QueueRateLimitService } from '../../services/QueueRateLimitService.js';
-import { QueueScheduledMessagesService } from '../../services/QueueScheduledMessagesService.js';
 import { QueuesService } from '../../services/QueuesService.js';
 import { ConfigurationService } from '../../services/ConfigurationService.js';
 import { QueueOperationalStateService } from '../../services/QueueOperationalStateService.js';
@@ -47,7 +43,7 @@ import { QueueOperationalStateService } from '../../services/QueueOperationalSta
 export interface IContainer {
   queueManager: QueueManager;
   queueStateManager: QueueStateManager;
-  queueMessages: QueueMessages;
+  queuePublishedMessages: QueuePublishedMessages;
   queuePendingMessages: QueuePendingMessages;
   queueAcknowledgedMessages: QueueAcknowledgedMessages;
   queueDeadLetteredMessages: QueueDeadLetteredMessages;
@@ -65,11 +61,7 @@ export interface IContainer {
   config: IRedisSMQRestApiParsedConfig;
 
   queuesService: QueuesService;
-  queueScheduledMessagesService: QueueScheduledMessagesService;
   queueMessagesService: QueueMessagesService;
-  queuePendingMessagesService: QueuePendingMessagesService;
-  queueAcknowledgedMessagesService: QueueAcknowledgedMessagesService;
-  queueDeadLetteredMessagesService: QueueDeadLetteredMessagesService;
   messagesService: MessagesService;
   queueRateLimitService: QueueRateLimitService;
   queueOperationalStateService: QueueOperationalStateService;

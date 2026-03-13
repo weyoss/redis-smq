@@ -9,8 +9,8 @@
 
 import * as path from 'path/posix';
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
   TControllerRequestHandlerGeneric,
 } from '../controller/types/index.js';
 import {
@@ -66,8 +66,8 @@ export async function parseRoutingMap(
   callbackFn: (
     controller: TControllerRequestHandlerGeneric,
     controllerName: string,
-    method: EControllerRequestMethod,
-    payload: EControllerRequestPayload[],
+    method: ERequestMethod,
+    payload: ERequestPayload[],
     path: string,
     description?: string,
     tags?: string[],

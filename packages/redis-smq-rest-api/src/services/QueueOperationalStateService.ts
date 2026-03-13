@@ -7,12 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import {
-  IQueueParams,
-  QueueStateManager,
-  TQueueStateTransitionUserOptions,
-} from 'redis-smq';
+import { IQueueParams, QueueStateManager } from 'redis-smq';
 import bluebird from 'bluebird';
+import { TransitQueueStateControllerRequestBodyDTO } from '../dto/controllers/queue-state/TransitQueueStateControllerRequestBodyDTO.js';
 
 export class QueueOperationalStateService {
   protected queueStateManager;
@@ -21,25 +18,18 @@ export class QueueOperationalStateService {
     this.queueStateManager = bluebird.promisifyAll(queueStateManager);
   }
 
-  async pauseQueue(
-    queueParams: IQueueParams,
-    options: TQueueStateTransitionUserOptions,
+  async transitQueueState(
+    queue: IQueueParams,
+    queueStateAction: TransitQueueStateControllerRequestBodyDTO,
   ) {
-    return this.queueStateManager.pauseAsync(queueParams, options);
-  }
-
-  async stopQueue(
-    queueParams: IQueueParams,
-    options: TQueueStateTransitionUserOptions,
-  ) {
-    return this.queueStateManager.stopAsync(queueParams, options);
-  }
-
-  async resumeQueue(
-    queueParams: IQueueParams,
-    options: TQueueStateTransitionUserOptions,
-  ) {
-    return this.queueStateManager.resumeAsync(queueParams, options);
+    const { state, options } = queueStateAction;
+    if (state === 'resume') {
+      return this.queueStateManager.resumeAsync(queue, options);
+    }
+    if (state === 'stop') {
+      return this.queueStateManager.stopAsync(queue, options);
+    }
+    return this.queueStateManager.pauseAsync(queue, options);
   }
 
   async getState(queueParams: IQueueParams) {

@@ -7,12 +7,11 @@
  * in the root directory of this source tree.
  */
 
+import { IQueueStateTransition } from 'redis-smq';
 import { TErrors } from '../../../errors/errors.js';
-import { IQueuePublishedMessagesCountByStatus } from 'redis-smq';
 
-export type CountQueueMessagesControllerResponseDTO =
-  | readonly [200, number | IQueuePublishedMessagesCountByStatus]
+export type TransitQueueStateControllerResponseDTO =
+  | readonly [200, IQueueStateTransition]
   | TErrors['InvalidQueueParametersError']
-  | TErrors['ConsumerGroupRequiredError']
-  | TErrors['ConsumerGroupsNotSupportedError']
-  | TErrors['QueueNotFoundError'];
+  | TErrors['QueueNotFoundError']
+  | TErrors['QueueStateTransitionError'];

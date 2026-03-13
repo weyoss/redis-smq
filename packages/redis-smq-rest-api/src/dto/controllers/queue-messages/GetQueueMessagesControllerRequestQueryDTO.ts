@@ -10,4 +10,10 @@
 export interface GetQueueMessagesControllerRequestQueryDTO {
   page: number;
   pageSize: number;
+  status?:
+    | 'pending'
+    | 'acknowledged'
+    | 'dead-lettered'
+    | 'scheduled'
+    | 'published';
 }

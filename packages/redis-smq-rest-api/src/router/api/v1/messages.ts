@@ -8,8 +8,8 @@
  */
 
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
 } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { deleteMessageByIdController } from '../../../controllers/message/deleteMessageByIdController.js';
@@ -26,44 +26,44 @@ export const messages: TRouterResourceMap = {
   resource: [
     {
       handler: publishMessageController,
-      method: EControllerRequestMethod.POST,
-      payload: [EControllerRequestPayload.BODY],
+      method: ERequestMethod.POST,
+      payload: [ERequestPayload.BODY],
     },
     {
       handler: getMessagesByIdsController,
-      method: EControllerRequestMethod.GET,
-      payload: [EControllerRequestPayload.QUERY],
+      method: ERequestMethod.GET,
+      payload: [ERequestPayload.QUERY],
     },
     {
       handler: deleteMessagesByIdsController,
-      method: EControllerRequestMethod.DELETE,
-      payload: [EControllerRequestPayload.QUERY],
+      method: ERequestMethod.DELETE,
+      payload: [ERequestPayload.QUERY],
     },
     {
       path: ':id',
       resource: [
         {
           handler: getMessageByIdController,
-          method: EControllerRequestMethod.GET,
-          payload: [EControllerRequestPayload.PATH],
+          method: ERequestMethod.GET,
+          payload: [ERequestPayload.PATH],
         },
         {
           handler: requeueMessageByIdController,
-          method: EControllerRequestMethod.POST,
-          payload: [EControllerRequestPayload.PATH],
+          method: ERequestMethod.POST,
+          payload: [ERequestPayload.PATH],
         },
         {
           handler: deleteMessageByIdController,
-          method: EControllerRequestMethod.DELETE,
-          payload: [EControllerRequestPayload.PATH],
+          method: ERequestMethod.DELETE,
+          payload: [ERequestPayload.PATH],
         },
         {
           path: 'requeue',
           resource: [
             {
               handler: requeueMessageByIdController,
-              method: EControllerRequestMethod.POST,
-              payload: [EControllerRequestPayload.PATH],
+              method: ERequestMethod.POST,
+              payload: [ERequestPayload.PATH],
             },
           ],
         },
@@ -72,8 +72,8 @@ export const messages: TRouterResourceMap = {
           resource: [
             {
               handler: getMessageStatusController,
-              method: EControllerRequestMethod.GET,
-              payload: [EControllerRequestPayload.PATH],
+              method: ERequestMethod.GET,
+              payload: [ERequestPayload.PATH],
             },
           ],
         },

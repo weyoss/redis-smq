@@ -10,16 +10,16 @@
 import { readFileSync } from 'fs';
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { constants } from '../../config/constants.js';
-import { EControllerRequestPayload } from '../controller/types/index.js';
+import { ERequestPayload } from '../controller/types/index.js';
 import { RequestValidationError } from '../router/errors/RequestValidationError.js';
 import { ResponseValidationError } from '../router/errors/ResponseValidationError.js';
 import { TResponseSchemaMap, TResponseSchemaMapItem } from './types/index.js';
 import { Ajv } from 'ajv';
 
 const payloadSources = [
-  EControllerRequestPayload.PATH,
-  EControllerRequestPayload.QUERY,
-  EControllerRequestPayload.BODY,
+  ERequestPayload.PATH,
+  ERequestPayload.QUERY,
+  ERequestPayload.BODY,
 ];
 
 export function SchemaGenerator() {
@@ -33,12 +33,12 @@ export function SchemaGenerator() {
   };
   const getRequestSchema = (
     controllerName: string,
-    payloadSource: EControllerRequestPayload,
+    payloadSource: ERequestPayload,
   ) => {
     const cName = `${controllerName[0].toUpperCase()}${controllerName.slice(
       1,
     )}`;
-    const payload = EControllerRequestPayload[payloadSource];
+    const payload = ERequestPayload[payloadSource];
     const pName = payload[0].toUpperCase() + payload.slice(1).toLowerCase();
     const type = `${cName}Request${pName}DTO`;
     return getDefinition(type);
@@ -123,9 +123,9 @@ export function SchemaGenerator() {
     },
     getRequestSchemas(
       controllerName: string,
-      requestPayloadSource: EControllerRequestPayload[],
+      requestPayloadSource: ERequestPayload[],
     ) {
-      return payloadSources.reduce<Map<EControllerRequestPayload, JSONSchema7>>(
+      return payloadSources.reduce<Map<ERequestPayload, JSONSchema7>>(
         (accumulator, currentValue) => {
           const schemaDefinition: JSONSchema7 = requestPayloadSource.includes(
             currentValue,
@@ -141,9 +141,9 @@ export function SchemaGenerator() {
         new Map(),
       );
     },
-    getRequestValidators(map: Map<EControllerRequestPayload, JSONSchema7>) {
+    getRequestValidators(map: Map<ERequestPayload, JSONSchema7>) {
       return payloadSources.reduce<
-        Map<EControllerRequestPayload, (data: unknown) => void>
+        Map<ERequestPayload, (data: unknown) => void>
       >((accumulator, currentValue) => {
         const schema = map.get(currentValue);
         if (!schema) throw new Error();

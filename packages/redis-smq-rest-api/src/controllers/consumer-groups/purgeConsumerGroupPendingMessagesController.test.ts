@@ -16,7 +16,7 @@ import { publishMessage } from '../../../tests/common/publish-message.js';
 import { saveConsumerGroup } from '../../../tests/common/save-consumer-group.js';
 import { TResponse } from '../../../tests/types/index.js';
 import { CountConsumerGroupPendingMessagesControllerResponseDTO } from '../../dto/controllers/consumer-groups/CountConsumerGroupPendingMessagesControllerResponseDTO.js';
-import { PurgeQueuePendingMessagesControllerResponseDTO } from '../../dto/controllers/queue-pending-messages/PurgeQueuePendingMessagesControllerResponseDTO.js';
+import { PurgeConsumerGroupPendingMessagesControllerResponseDTO } from '../../dto/controllers/consumer-groups/PurgeConsumerGroupPendingMessagesControllerResponseDTO.js';
 
 describe('purgeConsumerGroupPendingMessagesController', () => {
   it('HTTP 204 No Content', async () => {
@@ -31,7 +31,7 @@ describe('purgeConsumerGroupPendingMessagesController', () => {
     expect(batch1.length).toEqual(1);
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
-    const response1: TResponse<PurgeQueuePendingMessagesControllerResponseDTO> =
+    const response1: TResponse<PurgeConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.delete(
         `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup1}/messages`,
       );
@@ -40,7 +40,7 @@ describe('purgeConsumerGroupPendingMessagesController', () => {
 
     const response2: TResponse<CountConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.get(
-        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup1}/total-messages`,
+        `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/${consumerGroup1}/messages/count`,
       );
     expect(response2.status).toEqual(200);
     expect(response2.body?.data).toEqual(0);

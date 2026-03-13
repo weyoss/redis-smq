@@ -9,7 +9,6 @@
 
 import { IQueueParams } from 'redis-smq';
 
-export interface DeleteConsumerGroupControllerRequestPathDTO
-  extends IQueueParams {
+export interface DeleteConsumerGroupControllerRequestPathDTO extends IQueueParams {
   consumerGroupId: string;
 }

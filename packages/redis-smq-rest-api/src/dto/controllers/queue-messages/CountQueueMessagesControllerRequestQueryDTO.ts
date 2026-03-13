@@ -7,6 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from 'redis-smq';
-
-export interface GetConsumerGroupsControllerRequestPathDTO extends IQueueParams {}
+export interface CountQueueMessagesControllerRequestQueryDTO {
+  status?:
+    | 'pending'
+    | 'acknowledged'
+    | 'dead-lettered'
+    | 'scheduled'
+    | 'published';
+  groupBy?: 'status';
+}

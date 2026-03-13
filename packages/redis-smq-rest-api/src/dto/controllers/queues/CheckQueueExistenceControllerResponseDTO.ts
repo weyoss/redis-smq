@@ -7,6 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from 'redis-smq';
+import { TErrors } from '../../../errors/errors.js';
 
-export interface GetConsumerGroupsControllerRequestPathDTO extends IQueueParams {}
+export type CheckQueueExistenceControllerResponseDTO =
+  | readonly [200, null]
+  | TErrors['InvalidQueueParametersError'];

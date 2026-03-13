@@ -53,17 +53,19 @@ export interface IControllerResponseErrorDTO<
   body: IControllerErrorResponseBodyDTO<Status, Message>;
 }
 
-export enum EControllerRequestPayload {
+export enum ERequestPayload {
   PATH,
   QUERY,
   BODY,
 }
 
-export enum EControllerRequestMethod {
+export enum ERequestMethod {
   GET = 'get',
   POST = 'post',
   PUT = 'put',
   DELETE = 'delete',
+  HEAD = 'head',
+  PATCH = 'patch',
 }
 
 export type TControllerRequestHandler<

@@ -23,7 +23,7 @@ import {
   QueueManager,
   QueueAcknowledgedMessages,
   QueueDeadLetteredMessages,
-  QueueMessages,
+  QueuePublishedMessages,
   QueuePendingMessages,
   QueueRateLimit,
   QueueScheduledMessages,
@@ -40,12 +40,8 @@ import { ExchangesService } from '../services/ExchangesService.js';
 import { ExchangeTopicService } from '../services/ExchangeTopicService.js';
 import { MessagesService } from '../services/MessagesService.js';
 import { NamespacesService } from '../services/NamespacesService.js';
-import { QueueAcknowledgedMessagesService } from '../services/QueueAcknowledgedMessagesService.js';
-import { QueueDeadLetteredMessagesService } from '../services/QueueDeadLetteredMessagesService.js';
 import { QueueMessagesService } from '../services/QueueMessagesService.js';
-import { QueuePendingMessagesService } from '../services/QueuePendingMessagesService.js';
 import { QueueRateLimitService } from '../services/QueueRateLimitService.js';
-import { QueueScheduledMessagesService } from '../services/QueueScheduledMessagesService.js';
 import { QueuesService } from '../services/QueuesService.js';
 import { IContainer } from './types/container.js';
 import { ConfigurationService } from '../services/ConfigurationService.js';
@@ -60,7 +56,7 @@ export class Container {
       // RedisSMQ classes
       queueManager: asClass(QueueManager).singleton(),
       queueStateManager: asClass(QueueStateManager).singleton(),
-      queueMessages: asClass(QueueMessages).singleton(),
+      queuePublishedMessages: asClass(QueuePublishedMessages).singleton(),
       queuePendingMessages: asClass(QueuePendingMessages).singleton(),
       queueAcknowledgedMessages: asClass(QueueAcknowledgedMessages).singleton(),
       queueDeadLetteredMessages: asClass(QueueDeadLetteredMessages).singleton(),
@@ -81,14 +77,6 @@ export class Container {
       // Services
       queuesService: asClass(QueuesService),
       queueMessagesService: asClass(QueueMessagesService),
-      queuePendingMessagesService: asClass(QueuePendingMessagesService),
-      queueScheduledMessagesService: asClass(QueueScheduledMessagesService),
-      queueAcknowledgedMessagesService: asClass(
-        QueueAcknowledgedMessagesService,
-      ),
-      queueDeadLetteredMessagesService: asClass(
-        QueueDeadLetteredMessagesService,
-      ),
       messagesService: asClass(MessagesService),
       queueRateLimitService: asClass(QueueRateLimitService),
       namespacesService: asClass(NamespacesService),

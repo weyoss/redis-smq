@@ -13,8 +13,8 @@ import {
   IApplicationMiddlewareState,
 } from '../../application/types/index.js';
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
   TControllerRequestHandlerGeneric,
 } from '../../controller/types/index.js';
 
@@ -26,8 +26,8 @@ export type TRouter = KoaRouter<
 export interface IRouterResourceDescription {
   handler: TControllerRequestHandlerGeneric;
   description?: string;
-  method: EControllerRequestMethod;
-  payload: EControllerRequestPayload[];
+  method: ERequestMethod;
+  payload: ERequestPayload[];
 }
 
 export type TRouterResource =

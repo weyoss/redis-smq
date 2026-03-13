@@ -9,4 +9,4 @@
 
 import { IQueueParams } from 'redis-smq';
 
-export interface GetConsumerGroupsControllerRequestPathDTO extends IQueueParams {}
+export interface CheckQueueExistenceControllerRequestPathDTO extends IQueueParams {}

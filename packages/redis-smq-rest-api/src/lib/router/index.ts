@@ -14,8 +14,8 @@ import {
   IApplicationMiddlewareState,
 } from '../application/types/index.js';
 import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
+  ERequestMethod,
+  ERequestPayload,
   TControllerRequestHandlerGeneric,
 } from '../controller/types/index.js';
 import { SchemaGenerator } from '../validator/schema-generator.js';
@@ -46,7 +46,7 @@ const validatorCacheByController = new Map<
 function getOrCreateValidatorsForController(
   schemaGenerator: TSchemaGenerator,
   controllerName: string,
-  payloadSources: EControllerRequestPayload[],
+  payloadSources: ERequestPayload[],
 ) {
   const cacheKey = `${controllerName}:${payloadSources.join(',')}`;
   let cachedValidators = validatorCacheByController.get(cacheKey);
@@ -82,8 +82,8 @@ async function registerRouteWithValidation(
   router: TRouter,
   controllerHandler: TControllerRequestHandlerGeneric,
   controllerName: string,
-  httpMethod: EControllerRequestMethod,
-  payloadSources: EControllerRequestPayload[],
+  httpMethod: ERequestMethod,
+  payloadSources: ERequestPayload[],
   routePath: string,
   schemaGenerator: TSchemaGenerator,
 ) {
@@ -144,8 +144,8 @@ export async function registerResources(
     async (
       controllerHandler: TControllerRequestHandlerGeneric,
       controllerName: string,
-      httpMethod: EControllerRequestMethod,
-      payloadSources: EControllerRequestPayload[],
+      httpMethod: ERequestMethod,
+      payloadSources: ERequestPayload[],
       routePath: string,
     ) => {
       await registerRouteWithValidation(
