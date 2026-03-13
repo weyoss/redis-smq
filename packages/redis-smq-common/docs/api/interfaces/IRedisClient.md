@@ -1642,6 +1642,30 @@
 
 ---
 
+### zpoplpush()
+
+> **zpoplpush**(`source`, `destination`, `cb`): `void`
+
+#### Parameters
+
+##### source
+
+`string`
+
+##### destination
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string` \| `null`\>
+
+#### Returns
+
+`void`
+
+---
+
 ### zpoprpush()
 
 > **zpoprpush**(`source`, `destination`, `cb`): `void`
