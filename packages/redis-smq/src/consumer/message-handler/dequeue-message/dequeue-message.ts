@@ -123,8 +123,8 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
 
   protected performDequeue(redisClient: IRedisClient): void {
     if (this.isPriorityQueuingEnabled()) {
-      // Priority Queue: Use ZPOPRPUSH to get the highest-priority message.
-      redisClient.zpoprpush(
+      // Priority Queue: Use ZPOPLPUSH to get the highest-priority message.
+      redisClient.zpoplpush(
         this.keyQueuePriorityPending,
         this.keyQueueProcessing,
         this.handleMessage,
