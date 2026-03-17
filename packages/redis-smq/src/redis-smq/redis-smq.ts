@@ -11,7 +11,7 @@ import { ProducerFactory } from './factories/producer-factory.js';
 import { ConsumerFactory } from './factories/consumer-factory.js';
 import { MessageManagerFactory } from './factories/message-manager-factory.js';
 import { QueueManagerFactory } from './factories/queue-manager-factory.js';
-import { QueueMessagesFactory } from './factories/queue-messages-factory.js';
+import { PublishedMessagesFactory } from './factories/published-messages-factory.js';
 import { ConsumerGroupsFactory } from './factories/consumer-groups-factory.js';
 import { ScheduledMessagesFactory } from './factories/scheduled-messages-factory.js';
 import { FanoutExchangeFactory } from './factories/fanout-exchange-factory.js';
@@ -37,7 +37,7 @@ export class RedisSMQ {
   static createMessageManager = MessageManagerFactory.create;
   static createQueueManager = QueueManagerFactory.create;
   static createNamespaceManager = NamespaceManagerFactory.create;
-  static createQueueMessages = QueueMessagesFactory.create;
+  static createQueuePublishedMessages = PublishedMessagesFactory.create;
   static createConsumerGroups = ConsumerGroupsFactory.create;
   static createQueueAcknowledgedMessages = AcknowledgedMessagesFactory.create;
   static createQueueDeadLetteredMessages = DeadLetteredMessagesFactory.create;

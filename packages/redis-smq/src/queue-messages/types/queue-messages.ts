@@ -11,7 +11,7 @@ export interface IQueueGroupConsumersPendingCount {
   [key: string]: number;
 }
 
-export interface IQueueMessagesCount {
+export interface IQueuePublishedMessagesCountByStatus {
   acknowledged: number;
   deadLettered: number;
   pending: number | IQueueGroupConsumersPendingCount;

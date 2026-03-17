@@ -147,10 +147,8 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
 
         if group_exists then
             -- Move the message to the pending queue.
-            if queueType == EQueuePropertyQueueTypeFIFOQueue then
-                redis.call("LPUSH", keyQueuePending, messageId)
-            elseif queueType == EQueuePropertyQueueTypeLIFOQueue then
-                redis.call("RPUSH", keyQueuePending, messageId)
+            if queueType == EQueuePropertyQueueTypeFIFOQueue or queueType == EQueuePropertyQueueTypeLIFOQueue then
+                redis.call("RPUSH", keyQueuePending, messageId) -- Process the message as soon as possible
             else -- Priority queue
                 redis.call("ZADD", keyQueuePriorityPending, messagePriority, messageId)
             end

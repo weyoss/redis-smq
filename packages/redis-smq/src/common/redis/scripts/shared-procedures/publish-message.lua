@@ -15,7 +15,7 @@ local function publish_message(keys, args)
     local keyPriorityQueue = keys[2]
     local keyQueuePending = keys[3]
     local keyQueueScheduled = keys[4]
-    local keyQueueMessages = keys[5]
+    local keyQueuePublished = keys[5]
     local keyQueueConsumerGroups = keys[6]
     local keyMessage = keys[7]
 
@@ -148,11 +148,6 @@ local function publish_message(keys, args)
         end
     end
 
-    -- Idempotency check: prevent overwriting an existing message
-    if redis.call("SISMEMBER", keyQueueMessages, messageId) == 1 then
-        return 'MESSAGE_ALREADY_EXISTS'
-    end
-
     if messageStatus == EMessagePropertyStatusPending then
         -- Handle different queue types
         if queueType == EQueuePropertyQueueTypePriorityQueue then
@@ -179,8 +174,8 @@ local function publish_message(keys, args)
         redis.call("HINCRBY", keyQueueProperties, EQueuePropertyScheduledMessagesCount, 1)
     end
 
-    -- Add message to queue's global message set
-    redis.call("SADD", keyQueueMessages, messageId)
+    -- Add message to queue's global message list
+    redis.call("RPUSH", keyQueuePublished, messageId)
 
     -- For maximum script performance, all properties are passed directly to a
     -- single HSET command. This eliminates conditional checks and table overhead.

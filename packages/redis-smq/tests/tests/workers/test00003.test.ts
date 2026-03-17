@@ -9,7 +9,10 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { EMessagePropertyStatus, QueueMessages } from '../../../src/index.js';
+import {
+  EMessagePropertyStatus,
+  QueuePublishedMessages,
+} from '../../../src/index.js';
 import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
 import { ReapConsumersWorker } from '../../../src/consumer/message-handler/queue-workers/workers/reap-consumers.worker.js';
 import {
@@ -26,7 +29,7 @@ test('ReapConsumersWorker', async () => {
   await createQueue(defaultQueue, false);
   await crashAConsumerConsumingAMessage();
 
-  const queueMessages = bluebird.promisifyAll(new QueueMessages());
+  const queueMessages = bluebird.promisifyAll(new QueuePublishedMessages());
   const messages = await queueMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(messages.totalItems).toBe(1);
   const [message] = messages.items;

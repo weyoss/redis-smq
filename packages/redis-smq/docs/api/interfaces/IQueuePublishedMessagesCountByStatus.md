@@ -1,6 +1,6 @@
-[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IQueueMessagesCount
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IQueuePublishedMessagesCountByStatus
 
-# Interface: IQueueMessagesCount
+# Interface: IQueuePublishedMessagesCountByStatus
 
 ## Properties
 

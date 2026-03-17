@@ -10,12 +10,6 @@
 
 ---
 
-### ALL_MESSAGES
-
-> **ALL_MESSAGES**: `4`
-
----
-
 ### DEAD_LETTERED
 
 > **DEAD_LETTERED**: `0`
@@ -25,6 +19,12 @@
 ### PENDING
 
 > **PENDING**: `3`
+
+---
+
+### PUBLISHED
+
+> **PUBLISHED**: `4`
 
 ---
 

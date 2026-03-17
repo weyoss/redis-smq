@@ -8,7 +8,7 @@
  */
 
 export * from './types/index.js';
-export * from './queue-messages.js';
+export * from './queue-published-messages.js';
 export * from './queue-pending-messages.js';
 export * from './queue-scheduled-messages.js';
 export * from './queue-acknowledged-messages.js';

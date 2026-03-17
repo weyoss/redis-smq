@@ -160,7 +160,7 @@ queueManager.exists('my-queue', (err, exists) => {
 
 ```javascript
 // All messages in queue
-const allMessages = RedisSMQ.createQueueMessages();
+const allMessages = RedisSMQ.createQueuePublishedMessages();
 
 // Waiting to be processed
 const pendingMessages = RedisSMQ.createQueuePendingMessages();

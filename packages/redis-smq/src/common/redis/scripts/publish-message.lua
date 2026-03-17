@@ -16,7 +16,7 @@
 -- KEYS[2]: keyPriorityQueue
 -- KEYS[3]: keyQueuePending
 -- KEYS[4]: keyQueueScheduled
--- KEYS[5]: keyQueueMessages
+-- KEYS[5]: keyQueuePublished
 -- KEYS[6]: keyQueueConsumerGroups
 -- KEYS[7]: keyMessage
 --

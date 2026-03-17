@@ -55,7 +55,7 @@ enum ERedisKey {
   QUEUE_RATE_LIMIT_COUNTER,
   QUEUE_PROPERTIES,
   QUEUE_MESSAGES,
-  QUEUE_MESSAGE_IDS,
+  QUEUE_PUBLISHED,
   QUEUE_CONSUMER_GROUPS,
   QUEUE_EXCHANGE_BINDINGS,
 
@@ -232,8 +232,8 @@ export const redisKeys = {
       keyQueueConsumers: ERedisKey.QUEUE_CONSUMERS, // HASH
       keyQueueRateLimitCounter: ERedisKey.QUEUE_RATE_LIMIT_COUNTER, // STRING
       keyQueueProperties: ERedisKey.QUEUE_PROPERTIES, // HASH
-      keyQueueMessages: ERedisKey.QUEUE_MESSAGES, // SET
-      keyQueueMessageIds: ERedisKey.QUEUE_MESSAGE_IDS, // NOT USED
+      keyQueueMessages: ERedisKey.QUEUE_MESSAGES, // NOT USED
+      keyQueuePublished: ERedisKey.QUEUE_PUBLISHED, // LIST
       keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS, // SET
       keyQueueWorkerClusterLock: ERedisKey.QUEUE_WORKERS_LOCK, // STRING
       keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS, // SET

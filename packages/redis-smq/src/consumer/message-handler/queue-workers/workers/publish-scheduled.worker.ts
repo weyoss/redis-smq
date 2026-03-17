@@ -93,7 +93,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         keyQueuePending,
         keyQueuePriorityPending,
         keyQueueScheduled,
-        keyQueueMessages,
+        keyQueuePublished,
         keyQueueDL,
         keyQueueConsumerGroups,
       } = redisKeys.getQueueKeys(
@@ -106,7 +106,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
       const keys: string[] = [
         keyQueueProperties,
         keyQueuePending,
-        keyQueueMessages,
+        keyQueuePublished,
         keyQueuePriorityPending,
         keyQueueScheduled,
         keyQueueDL,

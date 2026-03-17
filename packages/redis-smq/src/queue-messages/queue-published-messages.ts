@@ -13,26 +13,30 @@ import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
-import { EQueueMessageType, IQueueMessagesCount } from './types/index.js';
+import {
+  EQueueMessageType,
+  IQueuePublishedMessagesCountByStatus,
+} from './types/index.js';
 
 /**
- * QueueMessages class provides browsing capabilities for all messages in a queue,
- * regardless of their status (pending, acknowledged, scheduled, dead-lettered).
+ * QueuePublishedMessages class provides browsing capabilities for all messages
+ * that entered a queue, regardless of their status (pending, acknowledged,
+ * scheduled, dead-lettered).
  */
-export class QueueMessages extends QueueMessagesAbstract {
-  public readonly messageType = EQueueMessageType.ALL_MESSAGES;
+export class QueuePublishedMessages extends QueueMessagesAbstract {
+  public readonly messageType = EQueueMessageType.PUBLISHED;
 
   /**
    * Count messages broken down by status: pending, acknowledged, scheduled, and dead-lettered.
    * @param queue - Queue string name or parameters.
-   * @param cb - Callback function returning the IQueueMessagesCount.
+   * @param cb - Callback function returning the IQueuePublishedMessagesCount.
    *
    * @throws InvalidQueueParametersError
    * @throws QueueNotFoundError
    */
   countMessagesByStatus(
     queue: string | IQueueParams,
-    cb: ICallback<IQueueMessagesCount>,
+    cb: ICallback<IQueuePublishedMessagesCountByStatus>,
   ): void {
     const queueParams = _parseQueueParams(queue);
     if (queueParams instanceof Error) {

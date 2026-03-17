@@ -9,38 +9,23 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
-import { EQueueType, ProducibleMessage } from '../../../src/index.js';
 import { BrowserStorageSet } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-set.js';
-import {
-  createQueue,
-  getDefaultQueue,
-} from '../../common/message-producing-consuming.js';
-import { getProducer } from '../../common/producer.js';
+import { getRedisInstance } from '../../common/redis.js';
 
 const { promisifyAll } = bluebird;
 
 it('QueueStorageSet: should fetch all items for a small list', async () => {
-  const defaultQueue = getDefaultQueue();
-  await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageSet = promisifyAll(new BrowserStorageSet());
+  const redisClient = await getRedisInstance();
+  const key = 'my-key';
 
   const ids: string[] = [];
-  const producer = getProducer();
-  await producer.runAsync();
   for (let i = 0; i < 5; i++) {
-    const [id] = await producer.produceAsync(
-      new ProducibleMessage().setBody(`msg-${i}`).setQueue(defaultQueue),
-    );
-    ids.unshift(id);
+    const item = `a${i}`;
+    await redisClient.saddAsync(key, item);
+    ids.push(item);
   }
 
-  const { keyQueueMessages } = redisKeys.getQueueKeys(
-    defaultQueue.ns,
-    defaultQueue.name,
-    null,
-  );
-  const items =
-    await queueMessagesStorageSet.fetchAllItemsAsync(keyQueueMessages);
+  const items = await queueMessagesStorageSet.fetchAllItemsAsync(key);
   expect(items.sort()).toEqual(ids.sort());
 });

@@ -35,6 +35,7 @@
 - [InvalidCronExpressionError](classes/InvalidCronExpressionError.md)
 - [InvalidDirectExchangeParametersError](classes/InvalidDirectExchangeParametersError.md)
 - [InvalidExchangeParametersError](classes/InvalidExchangeParametersError.md)
+- [InvalidExchangeRoutingKeyError](classes/InvalidExchangeRoutingKeyError.md)
 - [InvalidFanoutExchangeParametersError](classes/InvalidFanoutExchangeParametersError.md)
 - [InvalidNamespaceError](classes/InvalidNamespaceError.md)
 - [InvalidPurgeQueueJobIdError](classes/InvalidPurgeQueueJobIdError.md)

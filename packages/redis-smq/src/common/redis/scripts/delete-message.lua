@@ -25,7 +25,7 @@
 
 -- Static Keys
 local keyQueueProperties = KEYS[1]
-local keyQueueMessages = KEYS[2]
+local keyQueuePublished = KEYS[2]
 local keyQueuePending = KEYS[3]
 local keyQueuePriorityPending = KEYS[4]
 local keyQueueScheduled = KEYS[5]
@@ -145,7 +145,7 @@ for i = 1, (#ARGV - INITIAL_ARGV_OFFSET) do
         redis.call("DEL", messageKey)
 
         -- Remove the message ID from the queue's global message set
-        redis.call("SREM", keyQueueMessages, messageId)
+        redis.call("LREM", keyQueuePublished, 1, messageId)
 
         -- Decrement the total message count and the status-specific count
         redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, -1)

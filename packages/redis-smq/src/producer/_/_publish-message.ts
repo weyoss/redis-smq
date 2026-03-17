@@ -181,7 +181,7 @@ export function _publishMessage(
       keys.keyQueuePriorityPending,
       keys.keyQueuePending,
       keys.keyQueueScheduled,
-      keys.keyQueueMessages,
+      keys.keyQueuePublished,
       keys.keyQueueConsumerGroups,
       keyMessage,
     ],

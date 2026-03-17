@@ -5,7 +5,6 @@ import { MessageBrowser } from './message-browser/message-browser.js';
 import { MessageManager } from '../message-manager/index.js';
 import { BrowserStorageSortedSet } from './message-browser/browser-storage/browser-storage-sorted-set.js';
 import { BrowserStorageList } from './message-browser/browser-storage/browser-storage-list.js';
-import { BrowserStorageSet } from './message-browser/browser-storage/browser-storage-set.js';
 import { EQueueMessageType } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
@@ -49,12 +48,12 @@ export class MessageBrowserFactory {
   ): IMessageBrowser {
     const messageManager = new MessageManager();
     switch (messageType) {
-      case EQueueMessageType.ALL_MESSAGES:
+      case EQueueMessageType.PUBLISHED:
         return new MessageBrowser(
           messageManager,
-          new BrowserStorageSet(logger),
+          new BrowserStorageList(logger),
           messageType,
-          'keyQueueMessages',
+          'keyQueuePublished',
           false,
           logger,
         );

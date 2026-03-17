@@ -426,34 +426,6 @@ queueManager.save(
 
 ---
 
-### createQueueMessages()
-
-> `static` **createQueueMessages**: () => [`QueueMessages`](QueueMessages.md) = `QueueMessagesFactory.create`
-
-Creates a QueueMessages instance.
-
-#### Returns
-
-[`QueueMessages`](QueueMessages.md)
-
-A new QueueMessages instance
-
-#### Throws
-
-Error if RedisSMQ is not initialized
-
-#### Example
-
-```typescript
-const queueMessages = RedisSMQ.createQueueMessages();
-queueMessages.countMessagesByStatus('my-queue', (err, count) => {
-  if (err) return console.error('Failed to count messages:', err);
-  console.log('Counts:', count);
-});
-```
-
----
-
 ### createQueuePendingMessages()
 
 > `static` **createQueuePendingMessages**: () => [`QueuePendingMessages`](QueuePendingMessages.md) = `PendingMessagesFactory.create`
@@ -477,6 +449,34 @@ const pendingMessages = RedisSMQ.createQueuePendingMessages();
 pendingMessages.countMessages('my-queue', (err, count) => {
   if (err) return console.error('Failed to count pending:', err);
   console.log('Pending count:', count);
+});
+```
+
+---
+
+### createQueuePublishedMessages()
+
+> `static` **createQueuePublishedMessages**: () => [`QueuePublishedMessages`](QueuePublishedMessages.md) = `PublishedMessagesFactory.create`
+
+Creates a QueuePublishedMessages instance.
+
+#### Returns
+
+[`QueuePublishedMessages`](QueuePublishedMessages.md)
+
+A new QueuePublishedMessages instance
+
+#### Throws
+
+Error if RedisSMQ is not initialized
+
+#### Example
+
+```typescript
+const publishedMessages = RedisSMQ.createQueuePublishedMessages();
+publishedMessages.countMessagesByStatus('my-queue', (err, count) => {
+  if (err) return console.error('Failed to count messages:', err);
+  console.log('Counts:', count);
 });
 ```
 

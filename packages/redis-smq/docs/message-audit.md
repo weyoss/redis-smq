@@ -88,7 +88,7 @@ const config = {
 const { RedisSMQ } = require('redis-smq');
 
 // These work with or without audit
-const allMessages = RedisSMQ.createQueueMessages();
+const publishedMessages = RedisSMQ.createQueuePublishedMessages();
 const pendingMessages = RedisSMQ.createQueuePendingMessages();
 
 // These REQUIRE audit enabled
@@ -110,7 +110,7 @@ deadLettered.getMessages('my-queue', 1, 50, (err, page) => {
 
 ```javascript
 // All messages in queue (including pending, scheduled)
-const all = RedisSMQ.createQueueMessages();
+const all = RedisSMQ.createQueuePublishedMessages();
 all.getMessages('my-queue', 1, 100, (err, page) => {
   console.log('All messages:', page.items);
 });
@@ -168,4 +168,4 @@ const scheduled = RedisSMQ.createQueueScheduledMessages();
 **Related**:
 
 - [Configuration Guide](configuration.md) - Complete setup options
-- [Queue Messages API](api/classes/QueueMessages.md) - All message management
+- [QueuePublishedMessages API](api/classes/QueuePublishedMessages.md) - All message management

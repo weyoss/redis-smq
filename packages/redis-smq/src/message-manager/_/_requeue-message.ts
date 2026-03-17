@@ -99,7 +99,7 @@ export function _requeueMessage(
           keyQueueProperties,
           keyQueuePending,
           keyQueuePriorityPending,
-          keyQueueMessages,
+          keyQueuePublished,
           keyQueueScheduled,
           keyQueueConsumerGroups,
         } = redisKeys.getQueueKeys(
@@ -114,7 +114,7 @@ export function _requeueMessage(
           keyQueueProperties,
           keyQueuePriorityPending,
           keyQueuePending,
-          keyQueueMessages,
+          keyQueuePublished,
           keyQueueScheduled,
           keyQueueConsumerGroups,
           // Dynamic keys (7-8)

@@ -11,6 +11,6 @@ import bluebird from 'bluebird';
 import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueMessages() {
-  const instance = RedisSMQ.createQueueMessages();
+  const instance = RedisSMQ.createQueuePublishedMessages();
   return bluebird.promisifyAll(instance);
 }

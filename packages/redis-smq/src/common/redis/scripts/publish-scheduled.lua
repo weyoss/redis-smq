@@ -18,7 +18,7 @@
 --   Static Keys (1-7):
 --     KEYS[1]: keyQueueProperties
 --     KEYS[2]: keyQueuePending
---     KEYS[3]: keyQueueMessages
+--     KEYS[3]: keyQueuePublished
 --     KEYS[4]: keyQueuePriorityPending
 --     KEYS[5]: keyQueueScheduled
 --     KEYS[6]: keyQueueDeadLettered
@@ -54,7 +54,7 @@
 -- Static Keys
 local keyQueueProperties = KEYS[1]
 local keyQueuePending = KEYS[2]
-local keyQueueMessages = KEYS[3]
+local keyQueuePublished = KEYS[3]
 local keyQueuePriorityPending = KEYS[4]
 local keyQueueScheduled = KEYS[5]
 local keyQueueDeadLettered = KEYS[6]
@@ -242,7 +242,7 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 keyQueuePriorityPending,
                 keyQueuePending,
                 keyQueueScheduled,
-                keyQueueMessages,
+                keyQueuePublished,
                 keyQueueConsumerGroups,
                 keyMessage
             }

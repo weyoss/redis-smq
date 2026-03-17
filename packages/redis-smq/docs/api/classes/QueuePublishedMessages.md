@@ -1,9 +1,10 @@
-[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / QueueMessages
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / QueuePublishedMessages
 
-# Class: QueueMessages
+# Class: QueuePublishedMessages
 
-QueueMessages class provides browsing capabilities for all messages in a queue,
-regardless of their status (pending, acknowledged, scheduled, dead-lettered).
+QueuePublishedMessages class provides browsing capabilities for all messages
+that entered a queue, regardless of their status (pending, acknowledged,
+scheduled, dead-lettered).
 
 ## Extends
 
@@ -13,11 +14,11 @@ regardless of their status (pending, acknowledged, scheduled, dead-lettered).
 
 ### Constructor
 
-> **new QueueMessages**(): `QueueMessages`
+> **new QueuePublishedMessages**(): `QueuePublishedMessages`
 
 #### Returns
 
-`QueueMessages`
+`QueuePublishedMessages`
 
 #### Inherited from
 
@@ -27,7 +28,7 @@ regardless of their status (pending, acknowledged, scheduled, dead-lettered).
 
 ### messageType
 
-> `readonly` **messageType**: [`ALL_MESSAGES`](../enumerations/EQueueMessageType.md#all_messages) = `EQueueMessageType.ALL_MESSAGES`
+> `readonly` **messageType**: [`PUBLISHED`](../enumerations/EQueueMessageType.md#published) = `EQueueMessageType.PUBLISHED`
 
 Type of queue messages this browser handles.
 
@@ -119,9 +120,9 @@ Queue string name or parameters.
 
 ##### cb
 
-`ICallback`\<[`IQueueMessagesCount`](../interfaces/IQueueMessagesCount.md)\>
+`ICallback`\<[`IQueuePublishedMessagesCountByStatus`](../interfaces/IQueuePublishedMessagesCountByStatus.md)\>
 
-Callback function returning the IQueueMessagesCount.
+Callback function returning the IQueuePublishedMessagesCount.
 
 #### Returns
 

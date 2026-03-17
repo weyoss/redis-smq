@@ -114,7 +114,7 @@ export function _deleteMessage(
               const consumerGroupId = groupId === '_' ? null : groupId;
               const {
                 keyQueueProperties,
-                keyQueueMessages,
+                keyQueuePublished,
                 keyQueuePending,
                 keyQueuePriorityPending,
                 keyQueueScheduled,
@@ -126,7 +126,7 @@ export function _deleteMessage(
 
               const staticKeys = [
                 keyQueueProperties,
-                keyQueueMessages,
+                keyQueuePublished,
                 keyQueuePending,
                 keyQueuePriorityPending,
                 keyQueueScheduled,

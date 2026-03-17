@@ -12,5 +12,5 @@ export const enum EQueueMessageType {
   ACKNOWLEDGED,
   SCHEDULED,
   PENDING,
-  ALL_MESSAGES,
+  PUBLISHED,
 }

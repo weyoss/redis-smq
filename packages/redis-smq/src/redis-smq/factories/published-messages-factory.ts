@@ -7,27 +7,27 @@
  * in the root directory of this source tree.
  */
 
-import { QueueMessages } from '../../queue-messages/index.js';
+import { QueuePublishedMessages } from '../../queue-messages/index.js';
 import { FactoryAbstract } from './factory-abstract.js';
 
-export class QueueMessagesFactory extends FactoryAbstract {
+export class PublishedMessagesFactory extends FactoryAbstract {
   /**
-   * Creates a QueueMessages instance.
+   * Creates a QueuePublishedMessages instance.
    *
-   * @returns A new QueueMessages instance
+   * @returns A new QueuePublishedMessages instance
    * @throws Error if RedisSMQ is not initialized
    *
    * @example
    * ```typescript
-   * const queueMessages = RedisSMQ.createQueueMessages();
-   * queueMessages.countMessagesByStatus('my-queue', (err, count) => {
+   * const publishedMessages = RedisSMQ.createQueuePublishedMessages();
+   * publishedMessages.countMessagesByStatus('my-queue', (err, count) => {
    *   if (err) return console.error('Failed to count messages:', err);
    *   console.log('Counts:', count);
    * });
    * ```
    */
-  static create = (): QueueMessages => {
+  static create = (): QueuePublishedMessages => {
     this.ensureInitialized();
-    return this.track(new QueueMessages());
+    return this.track(new QueuePublishedMessages());
   };
 }

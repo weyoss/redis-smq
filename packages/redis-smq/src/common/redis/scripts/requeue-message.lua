@@ -23,7 +23,7 @@
 --     KEYS[1]: keyQueueProperties
 --     KEYS[2]: keyQueuePriorityPending
 --     KEYS[3]: keyQueuePending
---     KEYS[4]: keyQueueMessages
+--     KEYS[4]: keyQueuePublished
 --     KEYS[5]: keyQueueScheduled
 --     KEYS[6]: keyQueueConsumerGroups
 --   Dynamic Keys (7...): A repeating pair for each message being requeued.
@@ -55,7 +55,7 @@
 local keyQueueProperties = KEYS[1]
 local keyQueuePriorityPending = KEYS[2]
 local keyQueuePending = KEYS[3]
-local keyQueueMessages = KEYS[4]
+local keyQueuePublished = KEYS[4]
 local keyQueueScheduled = KEYS[5]
 local keyQueueConsumerGroups = KEYS[6]
 
@@ -155,7 +155,7 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 keyQueuePriorityPending,
                 keyQueuePending,
                 keyQueueScheduled,
-                keyQueueMessages,
+                keyQueuePublished,
                 keyQueueConsumerGroups,
                 keyNewMessage
             }
