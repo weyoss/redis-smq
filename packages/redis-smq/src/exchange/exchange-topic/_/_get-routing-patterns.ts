@@ -12,7 +12,7 @@ import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { _parseExchangeParams } from '../../_/_parse-exchange-params.js';
 import { EExchangeType, IExchangeParams } from '../../types/index.js';
 
-export function _getTopicExchangeBindingPatterns(
+export function _getRoutingPatterns(
   redisClient: IRedisClient,
   exchange: string | IExchangeParams,
   cb: ICallback<string[]>,

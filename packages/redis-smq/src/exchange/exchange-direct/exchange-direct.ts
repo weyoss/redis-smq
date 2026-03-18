@@ -20,6 +20,7 @@ import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import {
   ExchangeHasBoundQueuesError,
+  InvalidExchangeRoutingKeyError,
   InvalidDirectExchangeParametersError,
   NamespaceMismatchError,
   QueueAlreadyBound,
@@ -37,8 +38,8 @@ import {
   EExchangeType,
   IExchangeParams,
 } from '../types/index.js';
-import { _getDirectExchangeRoutingKeyQueues } from './_/_get-direct-exchange-routing-key-queues.js';
-import { _getDirectExchangeRoutingKeys } from './_/_get-direct-exchange-routing-keys.js';
+import { _getRoutingKeyBoundQueues } from './_/_get-routing-key-bound-queues.js';
+import { _getRoutingKeys } from './_/_get-routing-keys.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
@@ -133,8 +134,7 @@ export class ExchangeDirect {
     const exchangeParams = _parseExchangeParams(exchange, EExchangeType.DIRECT);
     if (exchangeParams instanceof Error) return cb(exchangeParams);
     withSharedPoolConnection(
-      (client, done) =>
-        _getDirectExchangeRoutingKeys(client, exchangeParams, done),
+      (client, done) => _getRoutingKeys(client, exchangeParams, done),
       cb,
     );
   }
@@ -164,7 +164,7 @@ export class ExchangeDirect {
    * });
    * ```
    */
-  getRoutingKeyQueues(
+  getRoutingKeyBoundQueues(
     exchange: string | IExchangeParams,
     routingKey: string,
     cb: ICallback<IQueueParams[]>,
@@ -177,7 +177,7 @@ export class ExchangeDirect {
       return cb(new InvalidDirectExchangeParametersError());
 
     withSharedPoolConnection((client, done) => {
-      _getDirectExchangeRoutingKeyQueues(
+      _getRoutingKeyBoundQueues(
         client,
         exchangeParams,
         validatedRoutingKey,
@@ -202,7 +202,7 @@ export class ExchangeDirect {
    * @param cb - Callback function called with the list of matching queues or an error
    *
    * @throws InvalidExchangeParametersError
-   * @throws InvalidDirectExchangeParametersError
+   * @throws InvalidExchangeRoutingKeyError
    * @throws ExchangeNotFoundError
    * @throws ExchangeTypeMismatchError
    *
@@ -266,7 +266,14 @@ export class ExchangeDirect {
     const validatedRoutingKey = redisKeys.validateRedisKey(routingKey);
     if (validatedRoutingKey instanceof Error) {
       this.logger.error(`matchQueues: invalid routing key "${routingKey}"`);
-      return cb(new InvalidDirectExchangeParametersError());
+      return cb(
+        new InvalidExchangeRoutingKeyError({
+          metadata: {
+            exchange: exchangeParams,
+            routingKey: routingKey,
+          },
+        }),
+      );
     }
 
     this.logger.debug(
@@ -282,7 +289,7 @@ export class ExchangeDirect {
             _validateExchange(client, exchangeParams, true, cb1),
           // Load queues bound to the routing key
           (cb1: ICallback) =>
-            _getDirectExchangeRoutingKeyQueues(
+            _getRoutingKeyBoundQueues(
               client,
               exchangeParams,
               validatedRoutingKey,
@@ -1114,6 +1121,47 @@ export class ExchangeDirect {
             );
           },
         },
+      );
+    }, cb);
+  }
+
+  getBindings(
+    exchange: string | IExchangeParams,
+    cb: ICallback<Record<string, IQueueParams[]>>,
+  ) {
+    const exchangeParams = _parseExchangeParams(exchange, EExchangeType.DIRECT);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
+    withSharedPoolConnection((client, done) => {
+      async.waterfall(
+        [
+          (cb: ICallback<string[]>) => {
+            _getRoutingKeys(client, exchangeParams, cb);
+          },
+          (routingKeys, done: ICallback<Record<string, IQueueParams[]>>) => {
+            const bindings: Record<string, IQueueParams[]> = {};
+            async.eachOf(
+              routingKeys,
+              (routingKey, _, done) => {
+                bindings[routingKey] = [];
+                _getRoutingKeyBoundQueues(
+                  client,
+                  exchangeParams,
+                  routingKey,
+                  (err, queues) => {
+                    if (err) return done(err);
+                    bindings[routingKey].push(...(queues ?? []));
+                    done();
+                  },
+                );
+              },
+              (err) => {
+                if (err) return done(err);
+                done(null, bindings);
+              },
+            );
+          },
+        ],
+        done,
       );
     }, cb);
   }

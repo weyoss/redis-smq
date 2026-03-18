@@ -251,14 +251,34 @@ topicExchange.delete(
 
 ---
 
-### getBindingPatternQueues()
+### getBindings()
 
-> **getBindingPatternQueues**(`exchange`, `bindingPattern`, `cb`): `void`
+> **getBindings**(`exchange`, `cb`): `void`
 
-Retrieve all queues bound to a specific binding pattern within a topic exchange.
+#### Parameters
+
+##### exchange
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### cb
+
+`ICallback`\<`Record`\<`string`, [`IQueueParams`](../interfaces/IQueueParams.md)[]\>\>
+
+#### Returns
+
+`void`
+
+---
+
+### getRoutingPatternBoundQueues()
+
+> **getRoutingPatternBoundQueues**(`exchange`, `bindingPattern`, `cb`): `void`
+
+Retrieve all queues bound to a specific routing pattern within a topic exchange.
 
 This method returns all queues that are bound to the exchange using the
-specified binding pattern. This is useful for understanding which queues
+specified routing pattern. This is useful for understanding which queues
 will receive messages for routing keys that match the pattern.
 
 #### Parameters
@@ -292,7 +312,7 @@ InvalidExchangeParametersError
 #### Example
 
 ```typescript
-topicExchange.getBindingPatternQueues(
+topicExchange.getRoutingPatternBoundQueues(
   'notifications',
   'user.#',
   (err, queues) => {
@@ -311,11 +331,11 @@ topicExchange.getBindingPatternQueues(
 
 ---
 
-### getBindingPatterns()
+### getRoutingPatterns()
 
-> **getBindingPatterns**(`exchange`, `cb`): `void`
+> **getRoutingPatterns**(`exchange`, `cb`): `void`
 
-Retrieve all binding patterns registered for a topic exchange.
+Retrieve all routing patterns registered for a topic exchange.
 
 This method returns all patterns that have been used to bind queues to the
 exchange. Each pattern represents a different routing rule that can match
@@ -346,13 +366,13 @@ InvalidExchangeParametersError
 #### Example
 
 ```typescript
-topicExchange.getBindingPatterns('notifications', (err, patterns) => {
+topicExchange.getRoutingPatterns('notifications', (err, patterns) => {
   if (err) {
     console.error('Failed to get patterns:', err);
     return;
   }
 
-  console.log('Binding patterns:');
+  console.log('Routing patterns:');
   patterns.forEach((pattern) => {
     console.log(`- ${pattern}`);
   });
@@ -404,6 +424,10 @@ Callback invoked with an array of matching queues or an error.
 #### Throws
 
 InvalidExchangeParametersError
+
+#### Throws
+
+InvalidExchangeRoutingKeyError
 
 #### Example
 

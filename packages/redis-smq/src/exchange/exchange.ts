@@ -205,7 +205,7 @@ export class Exchange {
    * );
    * ```
    */
-  getQueueBoundExchanges(
+  getQueueExchanges(
     queue: string | IQueueParams,
     cb: ICallback<IExchangeParsedParams[]>,
   ): void {

@@ -247,7 +247,7 @@ describe('ExchangeDirect', () => {
     await directExchange.bindQueueAsync(queueA, exchangeA, rkA);
     await directExchange.bindQueueAsync(queueB, exchangeA, rkA);
 
-    const queues = await directExchange.getRoutingKeyQueuesAsync(
+    const queues = await directExchange.getRoutingKeyBoundQueuesAsync(
       exchangeA,
       rkA,
     );
@@ -261,7 +261,7 @@ describe('ExchangeDirect', () => {
 
   it('getRoutingKeyQueues: returns empty array for a routing key with no bound queues', async () => {
     await directExchange.bindQueueAsync(queueA, exchangeA, rkA);
-    const queues = await directExchange.getRoutingKeyQueuesAsync(
+    const queues = await directExchange.getRoutingKeyBoundQueuesAsync(
       exchangeA,
       rkUnknown,
     );
@@ -281,7 +281,7 @@ describe('ExchangeDirect', () => {
     ];
     for (const k of invalidKeys) {
       await expect(
-        directExchange.getRoutingKeyQueuesAsync(exchangeA, k),
+        directExchange.getRoutingKeyBoundQueuesAsync(exchangeA, k),
       ).rejects.toThrow(InvalidDirectExchangeParametersError);
     }
   });

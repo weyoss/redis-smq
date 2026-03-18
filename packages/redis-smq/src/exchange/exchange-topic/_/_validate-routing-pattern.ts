@@ -22,7 +22,7 @@ const LITERAL_TOKEN_RE = /^[A-Za-z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)*$/;
  *   - literal token matching LITERAL_TOKEN_RE
  * - No empty tokens (i.e., no leading/trailing/double '.')
  */
-export function _validateTopicExchangeBindingPattern(p: unknown): boolean {
+export function _validateRoutingPattern(p: unknown): boolean {
   if (typeof p !== 'string' || p.length === 0) return false;
 
   const tokens = p.split('.');

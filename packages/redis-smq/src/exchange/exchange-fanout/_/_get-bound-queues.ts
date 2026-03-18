@@ -7,35 +7,23 @@
  * in the root directory of this source tree.
  */
 
-import {
-  CallbackEmptyReplyError,
-  ICallback,
-  IRedisClient,
-} from 'redis-smq-common';
+import { ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IQueueParams } from '../../../queue-manager/index.js';
 import { IExchangeParams } from '../../types/index.js';
 
-export function _getDirectExchangeRoutingKeyQueues(
+export function _getBoundQueues(
   client: IRedisClient,
   exchange: IExchangeParams,
-  routingKey: string,
   cb: ICallback<IQueueParams[]>,
 ) {
-  const { keyRoutingKeyQueues } = redisKeys.getExchangeDirectRoutingKeyKeys(
+  const { keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
     exchange.ns,
     exchange.name,
-    routingKey,
   );
-  client.smembers(keyRoutingKeyQueues, (err, res) => {
+  client.sscanAll(keyFanoutQueues, {}, (err, reply) => {
     if (err) return cb(err);
-    if (!res) return cb(new CallbackEmptyReplyError());
-
-    const queues: IQueueParams[] = [];
-    for (const raw of res) {
-      const q: IQueueParams = JSON.parse(raw);
-      queues.push(q);
-    }
+    const queues: IQueueParams[] = (reply || []).map((i) => JSON.parse(i));
     cb(null, queues);
   });
 }

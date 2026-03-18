@@ -40,9 +40,6 @@ function compileTopicPattern(pattern: string): RegExp {
   return new RegExp(re);
 }
 
-export function _matchTopicExchangeBindingPattern(
-  routingKey: string,
-  pattern: string,
-): boolean {
+export function _matchRoutingKey(routingKey: string, pattern: string): boolean {
   return compileTopicPattern(pattern).test(routingKey);
 }

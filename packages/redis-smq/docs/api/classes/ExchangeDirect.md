@@ -380,9 +380,29 @@ process.on('SIGTERM', () => {
 
 ---
 
-### getRoutingKeyQueues()
+### getBindings()
 
-> **getRoutingKeyQueues**(`exchange`, `routingKey`, `cb`): `void`
+> **getBindings**(`exchange`, `cb`): `void`
+
+#### Parameters
+
+##### exchange
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### cb
+
+`ICallback`\<`Record`\<`string`, [`IQueueParams`](../interfaces/IQueueParams.md)[]\>\>
+
+#### Returns
+
+`void`
+
+---
+
+### getRoutingKeyBoundQueues()
+
+> **getRoutingKeyBoundQueues**(`exchange`, `routingKey`, `cb`): `void`
 
 Retrieves all queues bound to a specific routing key for a direct exchange.
 
@@ -527,7 +547,7 @@ InvalidExchangeParametersError
 
 #### Throws
 
-InvalidDirectExchangeParametersError
+InvalidExchangeRoutingKeyError
 
 #### Throws
 

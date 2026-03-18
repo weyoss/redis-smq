@@ -257,6 +257,26 @@ fanoutExchange.delete({ name: 'temp-exchange', ns: 'testing' }, (err) => {
 
 ---
 
+### getBindings()
+
+> **getBindings**(`exchange`, `cb`): `void`
+
+#### Parameters
+
+##### exchange
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### cb
+
+`ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
+
+#### Returns
+
+`void`
+
+---
+
 ### matchQueues()
 
 > **matchQueues**(`exchange`, `cb`): `void`

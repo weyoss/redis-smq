@@ -121,9 +121,9 @@ exchange.getNamespaceExchanges('production', (err, exchanges) => {
 
 ---
 
-### getQueueBoundExchanges()
+### getQueueExchanges()
 
-> **getQueueBoundExchanges**(`queue`, `cb`): `void`
+> **getQueueExchanges**(`queue`, `cb`): `void`
 
 Retrieve all exchanges that a specific queue is bound to.
 

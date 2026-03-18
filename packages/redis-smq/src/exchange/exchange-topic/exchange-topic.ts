@@ -26,21 +26,22 @@ import {
   IExchangeParams,
 } from '../index.js';
 import { Configuration } from '../../config/index.js';
-import { _getTopicExchangeBindingPatterns } from './_/_get-topic-exchange-binding-patterns.js';
-import { _getTopicExchangeBindingPatternQueues } from './_/_get-topic-exchange-binding-pattern-queues.js';
+import { _getRoutingPatterns } from './_/_get-routing-patterns.js';
+import { _getRoutingPatternBoundQueues } from './_/_get-routing-pattern-bound-queues.js';
 import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
 import {
   ExchangeHasBoundQueuesError,
+  InvalidExchangeRoutingKeyError,
   InvalidTopicBindingPatternError,
   InvalidTopicExchangeParamsError,
   NamespaceMismatchError,
   QueueAlreadyBound,
   QueueNotBoundError,
 } from '../../errors/index.js';
-import { _validateTopicExchangeBindingPattern } from './_/_validate-topic-exchange-binding-pattern.js';
-import { _matchTopicExchangeBindingPattern } from './_/_match-topic-exchange-binding-pattern.js';
+import { _validateRoutingPattern } from './_/_validate-routing-pattern.js';
+import { _matchRoutingKey } from './_/_match-routing-key.js';
 import { _validateExchange } from '../_/_validate-exchange.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
@@ -117,6 +118,7 @@ export class ExchangeTopic {
    * @param cb - Callback invoked with an array of matching queues or an error.
    *
    * @throws InvalidExchangeParametersError
+   * @throws InvalidExchangeRoutingKeyError
    *
    * @example
    * ```typescript
@@ -144,14 +146,26 @@ export class ExchangeTopic {
       return cb(topicParams);
     }
 
+    const validatedRoutingKey = routingKey.trim();
+    if (!validatedRoutingKey) {
+      return cb(
+        new InvalidExchangeRoutingKeyError({
+          metadata: {
+            exchange: topicParams,
+            routingKey: routingKey,
+          },
+        }),
+      );
+    }
+
     withSharedPoolConnection((client, topCb) => {
-      _getTopicExchangeBindingPatterns(client, topicParams, (err, patterns) => {
+      _getRoutingPatterns(client, topicParams, (err, patterns) => {
         if (err) return topCb(err);
         const allPatterns = patterns ?? [];
         if (allPatterns.length === 0) return topCb(null, []);
 
         const matched = allPatterns.filter((p) =>
-          _matchTopicExchangeBindingPattern(routingKey, p),
+          _matchRoutingKey(validatedRoutingKey, p),
         );
         if (matched.length === 0) return topCb(null, []);
 
@@ -159,16 +173,11 @@ export class ExchangeTopic {
 
         // Fetch queues for each matched pattern in parallel
         const tasks = matched.map((p) => (tcb: ICallback) => {
-          _getTopicExchangeBindingPatternQueues(
-            client,
-            p,
-            topicParams,
-            (e, qs) => {
-              if (e) return tcb(e);
-              (qs ?? []).forEach((q) => union.set(`${q.name}@${q.ns}`, q));
-              tcb();
-            },
-          );
+          _getRoutingPatternBoundQueues(client, p, topicParams, (e, qs) => {
+            if (e) return tcb(e);
+            (qs ?? []).forEach((q) => union.set(`${q.name}@${q.ns}`, q));
+            tcb();
+          });
         });
 
         async.parallel(tasks, (e) => {
@@ -180,7 +189,7 @@ export class ExchangeTopic {
   }
 
   /**
-   * Retrieve all binding patterns registered for a topic exchange.
+   * Retrieve all routing patterns registered for a topic exchange.
    *
    * This method returns all patterns that have been used to bind queues to the
    * exchange. Each pattern represents a different routing rule that can match
@@ -193,34 +202,34 @@ export class ExchangeTopic {
    *
    * @example
    * ```typescript
-   * topicExchange.getBindingPatterns('notifications', (err, patterns) => {
+   * topicExchange.getRoutingPatterns('notifications', (err, patterns) => {
    *   if (err) {
    *     console.error('Failed to get patterns:', err);
    *     return;
    *   }
    *
-   *   console.log('Binding patterns:');
+   *   console.log('Routing patterns:');
    *   patterns.forEach(pattern => {
    *     console.log(`- ${pattern}`);
    *   });
    * });
    * ```
    */
-  getBindingPatterns(
+  getRoutingPatterns(
     exchange: string | IExchangeParams,
     cb: ICallback<string[]>,
   ): void {
     withSharedPoolConnection(
-      (client, cb) => _getTopicExchangeBindingPatterns(client, exchange, cb),
+      (client, cb) => _getRoutingPatterns(client, exchange, cb),
       cb,
     );
   }
 
   /**
-   * Retrieve all queues bound to a specific binding pattern within a topic exchange.
+   * Retrieve all queues bound to a specific routing pattern within a topic exchange.
    *
    * This method returns all queues that are bound to the exchange using the
-   * specified binding pattern. This is useful for understanding which queues
+   * specified routing pattern. This is useful for understanding which queues
    * will receive messages for routing keys that match the pattern.
    *
    * @param exchange - Exchange name or parameter object.
@@ -231,7 +240,7 @@ export class ExchangeTopic {
    *
    * @example
    * ```typescript
-   * topicExchange.getBindingPatternQueues(
+   * topicExchange.getRoutingPatternBoundQueues(
    *   'notifications',
    *   'user.#',
    *   (err, queues) => {
@@ -248,19 +257,14 @@ export class ExchangeTopic {
    * );
    * ```
    */
-  getBindingPatternQueues(
+  getRoutingPatternBoundQueues(
     exchange: string | IExchangeParams,
     bindingPattern: string,
     cb: ICallback<IQueueParams[]>,
   ): void {
     withSharedPoolConnection(
       (client, cb) =>
-        _getTopicExchangeBindingPatternQueues(
-          client,
-          bindingPattern,
-          exchange,
-          cb,
-        ),
+        _getRoutingPatternBoundQueues(client, bindingPattern, exchange, cb),
       cb,
     );
   }
@@ -330,7 +334,7 @@ export class ExchangeTopic {
     if (queueParams.ns !== exchangeParams.ns) {
       return cb(new NamespaceMismatchError());
     }
-    if (!_validateTopicExchangeBindingPattern(routingPattern)) {
+    if (!_validateRoutingPattern(routingPattern)) {
       return cb(
         new InvalidTopicBindingPatternError({
           metadata: { pattern: routingPattern },
@@ -535,7 +539,7 @@ export class ExchangeTopic {
     if (queueParams.ns !== exchangeParams.ns) {
       return cb(new NamespaceMismatchError());
     }
-    if (!_validateTopicExchangeBindingPattern(routingPattern)) {
+    if (!_validateRoutingPattern(routingPattern)) {
       return cb(
         new InvalidTopicBindingPatternError({
           metadata: { pattern: routingPattern },
@@ -901,6 +905,51 @@ export class ExchangeTopic {
           );
           outerCb();
         },
+      );
+    }, cb);
+  }
+
+  getBindings(
+    exchange: string | IExchangeParams,
+    cb: ICallback<Record<string, IQueueParams[]>>,
+  ) {
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
+
+    withSharedPoolConnection((client, done) => {
+      async.waterfall(
+        [
+          (cb: ICallback<string[]>) => {
+            _getRoutingPatterns(client, exchangeParams, cb);
+          },
+          (
+            bindingPatterns,
+            done: ICallback<Record<string, IQueueParams[]>>,
+          ) => {
+            const bindings: Record<string, IQueueParams[]> = {};
+            async.eachOf(
+              bindingPatterns,
+              (bindingPattern, _, done) => {
+                bindings[bindingPattern] = [];
+                _getRoutingPatternBoundQueues(
+                  client,
+                  bindingPattern,
+                  exchangeParams,
+                  (err, queues) => {
+                    if (err) return done(err);
+                    bindings[bindingPattern].push(...(queues ?? []));
+                    done();
+                  },
+                );
+              },
+              (err) => {
+                if (err) return done(err);
+                done(null, bindings);
+              },
+            );
+          },
+        ],
+        done,
       );
     }, cb);
   }

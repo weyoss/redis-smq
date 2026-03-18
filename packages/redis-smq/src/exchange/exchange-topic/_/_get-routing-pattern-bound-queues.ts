@@ -17,7 +17,7 @@ import { IQueueParams } from '../../../queue-manager/index.js';
 import { _parseExchangeParams } from '../../_/_parse-exchange-params.js';
 import { EExchangeType, IExchangeParams } from '../../types/index.js';
 
-export function _getTopicExchangeBindingPatternQueues(
+export function _getRoutingPatternBoundQueues(
   redisClient: IRedisClient,
   bindingPattern: string,
   exchange: string | IExchangeParams,

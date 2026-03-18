@@ -37,7 +37,7 @@ import {
   EExchangeType,
   IExchangeParams,
 } from '../types/index.js';
-import { _getExchangeFanoutBoundQueues } from './_/_get-exchange-fanout-bound-queues.js';
+import { _getBoundQueues } from './_/_get-bound-queues.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
@@ -134,12 +134,7 @@ export class ExchangeFanout {
     exchange: string | IExchangeParams,
     cb: ICallback<IQueueParams[]>,
   ): void {
-    const exchangeParams = _parseExchangeParams(exchange, this.type);
-    if (exchangeParams instanceof Error) return cb(exchangeParams);
-    withSharedPoolConnection(
-      (client, cb) => _getExchangeFanoutBoundQueues(client, exchangeParams, cb),
-      cb,
-    );
+    this.getBindings(exchange, cb);
   }
 
   create(
@@ -670,5 +665,17 @@ export class ExchangeFanout {
         (err) => outerCb(err),
       );
     }, cb);
+  }
+
+  getBindings(
+    exchange: string | IExchangeParams,
+    cb: ICallback<IQueueParams[]>,
+  ): void {
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
+    withSharedPoolConnection(
+      (client, cb) => _getBoundQueues(client, exchangeParams, cb),
+      cb,
+    );
   }
 }
