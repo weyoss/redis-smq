@@ -31,4 +31,5 @@ export const eventRoutingPolicies: TEventRoutingPolicy = {
   'queue.queueDeleted': EEventTarget.BOTH,
   'queue.consumerGroupCreated': EEventTarget.BOTH,
   'queue.consumerGroupDeleted': EEventTarget.BOTH,
+  'queue.stateChanged': EEventTarget.BOTH,
 };

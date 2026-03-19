@@ -436,6 +436,60 @@ console.log(queues);
 
 ---
 
+### getQueuesWithStatus()
+
+> **getQueuesWithStatus**(): [`IConsumerQueuesWithStatus`](../interfaces/IConsumerQueuesWithStatus.md)[]
+
+Retrieves the list of queues the consumer is currently configured to handle,
+along with their current consumption status.
+
+This method provides detailed information about each queue's consumption state,
+including whether the queue is actively being processed or message consumption
+is stopped. Upon stopping, pausing, or locking a queue, all queue consumers
+immediately stop consuming messages from that queue. However, the queue
+configuration remains registered in the consumer. When the queue is resumed,
+message consumption automatically resumes without requiring the consumer to
+reconfigure the queue. This is useful for monitoring and debugging consumer
+behavior and queue state transitions.
+
+#### Returns
+
+[`IConsumerQueuesWithStatus`](../interfaces/IConsumerQueuesWithStatus.md)[]
+
+Array of queue status objects, each containing:
+
+- Queue identification details (name, namespace, optional group ID)
+- Current consumption status (active, stopped)
+
+#### Example
+
+```typescript
+consumer.consume({ ns: 'orders', name: 'pending' }, handler, callback);
+
+const queuesWithStatus = consumer.getQueuesWithStatus();
+console.log(queuesWithStatus);
+// Output: [
+//   {
+//       queue: {
+//           queueParams: { ns: 'orders', name: 'pending' },
+//           groupId: null,
+//       },
+//       status: 'active'
+//   },
+// ]
+
+// After queue is paused/stopped/locked, status changes but configuration persists
+// When queue is resumed, status returns to 'active' and consumption continues
+```
+
+#### See
+
+- [getQueues](#getqueues) For retrieving queue information without status details.
+- [consume](#consume) For setting up queue consumption.
+- [cancel](#cancel) For stopping queue consumption.
+
+---
+
 ### isDown()
 
 > **isDown**(): `boolean`

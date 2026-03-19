@@ -19,8 +19,8 @@ import { IQueueParams } from '../../../../queue-manager/index.js';
 import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobNotFoundError } from '../../../../errors/index.js';
-import { _lockQueuelock } from '../../../../queue-state-manager/helpers/_lock-queue.js';
-import { _unlockQueue } from '../../../../queue-state-manager/helpers/_unlock-queue.js';
+import { _lockQueuelock } from '../../../../queue-state-manager/_/_lock-queue.js';
+import { _unlockQueue } from '../../../../queue-state-manager/_/_unlock-queue.js';
 
 export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQueueJobTarget> {
   constructor(redisClient: IRedisClient, logger: ILogger) {

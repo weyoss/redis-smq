@@ -25,8 +25,8 @@ import {
   IQueueStateTransition,
   TQueueStateTransitionUserOptions,
 } from './types/index.js';
-import { _getQueueState } from './helpers/_get-queue-state.js';
-import { _transitQueueTo } from './helpers/_transit-queue-to.js';
+import { _getQueueState } from './_/_get-queue-state.js';
+import { _transitQueueTo } from './_/_transit-queue-to.js';
 
 /**
  * Manages queue operational states and transitions

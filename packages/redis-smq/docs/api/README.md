@@ -60,6 +60,7 @@
 - [IConsumerMessageHandlerParams](interfaces/IConsumerMessageHandlerParams.md)
 - [IConsumerOptions](interfaces/IConsumerOptions.md)
 - [IConsumerParsedOptions](interfaces/IConsumerParsedOptions.md)
+- [IConsumerQueuesWithStatus](interfaces/IConsumerQueuesWithStatus.md)
 - [IEventBusConfig](interfaces/IEventBusConfig.md)
 - [IExchangeParams](interfaces/IExchangeParams.md)
 - [IExchangeParsedParams](interfaces/IExchangeParsedParams.md)

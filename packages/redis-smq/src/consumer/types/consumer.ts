@@ -7,6 +7,8 @@
  * in the root directory of this source tree.
  */
 
+import { IQueueParsedParams } from '../../queue-manager/index.js';
+
 export interface IConsumerBatchConfig {
   enabled?: boolean;
   batchSize?: number;
@@ -23,4 +25,9 @@ export interface IConsumerOptions {
 export interface IConsumerParsedOptions extends Required<IConsumerOptions> {
   batchAcks: Required<IConsumerBatchConfig>;
   batchUnacks: Required<IConsumerBatchConfig>;
+}
+
+export interface IConsumerQueuesWithStatus {
+  queue: IQueueParsedParams;
+  status: 'active' | 'stopped';
 }

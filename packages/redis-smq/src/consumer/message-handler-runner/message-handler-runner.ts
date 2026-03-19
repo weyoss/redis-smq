@@ -22,6 +22,7 @@ import { QueueStateChangeHandler } from './queue-state-change-handler.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
+import { IConsumerQueuesWithStatus } from '../types/index.js';
 
 /**
  * Manages the lifecycle of message handlers for a consumer, including
@@ -490,6 +491,23 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       ],
       (err) => cb(err),
     );
+  }
+
+  /**
+   * Returns all queues with handler configurations and consumption status.
+   */
+  getQueueWithStatus(): IConsumerQueuesWithStatus[] {
+    const queues = this.getQueues();
+    return queues.map((queue: IQueueParsedParams) => {
+      const status: IConsumerQueuesWithStatus['status'] =
+        this.getMessageHandlerInstance(queue)?.isRunning()
+          ? 'active'
+          : 'stopped';
+      return {
+        queue,
+        status,
+      };
+    });
   }
 
   /**

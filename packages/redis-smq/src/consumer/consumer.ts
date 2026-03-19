@@ -31,7 +31,11 @@ import { IConsumerContext } from './types/consumer-context.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { HeartbeatFactory } from '../common/heartbeat/heartbeat.js';
 import { heartbeatEventPublisher } from './heartbeat-event-publisher.js';
-import { IConsumerOptions, IConsumerParsedOptions } from './types/index.js';
+import {
+  IConsumerOptions,
+  IConsumerParsedOptions,
+  IConsumerQueuesWithStatus,
+} from './types/index.js';
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
@@ -606,6 +610,58 @@ export class Consumer extends Runnable<TConsumerEvent> {
   getQueues(): IQueueParsedParams[] {
     this.logger.debug('Getting list of queues being consumed');
     const queues = this.messageHandlerRunner.getQueues();
+    this.logger.debug(
+      `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
+    );
+    return queues;
+  }
+
+  /**
+   * Retrieves the list of queues the consumer is currently configured to handle,
+   * along with their current consumption status.
+   *
+   * This method provides detailed information about each queue's consumption state,
+   * including whether the queue is actively being processed or message consumption
+   * is stopped. Upon stopping, pausing, or locking a queue, all queue consumers
+   * immediately stop consuming messages from that queue. However, the queue
+   * configuration remains registered in the consumer. When the queue is resumed,
+   * message consumption automatically resumes without requiring the consumer to
+   * reconfigure the queue. This is useful for monitoring and debugging consumer
+   * behavior and queue state transitions.
+   *
+   * @returns {IConsumerQueuesWithStatus[]} Array of queue status objects, each containing:
+   *   - Queue identification details (name, namespace, optional group ID)
+   *   - Current consumption status (active, stopped)
+   *
+   * @example
+   * ```typescript
+   * consumer.consume({ ns: 'orders', name: 'pending' }, handler, callback);
+   *
+   * const queuesWithStatus = consumer.getQueuesWithStatus();
+   * console.log(queuesWithStatus);
+   * // Output: [
+   * //   {
+   * //       queue: {
+   * //           queueParams: { ns: 'orders', name: 'pending' },
+   * //           groupId: null,
+   * //       },
+   * //       status: 'active'
+   * //   },
+   * // ]
+   *
+   * // After queue is paused/stopped/locked, status changes but configuration persists
+   * // When queue is resumed, status returns to 'active' and consumption continues
+   * ```
+   *
+   * @see {@link getQueues} For retrieving queue information without status details.
+   * @see {@link consume} For setting up queue consumption.
+   * @see {@link cancel} For stopping queue consumption.
+   */
+  getQueuesWithStatus(): IConsumerQueuesWithStatus[] {
+    this.logger.debug(
+      'Getting list of queues being consumed with consumption status...',
+    );
+    const queues = this.messageHandlerRunner.getQueueWithStatus();
     this.logger.debug(
       `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
     );

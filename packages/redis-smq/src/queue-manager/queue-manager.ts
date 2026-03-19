@@ -33,7 +33,7 @@ import {
 } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
-import { maxQueueStateHistorySize } from '../queue-state-manager/helpers/_set-queue-state.js';
+import { maxQueueStateHistorySize } from '../queue-state-manager/_/_set-queue-state.js';
 import {
   ESystemStateTransitionReason,
   IQueueStateTransition,

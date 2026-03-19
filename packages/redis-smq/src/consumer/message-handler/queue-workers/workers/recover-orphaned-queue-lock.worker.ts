@@ -9,7 +9,7 @@
 
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
 import { async, ICallback } from 'redis-smq-common';
-import { _getQueueState } from '../../../../queue-state-manager/helpers/_get-queue-state.js';
+import { _getQueueState } from '../../../../queue-state-manager/_/_get-queue-state.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import {
   EQueueStateLockOwner,
@@ -18,7 +18,7 @@ import {
 } from '../../../../queue-state-manager/index.js';
 import { EQueueOperationalState } from '../../../../queue-manager/index.js';
 import { PurgeQueueJobManager } from '../../../../common/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
-import { _unlockQueue } from '../../../../queue-state-manager/helpers/_unlock-queue.js';
+import { _unlockQueue } from '../../../../queue-state-manager/_/_unlock-queue.js';
 
 export class RecoverOrphanedQueueLockWorker extends QueueWorkerAbstract {
   override work(cb: ICallback) {
