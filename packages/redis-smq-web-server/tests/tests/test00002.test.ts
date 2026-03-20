@@ -9,7 +9,10 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import { startApiServer, stopApiServer } from '../common/start-api-server.js';
+import {
+  startApiServer,
+  shutdownApiServer,
+} from '../common/start-api-server.js';
 import { RedisSMQWebServer } from '../../index.js';
 import { config } from '../common/config.js';
 import { net } from 'redis-smq-common';
@@ -36,12 +39,12 @@ describe('RedisSMQWebServer with apiProxyTarget', () => {
 
   afterEach(async () => {
     await webServer.shutdown();
-    await stopApiServer();
+    await shutdownApiServer();
   });
 
-  it('proxies /api/v1 endpoints', async () => {
+  it('proxies /api endpoints', async () => {
     await request(webServerUrl)
-      .get('/api/v1/queues')
+      .get('/api/queues')
       .expect(200)
       .expect('Content-Type', /application\/json/);
   });

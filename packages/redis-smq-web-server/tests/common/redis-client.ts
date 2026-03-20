@@ -29,5 +29,6 @@ export async function getRedisClientInstance() {
 export async function shutdownRedisClient() {
   if (redisClient) {
     await redisClient.shutdownAsync();
+    redisClient = null;
   }
 }

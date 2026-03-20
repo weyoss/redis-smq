@@ -81,7 +81,7 @@ describe('RedisSMQWebServer E2E Tests', () => {
   it('should route /api requests to embedded REST API', async () => {
     await startWebServer();
     await request(serverUrl)
-      .get('/api/v1/queues')
+      .get('/api/queues')
       .expect(200)
       .expect('Content-Type', /application\/json/);
   });
@@ -98,7 +98,7 @@ describe('RedisSMQWebServer E2E Tests', () => {
 
   it('should not serve index.html for /api routes', async () => {
     await startWebServer();
-    const response = await request(serverUrl).get('/api/v1/queues');
+    const response = await request(serverUrl).get('/api/queues');
 
     // Should not be HTML
     expect(response.headers['content-type']).not.toContain('text/html');

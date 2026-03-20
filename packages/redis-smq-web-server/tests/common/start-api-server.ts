@@ -25,7 +25,7 @@ export async function startApiServer() {
   }
 }
 
-export async function stopApiServer() {
+export async function shutdownApiServer() {
   if (server) {
     await server.shutdown();
     server = null;

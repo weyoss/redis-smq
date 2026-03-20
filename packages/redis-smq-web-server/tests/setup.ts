@@ -17,19 +17,31 @@ import {
   getRedisClientInstance,
   shutdownRedisClient,
 } from './common/redis-client.js';
+import bluebird from 'bluebird';
+import { RedisSMQ } from 'redis-smq';
+import { config } from './common/config.js';
+import { shutdownWebServer } from './common/start-web-server.js';
+import { shutdownApiServer } from './common/start-api-server.js';
+
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 beforeAll(async () => {
   await initializeRedis();
 });
 
 afterAll(async () => {
-  await shutdownRedisClient();
   await shutDownRedisServer();
 });
 
 beforeEach(async () => {
   const redis = await getRedisClientInstance();
   await redis.flushallAsync();
+  await RedisSMQAsync.initializeWithConfigAsync(config);
+  await RedisSMQAsync.shutdownAsync();
 });
 
-afterEach(async () => void 0);
+afterEach(async () => {
+  await shutdownWebServer();
+  await shutdownApiServer();
+  await shutdownRedisClient();
+});
