@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { QueueManagerActiveConsumersError } from '../../../src/errors/index.js';
+import { QueueHasActiveConsumersError } from '../../../src/errors/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -28,7 +28,7 @@ test('Deleting a message queue having live consumers', async () => {
 
   const q = await getQueueManager();
   await expect(q.deleteAsync(defaultQueue)).rejects.toThrow(
-    QueueManagerActiveConsumersError,
+    QueueHasActiveConsumersError,
   );
 
   await consumer.shutdownAsync();

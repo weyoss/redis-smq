@@ -12,7 +12,7 @@ import { EQueueMessageType } from './types/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageBrowser } from './message-browser/types/index.js';
 import { ICallback } from 'redis-smq-common';
-import { AcknowledgedMessageAuditNotEnabledError } from '../errors/index.js';
+import { AcknowledgmentAuditDisabledError } from '../errors/index.js';
 import { Configuration } from '../config/index.js';
 
 /**
@@ -38,7 +38,7 @@ export class QueueAcknowledgedMessages extends QueueMessagesAbstract {
         const cfg = Configuration.getConfig();
         if (!cfg.messageAudit.acknowledgedMessages.enabled) {
           this.logger.error(`Acknowledged message audit is not enabled`);
-          return cb(new AcknowledgedMessageAuditNotEnabledError());
+          return cb(new AcknowledgmentAuditDisabledError());
         }
         operation(browser, cb);
       },

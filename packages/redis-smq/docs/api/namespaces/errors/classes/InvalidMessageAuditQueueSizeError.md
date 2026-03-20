@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / DeadLetteredMessageAuditNotEnabledError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidMessageAuditQueueSizeError
 
-# Class: DeadLetteredMessageAuditNotEnabledError
+# Class: InvalidMessageAuditQueueSizeError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new DeadLetteredMessageAuditNotEnabledError**(...`args`): `DeadLetteredMessageAuditNotEnabledError`
+> **new InvalidMessageAuditQueueSizeError**(...`args`): `InvalidMessageAuditQueueSizeError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`DeadLetteredMessageAuditNotEnabledError`
+`InvalidMessageAuditQueueSizeError`
 
 #### Inherited from
 
@@ -130,11 +130,19 @@ not capture any frames.
 
 ### getProps()
 
-> **getProps**(): `IRedisSMQErrorProperties`
+> **getProps**(): `object`
 
 #### Returns
 
-`IRedisSMQErrorProperties`
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.Configuration.InvalidMessageAuditQueueSize'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string`
 
 #### Overrides
 

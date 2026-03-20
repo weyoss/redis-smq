@@ -309,7 +309,7 @@ RoutingKeyRequiredError
 
 #### Throws
 
-NoMatchedQueuesForMessageExchangeError
+NoMatchingQueuesError
 
 #### Throws
 

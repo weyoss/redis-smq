@@ -17,7 +17,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
-import { AcknowledgedMessageAuditNotEnabledError } from '../../../src/errors/index.js';
+import { AcknowledgmentAuditDisabledError } from '../../../src/errors/index.js';
 
 test('Combined test: Disable message audit, produce and acknowledge a message, and purge queue', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
@@ -32,14 +32,14 @@ test('Combined test: Disable message audit, produce and acknowledge a message, a
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
   await expect(
     acknowledgedMessages.countMessagesAsync(queue),
-  ).rejects.toThrowError(AcknowledgedMessageAuditNotEnabledError);
+  ).rejects.toThrowError(AcknowledgmentAuditDisabledError);
 
   const messages = await getQueueMessages();
   const res3 = await messages.countMessagesAsync(queue);
   expect(res3).toBe(1);
 
   await expect(acknowledgedMessages.purgeAsync(queue)).rejects.toThrowError(
-    AcknowledgedMessageAuditNotEnabledError,
+    AcknowledgmentAuditDisabledError,
   );
 
   const res4 = await messages.countMessagesAsync(queue);

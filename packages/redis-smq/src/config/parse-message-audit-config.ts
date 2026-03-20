@@ -10,7 +10,7 @@
 import { defaultConfig } from './default-config.js';
 import {
   ConfigurationMessageAuditExpireError,
-  ConfigurationMessageAuditQueueSizeError,
+  InvalidMessageAuditQueueSizeError,
 } from '../errors/index.js';
 import {
   IMessageAuditConfig,
@@ -67,7 +67,7 @@ function getMessageAuditParams(
   const queueSize = validateNumericValue(
     params.queueSize ?? defaultParams.queueSize,
   );
-  if (queueSize === false) throw new ConfigurationMessageAuditQueueSizeError();
+  if (queueSize === false) throw new InvalidMessageAuditQueueSizeError();
 
   const expire = validateNumericValue(params.expire ?? defaultParams.expire);
   if (expire === false) throw new ConfigurationMessageAuditExpireError();
@@ -89,7 +89,7 @@ function getMessageAuditParams(
  * @param config - The messages configuration object containing storage settings
  * @returns Parsed and validated storage configuration for all message types
  *
- * @throws ConfigurationMessageAuditQueueSizeError When any queueSize is invalid
+ * @throws InvalidMessageAuditQueueSizeError When any queueSize is invalid
  * @throws ConfigurationMessageAuditExpireError When any expire value is invalid
  *
  * @example

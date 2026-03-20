@@ -8,11 +8,14 @@
  */
 
 import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
+import { IQueueParams } from '../queue-manager/index.js';
 
-export class QueueManagerActiveConsumersError extends RedisSMQError {
+export class QueueHasActiveConsumersError extends RedisSMQError<{
+  queue: IQueueParams;
+}> {
   getProps(): IRedisSMQErrorProperties {
     return {
-      code: 'RedisSMQ.Queue.ActiveConsumers',
+      code: 'RedisSMQ.Queue.QueueHasActiveConsumers',
       defaultMessage:
         'The queue has active consumers and cannot be deleted. Before deleting a queue, make sure all its consumers are offline.',
     };

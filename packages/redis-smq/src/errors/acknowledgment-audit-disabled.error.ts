@@ -9,12 +9,11 @@
 
 import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class QueueDeliveryModelMismatchError extends RedisSMQError {
+export class AcknowledgmentAuditDisabledError extends RedisSMQError {
   getProps(): IRedisSMQErrorProperties {
     return {
-      code: 'RedisSMQ.Queue.DeliveryModelMismatch',
-      defaultMessage:
-        'Queue delivery model does not match the exchange fanout delivery model.',
+      code: 'RedisSMQ.Message.AcknowledgmentAuditDisabled',
+      defaultMessage: 'Message acknowledgment audit is not enabled.',
     };
   }
 }

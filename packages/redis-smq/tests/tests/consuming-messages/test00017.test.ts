@@ -20,8 +20,8 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 import {
-  AcknowledgedMessageAuditNotEnabledError,
-  DeadLetteredMessageAuditNotEnabledError,
+  AcknowledgmentAuditDisabledError,
+  DeadLetterAuditDisabledError,
 } from '../../../src/errors/index.js';
 
 test('Message audit: enabled = false', async () => {
@@ -39,7 +39,7 @@ test('Message audit: enabled = false', async () => {
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   await expect(
     deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100),
-  ).rejects.toThrowError(DeadLetteredMessageAuditNotEnabledError);
+  ).rejects.toThrowError(DeadLetterAuditDisabledError);
 
   const { producer: p, consumer: c } =
     await produceAndAcknowledgeMessage(getDefaultQueue());
@@ -50,5 +50,5 @@ test('Message audit: enabled = false', async () => {
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
   await expect(
     acknowledgedMessages.getMessagesAsync(defaultQueue, 0, 100),
-  ).rejects.toThrowError(AcknowledgedMessageAuditNotEnabledError);
+  ).rejects.toThrowError(AcknowledgmentAuditDisabledError);
 });

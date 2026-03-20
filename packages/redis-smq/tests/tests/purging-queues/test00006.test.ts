@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import {
-  QueueManagerActiveConsumersError,
+  QueueHasActiveConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
 } from '../../../src/errors/index.js';
@@ -42,7 +42,7 @@ test('Deleting a message queue with all of its data', async () => {
   await bluebird.delay(5000);
 
   await expect(q.deleteAsync(queue)).rejects.toThrow(
-    QueueManagerActiveConsumersError,
+    QueueHasActiveConsumersError,
   );
 
   await shutDownBaseInstance(consumer);

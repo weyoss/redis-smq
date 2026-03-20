@@ -9,11 +9,11 @@
 
 import { RedisSMQError } from 'redis-smq-common';
 
-export class NoMatchedQueuesForMessageExchangeError extends RedisSMQError {
+export class InvalidMessageAuditQueueSizeError extends RedisSMQError {
   getProps() {
     return {
-      code: 'RedisSMQ.Producer.NoMatchedQueuesForExchange',
-      defaultMessage: 'No queues were matched for the message exchange.',
+      code: 'RedisSMQ.Configuration.InvalidMessageAuditQueueSize',
+      defaultMessage: `Message audit 'queue size' parameter is invalid. Expected a positive integer.`,
     };
   }
 }

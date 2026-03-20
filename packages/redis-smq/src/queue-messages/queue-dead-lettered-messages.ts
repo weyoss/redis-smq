@@ -13,7 +13,7 @@ import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageBrowser } from './message-browser/types/index.js';
 import { ICallback } from 'redis-smq-common';
 import { Configuration } from '../config/index.js';
-import { DeadLetteredMessageAuditNotEnabledError } from '../errors/index.js';
+import { DeadLetterAuditDisabledError } from '../errors/index.js';
 
 /**
  * Manages audited dead-lettered messages in a queue.
@@ -39,7 +39,7 @@ export class QueueDeadLetteredMessages extends QueueMessagesAbstract {
         const cfg = Configuration.getConfig();
         if (!cfg.messageAudit.deadLetteredMessages.enabled) {
           this.logger.error(`Dead-lettered message audit is not enabled`);
-          return cb(new DeadLetteredMessageAuditNotEnabledError());
+          return cb(new DeadLetterAuditDisabledError());
         }
         operation(browser, cb);
       },

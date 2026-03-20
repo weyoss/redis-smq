@@ -13,7 +13,7 @@ import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups
 import {
   ConsumerSetMismatchError,
   QueueHasBoundExchangesError,
-  QueueManagerActiveConsumersError,
+  QueueHasActiveConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
@@ -205,7 +205,13 @@ export function _deleteQueue(
               );
             else if (reply === 'QUEUE_NOT_EMPTY') cb(new QueueNotEmptyError());
             else if (reply === 'QUEUE_HAS_ACTIVE_CONSUMERS')
-              cb(new QueueManagerActiveConsumersError());
+              cb(
+                new QueueHasActiveConsumersError({
+                  metadata: {
+                    queue: queueParams,
+                  },
+                }),
+              );
             else if (reply === 'QUEUE_HAS_BOUND_EXCHANGE')
               cb(new QueueHasBoundExchangesError());
             else if (reply === 'CONSUMER_SET_MISMATCH')

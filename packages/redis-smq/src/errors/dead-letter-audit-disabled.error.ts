@@ -9,10 +9,10 @@
 
 import { IRedisSMQErrorProperties, RedisSMQError } from 'redis-smq-common';
 
-export class DeadLetteredMessageAuditNotEnabledError extends RedisSMQError {
+export class DeadLetterAuditDisabledError extends RedisSMQError {
   getProps(): IRedisSMQErrorProperties {
     return {
-      code: 'RedisSMQ.Message.DeadLetteredMessageAuditNotEnabled',
+      code: 'RedisSMQ.Message.DeadLetterAuditDisabled',
       defaultMessage: 'Dead-lettered message audit is not enabled.',
     };
   }

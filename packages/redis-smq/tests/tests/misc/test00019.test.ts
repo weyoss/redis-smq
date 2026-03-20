@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import {
   ConfigurationMessageAuditExpireError,
-  ConfigurationMessageAuditQueueSizeError,
+  InvalidMessageAuditQueueSizeError,
 } from '../../../src/errors/index.js';
 import { parseMessageAuditConfig } from '../../../src/config/parse-message-audit-config.js';
 
@@ -21,7 +21,7 @@ test('Configuration: storeMessages', async () => {
         queueSize: -11,
       },
     });
-  }).toThrow(ConfigurationMessageAuditQueueSizeError);
+  }).toThrow(InvalidMessageAuditQueueSizeError);
 
   expect(() => {
     parseMessageAuditConfig({

@@ -1,30 +1,30 @@
-[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueDeliveryModelMismatchError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueHasActiveConsumersError
 
-# Class: QueueDeliveryModelMismatchError
+# Class: QueueHasActiveConsumersError
 
 ## Extends
 
-- `RedisSMQError`
+- `RedisSMQError`\<\{ `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>
 
 ## Constructors
 
 ### Constructor
 
-> **new QueueDeliveryModelMismatchError**(...`args`): `QueueDeliveryModelMismatchError`
+> **new QueueHasActiveConsumersError**(...`args`): `QueueHasActiveConsumersError`
 
 #### Parameters
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<`never`\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 
-`QueueDeliveryModelMismatchError`
+`QueueHasActiveConsumersError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+`RedisSMQError<{ queue: IQueueParams; }>.constructor`
 
 ## Properties
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): `null`
+> **getMetadata**(): \{ `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Returns
 
-`null`
+\{ `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Inherited from
 

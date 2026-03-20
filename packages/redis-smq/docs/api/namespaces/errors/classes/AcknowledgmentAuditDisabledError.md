@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / AcknowledgedMessageAuditNotEnabledError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / AcknowledgmentAuditDisabledError
 
-# Class: AcknowledgedMessageAuditNotEnabledError
+# Class: AcknowledgmentAuditDisabledError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new AcknowledgedMessageAuditNotEnabledError**(...`args`): `AcknowledgedMessageAuditNotEnabledError`
+> **new AcknowledgmentAuditDisabledError**(...`args`): `AcknowledgmentAuditDisabledError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`AcknowledgedMessageAuditNotEnabledError`
+`AcknowledgmentAuditDisabledError`
 
 #### Inherited from
 

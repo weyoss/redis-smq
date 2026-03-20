@@ -22,7 +22,7 @@ import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connectio
 import { Configuration } from '../config/index.js';
 import {
   MessageExchangeRequiredError,
-  NoMatchedQueuesForMessageExchangeError,
+  NoMatchingQueuesError,
   ProducerNotRunningError,
   QueueHasNoConsumerGroupsError,
   RoutingKeyRequiredError,
@@ -460,7 +460,7 @@ export class Producer extends Runnable<TProducerEvent> {
    * @throws ProducerNotRunningError
    * @throws MessageExchangeRequiredError
    * @throws RoutingKeyRequiredError
-   * @throws NoMatchedQueuesForMessageExchangeError
+   * @throws NoMatchingQueuesError
    * @throws QueueHasNoConsumerGroupsError
    * @throws QueueNotFoundError
    * @throws ConsumerGroupNotFoundError
@@ -523,7 +523,7 @@ export class Producer extends Runnable<TProducerEvent> {
           this.logger.error(
             `No queues found for exchange [${exchangeParams.name}@${exchangeParams.ns}].`,
           );
-          return cb(new NoMatchedQueuesForMessageExchangeError());
+          return cb(new NoMatchingQueuesError());
         }
 
         this.logger.info(

@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { NoMatchedQueuesForMessageExchangeError } from '../../../src/errors/index.js';
+import { NoMatchingQueuesError } from '../../../src/errors/index.js';
 import {
   EQueueType,
   ExchangeDirect,
@@ -142,7 +142,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
         publishViaDirect(exchangeDirectParams, 'order.updated', {
           id: 'X',
         }),
-      ).rejects.toThrow(NoMatchedQueuesForMessageExchangeError);
+      ).rejects.toThrow(NoMatchingQueuesError);
     });
 
     it('delivers to multiple queues bound to the same key', async () => {
@@ -266,7 +266,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
         publishViaTopic(exchangeTopicParams, 'order.created', {
           nope: true,
         }),
-      ).rejects.toThrow(NoMatchedQueuesForMessageExchangeError);
+      ).rejects.toThrow(NoMatchingQueuesError);
     });
   });
 
@@ -295,7 +295,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
       // Publish to fanout with no bindings
       await expect(
         publishViaFanout(exchangeFanoutParams, { hello: 'nobody' }),
-      ).rejects.toThrow(NoMatchedQueuesForMessageExchangeError);
+      ).rejects.toThrow(NoMatchingQueuesError);
     });
   });
 

@@ -19,7 +19,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
-import { AcknowledgedMessageAuditNotEnabledError } from '../../../src/errors/index.js';
+import { AcknowledgmentAuditDisabledError } from '../../../src/errors/index.js';
 
 test('Message audit: acknowledged = false, deadLettered = true', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
@@ -54,5 +54,5 @@ test('Message audit: acknowledged = false, deadLettered = true', async () => {
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
   await expect(
     acknowledgedMessages.getMessagesAsync(defaultQueue, 0, 100),
-  ).rejects.toThrowError(AcknowledgedMessageAuditNotEnabledError);
+  ).rejects.toThrowError(AcknowledgmentAuditDisabledError);
 });

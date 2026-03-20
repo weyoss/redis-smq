@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueManagerActiveConsumersError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / NoMatchingQueuesError
 
-# Class: QueueManagerActiveConsumersError
+# Class: NoMatchingQueuesError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new QueueManagerActiveConsumersError**(...`args`): `QueueManagerActiveConsumersError`
+> **new NoMatchingQueuesError**(...`args`): `NoMatchingQueuesError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`QueueManagerActiveConsumersError`
+`NoMatchingQueuesError`
 
 #### Inherited from
 
@@ -130,11 +130,19 @@ not capture any frames.
 
 ### getProps()
 
-> **getProps**(): `IRedisSMQErrorProperties`
+> **getProps**(): `object`
 
 #### Returns
 
-`IRedisSMQErrorProperties`
+`object`
+
+##### code
+
+> **code**: `string` = `'RedisSMQ.Producer.NoMatchingQueues'`
+
+##### defaultMessage
+
+> **defaultMessage**: `string` = `'No queues were matched for the message exchange.'`
 
 #### Overrides
 

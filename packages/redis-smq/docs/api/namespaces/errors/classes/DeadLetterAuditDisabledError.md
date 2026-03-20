@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConfigurationMessageAuditQueueSizeError
+[RedisSMQ](../../../../../README.md) / [Documentation](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / DeadLetterAuditDisabledError
 
-# Class: ConfigurationMessageAuditQueueSizeError
+# Class: DeadLetterAuditDisabledError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new ConfigurationMessageAuditQueueSizeError**(...`args`): `ConfigurationMessageAuditQueueSizeError`
+> **new DeadLetterAuditDisabledError**(...`args`): `DeadLetterAuditDisabledError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`ConfigurationMessageAuditQueueSizeError`
+`DeadLetterAuditDisabledError`
 
 #### Inherited from
 
@@ -130,19 +130,11 @@ not capture any frames.
 
 ### getProps()
 
-> **getProps**(): `object`
+> **getProps**(): `IRedisSMQErrorProperties`
 
 #### Returns
 
-`object`
-
-##### code
-
-> **code**: `string` = `'RedisSMQ.Configuration.MessageAuditQueueSize'`
-
-##### defaultMessage
-
-> **defaultMessage**: `string`
+`IRedisSMQErrorProperties`
 
 #### Overrides
 
