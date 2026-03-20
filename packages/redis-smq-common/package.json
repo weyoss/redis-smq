@@ -82,7 +82,7 @@
     "uuid": "13.0.0"
   },
   "scripts": {
-    "test": "../../scripts/test-workspace-esm.sh",
+    "test": "../../scripts/test_workspace_esm.sh",
     "build": "scripts/build.sh",
     "document": "scripts/document.sh"
   },

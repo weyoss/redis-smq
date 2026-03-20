@@ -63,8 +63,8 @@
     "build": "scripts/build.sh",
     "generate-openapi-client": "./scripts/generate_openapi_client.sh",
     "run-api-server": "./scripts/run_api_server.js",
-    "consume-queue": "./scripts/consume-queue.js",
-    "produce-message": "./scripts/produce-message.js"
+    "consume-queue": "scripts/consume_queue.js",
+    "produce-message": "scripts/produce_message.js"
   },
   "peerDependencies": {
     "redis-smq-common": "workspace:^"

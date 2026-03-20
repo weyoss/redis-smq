@@ -123,41 +123,30 @@ function setupSignalHandlers(shutdownHandler) {
   process.on('SIGTERM', shutdownHandler);
 }
 
-/**
- * Main application entry point
- */
-async function main() {
-  try {
-    // Parse command line arguments
-    const options = parseArguments();
+try {
+  // Parse command line arguments
+  const options = parseArguments();
 
-    // Load environment configuration
-    loadEnvironment(options.env);
+  // Load environment configuration
+  loadEnvironment(options.env);
 
-    // Configure
-    await configure();
+  // Configure
+  await configure();
 
-    // Parse queue configuration
-    const consumeQueue = parseQueue(options.queue);
+  // Parse queue configuration
+  const consumeQueue = parseQueue(options.queue);
 
-    // Initialize consumer
-    const consumer = bluebird.promisifyAll(RedisSMQAsync.createConsumer());
-    await consumer.runAsync();
-    await consumer.consumeAsync(consumeQueue, (msg, cb) => cb());
-    console.log(
-      `Consumer started - consuming from ${consumeQueue.ns}:${consumeQueue.name}`,
-    );
+  // Initialize consumer
+  const consumer = bluebird.promisifyAll(RedisSMQAsync.createConsumer());
+  await consumer.runAsync();
+  await consumer.consumeAsync(consumeQueue, (msg, cb) => cb());
+  console.log(
+    `Consumer started - consuming from ${consumeQueue.ns}:${consumeQueue.name}`,
+  );
 
-    const shutdownHandler = createShutdownHandler();
-    setupSignalHandlers(shutdownHandler);
-  } catch (error) {
-    console.error('Application startup failed:', error.message);
-    process.exit(1);
-  }
-}
-
-// Start the application
-main().catch((error) => {
-  console.error('Unhandled error:', error);
+  const shutdownHandler = createShutdownHandler();
+  setupSignalHandlers(shutdownHandler);
+} catch (error) {
+  console.error('Application startup failed:', error.message);
   process.exit(1);
-});
+}

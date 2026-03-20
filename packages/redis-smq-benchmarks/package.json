@@ -68,7 +68,7 @@
   },
   "scripts": {
     "build": "scripts/build.sh",
-    "test": "../../scripts/test-workspace-esm.sh"
+    "test": "../../scripts/test_workspace_esm.sh"
   },
   "bin": {
     "redis-smq-benchmarks": "./dist/esm/bin/cli.js"

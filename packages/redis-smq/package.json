@@ -74,7 +74,7 @@
   },
   "scripts": {
     "build": "scripts/build.sh",
-    "test": "../../scripts/test-workspace-esm.sh",
+    "test": "../../scripts/test_workspace_esm.sh",
     "document": "scripts/document.sh"
   },
   "engineStrict": true,

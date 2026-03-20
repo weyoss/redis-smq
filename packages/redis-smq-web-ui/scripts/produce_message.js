@@ -112,7 +112,7 @@ function createMessage(queue, messageContent, delay, ttl) {
  * @param {ProducibleMessage} message - Message to produce
  * @returns {Promise<string[]>} Promise resolving to message IDs
  */
-function produceMessage(producer, message) {
+function produce_message(producer, message) {
   return new Promise((resolve, reject) => {
     producer.produce(message, (err, ids) => {
       if (err) {
@@ -227,7 +227,7 @@ async function main() {
       options.ttl,
     );
 
-    const allIds = await produceMessage(producer, message);
+    const allIds = await produce_message(producer, message);
 
     const completedTimestamp = new Date().toISOString();
     console.log(`[${completedTimestamp}] Production completed successfully!`);
