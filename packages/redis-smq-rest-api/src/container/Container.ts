@@ -34,10 +34,7 @@ import {
   QueueStateManager,
 } from 'redis-smq';
 import { ConsumerGroupsService } from '../services/ConsumerGroupsService.js';
-import { ExchangeDirectService } from '../services/ExchangeDirectService.js';
-import { ExchangeFanoutService } from '../services/ExchangeFanoutService.js';
 import { ExchangesService } from '../services/ExchangesService.js';
-import { ExchangeTopicService } from '../services/ExchangeTopicService.js';
 import { MessagesService } from '../services/MessagesService.js';
 import { NamespacesService } from '../services/NamespacesService.js';
 import { QueueMessagesService } from '../services/QueueMessagesService.js';
@@ -80,9 +77,6 @@ export class Container {
       messagesService: asClass(MessagesService),
       queueRateLimitService: asClass(QueueRateLimitService),
       namespacesService: asClass(NamespacesService),
-      exchangeFanoutService: asClass(ExchangeFanoutService),
-      exchangeDirectService: asClass(ExchangeDirectService),
-      exchangeTopicService: asClass(ExchangeTopicService),
       exchangesService: asClass(ExchangesService),
       consumerGroupsService: asClass(ConsumerGroupsService),
       configurationService: asClass(ConfigurationService),

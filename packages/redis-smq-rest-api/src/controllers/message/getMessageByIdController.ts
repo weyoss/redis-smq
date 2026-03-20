@@ -12,8 +12,8 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { GetMessageByIdControllerRequestPathDTO } from '../../dto/controllers/messages/GetMessageByIdControllerRequestPathDTO.js';
-import { GetMessageByIdControllerResponseDTO } from '../../dto/controllers/messages/GetMessageByIdControllerResponseDTO.js';
+import { GetMessageByIdControllerRequestPathDTO } from './GetMessageByIdControllerRequestPathDTO.js';
+import { GetMessageByIdControllerResponseDTO } from './GetMessageByIdControllerResponseDTO.js';
 
 export const getMessageByIdController: TControllerRequestHandler<
   GetMessageByIdControllerRequestPathDTO,

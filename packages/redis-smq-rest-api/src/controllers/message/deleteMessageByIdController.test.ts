@@ -13,7 +13,7 @@ import { config } from '../../../tests/common/config.js';
 import { createQueue } from '../../../tests/common/create-queue.js';
 import { publishMessage } from '../../../tests/common/publish-message.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { GetMessageByIdControllerResponseDTO } from '../../dto/controllers/messages/GetMessageByIdControllerResponseDTO.js';
+import { GetMessageByIdControllerResponseDTO } from './GetMessageByIdControllerResponseDTO.js';
 
 describe('deleteMessageByIdController', () => {
   it('HTTP 204 No Content', async () => {
@@ -22,7 +22,7 @@ describe('deleteMessageByIdController', () => {
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<GetMessageByIdControllerResponseDTO> =
-      await request.delete(`/api/v1/messages/${messageId}`);
+      await request.delete(`/api/messages/${messageId}`);
     expect(response1.status).toEqual(204);
     expect(response1.body).toEqual({});
   });

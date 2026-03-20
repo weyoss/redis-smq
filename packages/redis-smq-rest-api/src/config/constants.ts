@@ -7,8 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 import { env } from 'redis-smq-common';
+
+const jsonSchemaFilename = 'schema.json';
+const openapiSchemaFilename = 'openapi-specs.json';
 
 const curDir = env.getCurrentDir();
 const srcDir = resolve(curDir, '../');
@@ -16,14 +19,20 @@ const rootDir =
   resolve(srcDir, '../').split('/').pop() === 'redis-smq-rest-api'
     ? resolve(srcDir, '../')
     : resolve(srcDir, '../../..');
+const distDir = join(rootDir, 'dist');
+
 const tsConfigPath = resolve(rootDir, './tsconfig.json');
-const jsonSchemaPath = resolve(rootDir, './dist/schema.json');
-const openApiDocumentFilename = 'openapi-specs.json';
+const assetsPath = join(distDir, 'assets');
+const jsonSchemaPath = join(assetsPath, jsonSchemaFilename);
+const openapiSchemaPath = join(assetsPath, openapiSchemaFilename);
 
 export const constants = {
   srcDir,
   rootDir,
-  openApiDocumentFilename,
+  distDir,
+  openapiSchemaFilename,
   tsConfigPath,
   jsonSchemaPath,
+  openapiSchemaPath,
+  assetsPath,
 };

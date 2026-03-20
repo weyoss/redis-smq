@@ -1,7 +1,12 @@
 {
   "extends": "../../tsconfig.cjs.json",
   "compilerOptions": {
-    "outDir": "./dist/cjs"
+    "outDir": "./dist/cjs",
+    "paths": {
+      "@scalar/openapi-types": [
+        "./node_modules/@scalar/openapi-types/dist/index.d.ts"
+      ]
+    }
   },
   "include": ["."]
 }

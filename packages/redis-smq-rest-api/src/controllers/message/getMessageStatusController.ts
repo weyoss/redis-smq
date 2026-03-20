@@ -12,8 +12,8 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { GetMessageStatusControllerRequestPathDTO } from '../../dto/controllers/messages/GetMessageStatusControllerRequestPathDTO.js';
-import { GetMessageStatusControllerResponseDTO } from '../../dto/controllers/messages/GetMessageStatusControllerResponseDTO.js';
+import { GetMessageStatusControllerRequestPathDTO } from './GetMessageStatusControllerRequestPathDTO.js';
+import { GetMessageStatusControllerResponseDTO } from './GetMessageStatusControllerResponseDTO.js';
 
 export const getMessageStatusController: TControllerRequestHandler<
   GetMessageStatusControllerRequestPathDTO,

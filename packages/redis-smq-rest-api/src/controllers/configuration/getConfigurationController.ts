@@ -12,7 +12,7 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { GetConfigurationControllerResponseDTO } from '../../dto/controllers/configuration/GetConfigurationControllerResponseDTO.js';
+import { GetConfigurationControllerResponseDTO } from './GetConfigurationControllerResponseDTO.js';
 
 export const getConfigurationController: TControllerRequestHandler<
   TControllerRequestPayloadEmpty,

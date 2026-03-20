@@ -13,7 +13,7 @@ set -e
 rm -rf dist
 
 # generate error mappings before building
-pnpm error-mappings:gen
+pnpm gen:error-mapping
 
 # esm
 tsc -p ./tsconfig.json
@@ -29,7 +29,7 @@ cat >dist/cjs/package.json <<!EOF
 !EOF
 
 # schema
-pnpm schema:gen
+pnpm gen:json-schema
 
 # openapi
-pnpm openapi:gen
+pnpm gen:openapi-schema

@@ -14,7 +14,7 @@ import { config } from '../../../tests/common/config.js';
 import { createQueue } from '../../../tests/common/create-queue.js';
 import { publishMessage } from '../../../tests/common/publish-message.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { GetMessageByIdControllerResponseDTO } from '../../dto/controllers/messages/GetMessageByIdControllerResponseDTO.js';
+import { GetMessageByIdControllerResponseDTO } from './GetMessageByIdControllerResponseDTO.js';
 
 describe('getMessageByIdController', () => {
   it('HTTP 200 OK', async () => {
@@ -23,7 +23,7 @@ describe('getMessageByIdController', () => {
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<GetMessageByIdControllerResponseDTO> =
-      await request.get(`/api/v1/messages/${messageId}`);
+      await request.get(`/api/messages/${messageId}`);
     expect(response1.status).toEqual(200);
     expect(response1.body?.data?.id).toEqual(messageId);
     expect(response1.body?.data?.status).toEqual(

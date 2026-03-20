@@ -11,13 +11,13 @@ import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { config } from '../../../tests/common/config.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { GetConfigurationControllerResponseDTO } from '../../dto/controllers/configuration/GetConfigurationControllerResponseDTO.js';
+import { GetConfigurationControllerResponseDTO } from './GetConfigurationControllerResponseDTO.js';
 
 describe('getConfigurationController', () => {
   it('HTTP 200 OK', async () => {
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<GetConfigurationControllerResponseDTO> =
-      await request.get('/api/v1/config');
+      await request.get('/api/config');
     expect(response1.status).toEqual(200);
     expect(Object.keys(response1.body?.data ?? {}).sort()).toEqual(
       ['namespace', 'redis', 'logger', 'eventBus', 'messageAudit'].sort(),

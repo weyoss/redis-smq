@@ -9,7 +9,7 @@
 
 import { IQueueParams, QueueStateManager } from 'redis-smq';
 import bluebird from 'bluebird';
-import { TransitQueueStateControllerRequestBodyDTO } from '../dto/controllers/queue-state/TransitQueueStateControllerRequestBodyDTO.js';
+import { TransitQueueStateControllerRequestBodyDTO } from '../controllers/namespaces/namespace/queues/queue/state/TransitQueueStateControllerRequestBodyDTO.js';
 
 export class QueueOperationalStateService {
   protected queueStateManager;

@@ -43,6 +43,7 @@ export function SchemaGenerator() {
     const type = `${cName}Request${pName}DTO`;
     return getDefinition(type);
   };
+
   const getResponseSchema = (controllerName: string) => {
     const cName = `${controllerName[0].toUpperCase()}${controllerName.slice(
       1,
@@ -148,7 +149,10 @@ export function SchemaGenerator() {
         const schema = map.get(currentValue);
         if (!schema) throw new Error();
         const ajv = new Ajv({ coerceTypes: true });
-        const validator = ajv.compile(schema);
+        const validator = ajv.compile({
+          ...schema,
+          definitions,
+        });
         const validatorFn = (data: unknown) => {
           const isValid = validator(data);
           if (!isValid && validator.errors) {
@@ -170,7 +174,10 @@ export function SchemaGenerator() {
       const m = new Map<string, (data: unknown) => void>();
       map.forEach((value, key) => {
         const ajv = new Ajv({ coerceTypes: false });
-        const validator = ajv.compile(value.schema);
+        const validator = ajv.compile({
+          ...value.schema,
+          definitions,
+        });
         const validatorFn = (data: unknown) => {
           const isValid = validator(data);
           if (!isValid && validator.errors) {

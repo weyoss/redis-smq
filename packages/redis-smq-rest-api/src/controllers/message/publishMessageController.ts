@@ -13,8 +13,8 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { PublishMessageControllerRequestBodyDTO } from '../../dto/controllers/messages/PublishMessageControllerRequestBodyDTO.js';
-import { PublishMessageControllerResponseDTO } from '../../dto/controllers/messages/PublishMessageControllerResponseDTO.js';
+import { PublishMessageControllerRequestBodyDTO } from './PublishMessageControllerRequestBodyDTO.js';
+import { PublishMessageControllerResponseDTO } from './PublishMessageControllerResponseDTO.js';
 
 export const publishMessageController: TControllerRequestHandler<
   TControllerRequestPayloadEmpty,

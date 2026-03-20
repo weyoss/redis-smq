@@ -12,8 +12,8 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { DeleteMessagesByIdsControllerRequestQueryDTO } from '../../dto/controllers/messages/DeleteMessagesByIdsControllerRequestQueryDTO.js';
-import { DeleteMessagesByIdsControllerResponseDTO } from '../../dto/controllers/messages/DeleteMessagesByIdsControllerResponseDTO.js';
+import { DeleteMessagesByIdsControllerRequestQueryDTO } from './DeleteMessagesByIdsControllerRequestQueryDTO.js';
+import { DeleteMessagesByIdsControllerResponseDTO } from './DeleteMessagesByIdsControllerResponseDTO.js';
 
 export const deleteMessagesByIdsController: TControllerRequestHandler<
   TControllerRequestPayloadEmpty,

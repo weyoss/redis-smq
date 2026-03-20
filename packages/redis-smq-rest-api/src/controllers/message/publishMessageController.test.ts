@@ -12,9 +12,9 @@ import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { config } from '../../../tests/common/config.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { PublishMessageControllerRequestBodyDTO } from '../../dto/controllers/messages/PublishMessageControllerRequestBodyDTO.js';
-import { PublishMessageControllerResponseDTO } from '../../dto/controllers/messages/PublishMessageControllerResponseDTO.js';
-import { CreateQueueControllerRequestBodyDTO } from '../../dto/controllers/queues/CreateQueueControllerRequestBodyDTO.js';
+import { PublishMessageControllerRequestBodyDTO } from './PublishMessageControllerRequestBodyDTO.js';
+import { PublishMessageControllerResponseDTO } from './PublishMessageControllerResponseDTO.js';
+import { CreateQueueControllerRequestBodyDTO } from '../main/CreateQueueControllerRequestBodyDTO.js';
 
 describe('publishMessageController', () => {
   it('HTTP 201 Created', async () => {
@@ -28,7 +28,7 @@ describe('publishMessageController', () => {
       queueDeliveryModel: EQueueDeliveryModel.POINT_TO_POINT,
       queueType: EQueueType.LIFO_QUEUE,
     };
-    await request.post('/api/v1/queues').send(requestBody1);
+    await request.post('/api/queues').send(requestBody1);
 
     const requestBody2: PublishMessageControllerRequestBodyDTO = {
       message: {
@@ -37,7 +37,7 @@ describe('publishMessageController', () => {
       exchange: { queue: requestBody1.queue },
     };
     const response: TResponse<PublishMessageControllerResponseDTO> =
-      await request.post('/api/v1/messages').send(requestBody2);
+      await request.post('/api/messages').send(requestBody2);
     expect(response.status).toEqual(201);
     expect(response.body?.data?.length).toEqual(1);
     expect(typeof (response.body?.data || [])[0]).toEqual('string');

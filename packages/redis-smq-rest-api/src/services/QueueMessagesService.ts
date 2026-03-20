@@ -16,9 +16,9 @@ import {
   QueuePublishedMessages,
   QueueScheduledMessages,
 } from 'redis-smq';
-import { GetQueueMessagesControllerRequestQueryDTO } from '../dto/controllers/queue-messages/GetQueueMessagesControllerRequestQueryDTO.js';
-import { CountQueueMessagesControllerRequestQueryDTO } from '../dto/controllers/queue-messages/CountQueueMessagesControllerRequestQueryDTO.js';
-import { PurgeQueueMessagesControllerRequestQueryDTO } from '../dto/controllers/queue-messages/PurgeQueueMessagesControllerRequestQueryDTO.js';
+import { GetQueueMessagesControllerRequestQueryDTO } from '../controllers/namespaces/namespace/queues/queue/messages/GetQueueMessagesControllerRequestQueryDTO.js';
+import { CountQueueMessagesControllerRequestQueryDTO } from '../controllers/namespaces/namespace/queues/queue/messages/CountQueueMessagesControllerRequestQueryDTO.js';
+import { PurgeQueueMessagesControllerRequestQueryDTO } from '../controllers/namespaces/namespace/queues/queue/messages/PurgeQueueMessagesControllerRequestQueryDTO.js';
 
 const { promisifyAll } = bluebird;
 

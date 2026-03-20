@@ -14,7 +14,7 @@ import { config } from '../../../tests/common/config.js';
 import { createQueue } from '../../../tests/common/create-queue.js';
 import { publishMessage } from '../../../tests/common/publish-message.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { GetMessageStatusControllerResponseDTO } from '../../dto/controllers/messages/GetMessageStatusControllerResponseDTO.js';
+import { GetMessageStatusControllerResponseDTO } from './GetMessageStatusControllerResponseDTO.js';
 
 describe('getMessageStatusController', () => {
   it('HTTP 200 OK', async () => {
@@ -23,7 +23,7 @@ describe('getMessageStatusController', () => {
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<GetMessageStatusControllerResponseDTO> =
-      await request.get(`/api/v1/messages/${messageId}/status`);
+      await request.get(`/api/messages/${messageId}/status`);
     expect(response1.status).toEqual(200);
     expect(response1.body?.data).toEqual(EMessagePropertyStatus.PENDING);
   });

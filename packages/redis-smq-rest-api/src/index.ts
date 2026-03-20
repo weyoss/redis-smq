@@ -19,7 +19,6 @@ import { join } from 'path';
 import { RedisSMQ } from 'redis-smq';
 import { createLogger, ILogger } from 'redis-smq-common';
 import { getAbsoluteFSPath as swaggerUiDistPath } from 'swagger-ui-dist';
-import tmp from 'tmp';
 import { constants } from './config/constants.js';
 import {
   IRedisSMQRestApiConfig,
@@ -33,16 +32,11 @@ import {
   IApplicationMiddlewareState,
 } from './lib/application/types/index.js';
 import { errorHandlerMiddleware } from './lib/errors/middlewares/errorHandlerMiddleware.js';
-import {
-  generateOpenApiDocument,
-  saveOpenApiDocument,
-} from './lib/openapi-spec/builder.js';
 import { registerResources } from './lib/router/index.js';
-import { routing } from './router/routing.js';
+import { routing } from './routing/routing.js';
 
 // Promisify external async APIs
 const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
-const tmpAsync = bluebird.promisifyAll(tmp);
 
 export class RedisSMQRestApi {
   protected app: Koa<
@@ -91,18 +85,10 @@ export class RedisSMQRestApi {
   }
 
   protected async initOpenApi() {
-    const { basePath } = this.config.apiServer;
-    const openApiFilename = constants.openApiDocumentFilename;
-
     this.logger.info('Initializing OpenAPI...');
-    const spec = await generateOpenApiDocument(routing, basePath);
 
-    // Create a temporary directory to store the OpenAPI spec file
-    const tmpDir = await tmpAsync.dirAsync();
-    await saveOpenApiDocument(spec, tmpDir);
-
-    // Mount middleware in order from most specific to least specific path
-    // to avoid route conflicts.
+    const { basePath } = this.config.apiServer;
+    const { openapiSchemaFilename, assetsPath } = constants;
 
     // 1. Serve Swagger UI assets from /swagger/ui
     const uiAssetsFsPath = swaggerUiDistPath();
@@ -111,10 +97,12 @@ export class RedisSMQRestApi {
     );
 
     // 2. Serve the OpenAPI spec from /swagger/assets/<filename>
-    this.app.use(mount(join(basePath, '/swagger/assets'), koaStatic(tmpDir)));
+    this.app.use(
+      mount(join(basePath, '/swagger/assets'), koaStatic(assetsPath)),
+    );
 
     // Prepare URLs for the HTML template
-    const specUrl = join(basePath, '/swagger/assets', openApiFilename);
+    const specUrl = join(basePath, '/swagger/assets', openapiSchemaFilename);
     const uiAssetsUrl = join(basePath, '/swagger/ui');
     const html = buildSwaggerUiHtml(specUrl, uiAssetsUrl);
 
@@ -162,7 +150,7 @@ export class RedisSMQRestApi {
     );
     const baseURL = `http://127.0.0.1:${port}${basePath === '/' ? '' : basePath}`;
     this.logger.info(
-      `OpenAPI specs are available at ${baseURL}/swagger/assets/${constants.openApiDocumentFilename}`,
+      `OpenAPI specs are available at ${baseURL}/swagger/assets/${constants.openapiSchemaFilename}`,
     );
     this.logger.info(`SWAGGER UI is accessible from ${baseURL}/swagger`);
   }

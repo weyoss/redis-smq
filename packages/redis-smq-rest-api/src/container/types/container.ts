@@ -28,10 +28,7 @@ import {
 } from 'redis-smq';
 import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
 import { ConsumerGroupsService } from '../../services/ConsumerGroupsService.js';
-import { ExchangeDirectService } from '../../services/ExchangeDirectService.js';
-import { ExchangeFanoutService } from '../../services/ExchangeFanoutService.js';
 import { ExchangesService } from '../../services/ExchangesService.js';
-import { ExchangeTopicService } from '../../services/ExchangeTopicService.js';
 import { MessagesService } from '../../services/MessagesService.js';
 import { NamespacesService } from '../../services/NamespacesService.js';
 import { QueueMessagesService } from '../../services/QueueMessagesService.js';
@@ -67,9 +64,6 @@ export interface IContainer {
   queueOperationalStateService: QueueOperationalStateService;
   namespacesService: NamespacesService;
   exchangesService: ExchangesService;
-  exchangeFanoutService: ExchangeFanoutService;
-  exchangeDirectService: ExchangeDirectService;
-  exchangeTopicService: ExchangeTopicService;
   consumerGroupsService: ConsumerGroupsService;
   configurationService: ConfigurationService;
 }
