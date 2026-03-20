@@ -11,6 +11,7 @@ import bluebird from 'bluebird';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   InvalidDirectExchangeParametersError,
+  InvalidExchangeRoutingKeyError,
   NamespaceMismatchError,
 } from '../../../src/errors/index.js';
 import {
@@ -142,7 +143,7 @@ describe('ExchangeDirect', () => {
     for (const k of invalidKeys) {
       await expect(
         directExchange.matchQueuesAsync(exchangeA, k),
-      ).rejects.toThrow(InvalidDirectExchangeParametersError);
+      ).rejects.toThrow(InvalidExchangeRoutingKeyError);
     }
   });
 
