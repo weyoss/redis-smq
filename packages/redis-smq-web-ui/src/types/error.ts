@@ -7,7 +7,8 @@
  * in the root directory of this source tree.
  */
 
-export * from '@/types/messages.ts';
-export * from '@/types/queues.ts';
-export * from '@/types/exchanges.ts';
-export * from '@/types/error.ts';
+export interface IAPIError {
+  title?: string;
+  message: string;
+  details?: Record<string, unknown>;
+}

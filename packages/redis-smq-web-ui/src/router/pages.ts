@@ -7,25 +7,23 @@
  * in the root directory of this source tree.
  */
 
-import AcknowledgedMessagesView from '@/views/AcknowledgedMessagesView.vue';
-import DeadLetteredMessagesView from '@/views/DeadLetteredMessagesView.vue';
-import NamespaceQueuesView from '@/views/NamespaceQueuesView.vue';
-import NamespacesView from '@/views/NamespacesView.vue';
-import PendingMessagesView from '@/views/PendingMessagesView.vue';
-import QueuePropertiesView from '@/views/QueuePropertiesView.vue';
-import ScheduledMessagesView from '@/views/ScheduledMessagesView.vue';
+import AcknowledgedMessagesView from '@/views/messages/AcknowledgedMessagesView.vue';
+import DeadLetteredMessagesView from '@/views/messages/DeadLetteredMessagesView.vue';
+import NamespaceQueuesView from '@/views/namespaces/NamespaceQueuesView.vue';
+import NamespaceListView from '@/views/namespaces/NamespaceListView.vue';
+import PendingMessagesView from '@/views/messages/PendingMessagesView.vue';
+import QueueView from '@/views/queues/QueueView.vue';
+import ScheduledMessagesView from '@/views/messages/ScheduledMessagesView.vue';
 import type { RouteRecordRaw } from 'vue-router';
-import QueueMessagesView from '@/views/QueueMessagesView.vue';
-import ExchangeDirectView from '@/views/ExchangeDirectView.vue';
-import ExchangeTopicView from '@/views/ExchangeTopicView.vue';
-import ExchangeFanoutViewView from '@/views/ExchangeFanoutView.vue';
-import NamespaceExchangesView from '@/views/NamespaceExchangesView.vue';
+import PublishedMessagesView from '@/views/messages/PublishedMessagesView.vue';
+import NamespaceExchangesView from '@/views/namespaces/NamespaceExchangesView.vue';
+import ExchangeView from '@/views/exchanges/ExchangeView.vue';
 
 export const pages: readonly RouteRecordRaw[] = [
   {
     path: '/ns',
     name: 'Namespaces',
-    component: NamespacesView,
+    component: NamespaceListView,
     meta: {
       title: 'NamespacesView',
       breadcrumb: 'NamespacesView',
@@ -43,7 +41,7 @@ export const pages: readonly RouteRecordRaw[] = [
   {
     path: '/ns/:ns/queues/:queue',
     name: 'Queue',
-    component: QueuePropertiesView,
+    component: QueueView,
     meta: {
       title: 'Queue Details',
       breadcrumb: 'Queue Details',
@@ -84,7 +82,7 @@ export const pages: readonly RouteRecordRaw[] = [
   {
     path: '/ns/:ns/queues/:queue/messages',
     name: 'Messages',
-    component: QueueMessagesView,
+    component: PublishedMessagesView,
     meta: {
       title: 'Queue Messages',
     },
@@ -99,30 +97,12 @@ export const pages: readonly RouteRecordRaw[] = [
     },
   },
   {
-    path: '/ns/:ns/exchanges/direct/:exchange',
-    name: 'Direct Exchange',
-    component: ExchangeDirectView,
+    path: '/ns/:ns/exchanges/:type/:exchange',
+    name: 'Exchange Details',
+    component: ExchangeView,
     meta: {
-      title: 'Direct Exchange Details',
-      breadcrumb: 'Direct Exchange Details',
-    },
-  },
-  {
-    path: '/ns/:ns/exchanges/topic/:exchange',
-    name: 'Topic Exchange',
-    component: ExchangeTopicView,
-    meta: {
-      title: 'Topic Exchange Details',
-      breadcrumb: 'Topic Exchange Details',
-    },
-  },
-  {
-    path: '/ns/:ns/exchanges/fanout/:exchange',
-    name: 'Fanout Exchange',
-    component: ExchangeFanoutViewView,
-    meta: {
-      title: 'Fanout Exchange Details',
-      breadcrumb: 'Fanout Exchange Details',
+      title: 'Exchange Details',
+      breadcrumb: 'Exchange Details',
     },
   },
 ];

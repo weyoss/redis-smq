@@ -7,8 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import type { GetApiV1NamespacesNsQueuesNameMessages200DataItemsItem } from '@/api/model/index.ts';
-
 export enum EMessagePriority {
   HIGHEST,
   VERY_HIGH,
@@ -38,5 +36,20 @@ export enum EMessagePropertyStatus {
   DEAD_LETTERED,
 }
 
-export type IMessageTransferable =
-  GetApiV1NamespacesNsQueuesNameMessages200DataItemsItem;
+export enum EMessageType {
+  PENDING = 'pending',
+  SCHEDULED = 'scheduled',
+  PUBLISHED = 'published',
+  DEAD_LETTERED = 'dead-lettered',
+  ACKNOWLEDGED = 'acknowledged',
+}
+
+export interface IMessageTypeConfig {
+  title: string;
+  icon: string;
+  description: string;
+  emptyMessage: string;
+  requiresConsumerGroup: boolean;
+  requiresConfig: boolean;
+  configEnabledProperty?: string;
+}

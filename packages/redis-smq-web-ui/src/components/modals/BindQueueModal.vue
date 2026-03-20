@@ -9,46 +9,51 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import BaseModal from './BaseModal.vue';
-import type { getErrorMessage } from '@/lib/error.ts';
+import { getErrorMessage } from '@/lib/error.ts';
+import { usePostApiNamespacesNsExchangesExchangeBindingsQueue } from '@/api/generated/namespace-exchanges/namespace-exchanges';
+import {
+  getGetApiNamespacesNsExchangesExchangeRoutingKeysQueryKey,
+  getGetApiNamespacesNsExchangesExchangeRoutingPatternsQueryKey,
+  getGetApiNamespacesNsExchangesExchangeBindingsQueryKey,
+} from '@/api/generated/namespace-exchanges/namespace-exchanges';
+import { type TExchangeType } from '@/types';
 
 interface Props {
   isVisible: boolean;
-  isLoading?: boolean;
-  error?: ReturnType<typeof getErrorMessage>;
-  exchangeType: 'direct' | 'fanout' | 'topic';
+  exchangeType: TExchangeType;
   exchangeName: string;
   namespace: string;
 }
 
-interface EmitPayload {
-  queueName: string;
-  routingKey?: string;
-  bindingPattern?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-  error: null,
-});
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'confirm', payload: EmitPayload): void;
-  (e: 'cancel'): void;
+  (e: 'close'): void;
+  (e: 'success'): void;
 }>();
+
+// Custom focus directive
+const vFocus = {
+  mounted: (el: HTMLElement) => el.focus(),
+};
+
+const queryClient = useQueryClient();
 
 // Form state
 const queueName = ref('');
 const routingKey = ref('');
 const bindingPattern = ref('');
 
-// Form validation
+// Form validation errors
 const queueNameError = ref('');
 const routingKeyError = ref('');
 const bindingPatternError = ref('');
 
 // Form refs for focus management
 const queueNameInput = ref<HTMLInputElement | null>(null);
+const errorSectionRef = ref<HTMLElement | null>(null);
 
 // Computed properties
 const modalTitle = computed(() => {
@@ -77,6 +82,55 @@ const modalDescription = computed(() => {
 const needsRoutingKey = computed(() => props.exchangeType === 'direct');
 const needsBindingPattern = computed(() => props.exchangeType === 'topic');
 
+// Bind queue mutation
+const bindQueueMutation = usePostApiNamespacesNsExchangesExchangeBindingsQueue({
+  mutation: {
+    onSuccess: () => {
+      // Invalidate all relevant queries
+      if (props.exchangeType === 'direct') {
+        queryClient.invalidateQueries({
+          queryKey: getGetApiNamespacesNsExchangesExchangeRoutingKeysQueryKey(
+            props.namespace,
+            props.exchangeName,
+          ),
+        });
+      } else if (props.exchangeType === 'topic') {
+        queryClient.invalidateQueries({
+          queryKey:
+            getGetApiNamespacesNsExchangesExchangeRoutingPatternsQueryKey(
+              props.namespace,
+              props.exchangeName,
+            ),
+        });
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: getGetApiNamespacesNsExchangesExchangeBindingsQueryKey(
+          props.namespace,
+          props.exchangeName,
+        ),
+      });
+
+      // Emit success and close
+      emit('success');
+      resetForm();
+    },
+    onError: (error) => {
+      console.error('Failed to bind queue:', error);
+      // Focus the error section
+      nextTick(() => {
+        errorSectionRef.value?.focus();
+      });
+    },
+  },
+});
+
+const isLoading = computed(() => bindQueueMutation.isPending.value);
+const error = computed(() =>
+  getErrorMessage(bindQueueMutation.error.value?.error),
+);
+
+// Form validation
 const isFormValid = computed(() => {
   const hasQueueName = queueName.value.trim().length > 0;
   const hasRoutingKey =
@@ -94,7 +148,6 @@ const isFormValid = computed(() => {
   );
 });
 
-// Validation functions
 const validateQueueName = () => {
   const value = queueName.value.trim();
   if (!value) {
@@ -164,29 +217,34 @@ const validateForm = () => {
 
 // Event handlers
 const handleConfirm = () => {
-  if (!validateForm() || props.isLoading) return;
+  if (!validateForm() || isLoading.value) return;
 
-  const payload: EmitPayload = {
-    queueName: queueName.value.trim(),
-  };
+  const params: Record<string, string> = {};
 
   if (needsRoutingKey.value) {
-    payload.routingKey = routingKey.value.trim();
+    params.routingKey = routingKey.value.trim();
   }
 
   if (needsBindingPattern.value) {
-    payload.bindingPattern = bindingPattern.value.trim();
+    params.routingPattern = bindingPattern.value.trim();
   }
 
-  emit('confirm', payload);
+  bindQueueMutation.mutateAsync({
+    ns: props.namespace,
+    exchange: props.exchangeName,
+    queue: queueName.value.trim(),
+    params,
+  });
 };
 
-const handleCancel = () => {
-  if (props.isLoading) return;
-  emit('cancel');
+const handleClose = () => {
+  if (isLoading.value) return;
+  bindQueueMutation.reset();
+  resetForm();
+  emit('close');
 };
 
-// Reset form when modal opens/closes
+// Reset form
 const resetForm = () => {
   queueName.value = '';
   routingKey.value = '';
@@ -202,22 +260,21 @@ watch(
   async (isVisible) => {
     if (isVisible) {
       resetForm();
+      bindQueueMutation.reset();
       await nextTick();
       queueNameInput.value?.focus();
     }
   },
 );
 
-// Watch for error changes to clear form errors
+// Clear routing key/pattern when exchange type changes
 watch(
-  () => props.error,
-  (newError) => {
-    if (!newError) {
-      // Clear form errors when external error is cleared
-      queueNameError.value = '';
-      routingKeyError.value = '';
-      bindingPatternError.value = '';
-    }
+  () => props.exchangeType,
+  () => {
+    routingKey.value = '';
+    bindingPattern.value = '';
+    routingKeyError.value = '';
+    bindingPatternError.value = '';
   },
 );
 </script>
@@ -229,7 +286,7 @@ watch(
     :subtitle="modalSubtitle"
     icon="bi bi-link-45deg"
     size="md"
-    @close="handleCancel"
+    @close="handleClose"
   >
     <template #body>
       <div class="bind-queue-content">
@@ -238,7 +295,14 @@ watch(
         </p>
 
         <!-- Error Alert -->
-        <div v-if="error" class="error-alert" role="alert">
+        <div
+          v-if="error"
+          ref="errorSectionRef"
+          class="error-alert"
+          role="alert"
+          tabindex="-1"
+          aria-live="assertive"
+        >
           <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
           <span class="error-text">{{ error }}</span>
         </div>
@@ -253,6 +317,7 @@ watch(
               id="queueName"
               ref="queueNameInput"
               v-model="queueName"
+              v-focus
               type="text"
               class="form-input"
               :class="{ error: !!queueNameError }"
@@ -295,7 +360,7 @@ watch(
               type="text"
               class="form-input"
               :class="{ error: !!routingKeyError }"
-              placeholder="Enter routing key"
+              placeholder="Enter routing key (e.g., user.created)"
               :disabled="isLoading"
               :aria-invalid="!!routingKeyError"
               aria-describedby="routingKey-hint routingKey-error"
@@ -355,9 +420,24 @@ watch(
               {{ bindingPatternError }}
             </div>
             <div id="bindingPattern-hint" class="field-hint">
-              Use * to match one word, # to match zero or more words (e.g.,
-              user.*.created, logs.#)
+              <p>Use * to match one word, # to match zero or more words</p>
+              <div class="pattern-examples">
+                <code>user.*</code> matches <code>user.create</code>,
+                <code>user.update</code>
+                <br />
+                <code>orders.#</code> matches <code>orders</code>,
+                <code>orders.europe</code>, <code>orders.europe.pending</code>
+              </div>
             </div>
+          </div>
+
+          <!-- Fanout Info (no params needed) -->
+          <div v-if="exchangeType === 'fanout'" class="info-message">
+            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+            <span>
+              Fanout exchanges broadcast all messages to every bound queue. No
+              routing key or pattern is needed.
+            </span>
           </div>
         </form>
       </div>
@@ -368,7 +448,7 @@ watch(
         type="button"
         class="btn btn-secondary"
         :disabled="isLoading"
-        @click="handleCancel"
+        @click="handleClose"
       >
         Cancel
       </button>
@@ -433,6 +513,13 @@ watch(
   border: 1px solid #f5c6cb;
   border-radius: 8px;
   font-size: 0.9rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.error-alert:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
 }
 
 .error-alert i {
@@ -521,7 +608,43 @@ watch(
   word-break: break-word;
 }
 
-/* Button Styles (footer buttons come from BaseModal footer layout) */
+.pattern-examples {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.pattern-examples code {
+  background: #e9ecef;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #0d6efd;
+}
+
+/* Info Message */
+.info-message {
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  border-radius: 8px;
+  color: #664d03;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.info-message i {
+  color: #d97706;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* Button Styles */
 .btn {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -611,21 +734,23 @@ watch(
     font-size: 0.9rem;
   }
 
-  /* Make actions full width in BaseModal footer when stacked on mobile */
-  :global(.modal-footer) {
-    align-items: stretch;
-  }
   .btn {
     padding: 0.65rem 1rem;
     font-size: 0.9rem;
     min-width: 0;
     width: 100%;
   }
+
+  .pattern-examples {
+    font-size: 0.75rem;
+  }
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .btn:hover {
+  .btn:hover,
+  .loading-spinner {
+    animation: none;
     transform: none;
   }
 }

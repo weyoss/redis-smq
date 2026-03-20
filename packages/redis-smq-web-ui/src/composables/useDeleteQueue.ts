@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { useDeleteApiV1NamespacesNsQueuesName } from '@/api/generated/queue/queue.ts';
+import { useDeleteApiNamespacesNsQueuesName } from '@/api/generated/queue/queue.ts';
 import { computed } from 'vue';
 
 /**
@@ -16,7 +16,7 @@ import { computed } from 'vue';
  * @returns an object with methods and state for deleting a queue.
  */
 export function useDeleteQueue(onSuccessCallback: () => Promise<unknown>) {
-  const deleteQueueMutation = useDeleteApiV1NamespacesNsQueuesName({
+  const deleteQueueMutation = useDeleteApiNamespacesNsQueuesName({
     mutation: {
       onSuccess: async () => {
         await onSuccessCallback();

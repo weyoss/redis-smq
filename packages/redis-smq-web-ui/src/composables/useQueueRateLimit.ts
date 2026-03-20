@@ -8,11 +8,11 @@
  */
 
 import {
-  useDeleteApiV1NamespacesNsQueuesNameRateLimit,
-  useGetApiV1NamespacesNsQueuesNameRateLimit,
-  usePutApiV1NamespacesNsQueuesNameRateLimit,
+  useDeleteApiNamespacesNsQueuesNameRateLimit,
+  useGetApiNamespacesNsQueuesNameRateLimit,
+  usePutApiNamespacesNsQueuesNameRateLimit,
 } from '@/api/generated/rate-limiting/rate-limiting.ts';
-import type { PutApiV1NamespacesNsQueuesNameRateLimitBody } from '@/api/model/index.ts';
+import type { PutApiNamespacesNsQueuesNameRateLimitBody } from '@/api/model/index.ts';
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 
@@ -20,7 +20,7 @@ export function useQueueRateLimit() {
   const selectedQueueStore = useSelectedQueueStore();
 
   // Rate Limit Query
-  const rateLimitQuery = useGetApiV1NamespacesNsQueuesNameRateLimit(
+  const rateLimitQuery = useGetApiNamespacesNsQueuesNameRateLimit(
     computed(() => selectedQueueStore.selectedQueue?.ns || ''),
     computed(() => selectedQueueStore.selectedQueue?.name || ''),
     {
@@ -36,7 +36,7 @@ export function useQueueRateLimit() {
   );
 
   // Rate Limit Mutations
-  const setRateLimitMutation = usePutApiV1NamespacesNsQueuesNameRateLimit({
+  const setRateLimitMutation = usePutApiNamespacesNsQueuesNameRateLimit({
     mutation: {
       onSuccess: async () => {
         // Refetch rate limit data after successful update
@@ -45,7 +45,7 @@ export function useQueueRateLimit() {
     },
   });
 
-  const clearRateLimitMutation = useDeleteApiV1NamespacesNsQueuesNameRateLimit({
+  const clearRateLimitMutation = useDeleteApiNamespacesNsQueuesNameRateLimit({
     mutation: {
       onSuccess: async () => {
         // Refetch rate limit data after successful deletion
@@ -96,7 +96,7 @@ export function useQueueRateLimit() {
 
   // Rate limit operations
   async function setRateLimit(
-    rateLimitData: PutApiV1NamespacesNsQueuesNameRateLimitBody,
+    rateLimitData: PutApiNamespacesNsQueuesNameRateLimitBody,
   ): Promise<void> {
     if (!selectedQueueStore.selectedQueue) {
       throw new Error('No queue selected');

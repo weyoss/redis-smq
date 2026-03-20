@@ -8,34 +8,32 @@
   -->
 
 <script setup lang="ts">
-import {
-  EExchangeType,
-  EMessagePropertyStatus,
-  type IMessageTransferable,
-} from '@/types';
+import { EExchangeType, EMessagePropertyStatus } from '@/types';
 import { computed, ref } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
 import { formatDate } from '@/lib/format.ts';
-import ConfirmationDialogModal from '@/components/modals/ConfirmationDialogModal.vue';
+import DeleteMessageModal from '@/components/modals/DeleteMessageModal.vue';
+import RequeueMessageModal from '@/components/modals/RequeueMessageModal.vue';
 import BaseModal from './BaseModal.vue';
+import type { IMessageTransferable } from '@/api/model';
 
 interface Props {
   message: IMessageTransferable | null;
   show: boolean;
-  isDeleting?: boolean;
-  isRequeuing?: boolean;
+  enableRequeue?: boolean;
 }
 
 interface Emits {
   (e: 'close'): void;
   (e: 'update:show', value: boolean): void;
-  (e: 'delete-message', messageId: string): void;
-  (e: 'requeue-message', messageId: string): void;
+  (e: 'message-deleted', messageId: string): void;
+  (e: 'message-requeued', messageId: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isDeleting: false,
   isRequeuing: false,
+  enableRequeue: false, // Default to false
 });
 
 const emit = defineEmits<Emits>();
@@ -43,8 +41,8 @@ const emit = defineEmits<Emits>();
 const activeTab = ref<
   'overview' | 'body' | 'state' | 'scheduling' | 'timeline'
 >('overview');
-const showDeleteConfirm = ref(false);
-const showRequeueConfirm = ref(false);
+const showDeleteModal = ref(false);
+const showRequeueModal = ref(false);
 
 // Computed properties for formatted data
 const formattedCreatedAt = computed(() => {
@@ -168,12 +166,9 @@ const formattedBody = computed(() => {
   }
 });
 
-// Check if message is dead-lettered (status 6)
-const isDeadLettered = computed(() => props.message?.status === 6);
-
 // Check if any action is in progress
 const isActionInProgress = computed(
-  () => props.isDeleting || props.isRequeuing,
+  () => showDeleteModal.value || showRequeueModal.value,
 );
 
 const timelineEvents = computed(() => {
@@ -266,24 +261,21 @@ function handleClose(): void {
 function copyToClipboard(text: string): void {
   navigator.clipboard.writeText(text).then(() => {
     // Optional: add a toast here
-    // console.log('Copied to clipboard');
   });
 }
 
-// Delete message handlers
-function confirmDelete(): void {
+function handleDeleteSuccess(): void {
+  showDeleteModal.value = false;
   if (props.message?.id) {
-    emit('delete-message', props.message.id);
+    emit('message-deleted', props.message.id);
   }
-  showDeleteConfirm.value = false;
 }
 
-// Requeue message handlers
-function confirmRequeue(): void {
+function handleRequeueSuccess(): void {
+  showRequeueModal.value = false;
   if (props.message?.id) {
-    emit('requeue-message', props.message.id);
+    emit('message-requeued', props.message.id);
   }
-  showRequeueConfirm.value = false;
 }
 </script>
 
@@ -730,22 +722,16 @@ function confirmRequeue(): void {
     </template>
 
     <template #footer>
-      <div class="footer-info">
-        <small class="text-muted">
-          <i class="bi bi-info-circle me-1"></i>
-          Message created {{ formattedCreatedAt }}
-        </small>
-      </div>
       <div class="footer-actions">
-        <!-- Requeue Button (only for dead-lettered messages) -->
+        <!-- Requeue Button (only for dead-lettered messages when requeue is enabled) -->
         <button
-          v-if="isDeadLettered"
+          v-if="enableRequeue"
           type="button"
           class="btn btn-warning"
           :disabled="isActionInProgress"
-          @click="showRequeueConfirm = true"
+          @click="showRequeueModal = true"
         >
-          <template v-if="isRequeuing">
+          <template v-if="showRequeueModal">
             <span class="spinner-border spinner-border-sm me-2"></span>
             Requeuing...
           </template>
@@ -760,16 +746,10 @@ function confirmRequeue(): void {
           type="button"
           class="btn btn-danger"
           :disabled="isActionInProgress"
-          @click="showDeleteConfirm = true"
+          @click="showDeleteModal = true"
         >
-          <template v-if="isDeleting">
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            Deleting...
-          </template>
-          <template v-else>
-            <i class="bi bi-trash me-2"></i>
-            Delete Message
-          </template>
+          <i class="bi bi-trash me-2"></i>
+          Delete Message
         </button>
 
         <!-- Close Button -->
@@ -785,38 +765,21 @@ function confirmRequeue(): void {
     </template>
   </BaseModal>
 
-  <!-- Confirmation Dialogs using the reusable component -->
-  <ConfirmationDialogModal
-    :is-visible="showDeleteConfirm"
-    title="Delete Message"
-    message="Are you sure you want to delete this message? This action cannot be undone."
-    confirm-text="Delete Message"
-    variant="danger"
-    :is-loading="isDeleting"
-    @confirm="confirmDelete"
-    @close="showDeleteConfirm = false"
-  >
-    <template #message-preview>
-      <strong>Message ID: </strong>
-      <code>{{ message?.id }}</code>
-    </template>
-  </ConfirmationDialogModal>
+  <!-- Delete Message Modal (self-contained) -->
+  <DeleteMessageModal
+    :is-visible="showDeleteModal"
+    :message-id="message?.id || ''"
+    @close="showDeleteModal = false"
+    @success="handleDeleteSuccess"
+  />
 
-  <ConfirmationDialogModal
-    :is-visible="showRequeueConfirm"
-    title="Requeue Message"
-    message="Are you sure you want to requeue this dead-lettered message? It will be moved back to the pending queue for processing."
-    confirm-text="Requeue Message"
-    variant="warning"
-    :is-loading="isRequeuing"
-    @confirm="confirmRequeue"
-    @close="showRequeueConfirm = false"
-  >
-    <template #message-preview>
-      <strong>Message ID: </strong>
-      <code>{{ message?.id }}</code>
-    </template>
-  </ConfirmationDialogModal>
+  <!-- Requeue Message Modal (self-contained) -->
+  <RequeueMessageModal
+    :is-visible="showRequeueModal"
+    :message-id="message?.id || ''"
+    @close="showRequeueModal = false"
+    @success="handleRequeueSuccess"
+  />
 </template>
 
 <style scoped>
@@ -1073,11 +1036,6 @@ function confirmRequeue(): void {
 }
 
 /* Footer expect BaseModal to align content horizontally by default */
-.footer-info {
-  flex: 1;
-  overflow-wrap: anywhere;
-}
-
 .footer-actions {
   display: flex;
   align-items: center;

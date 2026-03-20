@@ -7,65 +7,82 @@
  * in the root directory of this source tree.
  */
 
-import { type Ref, computed } from 'vue';
-import { getApiV1NamespacesNsQueuesNameAcknowledgedMessages } from '@/api/generated/acknowledged-messages/acknowledged-messages.ts';
-import {
-  useMessages,
-  type MessagesQueryConfig,
-} from '@/composables/useMessages';
-import type { IQueueParams } from '@/types/index.ts';
-import { useGetApiV1Config } from '@/api/generated/configuration/configuration.ts';
+import { computed, type Ref } from 'vue';
+import { useMessages } from './useMessages.ts';
+import type { IQueueParams } from '@/types';
+import { useGetApiConfig } from '@/api/generated/configuration/configuration';
+import { GetApiNamespacesNsQueuesNameMessagesStatus } from '@/api/model';
+import { getApiNamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages';
 import { getErrorMessage } from '@/lib/error.ts';
 
-/**
- * Composable for acknowledged messages that first checks if the feature is enabled
- * in the server configuration before fetching messages.
- */
 export function useAcknowledgedMessages(
-  queueParams: Ref<IQueueParams>,
+  queueParams: Ref<IQueueParams | null>,
   initialPageSize = 20,
 ) {
-  // --- Configuration Fetching ---
+  // First, fetch the config to check if audit is enabled
   const {
     data: configData,
     isLoading: isConfigLoading,
-    error: configApiError,
+    error: configError,
     refetch: refetchConfig,
-  } = useGetApiV1Config();
+  } = useGetApiConfig();
 
-  const ackEnabled = computed<boolean | null>(() => {
-    if (isConfigLoading.value) return null; // Indeterminate state while loading
-    const enabled =
-      configData.value?.data?.messageAudit?.acknowledgedMessages?.enabled;
-    return typeof enabled === 'boolean' ? enabled : false;
+  // Determine if audit is enabled
+  const ackEnabled = computed(
+    () =>
+      configData.value?.data?.messageAudit.acknowledgedMessages.enabled ??
+      false,
+  );
+
+  // Create an enabled flag for messages query
+  const messagesEnabled = computed(() => {
+    if (isConfigLoading.value) return false;
+    if (configError.value) return false;
+    return ackEnabled.value && !!queueParams.value;
   });
 
-  const configError = computed(() => getErrorMessage(configApiError.value));
-
-  // --- Messages Composable Setup ---
-  const config: MessagesQueryConfig = {
-    queryFn: async ({ ns, name, page, pageSize }) => {
-      return getApiV1NamespacesNsQueuesNameAcknowledgedMessages(ns, name, {
-        page,
-        pageSize,
-      });
+  // Use the messages composable with conditional enabling
+  const messagesComposable = useMessages(
+    queueParams,
+    {
+      queryFn: async ({ ns, name, page, pageSize }) => {
+        return getApiNamespacesNsQueuesNameMessages(ns, name, {
+          page,
+          pageSize,
+          status: GetApiNamespacesNsQueuesNameMessagesStatus.acknowledged,
+        });
+      },
+      queryKeyPrefix: 'acknowledged-messages',
+      enableDelete: true,
+      enableRequeue: true,
+      enabled: messagesEnabled,
     },
-    queryKeyPrefix: 'acknowledged-messages',
-    enableDelete: true,
-    enableRequeue: true, // Acknowledged messages can be requeued
-    enabled: ackEnabled, // Pass the computed enabled flag to useMessages
-  };
+    initialPageSize,
+  );
 
-  const messagesComposable = useMessages(queueParams, config, initialPageSize);
-
-  // --- Combined State for the View ---
   return {
-    ...messagesComposable,
-
-    // Configuration state
+    // Config state
     isConfigLoading,
-    configError,
+    configError: computed(() => getErrorMessage(configError)), // converting unknown to IAPIError
     ackEnabled,
     refetchConfig,
+
+    // Messages state
+    messages: messagesComposable.messages,
+    pagination: messagesComposable.pagination,
+    isLoading: messagesComposable.isLoading,
+    isFetching: messagesComposable.isFetching,
+    isDeleting: messagesComposable.isDeleting,
+    isRequeuing: messagesComposable.isRequeuing,
+    error: messagesComposable.error,
+    goToPage: messagesComposable.goToPage,
+    setPageSize: messagesComposable.setPageSize,
+    refresh: messagesComposable.refresh,
+    deleteMessage: messagesComposable.deleteMessage,
+    requeueMessage: messagesComposable.requeueMessage,
+    totalMessages: messagesComposable.totalMessages,
+    hasNextPage: messagesComposable.hasNextPage,
+    hasPreviousPage: messagesComposable.hasPreviousPage,
+    currentPage: messagesComposable.currentPage,
   };
 }

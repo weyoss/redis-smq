@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { useGetApiV1NamespacesNsQueuesNameConsumers } from '@/api/generated/consumers/consumers.ts';
+import { useGetApiNamespacesNsQueuesNameConsumers } from '@/api/generated/queue-consumers/queue-consumers.ts';
 import { computed, ref } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 
@@ -35,7 +35,7 @@ export function useQueueConsumers() {
   const refetchInterval = ref<number | false>(DEFAULT_REFETCH_INTERVAL);
 
   // Consumers Query - uses selectedQueue.selectedQueue
-  const consumersQuery = useGetApiV1NamespacesNsQueuesNameConsumers(
+  const consumersQuery = useGetApiNamespacesNsQueuesNameConsumers(
     computed(() => selectedQueueStore.selectedQueue?.ns || ''),
     computed(() => selectedQueueStore.selectedQueue?.name || ''),
     {

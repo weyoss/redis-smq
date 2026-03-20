@@ -8,7 +8,7 @@
  */
 
 import { type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
+import { getApiNamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
@@ -18,15 +18,16 @@ import type { IQueueParams } from '@/types/index.ts';
 /**
  * Composable for all queue messages with full delete and requeue capabilities
  */
-export function useQueueMessages(
+export function useQueuePublishedMessages(
   queueParams: Ref<IQueueParams>,
   initialPageSize = 20,
 ) {
   const config: MessagesQueryConfig = {
     queryFn: async ({ ns, name, page, pageSize }) => {
-      return getApiV1NamespacesNsQueuesNameMessages(ns, name, {
+      return getApiNamespacesNsQueuesNameMessages(ns, name, {
         page,
         pageSize,
+        status: 'published',
       });
     },
     queryKeyPrefix: 'queue-messages',

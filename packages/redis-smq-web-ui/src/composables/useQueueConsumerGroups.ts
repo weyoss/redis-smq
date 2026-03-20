@@ -8,11 +8,11 @@
  */
 
 import {
-  useGetApiV1NamespacesNsQueuesNameConsumerGroups,
-  usePostApiV1NamespacesNsQueuesNameConsumerGroups,
-  useDeleteApiV1NamespacesNsQueuesNameConsumerGroupsConsumerGroupId,
+  useGetApiNamespacesNsQueuesNameConsumerGroups,
+  usePostApiNamespacesNsQueuesNameConsumerGroups,
+  useDeleteApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupId,
 } from '@/api/generated/consumer-groups/consumer-groups.ts';
-import type { PostApiV1NamespacesNsQueuesNameConsumerGroupsBody } from '@/api/model/index.ts';
+import type { PostApiNamespacesNsQueuesNameConsumerGroupsBody } from '@/api/model/index.ts';
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
@@ -26,7 +26,7 @@ export function useQueueConsumerGroups() {
   });
 
   // Consumer Groups Query
-  const consumerGroupsQuery = useGetApiV1NamespacesNsQueuesNameConsumerGroups(
+  const consumerGroupsQuery = useGetApiNamespacesNsQueuesNameConsumerGroups(
     computed(() => selectedQueue.value?.ns || ''),
     computed(() => selectedQueue.value?.name || ''),
     {
@@ -40,7 +40,7 @@ export function useQueueConsumerGroups() {
 
   // Consumer Groups Mutations
   const createConsumerGroupMutation =
-    usePostApiV1NamespacesNsQueuesNameConsumerGroups({
+    usePostApiNamespacesNsQueuesNameConsumerGroups({
       mutation: {
         onSuccess: async () => {
           // Refetch consumer groups after successful creation
@@ -50,7 +50,7 @@ export function useQueueConsumerGroups() {
     });
 
   const deleteConsumerGroupMutation =
-    useDeleteApiV1NamespacesNsQueuesNameConsumerGroupsConsumerGroupId({
+    useDeleteApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupId({
       mutation: {
         onSuccess: async () => {
           // Refetch consumer groups after successful deletion
@@ -119,7 +119,7 @@ export function useQueueConsumerGroups() {
       throw new Error('No queue selected');
     }
 
-    const payload: PostApiV1NamespacesNsQueuesNameConsumerGroupsBody = {
+    const payload: PostApiNamespacesNsQueuesNameConsumerGroupsBody = {
       consumerGroupId,
     };
 

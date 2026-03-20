@@ -9,14 +9,14 @@
 
 <script lang="ts" setup>
 import BaseModal from '@/components/modals/BaseModal.vue';
-import { getErrorMessage } from '@/lib/error.ts';
+import type { IAPIError } from '@/types';
 
 interface Props {
   isVisible: boolean;
   namespace: string | null;
   queueCount: number;
   isDeleting: boolean;
-  error: ReturnType<typeof getErrorMessage>;
+  error: IAPIError | null;
 }
 
 const props = defineProps<Props>();

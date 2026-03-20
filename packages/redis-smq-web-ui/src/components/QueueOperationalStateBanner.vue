@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { EQueueOperationalState } from '@/types';
-import type { GetApiV1NamespacesNsQueuesNameOperationalState200Data } from '@/api/model';
+import type { GetApiNamespacesNsQueuesNameState200 } from '@/api/model';
 
 const props = defineProps<{
   queue: {
@@ -18,7 +18,7 @@ const props = defineProps<{
     name: string;
   };
   status?: EQueueOperationalState;
-  operationalState?: GetApiV1NamespacesNsQueuesNameOperationalState200Data;
+  operationalState?: GetApiNamespacesNsQueuesNameState200['data'];
   isLoading?: boolean;
   error: string | null;
 }>();

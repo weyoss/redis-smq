@@ -17,8 +17,8 @@ import {
 import { Field, ErrorMessage, type GenericObject, useForm } from 'vee-validate';
 import BaseModal from '@/components/modals/BaseModal.vue';
 import { useCreateQueue } from '@/composables/useCreateQueue.ts';
-import { getErrorMessage } from '@/lib/error.ts';
-import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
+import { getErrorMessage, getErrorMessageString } from '@/lib/error.ts';
+import type { PostApiQueuesBody } from '@/api/model/index.ts';
 
 // Custom focus directive
 const vFocus = {
@@ -67,11 +67,7 @@ const { createQueue, isCreatingQueue, createQueueError, createQueueMutation } =
 // Display-friendly error text
 const createErrorText = computed(() => {
   if (!createQueueError.value) return '';
-  const err = getErrorMessage(createQueueError.value);
-  // Support both string and {message} shapes
-  return typeof err === 'string'
-    ? err
-    : (err?.message ?? 'Failed to create queue');
+  return getErrorMessageString(createQueueError.value);
 });
 
 // Reset form and mutation when dialog is closed
@@ -91,7 +87,7 @@ const onFormSubmit = handleSubmit(async (values: GenericObject) => {
   const formValues = values as QueueFormValues;
   submittedValues.value = formValues;
 
-  const queueData: PostApiV1QueuesBody = {
+  const queueData: PostApiQueuesBody = {
     queue: { ns: formValues.ns, name: formValues.name },
     queueType: formValues.type,
     queueDeliveryModel: formValues.deliveryModel,

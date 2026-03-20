@@ -12,11 +12,7 @@ import { computed, ref, watch } from 'vue';
 import BaseModal from '@/components/modals/BaseModal.vue';
 import { EExchangeType } from '@/types/exchanges';
 import { getErrorMessage } from '@/lib/error.ts';
-
-/* Generated API mutations for deleting exchanges */
-import { useDeleteApiV1NamespacesNsExchangesFanoutFanout } from '@/api/generated/fanout-exchange/fanout-exchange';
-import { useDeleteApiV1NamespacesNsExchangesDirectDirect } from '@/api/generated/direct-exchange/direct-exchange';
-import { useDeleteApiV1NamespacesNsExchangesTopicTopic } from '@/api/generated/topic-exchange/topic-exchange';
+import { useDeleteApiNamespacesNsExchangesExchange } from '@/api/generated/namespace-exchanges/namespace-exchanges';
 
 const props = defineProps<{
   isVisible: boolean;
@@ -93,40 +89,27 @@ const confirmMessage = computed(() => {
   return `Are you sure you want to delete the ${lower} exchange "${props.exchangeName}"? This will remove all queue bindings and cannot be undone.`;
 });
 
-/* delete mutations (one per type) */
-const deleteFanout = useDeleteApiV1NamespacesNsExchangesFanoutFanout();
-const deleteDirect = useDeleteApiV1NamespacesNsExchangesDirectDirect();
-const deleteTopic = useDeleteApiV1NamespacesNsExchangesTopicTopic();
+/* Unified delete mutation */
+const deleteExchange = useDeleteApiNamespacesNsExchangesExchange();
 
-/* loading and error states derived from the active mutation */
+/* loading and error states */
 const isDeleting = computed<boolean>(() => {
-  return (
-    deleteDirect.isPending.value ||
-    deleteTopic.isPending.value ||
-    deleteFanout.isPending.value
-  );
+  return deleteExchange.isPending.value;
 });
 
-/* error */
 const error = computed(() =>
-  getErrorMessage(
-    deleteDirect.error.value?.error ||
-      deleteTopic.error.value?.error ||
-      deleteFanout.error.value?.error,
-  ),
+  getErrorMessage(deleteExchange.error.value?.error),
 );
 
 /* Local submit guard to prevent ultra-fast double clicks */
 const submitting = ref(false);
 
-/* Reset mutation state when modal opens and when it closes */
+/* Reset mutation state when modal opens */
 watch(
   () => props.isVisible,
   (visible) => {
     if (visible) {
-      deleteDirect.reset?.();
-      deleteTopic.reset?.();
-      deleteFanout.reset?.();
+      deleteExchange.reset?.();
       submitting.value = false;
     }
   },
@@ -135,10 +118,7 @@ watch(
 /* Actions */
 function onClose() {
   if (!isDeleting.value && !submitting.value) {
-    // Optional: clear state on close as well
-    deleteDirect.reset?.();
-    deleteTopic.reset?.();
-    deleteFanout.reset?.();
+    deleteExchange.reset?.();
     submitting.value = false;
     emit('close');
   }
@@ -149,32 +129,18 @@ async function onConfirm() {
 
   submitting.value = true;
   try {
-    switch (props.exchangeType) {
-      case EExchangeType.FANOUT:
-        await deleteFanout.mutateAsync({
-          ns: props.namespace,
-          fanout: props.exchangeName,
-        });
-        break;
-      case EExchangeType.DIRECT:
-        await deleteDirect.mutateAsync({
-          ns: props.namespace,
-          direct: props.exchangeName,
-        });
-        break;
-      case EExchangeType.TOPIC:
-        await deleteTopic.mutateAsync({
-          ns: props.namespace,
-          topic: props.exchangeName,
-        });
-        break;
-      default:
-        throw new Error('Unsupported exchange type');
-    }
+    // Unified delete endpoint - works for all exchange types
+    await deleteExchange.mutateAsync({
+      ns: props.namespace,
+      exchange: props.exchangeName,
+    });
 
     // Notify parent (so it can refresh data or navigate) and close the modal
     emit('deleted');
     emit('close');
+  } catch (err) {
+    // Error is handled by the mutation's error state
+    console.error('Failed to delete exchange:', err);
   } finally {
     submitting.value = false;
   }

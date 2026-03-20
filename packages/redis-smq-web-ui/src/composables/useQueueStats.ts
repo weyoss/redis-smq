@@ -7,15 +7,22 @@
  * in the root directory of this source tree.
  */
 
-import { useGetApiV1NamespacesNsQueuesNameTotalMessagesStats } from '@/api/generated/total-messages/total-messages.ts';
+import { useGetApiNamespacesNsQueuesNameMessagesCount } from '@/api/generated/queue-messages/queue-messages.ts';
 import { computed, type ComputedRef } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+import type { IQueuePublishedMessagesCountByStatus } from '@/api/model';
+
+// Type for consumer group pending counts
+export interface IQueueGroupConsumersPendingCount {
+  [consumerGroupId: string]: number;
+}
 
 export interface QueueStats {
-  pending: number;
+  pending: number | IQueueGroupConsumersPendingCount;
   acknowledged: number;
   deadLettered: number;
   scheduled: number;
+  published?: number;
 }
 
 export interface QueueStatsState {
@@ -26,22 +33,57 @@ export interface QueueStatsState {
   hasValidQueue: ComputedRef<boolean>;
   getPercentage: (value: number) => number;
   refetchAll: () => void;
+  isGroupedByStatus: ComputedRef<boolean>;
+  hasConsumerGroups: ComputedRef<boolean>;
+  getConsumerGroupPendingCount: (consumerGroupId: string) => number;
+  getTotalPendingCount: ComputedRef<number>;
 }
 
 // Helper function to safely convert API response values to numbers
-function toNumber(value: unknown): number {
-  if (typeof value === 'number') {
-    return value;
+function processMessageCount(
+  data: number | IQueuePublishedMessagesCountByStatus | undefined,
+): QueueStats {
+  const defaultStats: QueueStats = {
+    pending: 0,
+    acknowledged: 0,
+    deadLettered: 0,
+    scheduled: 0,
+  };
+
+  if (data === undefined) {
+    return defaultStats;
   }
-  if (typeof value === 'object' && value !== null) {
-    // Handle case where value is an object with string keys and number values
-    // Sum all the numeric values in the object
-    const obj = value as { [p: string]: number };
-    return Object.values(obj).reduce((sum, num) => {
-      return sum + num;
-    }, 0);
+
+  // Case 1: data is a number (total count)
+  if (typeof data === 'number') {
+    return {
+      ...defaultStats,
+      pending: data,
+      published: data,
+    };
   }
-  return 0;
+
+  // Case 2: data is an object with status counts
+  if (typeof data === 'object' && data !== null) {
+    // Handle pending which could be number or consumer group object
+    let pendingValue: number | IQueueGroupConsumersPendingCount = 0;
+
+    if (typeof data.pending === 'number') {
+      pendingValue = data.pending;
+    } else if (typeof data.pending === 'object' && data.pending !== null) {
+      // It's a consumer group pending count object
+      pendingValue = { ...data.pending } as IQueueGroupConsumersPendingCount;
+    }
+
+    return {
+      pending: pendingValue,
+      acknowledged: data.acknowledged ?? 0,
+      deadLettered: data.deadLettered ?? 0,
+      scheduled: data.scheduled ?? 0,
+    };
+  }
+
+  return defaultStats;
 }
 
 export function useQueueStats(): QueueStatsState {
@@ -64,39 +106,110 @@ export function useQueueStats(): QueueStatsState {
     },
   };
 
-  // Single API call for all queue statistics
-  const statsQuery = useGetApiV1NamespacesNsQueuesNameTotalMessagesStats(
+  // Single API call for all queue statistics with groupBy=status
+  const statsQuery = useGetApiNamespacesNsQueuesNameMessagesCount(
     computed(() => ns.value ?? ''),
     computed(() => queueName.value ?? ''),
+    {
+      groupBy: 'status',
+    },
     queryOptions,
   );
 
-  // Loading state (simplified since we only have one query)
+  // Determine if the response is grouped by status
+  const isGroupedByStatus = computed(() => {
+    const data = statsQuery.data.value?.data;
+    return typeof data === 'object' && data !== null;
+  });
+
+  // Check if the queue has consumer groups (pending is an object)
+  const hasConsumerGroups = computed(() => {
+    const data = statsQuery.data.value?.data;
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      typeof data.pending === 'object' &&
+      data.pending !== null
+    );
+  });
+
+  // Loading state
   const isLoading = computed(() => statsQuery.isLoading.value);
 
-  // Error state (simplified since we only have one query)
+  // Error state
   const error = computed(() => statsQuery.error.value);
 
-  // Computed properties for stats with fallback values and proper type conversion
-  const stats = computed(
-    (): QueueStats => ({
-      pending: toNumber(statsQuery.data.value?.data?.pending),
-      acknowledged: toNumber(statsQuery.data.value?.data?.acknowledged),
-      deadLettered: toNumber(statsQuery.data.value?.data?.deadLettered),
-      scheduled: toNumber(statsQuery.data.value?.data?.scheduled),
-    }),
+  // Computed properties for stats with fallback values
+  const stats = computed(() =>
+    processMessageCount(statsQuery.data.value?.data),
   );
 
-  const totalMessages = computed(() =>
-    Object.values(stats.value).reduce((sum, count) => sum + count, 0),
-  );
+  // Get total pending count (sum of all consumer groups if needed)
+  const getTotalPendingCount = computed<number>(() => {
+    if (typeof stats.value.pending === 'number') {
+      return stats.value.pending;
+    }
+    // Sum all consumer group pending counts
+    return Object.values(stats.value.pending).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+  });
+
+  // Get pending count for a specific consumer group
+  function getConsumerGroupPendingCount(consumerGroupId: string): number {
+    const pending = stats.value.pending;
+    if (typeof pending === 'number') {
+      return pending; // If no consumer groups, all pending messages count
+    }
+    return pending[consumerGroupId] || 0;
+  }
+
+  // Calculate total messages
+  const totalMessages = computed(() => {
+    const data = statsQuery.data.value?.data;
+
+    // If it's a number, that's the total
+    if (typeof data === 'number') {
+      return data;
+    }
+
+    // If it's an object, sum all the values
+    if (typeof data === 'object' && data !== null) {
+      let total = 0;
+
+      // Add acknowledged
+      total += data.acknowledged ?? 0;
+
+      // Add dead-lettered
+      total += data.deadLettered ?? 0;
+
+      // Add scheduled
+      total += data.scheduled ?? 0;
+
+      // Add pending (handling both number and object)
+      if (typeof data.pending === 'number') {
+        total += data.pending;
+      } else if (typeof data.pending === 'object' && data.pending !== null) {
+        total += Object.values(data.pending).reduce(
+          (sum, count) => sum + count,
+          0,
+        );
+      }
+
+      return total;
+    }
+
+    return 0;
+  });
 
   // Calculate percentage safely
   function getPercentage(value: number): number {
-    return totalMessages.value > 0 ? (value / totalMessages.value) * 100 : 0;
+    const total = totalMessages.value;
+    return total > 0 ? (value / total) * 100 : 0;
   }
 
-  // Refetch statistics (simplified since we only have one query)
+  // Refetch statistics
   function refetchAll(): void {
     if (!hasValidQueue.value) {
       console.warn('QueueStats: Cannot refetch - no valid queue selected');
@@ -116,5 +229,9 @@ export function useQueueStats(): QueueStatsState {
     hasValidQueue,
     getPercentage,
     refetchAll,
+    isGroupedByStatus,
+    hasConsumerGroups,
+    getConsumerGroupPendingCount,
+    getTotalPendingCount,
   };
 }

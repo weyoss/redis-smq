@@ -13,6 +13,15 @@ export enum EExchangeType {
   TOPIC,
 }
 
+export const ExchangeTypeString = {
+  [EExchangeType.DIRECT]: 'direct',
+  [EExchangeType.TOPIC]: 'topic',
+  [EExchangeType.FANOUT]: 'fanout',
+} as const;
+
+export type TExchangeType =
+  (typeof ExchangeTypeString)[keyof typeof ExchangeTypeString];
+
 export interface IExchangeParams {
   name: string;
   ns: string;

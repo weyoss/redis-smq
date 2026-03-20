@@ -8,31 +8,86 @@
   -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import BaseModal from './BaseModal.vue';
-import type { getErrorMessage } from '@/lib/error.ts';
+import { getErrorMessage } from '@/lib/error.ts';
+import { useDeleteApiNamespacesNsExchangesExchangeBindingsQueue } from '@/api/generated/namespace-exchanges/namespace-exchanges';
+import {
+  getGetApiNamespacesNsExchangesExchangeRoutingKeysQueryKey,
+  getGetApiNamespacesNsExchangesExchangeRoutingPatternsQueryKey,
+  getGetApiNamespacesNsExchangesExchangeBindingsQueryKey,
+} from '@/api/generated/namespace-exchanges/namespace-exchanges';
 
 interface Props {
   isVisible: boolean;
-  isLoading?: boolean;
-  error?: ReturnType<typeof getErrorMessage>;
   queueName: string;
+  exchangeName: string;
+  namespace: string;
+  exchangeType: 'direct' | 'fanout' | 'topic';
   routingKey?: string;
   bindingPattern?: string;
-  exchangeType: 'direct' | 'fanout' | 'topic';
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-  error: null,
   routingKey: '',
   bindingPattern: '',
 });
 
 const emit = defineEmits<{
-  (e: 'confirm'): void;
-  (e: 'cancel'): void;
+  (e: 'close'): void;
+  (e: 'success'): void;
 }>();
+
+const queryClient = useQueryClient();
+const errorSectionRef = ref<HTMLElement | null>(null);
+
+// Unbind queue mutation
+const unbindQueueMutation =
+  useDeleteApiNamespacesNsExchangesExchangeBindingsQueue({
+    mutation: {
+      onSuccess: () => {
+        // Invalidate all relevant queries based on exchange type
+        if (props.exchangeType === 'direct') {
+          queryClient.invalidateQueries({
+            queryKey: getGetApiNamespacesNsExchangesExchangeRoutingKeysQueryKey(
+              props.namespace,
+              props.exchangeName,
+            ),
+          });
+        } else if (props.exchangeType === 'topic') {
+          queryClient.invalidateQueries({
+            queryKey:
+              getGetApiNamespacesNsExchangesExchangeRoutingPatternsQueryKey(
+                props.namespace,
+                props.exchangeName,
+              ),
+          });
+        }
+
+        queryClient.invalidateQueries({
+          queryKey: getGetApiNamespacesNsExchangesExchangeBindingsQueryKey(
+            props.namespace,
+            props.exchangeName,
+          ),
+        });
+
+        emit('success');
+      },
+      onError: (error) => {
+        console.error('Failed to unbind queue:', error);
+        // Focus the error section
+        nextTick(() => {
+          errorSectionRef.value?.focus();
+        });
+      },
+    },
+  });
+
+const isLoading = computed(() => unbindQueueMutation.isPending.value);
+const error = computed(() =>
+  getErrorMessage(unbindQueueMutation.error.value?.error),
+);
 
 // Computed properties
 const modalTitle = computed(() => {
@@ -52,7 +107,7 @@ const bindingKey = computed(() => {
     case 'topic':
       return props.bindingPattern;
     case 'fanout':
-      return null; // Fanout exchanges don't use routing keys
+      return null;
     default:
       return null;
   }
@@ -93,15 +148,40 @@ const warningMessage = computed(() => {
 });
 
 // Event handlers
-const handleConfirm = () => {
-  if (props.isLoading) return;
-  emit('confirm');
+const handleConfirm = async () => {
+  if (isLoading.value) return;
+
+  const params: Record<string, string> = {};
+
+  if (props.exchangeType === 'direct' && props.routingKey) {
+    params.routingKey = props.routingKey;
+  } else if (props.exchangeType === 'topic' && props.bindingPattern) {
+    params.routingPattern = props.bindingPattern;
+  }
+
+  await unbindQueueMutation.mutateAsync({
+    ns: props.namespace,
+    exchange: props.exchangeName,
+    queue: props.queueName,
+    params,
+  });
 };
 
-const handleCancel = () => {
-  if (props.isLoading) return;
-  emit('cancel');
+const handleClose = () => {
+  if (isLoading.value) return;
+  unbindQueueMutation.reset();
+  emit('close');
 };
+
+// Watch for visibility changes to reset state
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (!isVisible) {
+      unbindQueueMutation.reset();
+    }
+  },
+);
 </script>
 
 <template>
@@ -111,17 +191,24 @@ const handleCancel = () => {
     :subtitle="modalSubtitle"
     icon="bi bi-unlink"
     size="sm"
-    @close="handleCancel"
+    @close="handleClose"
   >
     <template #body>
       <div class="unbind-queue-content">
         <!-- Error Alert -->
-        <div v-if="error" class="error-alert" role="alert">
+        <div
+          v-if="error"
+          ref="errorSectionRef"
+          class="error-alert"
+          role="alert"
+          tabindex="-1"
+          aria-live="assertive"
+        >
           <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
           <span>{{ error }}</span>
         </div>
 
-        <!-- Confirmation Message -->
+        <!-- Confirmation Section -->
         <div class="confirmation-section">
           <div class="confirmation-icon">
             <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
@@ -140,6 +227,16 @@ const handleCancel = () => {
           </div>
 
           <div class="detail-item">
+            <span class="detail-label">Exchange:</span>
+            <span class="detail-value exchange-name">{{ exchangeName }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Namespace:</span>
+            <span class="detail-value namespace">{{ namespace }}</span>
+          </div>
+
+          <div class="detail-item">
             <span class="detail-label">Exchange Type:</span>
             <span class="detail-value exchange-type">{{ exchangeType }}</span>
           </div>
@@ -149,6 +246,15 @@ const handleCancel = () => {
             <span class="detail-value binding-key">{{ bindingKey }}</span>
           </div>
         </div>
+
+        <!-- Additional warning for fanout exchanges -->
+        <div v-if="exchangeType === 'fanout'" class="info-message">
+          <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+          <span>
+            Fanout exchanges broadcast to all bound queues. After unbinding,
+            this queue will no longer receive any messages from this exchange.
+          </span>
+        </div>
       </div>
     </template>
 
@@ -157,7 +263,7 @@ const handleCancel = () => {
         type="button"
         class="btn btn-secondary"
         :disabled="isLoading"
-        @click="handleCancel"
+        @click="handleClose"
       >
         Cancel
       </button>
@@ -190,7 +296,7 @@ const handleCancel = () => {
 /* Error Alert */
 .error-alert {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   background: #f8d7da;
@@ -198,6 +304,13 @@ const handleCancel = () => {
   border: 1px solid #f5c6cb;
   border-radius: 6px;
   font-size: 0.875rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.error-alert:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
 }
 
 .error-alert i {
@@ -280,10 +393,21 @@ const handleCancel = () => {
   border: 1px solid #dee2e6;
   font-size: 0.875rem;
   flex: 1;
+  word-break: break-word;
 }
 
 .queue-name {
   color: #0c5460;
+  font-weight: 500;
+}
+
+.exchange-name {
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.namespace {
+  color: #6c757d;
   font-weight: 500;
 }
 
@@ -296,6 +420,26 @@ const handleCancel = () => {
 .binding-key {
   color: #856404;
   font-weight: 500;
+}
+
+/* Info Message */
+.info-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #e7f3ff;
+  border: 1px solid #b8daff;
+  border-radius: 6px;
+  color: #004085;
+  font-size: 0.875rem;
+}
+
+.info-message i {
+  color: #0d6efd;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
 }
 
 /* Button Styles */
@@ -411,6 +555,16 @@ const handleCancel = () => {
     padding: 0.625rem 1.25rem;
     font-size: 0.8rem;
     min-width: 100px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .loading-spinner,
+  .error-alert {
+    animation: none;
+    transition: none;
   }
 }
 </style>

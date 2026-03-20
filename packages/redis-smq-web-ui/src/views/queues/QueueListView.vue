@@ -9,39 +9,28 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watchEffect } from 'vue';
-import { useRouter } from 'vue-router';
-import { usePageContentStore, type PageAction } from '@/stores/pageContent';
-import { useSelectedQueueStore } from '@/stores/selectedQueue';
-import { useEscapeKey } from '@/composables/useEscapeKey';
+import { usePageContentStore, type PageAction } from '@/stores/pageContent.ts';
+import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+import { useEscapeKey } from '@/composables/useEscapeKey.ts';
 
 import PageContent from '@/components/PageContent.vue';
 import QueueListItem from '@/components/QueueListItem.vue';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
-import DeleteQueueModal from '@/components/modals/DeleteQueueModal.vue';
 import { getErrorMessage } from '@/lib/error.ts';
 import { useListQueues } from '@/composables/useListQueues.ts';
-import { useDeleteQueue } from '@/composables/useDeleteQueue.ts';
 
-const router = useRouter();
 const pageContentStore = usePageContentStore();
 const selectedQueueStore = useSelectedQueueStore();
 
-// Directly use composable hooks for queue management
+// Use composable for queue listing
 const { sortedQueues, isLoadingQueues, queuesError, refetchQueues } =
   useListQueues();
 
-const { deleteQueue, isDeletingQueue, deleteQueueError, deleteQueueMutation } =
-  useDeleteQueue(async () => {
-    await refetchQueues();
-  });
-
-// Local computed properties from hooks
+// Local computed properties
 const hasQueues = computed(() => sortedQueues.value.length > 0);
 
 // Local UI state for modals
 const showCreateModal = ref(false);
-const showDeleteModal = ref(false);
-const queueToDelete = ref<{ ns: string; name: string } | null>(null);
 
 // Page content definitions
 const pageTitle = 'Queues';
@@ -62,32 +51,15 @@ const pageActions = computed((): PageAction[] => [
     label: 'Create Queue',
     icon: 'bi bi-plus-circle',
     variant: 'primary',
-    // Creation is handled inside the modal; keep this always enabled
     disabled: false,
     loading: false,
     handler: () => (showCreateModal.value = true),
   },
 ]);
 
-// Event Handlers
-function goToQueueDetails(ns: string, name: string) {
-  router.push({ name: 'Queue', params: { ns, queue: name } });
-}
-
-function confirmDelete(ns: string, name: string) {
-  queueToDelete.value = { ns, name };
-  showDeleteModal.value = true;
-}
-
-async function deleteQueueConfirmed() {
-  if (!queueToDelete.value) return;
-  try {
-    await deleteQueue(queueToDelete.value);
-    showDeleteModal.value = false;
-  } catch (err) {
-    // Error is handled by the hook and displayed in the banner
-    console.error('Failed to delete queue:', err);
-  }
+// Handle queue deletion success
+function handleQueueDeleted() {
+  refetchQueues();
 }
 
 // Sync component state with the page content store
@@ -133,32 +105,12 @@ useEscapeKey([
     isVisible: showCreateModal,
     onEscape: () => (showCreateModal.value = false),
   },
-  {
-    isVisible: showDeleteModal,
-    onEscape: () => (showDeleteModal.value = false),
-  },
 ]);
 </script>
 
 <template>
   <div>
     <PageContent>
-      <!-- Transient Error Banners -->
-      <div
-        v-if="deleteQueueError && !showDeleteModal"
-        class="alert alert-warning alert-dismissible fade show mb-4"
-        role="alert"
-      >
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        {{ getErrorMessage(deleteQueueError) }}
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Close"
-          @click="deleteQueueMutation.reset()"
-        ></button>
-      </div>
-
       <!-- Queues List Container -->
       <div class="queues-list-container">
         <div class="queues-list-header">
@@ -172,27 +124,19 @@ useEscapeKey([
           <QueueListItem
             v-for="queue in sortedQueues"
             :key="`${queue.ns}-${queue.name}`"
-            :queue="queue"
-            @select="goToQueueDetails"
-            @delete="confirmDelete"
+            :ns="queue.ns"
+            :name="queue.name"
+            @deleted="handleQueueDeleted"
           />
         </div>
       </div>
     </PageContent>
 
-    <!-- Modals (teleported to body) -->
+    <!-- Create Queue Modal -->
     <CreateQueueModal
       :is-visible="showCreateModal"
       @close="showCreateModal = false"
       @created="refetchQueues()"
-    />
-    <DeleteQueueModal
-      v-if="showDeleteModal && queueToDelete"
-      :is-visible="showDeleteModal"
-      :is-deleting="isDeletingQueue"
-      :queue="queueToDelete"
-      @cancel="showDeleteModal = false"
-      @confirm="deleteQueueConfirmed"
     />
   </div>
 </template>
@@ -224,7 +168,7 @@ useEscapeKey([
   overflow-y: auto;
 }
 
-/* Custom Scrollbar for a cleaner look */
+/* Custom Scrollbar */
 .queues-list::-webkit-scrollbar {
   width: 6px;
 }

@@ -10,7 +10,7 @@
 export default {
   redisSMQApi: {
     input: {
-      target: 'node_modules/redis-smq-rest-api/dist/openapi-specs.json',
+      target: 'node_modules/redis-smq-rest-api/dist/assets/openapi-specs.json',
     },
     output: {
       httpClient: 'axios',

@@ -8,14 +8,15 @@
   -->
 
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
 import { Field } from 'vee-validate';
 import BaseModal from '@/components/modals/BaseModal.vue';
 import { useQueueStateChangeForm } from '@/composables/useQueueStateChangeForm';
-import { PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason } from '@/api/model';
+import { usePatchApiNamespacesNsQueuesNameState } from '@/api/generated/queue-operational-state/queue-operational-state';
+import { EQueueStateTransitionReason } from '@/api/model';
 
 const props = defineProps<{
   isVisible: boolean;
-  isPausing: boolean;
   queue: {
     ns: string;
     name: string;
@@ -23,20 +24,33 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'cancel'): void;
-  (
-    e: 'confirm',
-    data: {
-      reason: string;
-      description?: string;
-      metadata?: Record<string, unknown>;
-    },
-  ): void;
+  (e: 'close'): void;
+  (e: 'success'): void;
 }>();
+
+// Error section ref for focusing
+const errorSectionRef = ref<HTMLElement | null>(null);
+
+// State mutation
+const stateMutation = usePatchApiNamespacesNsQueuesNameState({
+  mutation: {
+    onSuccess: () => {
+      emit('success');
+    },
+    onError: (error) => {
+      console.error('Failed to pause queue:', error);
+      nextTick(() => {
+        errorSectionRef.value?.focus();
+      });
+    },
+  },
+});
+
+const isPausing = computed(() => stateMutation.isPending.value);
+const error = computed(() => stateMutation.error.value?.error);
 
 // Initialize form using the composable
 const {
-  reason,
   reasonError,
   description,
   descriptionError,
@@ -52,32 +66,49 @@ const {
   showAdvanced,
   reasonOptions,
 } = useQueueStateChangeForm({
-  reasonEnum: PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason,
-  defaultReason:
-    PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason.MANUAL,
+  reasonEnum: EQueueStateTransitionReason,
+  defaultReason: EQueueStateTransitionReason.MANUAL,
   maxDescriptionLength: 500,
 });
 
 // Handle modal close
 function handleModalClose() {
-  if (!props.isPausing) {
+  if (!isPausing.value) {
     resetForm();
-    emit('cancel');
+    stateMutation.reset();
+    emit('close');
   }
 }
 
 // Submit handler
-const onSubmit = handleSubmit((values) => {
-  if (!props.isPausing) {
-    emit('confirm', {
-      reason: values.reason,
-      description: values.description || undefined,
-      metadata: getMetadataObject(),
-    });
+const onSubmit = handleSubmit(async (values) => {
+  if (isPausing.value) return;
 
-    resetForm();
-  }
+  const options: Record<string, any> = {};
+  if (values.description) options.description = values.description;
+  if (getMetadataObject()) options.metadata = getMetadataObject();
+  if (values.reason) options.reason = values.reason;
+
+  await stateMutation.mutateAsync({
+    ns: props.queue.ns,
+    name: props.queue.name,
+    data: {
+      state: 'pause',
+      options,
+    },
+  });
 });
+
+// Reset form when modal is hidden
+watch(
+  () => props.isVisible,
+  (newVal) => {
+    if (!newVal) {
+      resetForm();
+      stateMutation.reset();
+    }
+  },
+);
 </script>
 
 <template>
@@ -92,6 +123,19 @@ const onSubmit = handleSubmit((values) => {
     <template #body>
       <form id="pause-queue-form" @submit.prevent="onSubmit">
         <div class="dialog-body">
+          <!-- Error Alert -->
+          <div
+            v-if="error"
+            ref="errorSectionRef"
+            class="error-alert"
+            role="alert"
+            tabindex="-1"
+            aria-live="assertive"
+          >
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <span>{{ error }}</span>
+          </div>
+
           <!-- Confirmation -->
           <section class="confirmation-message">
             <p class="message-text">
@@ -308,6 +352,31 @@ const onSubmit = handleSubmit((values) => {
   gap: clamp(16px, 3vw, 24px);
   padding: 0;
   overflow-x: hidden;
+}
+
+/* Error Alert */
+.error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.error-alert:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
+}
+
+.error-alert i {
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 /* Confirmation section */
@@ -775,7 +844,8 @@ const onSubmit = handleSubmit((values) => {
   .metadata-add-btn,
   .metadata-remove,
   .advanced-toggle,
-  .btn {
+  .btn,
+  .error-alert {
     transition: none;
   }
 

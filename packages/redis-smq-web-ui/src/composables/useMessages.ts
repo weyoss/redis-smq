@@ -7,14 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { computed, reactive, watch, type Ref, ref } from 'vue';
+import { computed, reactive, type Ref, watch } from 'vue';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import {
-  useDeleteApiV1MessagesId,
-  usePostApiV1MessagesIdRequeue,
+  useDeleteApiMessagesId,
+  usePostApiMessagesIdRequeue,
 } from '@/api/generated/messages/messages.ts';
-import type { IQueueParams, IMessageTransferable } from '@/types/index.ts';
+import type { IQueueParams } from '@/types/index.ts';
 import { getErrorMessage } from '@/lib/error.ts';
+import type { IMessageTransferable } from '@/api/model';
 
 /**
  * Local pagination info exposed to the UI.
@@ -58,19 +59,17 @@ export interface MessagesQueryConfig {
     name: string;
     page: number;
     pageSize: number;
-    extraParams?: Record<string, unknown>;
   }) => Promise<MessagesApiResponse>;
   queryKeyPrefix: string;
   enableDelete?: boolean;
   enableRequeue?: boolean;
-  enabled?: Ref<boolean | null>;
+  enabled?: Ref<boolean | null>; // When false, query is disabled. When null, wait. When true, enable if queue exists.
 }
 
 export function useMessages(
   queueParams: Ref<IQueueParams | null>,
   config: MessagesQueryConfig,
   initialPageSize = 20,
-  extraParams: Ref<Record<string, unknown>> = ref({}),
 ) {
   const queryClient = useQueryClient();
 
@@ -80,11 +79,12 @@ export function useMessages(
     pageSize: initialPageSize,
   });
 
-  // Stable query key - includes page number for direct access
+  // Modified queryKey - include enabled state
   const queryKey = computed(() => {
-    if (!queueParams.value) return ['disabled'];
-
-    const key = [
+    if (!queueParams.value || !isEnabled.value) {
+      return ['disabled', config.queryKeyPrefix];
+    }
+    return [
       config.queryKeyPrefix,
       queueParams.value.ns,
       queueParams.value.name,
@@ -93,20 +93,6 @@ export function useMessages(
       'size',
       pagination.pageSize,
     ];
-
-    // Include extra parameters
-    const extraParamsEntries = Object.entries(extraParams.value).sort(
-      ([a], [b]) => a.localeCompare(b),
-    );
-    if (extraParamsEntries.length > 0) {
-      extraParamsEntries.forEach(([paramKey, paramValue]) => {
-        if (paramValue !== undefined && paramValue !== null) {
-          key.push(paramKey, String(paramValue));
-        }
-      });
-    }
-
-    return key;
   });
 
   // Helper to extract total count
@@ -114,13 +100,23 @@ export function useMessages(
     return payload?.data?.totalItems ?? 0;
   }
 
-  // Computed enabled state
+  // Computed enabled state - FIXED!
   const isEnabled = computed(() => {
-    const baseEnabled = !!(queueParams.value?.ns && queueParams.value?.name);
+    // First check: queue params must exist
+    const queueExists = !!(queueParams.value?.ns && queueParams.value?.name);
+    if (!queueExists) return false;
+
+    // Second check: if config.enabled is provided, respect its value
     if (config.enabled !== undefined) {
-      return baseEnabled && config.enabled.value === true;
+      // If config.enabled is null, wait (don't enable yet)
+      if (config.enabled.value === null) return false;
+
+      // Only enable if config.enabled is true
+      return config.enabled.value;
     }
-    return baseEnabled;
+
+    // If no config.enabled provided, default to true when queue exists
+    return true;
   });
 
   // Single page query
@@ -146,16 +142,14 @@ export function useMessages(
         throw new Error('Queue parameters are required');
       }
 
-      const result = await config.queryFn({
+      return await config.queryFn({
         ns: queueParams.value.ns,
         name: queueParams.value.name,
         page: pagination.currentPage,
         pageSize: pagination.pageSize,
-        extraParams: extraParams.value,
       });
-      return result;
     },
-    // Keep previous data while fetching to avoid UI flicker - THIS IS CRITICAL!
+    // Keep previous data while fetching to avoid UI flicker
     placeholderData: (previousData) => previousData,
     // Cache for 5 minutes
     gcTime: 1000 * 60 * 5,
@@ -211,7 +205,7 @@ export function useMessages(
   };
 
   const deleteMessageMutation = config.enableDelete
-    ? useDeleteApiV1MessagesId({
+    ? useDeleteApiMessagesId({
         mutation: {
           onSuccess: onMutationSuccess,
           onError: (error) => {
@@ -222,7 +216,7 @@ export function useMessages(
     : null;
 
   const requeueMessageMutation = config.enableRequeue
-    ? usePostApiV1MessagesIdRequeue({
+    ? usePostApiMessagesIdRequeue({
         mutation: {
           onSuccess: onMutationSuccess,
           onError: (error) => {
@@ -239,8 +233,7 @@ export function useMessages(
   });
 
   const totalMessages = computed<number>(() => {
-    const total = extractTotalItems(data.value ?? {});
-    return total;
+    return extractTotalItems(data.value ?? {});
   });
 
   const isDeleting = computed<boolean>(
@@ -255,8 +248,7 @@ export function useMessages(
       fetchError.value ||
       deleteMessageMutation?.error.value ||
       requeueMessageMutation?.error.value;
-    const errorMsg = getErrorMessage(err);
-    return errorMsg;
+    return getErrorMessage(err);
   });
 
   const hasNextPage = computed(() => {
@@ -341,6 +333,7 @@ export function useMessages(
     () => [pagination.currentPage, data.value],
     () => {
       if (!queueParams.value) return;
+      if (!isEnabled.value) return; // Don't prefetch if not enabled
 
       const totalPages = paginationInfo.value.totalPages;
 
@@ -365,7 +358,6 @@ export function useMessages(
               name: queueParams.value.name,
               page: pagination.currentPage + 1,
               pageSize: pagination.pageSize,
-              extraParams: extraParams.value,
             });
           },
         });
@@ -392,7 +384,6 @@ export function useMessages(
               name: queueParams.value.name,
               page: pagination.currentPage - 1,
               pageSize: pagination.pageSize,
-              extraParams: extraParams.value,
             });
           },
         });

@@ -8,7 +8,7 @@
  */
 
 import { type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNameScheduledMessages } from '@/api/generated/scheduled-messages/scheduled-messages.ts';
+import { getApiNamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
@@ -25,9 +25,10 @@ export function useScheduledMessages(
 ) {
   const config: MessagesQueryConfig = {
     queryFn: async ({ ns, name, page, pageSize }) => {
-      return getApiV1NamespacesNsQueuesNameScheduledMessages(ns, name, {
+      return getApiNamespacesNsQueuesNameMessages(ns, name, {
         page,
         pageSize,
+        status: 'scheduled',
       });
     },
     queryKeyPrefix: 'scheduled-messages',

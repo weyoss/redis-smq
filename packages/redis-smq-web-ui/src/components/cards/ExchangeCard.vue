@@ -11,31 +11,26 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import {
   EExchangeType,
-  type TExchangeDeleteEventPayload,
-  type TExchangeDeleteEventPayloadTotals,
+  ExchangeTypeString,
+  type IExchangeParsedParams,
 } from '@/types';
+import { useExchangeNavigation } from '@/composables/useExchangeNavigation';
+import { useExchangeModals } from '@/composables/useExchangeModals';
 
-// API hooks for fetching routing keys and binding patterns
-import { useGetApiV1NamespacesNsExchangesDirectDirectRoutingKeys } from '@/api/generated/direct-exchange/direct-exchange';
-import { useGetApiV1NamespacesNsExchangesTopicTopicBindingPatterns } from '@/api/generated/topic-exchange/topic-exchange';
+// API hooks for fetching exchange data
+import {
+  useGetApiNamespacesNsExchangesExchangeRoutingKeys,
+  useGetApiNamespacesNsExchangesExchangeRoutingPatterns,
+  useGetApiNamespacesNsExchangesExchangeBindings,
+} from '@/api/generated/namespace-exchanges/namespace-exchanges';
 
-// API hooks for fetching queue data for different exchange types
-import { useGetApiV1NamespacesNsExchangesDirectDirectQueues } from '@/api/generated/direct-exchange/direct-exchange';
-import { useGetApiV1NamespacesNsExchangesFanoutFanoutQueues } from '@/api/generated/fanout-exchange/fanout-exchange';
-import { useGetApiV1NamespacesNsExchangesTopicTopicQueues } from '@/api/generated/topic-exchange/topic-exchange';
-
-import type {
-  GetApiV1NamespacesNsExchangesDirectDirectQueuesParams,
-  GetApiV1NamespacesNsExchangesTopicTopicQueuesParams,
-} from '@/api/model';
+import type { IQueueParams } from '@/api/model';
 import { getErrorMessage } from '@/lib/error';
 
-// Define the shape of a single exchange object
-interface Exchange {
-  name: string;
-  ns: string;
-  type: EExchangeType;
-}
+// Import modals (they'll be rendered in this component)
+import BindQueueModal from '@/components/modals/BindQueueModal.vue';
+import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
+import DeleteExchangeModal from '@/components/modals/DeleteExchangeModal.vue';
 
 interface QueueData {
   items: string[];
@@ -45,17 +40,16 @@ interface QueueData {
 }
 
 const props = defineProps<{
-  exchange: Exchange;
-  isDeleting?: boolean;
+  exchange: IExchangeParsedParams;
 }>();
 
 const emit = defineEmits<{
-  (e: 'delete', payload: TExchangeDeleteEventPayload): void;
-  (e: 'viewDetails', payload: Exchange): void;
-  (e: 'bindQueue', payload: Exchange): void;
-  (e: 'unbindQueue', payload: { exchange: Exchange; queueName: string }): void;
-  (e: 'publishMessage', payload: Exchange): void;
+  (e: 'deleted'): void;
+  (e: 'dataChanged'): void;
 }>();
+
+const { goToExchangePage } = useExchangeNavigation();
+const modals = useExchangeModals();
 
 // --- Step 1: Fetch Routing Keys and Binding Patterns ---
 
@@ -66,17 +60,13 @@ const shouldFetchRoutingKeys = computed(
 const shouldFetchBindingPatterns = computed(
   () => props.exchange.type === EExchangeType.TOPIC,
 );
-const shouldFetchFanoutQueues = computed(
-  () => props.exchange.type === EExchangeType.FANOUT,
-);
 
 // Fetch routing keys for Direct exchanges
 const {
-  data: routingKeysData,
   isLoading: isLoadingRoutingKeys,
   error: routingKeysError,
   refetch: refetchRoutingKeys,
-} = useGetApiV1NamespacesNsExchangesDirectDirectRoutingKeys(
+} = useGetApiNamespacesNsExchangesExchangeRoutingKeys(
   computed(() => props.exchange.ns),
   computed(() => props.exchange.name),
   {
@@ -88,11 +78,10 @@ const {
 
 // Fetch binding patterns for Topic exchanges
 const {
-  data: bindingPatternsData,
   isLoading: isLoadingBindingPatterns,
   error: bindingPatternsError,
   refetch: refetchBindingPatterns,
-} = useGetApiV1NamespacesNsExchangesTopicTopicBindingPatterns(
+} = useGetApiNamespacesNsExchangesExchangeRoutingPatterns(
   computed(() => props.exchange.ns),
   computed(() => props.exchange.name),
   {
@@ -102,214 +91,104 @@ const {
   },
 );
 
-// For Fanout exchanges: direct fetch (no parameters needed)
+// --- Step 2: Fetch All Bindings ---
+
+// Fetch all bindings (returns object mapping keys/patterns to queues)
 const {
-  data: fanoutQueuesData,
-  isLoading: isLoadingFanoutQueues,
-  error: fanoutQueuesError,
-  refetch: refetchFanoutQueues,
-} = useGetApiV1NamespacesNsExchangesFanoutFanoutQueues(
+  data: allBindingsData,
+  isLoading: isLoadingAllBindings,
+  error: allBindingsError,
+  refetch: refetchAllBindings,
+} = useGetApiNamespacesNsExchangesExchangeBindings(
   computed(() => props.exchange.ns),
   computed(() => props.exchange.name),
+  undefined,
   {
     query: {
-      enabled: shouldFetchFanoutQueues,
+      enabled: computed(() => !!props.exchange.ns && !!props.exchange.name),
     },
   },
 );
 
-// Extract routing keys and binding patterns
-const routingKeys = computed(() => {
-  if (props.exchange.type !== EExchangeType.DIRECT) return [];
-  return routingKeysData.value?.data || [];
-});
+// Process bindings into a map
+const bindingsMap = computed<Map<string, IQueueParams[]>>(() => {
+  const map = new Map<string, IQueueParams[]>();
+  const data = allBindingsData.value?.data;
 
-const bindingPatterns = computed(() => {
-  if (props.exchange.type !== EExchangeType.TOPIC) return [];
-  return bindingPatternsData.value?.data || [];
-});
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    Object.entries(data).forEach(([key, queues]) => {
+      if (Array.isArray(queues)) {
+        map.set(key, queues);
+      }
+    });
+  } else if (Array.isArray(data)) {
+    map.set('_fanout', data);
+  }
 
-// --- Step 2: Fetch Queues Using the Keys/Patterns ---
-
-// Create individual query hooks for direct exchange queues
-// We'll create a reasonable maximum number and enable/disable them as needed
-const maxQueries = 10; // Reasonable limit for routing keys/binding patterns
-
-const directQueueQueries = Array.from({ length: maxQueries }, (_, index) => {
-  const routingKey = computed(() => routingKeys.value[index] || '');
-  const shouldEnable = computed(
-    () =>
-      props.exchange.type === EExchangeType.DIRECT &&
-      index < routingKeys.value.length &&
-      !!routingKeys.value[index],
-  );
-
-  return useGetApiV1NamespacesNsExchangesDirectDirectQueues(
-    computed(() => props.exchange.ns),
-    computed(() => props.exchange.name),
-    computed(
-      () =>
-        ({
-          routingKey: routingKey.value,
-        }) as GetApiV1NamespacesNsExchangesDirectDirectQueuesParams,
-    ),
-    {
-      query: {
-        enabled: shouldEnable,
-      },
-    },
-  );
-});
-
-const topicQueueQueries = Array.from({ length: maxQueries }, (_, index) => {
-  const bindingPattern = computed(() => bindingPatterns.value[index] || '');
-  const shouldEnable = computed(
-    () =>
-      props.exchange.type === EExchangeType.TOPIC &&
-      index < bindingPatterns.value.length &&
-      !!bindingPatterns.value[index],
-  );
-
-  return useGetApiV1NamespacesNsExchangesTopicTopicQueues(
-    computed(() => props.exchange.ns),
-    computed(() => props.exchange.name),
-    computed(
-      () =>
-        ({
-          bindingPattern: bindingPattern.value,
-        }) as GetApiV1NamespacesNsExchangesTopicTopicQueuesParams,
-    ),
-    {
-      query: {
-        enabled: shouldEnable,
-      },
-    },
-  );
+  return map;
 });
 
 // --- Unified Loading and Error States ---
 
 const isLoadingData = computed(() => {
-  switch (props.exchange.type) {
-    case EExchangeType.DIRECT:
-      return (
-        isLoadingRoutingKeys.value ||
-        directQueueQueries.some(
-          (query, index) =>
-            index < routingKeys.value.length && query.isLoading.value,
-        )
-      );
-    case EExchangeType.FANOUT:
-      return isLoadingFanoutQueues.value;
-    case EExchangeType.TOPIC:
-      return (
-        isLoadingBindingPatterns.value ||
-        topicQueueQueries.some(
-          (query, index) =>
-            index < bindingPatterns.value.length && query.isLoading.value,
-        )
-      );
-    default:
-      return false;
+  if (props.exchange.type === EExchangeType.FANOUT) {
+    return isLoadingAllBindings.value;
   }
+  return (
+    isLoadingRoutingKeys.value ||
+    isLoadingBindingPatterns.value ||
+    isLoadingAllBindings.value
+  );
 });
 
 const queuesError = computed(() => {
-  switch (props.exchange.type) {
-    case EExchangeType.DIRECT:
-      return (
-        routingKeysError.value ||
-        directQueueQueries.find(
-          (query, index) =>
-            index < routingKeys.value.length && query.error.value,
-        )?.error.value
-      );
-    case EExchangeType.FANOUT:
-      return fanoutQueuesError.value;
-    case EExchangeType.TOPIC:
-      return (
-        bindingPatternsError.value ||
-        topicQueueQueries.find(
-          (query, index) =>
-            index < bindingPatterns.value.length && query.error.value,
-        )?.error.value
-      );
-    default:
-      return null;
+  if (props.exchange.type === EExchangeType.FANOUT) {
+    return allBindingsError.value;
   }
+  return (
+    routingKeysError.value ||
+    bindingPatternsError.value ||
+    allBindingsError.value
+  );
 });
 
 const hasError = computed(() => !!queuesError.value);
 const errorMessage = computed(() => getErrorMessage(queuesError.value));
 
 const handleRetryLoadQueues = () => {
-  switch (props.exchange.type) {
-    case EExchangeType.DIRECT:
-      refetchRoutingKeys();
-      directQueueQueries.forEach((query, index) => {
-        if (index < routingKeys.value.length) {
-          query.refetch();
-        }
-      });
-      break;
-    case EExchangeType.FANOUT:
-      refetchFanoutQueues();
-      break;
-    case EExchangeType.TOPIC:
-      refetchBindingPatterns();
-      topicQueueQueries.forEach((query, index) => {
-        if (index < bindingPatterns.value.length) {
-          query.refetch();
-        }
-      });
-      break;
+  if (props.exchange.type === EExchangeType.DIRECT) {
+    refetchRoutingKeys();
+  } else if (props.exchange.type === EExchangeType.TOPIC) {
+    refetchBindingPatterns();
   }
+  refetchAllBindings();
 };
 
 // --- Process Queue Data ---
 
 const queues = computed<QueueData>(() => {
   let allQueues: string[] = [];
-  let routingKeysUsed: string[] = [];
-  let bindingPatternsUsed: string[] = [];
-  const exchangeType = props.exchange.type;
+  const routingKeysUsed: string[] = [];
+  const bindingPatternsUsed: string[] = [];
 
-  if (exchangeType === EExchangeType.DIRECT) {
-    // Combine queues from all routing keys
-    directQueueQueries.forEach((query, index) => {
-      if (index >= routingKeys.value.length) return;
-
-      const queueData = query.data?.value?.data;
-      if (queueData && Array.isArray(queueData)) {
-        const queuesForKey = queueData.map((q) => q.name).filter(Boolean);
-        allQueues.push(...queuesForKey);
-        if (queuesForKey.length > 0) {
-          routingKeysUsed.push(routingKeys.value[index]);
-        }
-      }
-    });
-  } else if (exchangeType === EExchangeType.FANOUT) {
-    const fanoutData = fanoutQueuesData.value?.data;
-    if (fanoutData && Array.isArray(fanoutData)) {
-      allQueues = fanoutData.map((q) => q.name).filter(Boolean);
-    }
+  if (props.exchange.type === EExchangeType.FANOUT) {
+    const fanoutQueues = bindingsMap.value.get('_fanout') || [];
+    allQueues = fanoutQueues.map((q) => q.name);
   } else {
-    // Combine queues from all binding patterns
-    topicQueueQueries.forEach((query, index) => {
-      if (index >= bindingPatterns.value.length) return;
+    bindingsMap.value.forEach((queues, key) => {
+      const queueNames = queues.map((q) => q.name);
+      allQueues.push(...queueNames);
 
-      const queueData = query.data?.value?.data;
-      if (queueData && Array.isArray(queueData)) {
-        const queuesForPattern = queueData.map((q) => q.name).filter(Boolean);
-        allQueues.push(...queuesForPattern);
-        if (queuesForPattern.length > 0) {
-          bindingPatternsUsed.push(bindingPatterns.value[index]);
+      if (queueNames.length > 0) {
+        if (props.exchange.type === EExchangeType.DIRECT) {
+          routingKeysUsed.push(key);
+        } else if (props.exchange.type === EExchangeType.TOPIC) {
+          bindingPatternsUsed.push(key);
         }
       }
     });
   }
 
-  // Remove duplicates
   const uniqueQueues = [...new Set(allQueues)];
 
   return {
@@ -320,35 +199,8 @@ const queues = computed<QueueData>(() => {
   };
 });
 
-// --- UI State and Interaction Logic ---
+// --- UI State ---
 
-// Dropdown menu state
-const showDropdown = ref(false);
-const dropdown = ref<HTMLElement | null>(null);
-
-const handleClickOutside = (event: MouseEvent) => {
-  if (dropdown.value && !dropdown.value.contains(event.target as Node)) {
-    showDropdown.value = false;
-  }
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && showDropdown.value) {
-    showDropdown.value = false;
-  }
-};
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-  document.addEventListener('keydown', handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
-  document.removeEventListener('keydown', handleKeyDown);
-});
-
-// Computed properties for dynamic styling and data
 const exchangeTypeDetails = computed(() => {
   switch (props.exchange.type) {
     case EExchangeType.DIRECT:
@@ -388,7 +240,6 @@ const remainingQueuesCount = computed(() =>
   Math.max(0, queues.value.total - sampleQueues.value.length),
 );
 
-// Show metadata info for Direct and Topic exchanges
 const metadataInfo = computed(() => {
   switch (props.exchange.type) {
     case EExchangeType.DIRECT:
@@ -404,70 +255,107 @@ const metadataInfo = computed(() => {
   }
 });
 
-// Event handlers
+// Dropdown menu state
+const showDropdown = ref(false);
+const dropdown = ref<HTMLElement | null>(null);
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (dropdown.value && !dropdown.value.contains(event.target as Node)) {
+    showDropdown.value = false;
+  }
+};
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && showDropdown.value) {
+    showDropdown.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('keydown', handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('keydown', handleKeyDown);
+});
+
+// Event handlers - use the modal composable
 const handleDelete = () => {
   showDropdown.value = false;
-  const totals: TExchangeDeleteEventPayloadTotals = {
-    totalQueues: queues.value.total,
-    totalRoutingKeys:
-      props.exchange.type === EExchangeType.DIRECT
-        ? (queues.value.routingKeys?.length ?? 0)
-        : undefined,
-    totalBindingPatterns:
-      props.exchange.type === EExchangeType.TOPIC
-        ? (queues.value.bindingPatterns?.length ?? 0)
-        : undefined,
-  };
-
-  emit('delete', { exchange: props.exchange, totals });
+  modals.openDeleteModal(props.exchange);
 };
 
 const handleBindQueue = () => {
   showDropdown.value = false;
-  emit('bindQueue', props.exchange);
+  modals.openBindModal(props.exchange);
 };
 
+// Find the binding key for the queue
 const handleUnbindQueue = (queueName: string) => {
   showDropdown.value = false;
-  emit('unbindQueue', { exchange: props.exchange, queueName });
-};
 
-const handlePublishMessage = () => {
-  showDropdown.value = false;
-  emit('publishMessage', props.exchange);
-};
+  // Find which binding key this queue belongs to
+  let bindingKey: string | undefined;
 
-const handleViewDetails = () => {
-  emit('viewDetails', props.exchange);
+  if (props.exchange.type === EExchangeType.FANOUT) {
+    // For fanout, no binding key needed
+    bindingKey = undefined;
+  } else {
+    // Search through the bindings map to find the key for this queue
+    for (const [key, queues] of bindingsMap.value.entries()) {
+      if (queues.some((q) => q.name === queueName)) {
+        bindingKey = key;
+        break;
+      }
+    }
+  }
+
+  modals.openUnbindModal(props.exchange, queueName, bindingKey);
 };
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
+};
+
+// Modal success handlers
+const handleBindSuccess = () => {
+  modals.closeModals();
+  // Refresh data
+  if (props.exchange.type === EExchangeType.DIRECT) {
+    refetchRoutingKeys();
+  } else if (props.exchange.type === EExchangeType.TOPIC) {
+    refetchBindingPatterns();
+  }
+  refetchAllBindings();
+  emit('dataChanged');
+};
+
+const handleUnbindSuccess = () => {
+  modals.closeModals();
+  // Refresh data
+  if (props.exchange.type === EExchangeType.DIRECT) {
+    refetchRoutingKeys();
+  } else if (props.exchange.type === EExchangeType.TOPIC) {
+    refetchBindingPatterns();
+  }
+  refetchAllBindings();
+  emit('dataChanged');
+};
+
+const handleDeleted = () => {
+  modals.closeModals();
+  emit('deleted');
 };
 </script>
 
 <template>
   <article
     class="exchange-card"
-    :class="{ 'is-deleting': isDeleting }"
     role="article"
     :aria-label="`${exchangeTypeDetails.name} exchange ${exchange.name} in ${exchange.ns} namespace`"
   >
-    <!-- Deleting Overlay -->
-    <div
-      v-if="isDeleting"
-      class="loading-overlay"
-      role="status"
-      aria-live="polite"
-    >
-      <div
-        class="spinner-border text-light"
-        role="status"
-        aria-hidden="true"
-      ></div>
-      <span class="loading-text">Deleting exchange...</span>
-    </div>
-
     <!-- Card Header -->
     <header class="card-header">
       <div class="header-content">
@@ -516,16 +404,6 @@ const toggleDropdown = () => {
             >
               <i class="bi bi-link-45deg" aria-hidden="true"></i>
               <span>Bind Queue</span>
-            </button>
-
-            <button
-              type="button"
-              class="dropdown-item"
-              role="menuitem"
-              @click="handlePublishMessage"
-            >
-              <i class="bi bi-send" aria-hidden="true"></i>
-              <span>Publish Message</span>
             </button>
 
             <div class="dropdown-divider" role="separator"></div>
@@ -632,7 +510,6 @@ const toggleDropdown = () => {
             <i class="bi bi-inbox" aria-hidden="true"></i>
             <p>No queues are bound to this exchange.</p>
             <button type="button" class="btn-bind-now" @click="handleBindQueue">
-              <i class="bi bi-link-45deg" aria-hidden="true"></i>
               Bind a queue
             </button>
           </div>
@@ -646,12 +523,62 @@ const toggleDropdown = () => {
         type="button"
         class="btn-details"
         :aria-label="`View details for ${exchange.name} exchange`"
-        @click="handleViewDetails"
+        @click="() => goToExchangePage(exchange)"
       >
         <span>View Details</span>
         <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
       </button>
     </footer>
+
+    <!-- Modals - using the composable state -->
+    <BindQueueModal
+      :is-visible="
+        modals.showBindModal.value &&
+        modals.selectedExchange?.value?.name === exchange.name
+      "
+      :exchange-type="ExchangeTypeString[exchange.type]"
+      :exchange-name="exchange.name"
+      :namespace="exchange.ns"
+      @close="modals.closeModals"
+      @success="handleBindSuccess"
+    />
+
+    <UnbindQueueModal
+      v-if="modals.selectedQueue.value && modals.selectedExchange?.value"
+      :is-visible="
+        modals.showUnbindModal.value &&
+        modals.selectedExchange?.value?.name === exchange.name
+      "
+      :queue-name="modals.selectedQueue.value"
+      :exchange-name="exchange.name"
+      :namespace="exchange.ns"
+      :exchange-type="ExchangeTypeString[exchange.type]"
+      :routing-key="
+        props.exchange.type === EExchangeType.DIRECT
+          ? (modals.selectedBindingKey.value ?? undefined)
+          : undefined
+      "
+      :binding-pattern="
+        props.exchange.type === EExchangeType.TOPIC
+          ? (modals.selectedBindingKey.value ?? undefined)
+          : undefined
+      "
+      @close="modals.closeModals"
+      @success="handleUnbindSuccess"
+    />
+
+    <DeleteExchangeModal
+      :is-visible="
+        modals.showDeleteModal.value &&
+        modals.selectedExchange?.value?.name === exchange.name
+      "
+      :exchange-type="exchange.type"
+      :exchange-name="exchange.name"
+      :namespace="exchange.ns"
+      :total-queues="queues.total"
+      @deleted="handleDeleted"
+      @close="modals.closeModals"
+    />
   </article>
 </template>
 
@@ -768,6 +695,38 @@ const toggleDropdown = () => {
 .btn-retry:hover {
   background-color: #dc3545;
   color: white;
+}
+
+/* Bind Now Button */
+.btn-bind-now {
+  background: #0d6efd;
+  color: white;
+  border: 1px solid #0d6efd;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-bind-now:hover {
+  background: #0b5ed7;
+  border-color: #0a58ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+}
+
+.btn-bind-now:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+.btn-bind-now:active {
+  transform: translateY(0);
 }
 
 /* Header */
@@ -1108,19 +1067,21 @@ const toggleDropdown = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .no-queues-message i {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: #6c757d;
+  margin-bottom: 0.5rem;
 }
 
 .no-queues-message p {
   margin: 0;
   color: #6c757d;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   overflow-wrap: anywhere;
+  max-width: 80%;
 }
 
 /* Footer */
@@ -1214,38 +1175,9 @@ const toggleDropdown = () => {
   .btn-unbind-queue {
     align-self: flex-end;
   }
-}
 
-/* High contrast mode support */
-@media (prefers-contrast: more) {
-  .exchange-card {
-    border-width: 2px;
-  }
-
-  .dropdown-item:focus,
-  .btn-actions:focus,
-  .btn-details:focus,
-  .btn-bind-now:focus,
-  .btn-unbind-queue:focus {
-    outline: 3px solid;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .exchange-card,
-  .btn-actions,
-  .dropdown-item,
-  .btn-details,
-  .btn-bind-now,
-  .btn-unbind-queue,
-  .dropdown-enter-active,
-  .dropdown-leave-active {
-    transition: none;
-  }
-
-  .exchange-card:hover {
-    transform: none;
+  .no-queues-message p {
+    max-width: 100%;
   }
 }
 
@@ -1282,6 +1214,14 @@ const toggleDropdown = () => {
     border-color: #4a5568;
   }
 
+  .no-queues-message p {
+    color: #a0aec0;
+  }
+
+  .no-queues-message i {
+    color: #718096;
+  }
+
   .btn-details {
     background: #4a5568;
     border-color: #4a5568;
@@ -1291,6 +1231,48 @@ const toggleDropdown = () => {
   .btn-details:hover {
     background: #0d6efd;
     border-color: #0d6efd;
+  }
+
+  .btn-bind-now {
+    background: #0d6efd;
+    color: white;
+  }
+
+  .btn-bind-now:hover {
+    background: #0b5ed7;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .exchange-card {
+    border-width: 2px;
+  }
+
+  .dropdown-item:focus,
+  .btn-actions:focus,
+  .btn-details:focus,
+  .btn-bind-now:focus,
+  .btn-unbind-queue:focus {
+    outline: 3px solid;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .exchange-card,
+  .btn-actions,
+  .dropdown-item,
+  .btn-details,
+  .btn-bind-now,
+  .btn-unbind-queue,
+  .dropdown-enter-active,
+  .dropdown-leave-active {
+    transition: none;
+  }
+
+  .exchange-card:hover {
+    transform: none;
   }
 }
 </style>

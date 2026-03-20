@@ -12,17 +12,17 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 import {
-  getApiV1Queues,
-  getGetApiV1QueuesQueryKey,
+  getApiQueues,
+  getGetApiQueuesQueryKey,
 } from '@/api/generated/queues/queues.ts';
 import {
-  getApiV1NamespacesNsQueuesName,
-  getGetApiV1NamespacesNsQueuesNameQueryKey,
+  getApiNamespacesNsQueuesName,
+  getGetApiNamespacesNsQueuesNameQueryKey,
 } from '@/api/generated/queue/queue.ts';
 import {
-  getApiV1NamespacesNsQueuesNameConsumers,
-  getGetApiV1NamespacesNsQueuesNameConsumersQueryKey,
-} from '@/api/generated/consumers/consumers.ts';
+  getApiNamespacesNsQueuesNameConsumers,
+  getGetApiNamespacesNsQueuesNameConsumersQueryKey,
+} from '@/api/generated/queue-consumers/queue-consumers.ts';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
 
 const router = useRouter();
@@ -96,8 +96,8 @@ const loadDashboardData = async () => {
 
     // Fetch all queues imperatively using the query client
     const queuesResponse = await queryClient.fetchQuery({
-      queryKey: getGetApiV1QueuesQueryKey(),
-      queryFn: () => getApiV1Queues(),
+      queryKey: getGetApiQueuesQueryKey(),
+      queryFn: () => getApiQueues(),
     });
     const queues = queuesResponse.data;
 
@@ -116,20 +116,17 @@ const loadDashboardData = async () => {
     // For each queue, create promises to fetch its details and consumers
     const promises = queues.map(async (queue) => {
       const detailsPromise = queryClient.fetchQuery({
-        queryKey: getGetApiV1NamespacesNsQueuesNameQueryKey(
-          queue.ns,
-          queue.name,
-        ),
-        queryFn: () => getApiV1NamespacesNsQueuesName(queue.ns, queue.name),
+        queryKey: getGetApiNamespacesNsQueuesNameQueryKey(queue.ns, queue.name),
+        queryFn: () => getApiNamespacesNsQueuesName(queue.ns, queue.name),
       });
 
       const consumersPromise = queryClient.fetchQuery({
-        queryKey: getGetApiV1NamespacesNsQueuesNameConsumersQueryKey(
+        queryKey: getGetApiNamespacesNsQueuesNameConsumersQueryKey(
           queue.ns,
           queue.name,
         ),
         queryFn: () =>
-          getApiV1NamespacesNsQueuesNameConsumers(queue.ns, queue.name),
+          getApiNamespacesNsQueuesNameConsumers(queue.ns, queue.name),
       });
 
       const [detailsResponse, consumersResponse] = await Promise.all([

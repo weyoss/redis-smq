@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { usePostApiV1Queues } from '@/api/generated/queues/queues.ts';
+import { usePostApiQueues } from '@/api/generated/queues/queues.ts';
 import { computed } from 'vue';
 
 /**
@@ -16,7 +16,7 @@ import { computed } from 'vue';
  * @returns an object with methods and state for creating a queue.
  */
 export function useCreateQueue(onSuccessCallback: () => Promise<unknown>) {
-  const createQueueMutation = usePostApiV1Queues({
+  const createQueueMutation = usePostApiQueues({
     mutation: {
       onSuccess: async () => {
         await onSuccessCallback();

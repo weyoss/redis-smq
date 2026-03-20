@@ -8,13 +8,13 @@
  */
 
 import { type Ref, computed } from 'vue';
-import { getApiV1NamespacesNsQueuesNameDeadLetteredMessages } from '@/api/generated/dead-lettered-messages/dead-lettered-messages.ts';
+import { getApiNamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
 import type { IQueueParams } from '@/types/index.ts';
-import { useGetApiV1Config } from '@/api/generated/configuration/configuration.ts';
+import { useGetApiConfig } from '@/api/generated/configuration/configuration.ts';
 import { getErrorMessage } from '@/lib/error.ts';
 
 /**
@@ -31,7 +31,7 @@ export function useDeadLetteredMessages(
     isLoading: isConfigLoading,
     error: configApiError,
     refetch: refetchConfig,
-  } = useGetApiV1Config();
+  } = useGetApiConfig();
 
   const deadLetteringEnabled = computed<boolean | null>(() => {
     if (isConfigLoading.value) return null; // Indeterminate state
@@ -45,9 +45,10 @@ export function useDeadLetteredMessages(
   // --- Messages Composable Setup ---
   const config: MessagesQueryConfig = {
     queryFn: async ({ ns, name, page, pageSize }) => {
-      return getApiV1NamespacesNsQueuesNameDeadLetteredMessages(ns, name, {
+      return getApiNamespacesNsQueuesNameMessages(ns, name, {
         page,
         pageSize,
+        status: 'dead-lettered',
       });
     },
     queryKeyPrefix: 'dead-lettered-messages',

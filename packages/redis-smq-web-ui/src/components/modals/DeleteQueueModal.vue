@@ -8,29 +8,80 @@
   -->
 
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
 import BaseModal from '@/components/modals/BaseModal.vue';
+import { getErrorMessage } from '@/lib/error.ts';
+import { useDeleteApiNamespacesNsQueuesName } from '@/api/generated/queue/queue';
 
-const props = defineProps<{
+interface Props {
   isVisible: boolean;
-  isDeleting: boolean;
   queue: {
     ns: string;
     name: string;
   };
-}>();
+}
+
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'cancel'): void;
-  (e: 'confirm'): void;
+  (e: 'close'): void;
+  (e: 'success'): void;
 }>();
 
+// Custom focus directive for error section
+const vFocus = {
+  mounted: (el: HTMLElement) => el.focus(),
+};
+
+// Error section ref for focusing
+const errorSectionRef = ref<HTMLElement | null>(null);
+
+// Delete queue mutation
+const deleteQueueMutation = useDeleteApiNamespacesNsQueuesName({
+  mutation: {
+    onSuccess: () => {
+      emit('success');
+    },
+    onError: (error) => {
+      console.error('Failed to delete queue:', error);
+      // Focus the error section
+      nextTick(() => {
+        errorSectionRef.value?.focus();
+      });
+    },
+  },
+});
+
+const isDeleting = computed(() => deleteQueueMutation.isPending.value);
+const error = computed(() =>
+  getErrorMessage(deleteQueueMutation.error.value?.error),
+);
+
 function handleClose() {
-  if (!props.isDeleting) emit('cancel');
+  if (!isDeleting.value) {
+    deleteQueueMutation.reset();
+    emit('close');
+  }
 }
 
-function handleConfirm() {
-  if (!props.isDeleting) emit('confirm');
+async function handleConfirm() {
+  if (isDeleting.value) return;
+
+  await deleteQueueMutation.mutateAsync({
+    ns: props.queue.ns,
+    name: props.queue.name,
+  });
 }
+
+// Reset mutation when modal is hidden
+watch(
+  () => props.isVisible,
+  (newVal) => {
+    if (!newVal) {
+      deleteQueueMutation.reset();
+    }
+  },
+);
 </script>
 
 <template>
@@ -44,6 +95,20 @@ function handleConfirm() {
   >
     <template #body>
       <div class="dialog-body">
+        <!-- Error Alert -->
+        <div
+          v-if="error"
+          ref="errorSectionRef"
+          v-focus
+          class="error-alert"
+          role="alert"
+          tabindex="-1"
+          aria-live="assertive"
+        >
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>{{ error }}</span>
+        </div>
+
         <!-- Confirmation -->
         <section class="confirmation-message">
           <p class="message-text">
@@ -137,6 +202,31 @@ function handleConfirm() {
   gap: clamp(12px, 2.8vw, 18px);
   padding: 0; /* BaseModal provides padding */
   overflow-x: hidden;
+}
+
+/* Error Alert */
+.error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.error-alert:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+  border-color: #dc3545;
+}
+
+.error-alert i {
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 /* Confirmation content */
@@ -293,7 +383,8 @@ function handleConfirm() {
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .actions .btn {
+  .actions .btn,
+  .error-alert {
     transition: none;
   }
 }

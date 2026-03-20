@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { useGetApiV1NamespacesNsQueuesName } from '@/api/generated/queue/queue.ts';
+import { useGetApiNamespacesNsQueuesName } from '@/api/generated/queue/queue.ts';
 import { EQueueDeliveryModel } from '@/types/index.ts';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
@@ -23,7 +23,7 @@ export const useSelectedQueuePropertiesStore = defineStore(
     });
 
     // Queue Properties Query
-    const queuePropertiesQuery = useGetApiV1NamespacesNsQueuesName(
+    const queuePropertiesQuery = useGetApiNamespacesNsQueuesName(
       computed(() => selectedQueue.value?.ns || ''),
       computed(() => selectedQueue.value?.name || ''),
       {

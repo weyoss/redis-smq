@@ -11,7 +11,7 @@ import { ref, computed } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
-import { PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason } from '@/api/model';
+import { EQueueStateTransitionReason } from '@/api/model';
 
 // Types for metadata entries
 interface MetadataEntry {
@@ -32,7 +32,7 @@ interface UseQueueStateChangeFormProps {
  */
 export function useQueueStateChangeForm({
   reasonEnum,
-  defaultReason = PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason.MANUAL,
+  defaultReason = EQueueStateTransitionReason.MANUAL,
   maxDescriptionLength = 500,
 }: UseQueueStateChangeFormProps) {
   // Create validation schema

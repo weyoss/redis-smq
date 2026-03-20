@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import ExchangesView from '@/views/ExchangesView.vue';
+import ExchangeListView from '@/views/exchanges/ExchangeListView.vue';
 import HomeViewView from '@/views/HomeView.vue';
 import type { RouteRecordRaw } from 'vue-router';
 
@@ -23,7 +23,7 @@ export const main: readonly RouteRecordRaw[] = [
   {
     path: '/ns',
     name: 'Namespaces',
-    component: () => import('../views/NamespacesView.vue'),
+    component: () => import('../views/namespaces/NamespaceListView.vue'),
     meta: {
       title: 'Namespace Management',
       breadcrumbs: 'Namespaces',
@@ -35,7 +35,7 @@ export const main: readonly RouteRecordRaw[] = [
     // route level code-splitting
     // this generates a separate chunk (About.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import('../views/QueuesView.vue'),
+    component: () => import('../views/queues/QueueListView.vue'),
     meta: {
       title: 'Queue Management',
       breadcrumbs: 'Queues',
@@ -44,6 +44,6 @@ export const main: readonly RouteRecordRaw[] = [
   {
     path: '/exchanges',
     name: 'Exchanges',
-    component: ExchangesView,
+    component: ExchangeListView,
   },
 ];

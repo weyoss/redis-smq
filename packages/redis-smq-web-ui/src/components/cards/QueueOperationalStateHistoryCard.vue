@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useGetApiV1NamespacesNsQueuesNameOperationalStateGetHistory } from '@/api/generated/queue-operational-state/queue-operational-state.ts';
+import { useGetApiNamespacesNsQueuesNameStateHistory } from '@/api/generated/queue-operational-state/queue-operational-state.ts';
 import { getErrorMessage } from '@/lib/error.ts';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { EQueueOperationalState } from '@/types';
@@ -31,7 +31,7 @@ const {
   isLoading,
   error,
   refetch,
-} = useGetApiV1NamespacesNsQueuesNameOperationalStateGetHistory(
+} = useGetApiNamespacesNsQueuesNameStateHistory(
   computed(() => String(selectedQueue.value?.ns)),
   computed(() => String(selectedQueue.value?.name)),
   {

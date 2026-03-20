@@ -8,60 +8,65 @@
   -->
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { EExchangeType } from '@/types/exchanges';
 import { getErrorMessage } from '@/lib/error';
 import BaseModal from '@/components/modals/BaseModal.vue';
+import { usePostApiNamespacesNsExchangesExchangeBindingsQueue } from '@/api/generated/namespace-exchanges/namespace-exchanges';
 
 // Custom focus directive
 const vFocus = {
   mounted: (el: HTMLElement) => el.focus(),
 };
 
+// Error section ref for focusing
+const errorSectionRef = ref<HTMLElement | null>(null);
+
 const props = defineProps<{
   isVisible: boolean;
-  isLoading: boolean;
-  error: ReturnType<typeof getErrorMessage>;
 }>();
 
 const emit = defineEmits<{
   (e: 'cancel'): void;
-  (
-    e: 'confirm',
-    payload: {
-      name: string;
-      ns: string;
-      type: EExchangeType;
-      queueName: string;
-      routingKey?: string;
-      bindingPattern?: string;
-    },
-  ): void;
+  (e: 'success'): void;
 }>();
 
+// Form state
 const name = ref('');
 const ns = ref('default');
 const type = ref<EExchangeType>(EExchangeType.DIRECT);
 const queueName = ref('');
 const routingKey = ref('');
-const bindingPattern = ref('');
+const routingPattern = ref('');
+const createError = ref('');
 
-// Exchange type options with proper integer values and display names
+// Exchange type options
 const exchangeTypeOptions = [
   {
     value: EExchangeType.DIRECT,
     label: 'Direct',
     description: 'Routes messages to queues based on exact routing key match',
-  },
-  {
-    value: EExchangeType.FANOUT,
-    label: 'Fanout',
-    description: 'Routes messages to all bound queues (ignores routing key)',
+    paramName: 'routingKey',
+    paramPlaceholder: 'e.g., user.created',
+    paramHelp:
+      'Messages with this exact routing key will be routed to the queue',
   },
   {
     value: EExchangeType.TOPIC,
     label: 'Topic',
     description: 'Routes messages based on wildcard pattern matching (* and #)',
+    paramName: 'routingPattern',
+    paramPlaceholder: 'e.g., user.* or orders.#',
+    paramHelp: '* matches one word, # matches zero or more words',
+  },
+  {
+    value: EExchangeType.FANOUT,
+    label: 'Fanout',
+    description: 'Routes messages to all bound queues (ignores routing key)',
+    paramName: null,
+    paramPlaceholder: '',
+    paramHelp:
+      'No routing parameters needed - messages are broadcast to all bound queues',
   },
 ];
 
@@ -69,65 +74,90 @@ const selectedExchangeType = computed(() => {
   return exchangeTypeOptions.find((option) => option.value === type.value);
 });
 
+// Validation
 const isFormValid = computed(() => {
   const basicValid =
     name.value.trim() !== '' &&
     ns.value.trim() !== '' &&
     queueName.value.trim() !== '';
 
+  if (!basicValid) return false;
+
   // For direct exchanges, routing key is required
   if (type.value === EExchangeType.DIRECT) {
-    return basicValid && routingKey.value.trim() !== '';
+    return routingKey.value.trim() !== '';
   }
 
-  // For topic exchanges, binding pattern is required
+  // For topic exchanges, routing pattern is required
   if (type.value === EExchangeType.TOPIC) {
-    return basicValid && bindingPattern.value.trim() !== '';
+    return routingPattern.value.trim() !== '';
   }
 
-  return basicValid;
+  // For fanout exchanges, no additional params needed
+  return true;
 });
 
-const showRoutingKeyField = computed(() => {
-  return type.value === EExchangeType.DIRECT;
+const currentParamValue = computed({
+  get: () => {
+    if (type.value === EExchangeType.DIRECT) return routingKey.value;
+    if (type.value === EExchangeType.TOPIC) return routingPattern.value;
+    return '';
+  },
+  set: (value: string) => {
+    if (type.value === EExchangeType.DIRECT) routingKey.value = value;
+    if (type.value === EExchangeType.TOPIC) routingPattern.value = value;
+  },
 });
 
-const showBindingPatternField = computed(() => {
-  return type.value === EExchangeType.TOPIC;
-});
+// Creation Mutation
+const createExchangeMutation =
+  usePostApiNamespacesNsExchangesExchangeBindingsQueue({
+    mutation: {
+      onSuccess: () => {
+        emit('success');
+      },
+      onError: (err) => {
+        console.error('Failed to create exchange:', err);
+        createError.value =
+          getErrorMessage(err.error)?.message ?? 'Failed to create exchange';
 
-const errorMessage = computed(() => {
-  return props.error ? getErrorMessage(props.error) : null;
-});
+        // Focus the error section when error occurs
+        nextTick(() => {
+          errorSectionRef.value?.focus();
+        });
+      },
+    },
+  });
+
+const isCreating = computed(() => createExchangeMutation.isPending.value);
 
 function handleSubmit() {
-  if (isFormValid.value && !props.isLoading) {
-    const payload: {
-      name: string;
-      ns: string;
-      type: EExchangeType;
-      queueName: string;
-      routingKey?: string;
-      bindingPattern?: string;
-    } = {
-      name: name.value.trim(),
-      ns: ns.value.trim(),
-      type: type.value,
-      queueName: queueName.value.trim(),
-    };
+  if (!isFormValid.value || isCreating.value) return;
 
-    // Add routing key for direct exchanges
-    if (type.value === EExchangeType.DIRECT && routingKey.value.trim()) {
-      payload.routingKey = routingKey.value.trim();
-    }
+  // Clear previous errors
+  createError.value = '';
 
-    // Add binding pattern for topic exchanges
-    if (type.value === EExchangeType.TOPIC && bindingPattern.value.trim()) {
-      payload.bindingPattern = bindingPattern.value.trim();
-    }
+  // Build params based on exchange type
+  const params: Record<string, string> = {};
 
-    emit('confirm', payload);
+  if (type.value === EExchangeType.DIRECT && routingKey.value.trim()) {
+    params.routingKey = routingKey.value.trim();
   }
+
+  if (type.value === EExchangeType.TOPIC && routingPattern.value.trim()) {
+    params.routingPattern = routingPattern.value.trim();
+  }
+
+  createExchangeMutation
+    .mutateAsync({
+      ns: ns.value.trim(),
+      exchange: name.value.trim(),
+      queue: queueName.value.trim(),
+      params,
+    })
+    .catch(() => {
+      // the error will be handled in createExchangeMutation
+    });
 }
 
 function handleClose() {
@@ -144,17 +174,19 @@ watch(
       type.value = EExchangeType.DIRECT;
       queueName.value = '';
       routingKey.value = '';
-      bindingPattern.value = '';
+      routingPattern.value = '';
+      createError.value = '';
+      createExchangeMutation.reset();
     }
   },
 );
 
-// Clear routing key/binding pattern when exchange type changes
+// Clear routing key/pattern when exchange type changes
 watch(
   () => type.value,
   () => {
     routingKey.value = '';
-    bindingPattern.value = '';
+    routingPattern.value = '';
   },
 );
 </script>
@@ -172,13 +204,13 @@ watch(
         <!-- Information Alert -->
         <div class="alert alert-info mb-4">
           <i class="bi bi-info-circle me-2"></i>
-          <strong>Note:</strong> Exchanges are created by binding the first
-          queue to them. You'll need to specify both the exchange details and
-          the initial queue binding.
+          <strong>Note:</strong> Exchanges are created automatically when you
+          bind the first queue to them. You'll create the exchange by binding a
+          queue with the appropriate routing parameters.
         </div>
 
         <form @submit.prevent="handleSubmit">
-          <!-- Basic Information Section -->
+          <!-- Exchange Details Section -->
           <section class="form-section">
             <div class="section-header">
               <h3 class="section-title">
@@ -206,9 +238,10 @@ watch(
                   class="form-control"
                   placeholder="e.g., user-events"
                   required
-                  :disabled="isLoading"
+                  :disabled="isCreating"
                   autocomplete="off"
                   aria-describedby="exchange-name-help"
+                  :aria-invalid="!!createError"
                 />
                 <div id="exchange-name-help" class="field-help">
                   <i class="bi bi-lightbulb help-icon"></i>
@@ -230,9 +263,10 @@ watch(
                   class="form-control"
                   placeholder="e.g., default"
                   required
-                  :disabled="isLoading"
+                  :disabled="isCreating"
                   autocomplete="off"
                   aria-describedby="exchange-ns-help"
+                  :aria-invalid="!!createError"
                 />
                 <div id="exchange-ns-help" class="field-help">
                   <i class="bi bi-lightbulb help-icon"></i>
@@ -251,8 +285,9 @@ watch(
                   id="exchange-type"
                   v-model="type"
                   class="form-select"
-                  :disabled="isLoading"
+                  :disabled="isCreating"
                   aria-describedby="exchange-type-help"
+                  :aria-invalid="!!createError"
                 >
                   <option
                     v-for="option in exchangeTypeOptions"
@@ -263,11 +298,11 @@ watch(
                   </option>
                 </select>
                 <div id="exchange-type-help" class="field-help">
-                  <div v-if="selectedExchangeType" class="help-options">
-                    <div class="help-option">
+                  <div v-if="selectedExchangeType" class="help-content">
+                    <span class="help-text">
                       <strong>{{ selectedExchangeType.label }}:</strong>
                       {{ selectedExchangeType.description }}
-                    </div>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -279,10 +314,10 @@ watch(
             <div class="section-header">
               <h3 class="section-title">
                 <i class="bi bi-link-45deg section-icon"></i>
-                Initial Queue Binding
+                Queue Binding
               </h3>
               <p class="section-description">
-                Exchanges are created by binding the first queue to them
+                Bind a queue to create the exchange with its first binding
               </p>
             </div>
 
@@ -301,9 +336,10 @@ watch(
                   class="form-control"
                   placeholder="e.g., user-notifications"
                   required
-                  :disabled="isLoading"
+                  :disabled="isCreating"
                   autocomplete="off"
                   aria-describedby="queue-name-help"
+                  :aria-invalid="!!createError"
                 />
                 <div id="queue-name-help" class="field-help">
                   <i class="bi bi-lightbulb help-icon"></i>
@@ -311,72 +347,82 @@ watch(
                 </div>
               </div>
 
-              <!-- Routing Key Field (Direct Exchange) -->
-              <div v-if="showRoutingKeyField" class="form-group">
-                <label for="routing-key" class="form-label">
-                  <i class="bi bi-key-fill label-icon"></i>
-                  Routing Key
+              <!-- Dynamic Parameter Field (based on exchange type) -->
+              <div v-if="selectedExchangeType?.paramName" class="form-group">
+                <label :for="selectedExchangeType.paramName" class="form-label">
+                  <i
+                    :class="{
+                      'bi bi-key-fill': type === EExchangeType.DIRECT,
+                      'bi bi-asterisk': type === EExchangeType.TOPIC,
+                    }"
+                    class="label-icon"
+                  ></i>
+                  {{
+                    type === EExchangeType.DIRECT
+                      ? 'Routing Key'
+                      : 'Routing Pattern'
+                  }}
                   <span class="required-indicator">*</span>
                 </label>
                 <input
-                  id="routing-key"
-                  v-model="routingKey"
+                  :id="selectedExchangeType.paramName"
+                  v-model="currentParamValue"
                   type="text"
                   class="form-control"
-                  placeholder="e.g., user.created"
+                  :placeholder="selectedExchangeType.paramPlaceholder"
                   required
-                  :disabled="isLoading"
+                  :disabled="isCreating"
                   autocomplete="off"
-                  aria-describedby="routing-key-help"
+                  :aria-describedby="`${selectedExchangeType.paramName}-help`"
+                  :aria-invalid="!!createError"
                 />
-                <div id="routing-key-help" class="field-help">
+                <div
+                  :id="`${selectedExchangeType.paramName}-help`"
+                  class="field-help"
+                >
                   <i class="bi bi-lightbulb help-icon"></i>
-                  Messages with this exact routing key will be routed to the
-                  queue
+                  {{ selectedExchangeType.paramHelp }}
+                </div>
+
+                <!-- Additional help for topic patterns -->
+                <div v-if="type === EExchangeType.TOPIC" class="help-examples">
+                  <div class="example-item">
+                    <code>user.*</code> matches <code>user.create</code>,
+                    <code>user.update</code>
+                  </div>
+                  <div class="example-item">
+                    <code>orders.#</code> matches <code>orders</code>,
+                    <code>orders.europe</code>,
+                    <code>orders.europe.pending</code>
+                  </div>
                 </div>
               </div>
 
-              <!-- Binding Pattern Field (Topic Exchange) -->
-              <div v-if="showBindingPatternField" class="form-group">
-                <label for="binding-pattern" class="form-label">
-                  <i class="bi bi-asterisk label-icon"></i>
-                  Binding Pattern
-                  <span class="required-indicator">*</span>
-                </label>
-                <input
-                  id="binding-pattern"
-                  v-model="bindingPattern"
-                  type="text"
-                  class="form-control"
-                  placeholder="e.g., user.* or user.#"
-                  required
-                  :disabled="isLoading"
-                  autocomplete="off"
-                  aria-describedby="binding-pattern-help"
-                />
-                <div id="binding-pattern-help" class="field-help">
-                  <div class="help-options">
-                    <div class="help-option">
-                      <strong>*</strong> matches exactly one word
-                    </div>
-                    <div class="help-option">
-                      <strong>#</strong> matches zero or more words
-                    </div>
-                  </div>
-                </div>
+              <!-- Fanout info message -->
+              <div v-if="type === EExchangeType.FANOUT" class="info-message">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Fanout exchanges don't use routing keys - messages are broadcast
+                to all bound queues.
               </div>
             </div>
           </section>
 
-          <!-- Error Display -->
-          <div v-if="errorMessage" class="error-section">
+          <!-- Error Display - with focus management -->
+          <div
+            v-if="createError"
+            ref="errorSectionRef"
+            class="error-section"
+            role="alert"
+            tabindex="-1"
+            aria-live="assertive"
+          >
             <div class="error-content">
               <div class="error-icon">
                 <i class="bi bi-exclamation-triangle-fill"></i>
               </div>
               <div class="error-text">
                 <h4 class="error-title">Creation Failed</h4>
-                <p class="error-message">{{ errorMessage }}</p>
+                <p class="error-message">{{ createError }}</p>
               </div>
             </div>
           </div>
@@ -388,7 +434,7 @@ watch(
       <button
         type="button"
         class="btn btn-secondary"
-        :disabled="isLoading"
+        :disabled="isCreating"
         @click="handleClose"
       >
         <i class="bi bi-x-circle me-2"></i>
@@ -397,12 +443,12 @@ watch(
       <button
         type="button"
         class="btn btn-primary"
-        :disabled="!isFormValid || isLoading"
+        :disabled="!isFormValid || isCreating"
         @click="handleSubmit"
       >
-        <template v-if="isLoading">
+        <template v-if="isCreating">
           <span class="spinner-border spinner-border-sm me-2"></span>
-          Creating Exchange...
+          Creating...
         </template>
         <template v-else>
           <i class="bi bi-check-circle me-2"></i>
@@ -414,7 +460,6 @@ watch(
 </template>
 
 <style scoped>
-/* Form Content - Added proper padding to match CreateQueueModal */
 .form-content {
   padding: 1.25rem 1.5rem;
   max-height: 70vh;
@@ -473,7 +518,6 @@ watch(
   color: #6b7280;
   font-size: 0.8rem;
   margin: 0;
-  line-height: 1.4;
 }
 
 /* Form Grid */
@@ -549,29 +593,66 @@ watch(
   flex-shrink: 0;
 }
 
-.help-options {
+.help-content {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-left: 0.75rem;
 }
 
-.help-option {
+.help-text {
+  line-height: 1.4;
+}
+
+/* Help Examples */
+.help-examples {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
   font-size: 0.75rem;
-  line-height: 1.3;
+  color: #495057;
 }
 
-.help-option strong {
-  color: #374151;
+.example-item {
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Error Section */
+.example-item code {
+  background: #e9ecef;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #0d6efd;
+}
+
+/* Info Message */
+.info-message {
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  border-radius: 6px;
+  color: #664d03;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Error Section - with focus styles */
 .error-section {
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.error-section:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25);
+  border-color: #dc2626;
 }
 
 .error-content {
@@ -676,6 +757,11 @@ watch(
     padding: 1rem;
     max-height: 60vh;
   }
+
+  .example-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* Focus states for accessibility */
@@ -690,7 +776,8 @@ watch(
 @media (prefers-reduced-motion: reduce) {
   .btn,
   .form-control,
-  .form-select {
+  .form-select,
+  .error-section {
     transition: none;
   }
 

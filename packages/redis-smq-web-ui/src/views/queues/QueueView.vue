@@ -10,14 +10,11 @@
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useQueryClient } from '@tanstack/vue-query';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
-import { type PageAction, usePageContentStore } from '@/stores/pageContent';
-import { useDeleteQueue } from '@/composables/useDeleteQueue.ts';
-import { useStopQueue } from '@/composables/useStopQueue.ts';
-import { usePauseQueue } from '@/composables/usePauseQueue.ts';
-import { useResumeQueue } from '@/composables/useResumeQueue.ts';
-import { useEscapeKey } from '@/composables/useEscapeKey';
+import { type PageAction, usePageContentStore } from '@/stores/pageContent.ts';
+import { useEscapeKey } from '@/composables/useEscapeKey.ts';
 import { getErrorMessage } from '@/lib/error.ts';
 
 import PageContent from '@/components/PageContent.vue';
@@ -30,12 +27,8 @@ import ResumeQueueModal from '@/components/modals/ResumeQueueModal.vue';
 import QueueConsumersCard from '@/components/cards/QueueConsumersCard.vue';
 import QueueOperationalStateBanner from '@/components/QueueOperationalStateBanner.vue';
 import { EQueueOperationalState } from '@/types';
-import { useGetApiV1NamespacesNsQueuesNameOperationalState } from '@/api/generated/queue-operational-state/queue-operational-state.ts';
-import type {
-  PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason,
-  PostApiV1NamespacesNsQueuesNameOperationalStateResumeBodyReason,
-  PostApiV1NamespacesNsQueuesNameOperationalStateStopBodyReason,
-} from '@/api/model';
+import { getGetApiNamespacesNsQueuesNameQueryKey } from '@/api/generated/queue/queue';
+import { useGetApiNamespacesNsQueuesNameState } from '@/api/generated/queue-operational-state/queue-operational-state.ts';
 import QueueMessageStatsCard from '@/components/cards/QueueMessageStatsCard.vue';
 import QueueConfigurationCard from '@/components/cards/QueueConfigurationCard.vue';
 import QueueOperationalStateHistoryCard from '@/components/cards/QueueOperationalStateHistoryCard.vue';
@@ -43,6 +36,7 @@ import QueueOperationalStateHistoryCard from '@/components/cards/QueueOperationa
 // Core State & Route Params
 const route = useRoute();
 const router = useRouter();
+const queryClient = useQueryClient();
 const pageContentStore = usePageContentStore();
 const selectedQueueStore = useSelectedQueueStore();
 const queuePropertiesStore = useSelectedQueuePropertiesStore();
@@ -68,7 +62,7 @@ const {
   isLoading: isLoadingOperationalState,
   error: operationalStateError,
   refetch: refetchOperationalState,
-} = useGetApiV1NamespacesNsQueuesNameOperationalState(ns, name, {
+} = useGetApiNamespacesNsQueuesNameState(ns, name, {
   query: {
     enabled: computed(
       () =>
@@ -81,40 +75,6 @@ const {
   },
 });
 
-// Delete Queue Logic
-const { deleteQueue, isDeletingQueue, deleteQueueError, deleteQueueMutation } =
-  useDeleteQueue(async () => {
-    // On successful deletion, navigate away
-    await router.push({ name: 'Queues' });
-  });
-
-// Pause Queue Logic
-const { pauseQueue, isPausingQueue, pauseQueueError, pauseQueueMutation } =
-  usePauseQueue(async () => {
-    // On successful pause, refresh queue properties
-    await queuePropertiesStore.refreshQueueProperties();
-    await refetchOperationalState();
-    hidePauseModal();
-  });
-
-// Resume Queue Logic
-const { resumeQueue, isResumingQueue, resumeQueueError, resumeQueueMutation } =
-  useResumeQueue(async () => {
-    // On successful resume, refresh queue properties
-    await queuePropertiesStore.refreshQueueProperties();
-    await refetchOperationalState();
-    hideResumeModal();
-  });
-
-// Stop Queue Logic
-const { stopQueue, isStoppingQueue, stopQueueError, stopQueueMutation } =
-  useStopQueue(async () => {
-    // On successful stop, refresh queue properties
-    await queuePropertiesStore.refreshQueueProperties();
-    await refetchOperationalState();
-    hideStopModal();
-  });
-
 // Modal Management
 const isDeleteModalVisible = ref(false);
 const isPauseModalVisible = ref(false);
@@ -123,7 +83,6 @@ const isResumeModalVisible = ref(false);
 
 // Delete Modal
 function showDeleteModal() {
-  deleteQueueMutation.reset();
   isDeleteModalVisible.value = true;
 }
 
@@ -133,7 +92,6 @@ function hideDeleteModal() {
 
 // Pause Modal
 function showPauseModal() {
-  pauseQueueMutation.reset();
   isPauseModalVisible.value = true;
 }
 
@@ -143,7 +101,6 @@ function hidePauseModal() {
 
 // Stop Modal
 function showStopModal() {
-  stopQueueMutation.reset();
   isStopModalVisible.value = true;
 }
 
@@ -153,7 +110,6 @@ function hideStopModal() {
 
 // Resume Modal
 function showResumeModal() {
-  resumeQueueMutation.reset();
   isResumeModalVisible.value = true;
 }
 
@@ -162,68 +118,40 @@ function hideResumeModal() {
 }
 
 // Action Handlers
-async function handleConfirmDelete() {
-  if (!queue.value) return;
-  await deleteQueue({ ns: queue.value.ns, name: queue.value.name });
+async function handleDeleteSuccess() {
+  isDeleteModalVisible.value = false;
+  // Invalidate queues list query
+  queryClient.invalidateQueries({
+    queryKey: getGetApiNamespacesNsQueuesNameQueryKey(ns.value, name.value),
+  });
+  // Navigate away on successful deletion
+  await router.push({ name: 'Queues' });
 }
 
-async function handleConfirmPause(data: {
-  reason: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}) {
-  if (!queue.value) return;
-  await pauseQueue({
-    ns: queue.value.ns,
-    name: queue.value.name,
-    reason:
-      data.reason as PostApiV1NamespacesNsQueuesNameOperationalStatePauseBodyReason,
-    description: data.description,
-    metadata: data.metadata,
-  });
+async function handlePauseSuccess() {
+  // Refresh queue properties after successful pause
+  await queuePropertiesStore.refreshQueueProperties();
+  await refetchOperationalState();
+  hidePauseModal();
 }
 
-async function handleConfirmStop(data: {
-  reason: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}) {
-  if (!queue.value) return;
-  await stopQueue({
-    ns: queue.value.ns,
-    name: queue.value.name,
-    reason:
-      data.reason as PostApiV1NamespacesNsQueuesNameOperationalStateStopBodyReason,
-    description: data.description,
-    metadata: data.metadata,
-  });
+async function handleStopSuccess() {
+  // Refresh queue properties after successful stop
+  await queuePropertiesStore.refreshQueueProperties();
+  await refetchOperationalState();
+  hideStopModal();
 }
 
-async function handleConfirmResume(data: {
-  reason: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}) {
-  if (!queue.value) return;
-  await resumeQueue({
-    ns: queue.value.ns,
-    name: queue.value.name,
-    reason:
-      data.reason as PostApiV1NamespacesNsQueuesNameOperationalStateResumeBodyReason,
-    description: data.description,
-    metadata: data.metadata,
-  });
+async function handleResumeSuccess() {
+  // Refresh queue properties after successful resume
+  await queuePropertiesStore.refreshQueueProperties();
+  await refetchOperationalState();
+  hideResumeModal();
 }
 
 // Combined Error Handling
 const error = computed(() => {
-  const err =
-    deleteQueueError.value ||
-    pauseQueueError.value ||
-    resumeQueueError.value ||
-    stopQueueError.value ||
-    queuePropertiesError.value ||
-    operationalStateError.value;
+  const err = queuePropertiesError.value || operationalStateError.value;
   return getErrorMessage(err);
 });
 
@@ -234,13 +162,7 @@ const isQueueNotFoundError = computed(() => {
 
 // Determine if any queue operation is in progress
 const isAnyOperationInProgress = computed(
-  () =>
-    isLoading.value ||
-    isDeletingQueue.value ||
-    isPausingQueue.value ||
-    isResumingQueue.value ||
-    isStoppingQueue.value ||
-    isLoadingOperationalState.value,
+  () => isLoading.value || isLoadingOperationalState.value,
 );
 
 // Page Content Management
@@ -256,7 +178,7 @@ const pageActions = computed((): PageAction[] => {
     icon: 'bi bi-trash',
     variant: 'danger',
     disabled: isAnyOperationInProgress.value,
-    loading: isDeletingQueue.value,
+    loading: false,
     handler: showDeleteModal,
   };
 
@@ -265,7 +187,7 @@ const pageActions = computed((): PageAction[] => {
     label: 'Pause',
     icon: 'bi bi-pause-fill',
     disabled: isAnyOperationInProgress.value,
-    loading: isPausingQueue.value,
+    loading: false,
     handler: showPauseModal,
   };
 
@@ -274,7 +196,7 @@ const pageActions = computed((): PageAction[] => {
     label: 'Stop',
     icon: 'bi bi-stop-fill',
     disabled: isAnyOperationInProgress.value,
-    loading: isStoppingQueue.value,
+    loading: false,
     handler: showStopModal,
   };
 
@@ -283,7 +205,7 @@ const pageActions = computed((): PageAction[] => {
     label: 'Resume',
     icon: 'bi bi-play-fill',
     disabled: isAnyOperationInProgress.value,
-    loading: isResumingQueue.value,
+    loading: false,
     handler: showResumeModal,
   };
 
@@ -412,56 +334,49 @@ watch(
 
       <!-- The main content is rendered by the slot if not loading/error/empty -->
       <div v-if="queue" class="details-grid">
-        <div class="details-column-main">
+        <!-- Full Width Row -->
+        <div class="details-full-width">
           <QueueConfigurationCard />
-          <ConsumerGroupsCard />
-          <QueueConsumersCard />
-        </div>
-        <div class="details-column-secondary">
           <QueueMessageStatsCard />
           <QueueRateLimitCard />
+          <ConsumerGroupsCard />
           <QueueOperationalStateHistoryCard />
+          <QueueConsumersCard />
         </div>
       </div>
     </PageContent>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Modals remain the same -->
     <DeleteQueueModal
-      :queue="{ ns, name }"
-      :is-deleting="isDeletingQueue"
+      v-if="isDeleteModalVisible"
       :is-visible="isDeleteModalVisible"
-      @cancel="hideDeleteModal"
-      @confirm="handleConfirmDelete"
+      :queue="{ ns, name }"
+      @close="hideDeleteModal"
+      @success="handleDeleteSuccess"
     />
 
-    <!-- Pause Queue Modal -->
     <PauseQueueModal
       v-if="isPauseModalVisible"
-      :queue="{ ns, name }"
-      :is-pausing="isPausingQueue"
       :is-visible="isPauseModalVisible"
-      @cancel="hidePauseModal"
-      @confirm="handleConfirmPause"
+      :queue="{ ns, name }"
+      @close="hidePauseModal"
+      @success="handlePauseSuccess"
     />
 
-    <!-- Stop Queue Modal -->
     <StopQueueModal
       v-if="isStopModalVisible"
-      :queue="{ ns, name, status: queueOperationalState }"
-      :is-stopping="isStoppingQueue"
       :is-visible="isStopModalVisible"
-      @cancel="hideStopModal"
-      @confirm="handleConfirmStop"
+      :queue="{ ns, name, status: queueOperationalState }"
+      @close="hideStopModal"
+      @success="handleStopSuccess"
     />
 
-    <!-- Resume Queue Modal -->
     <ResumeQueueModal
       v-if="isResumeModalVisible"
-      :queue="{ ns, name, status: queueOperationalState }"
-      :is-resuming="isResumingQueue"
       :is-visible="isResumeModalVisible"
-      @cancel="hideResumeModal"
-      @confirm="handleConfirmResume"
+      :queue="{ ns, name, status: queueOperationalState }"
+      @close="hideResumeModal"
+      @success="handleResumeSuccess"
     />
   </div>
 </template>
@@ -484,6 +399,14 @@ watch(
   word-break: break-word;
 }
 
+.details-full-width {
+  grid-column: 1 / -1; /* Span the entire width */
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.5vw, 20px);
+  margin-top: 0; /* Remove any top margin since grid gap handles spacing */
+}
+
 .details-column-main,
 .details-column-secondary {
   display: flex;
@@ -496,6 +419,11 @@ watch(
 @media (max-width: 1200px) {
   .details-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* On single column layout, full width is automatic */
+  .details-full-width {
+    grid-column: auto;
   }
 }
 

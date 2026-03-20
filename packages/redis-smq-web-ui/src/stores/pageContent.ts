@@ -9,6 +9,7 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed, type Ref } from 'vue';
+import type { IAPIError } from '@/types';
 
 export interface PageAction {
   id: string;
@@ -34,11 +35,7 @@ export interface PageContentState {
 
   // Content State
   isLoading: boolean;
-  error?: {
-    title?: string;
-    message: string;
-    details?: object;
-  } | null;
+  error?: IAPIError | null;
   isEmpty: boolean;
   emptyStateConfig?: {
     icon: string;
@@ -125,7 +122,7 @@ export const usePageContentStore = defineStore('pageContent', () => {
     }
   }
 
-  function setErrorState(error: { message: string; details?: object } | null) {
+  function setErrorState(error?: IAPIError | null) {
     state.value.error = error;
     if (error) {
       state.value.isLoading = false;

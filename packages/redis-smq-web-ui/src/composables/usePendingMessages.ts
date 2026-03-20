@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { computed, type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNamePendingMessages } from '@/api/generated/pending-messages/pending-messages.ts';
+import { type Ref } from 'vue';
+import { getApiNamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
+import { getApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupIdMessages } from '@/api/generated/consumer-groups/consumer-groups.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
 import type { IQueueParams } from '@/types/index.ts';
-import type { GetApiV1NamespacesNsQueuesNamePendingMessagesParams } from '@/api/model/getApiV1NamespacesNsQueuesNamePendingMessagesParams.ts';
 
 /**
  * Composable for pending messages with both delete and requeue capabilities
@@ -26,33 +26,30 @@ export function usePendingMessages(
   consumerGroupId: Ref<string | null>,
   initialPageSize = 20,
 ) {
-  // Create extra parameters from the consumer group ID
-  const extraParams = computed(() => {
-    const params: Record<string, unknown> = {};
-    if (consumerGroupId.value) {
-      params.consumerGroupId = consumerGroupId.value;
-    }
-    return params;
-  });
-
   const config: MessagesQueryConfig = {
-    queryFn: async ({ ns, name, page, pageSize, extraParams = {} }) => {
-      const apiParams: GetApiV1NamespacesNsQueuesNamePendingMessagesParams = {
-        page,
-        pageSize,
-      };
-
+    queryFn: async ({ ns, name, page, pageSize }) => {
       // Add consumer group ID if present in extra parameters
-      if (extraParams.consumerGroupId) {
-        apiParams.consumerGroupId = String(extraParams.consumerGroupId);
+      if (consumerGroupId.value) {
+        return getApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupIdMessages(
+          ns,
+          name,
+          consumerGroupId.value,
+          {
+            page,
+            pageSize,
+          },
+        );
       }
 
-      return getApiV1NamespacesNsQueuesNamePendingMessages(ns, name, apiParams);
+      return getApiNamespacesNsQueuesNameMessages(ns, name, {
+        page,
+        pageSize,
+      });
     },
-    queryKeyPrefix: 'pending-messages',
+    queryKeyPrefix: `${consumerGroupId.value ? `consumer-group-${consumerGroupId.value}-` : ''}pending-messages`,
     enableDelete: true,
     enableRequeue: false, // Pending messages can not be requeued
   };
 
-  return useMessages(queueParams, config, initialPageSize, extraParams);
+  return useMessages(queueParams, config, initialPageSize);
 }

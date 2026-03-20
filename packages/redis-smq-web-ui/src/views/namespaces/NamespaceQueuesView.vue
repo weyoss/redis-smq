@@ -10,60 +10,79 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useQueryClient } from '@tanstack/vue-query';
 
-import { useNamespaces } from '@/composables/useNamespaces.ts';
 import { getErrorMessage } from '@/lib/error.ts';
-import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useSelectedNamespaceStore } from '@/stores/selectedNamespace.ts';
-import { useDeleteQueue } from '@/composables/useDeleteQueue.ts';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent.ts';
+
+// Generated API hooks
+import {
+  useGetApiNamespacesNsQueues,
+  getGetApiNamespacesNsQueuesQueryKey,
+} from '@/api/generated/namespace-queues/namespace-queues';
+
+import { useGetApiNamespaces } from '@/api/generated/namespaces/namespaces';
 
 import PageContent from '@/components/PageContent.vue';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
-import DeleteQueueModal from '@/components/modals/DeleteQueueModal.vue';
 import QueueListItem from '@/components/QueueListItem.vue';
 
 const route = useRoute();
 const router = useRouter();
-const namespaces = useNamespaces();
+const queryClient = useQueryClient();
 const selectedNamespaceStore = useSelectedNamespaceStore();
-const selectedQueueStore = useSelectedQueueStore();
 const pageContentStore = usePageContentStore();
-
-// Delete queue composable (creation handled inside CreateQueueModal)
-const deleteQueue = useDeleteQueue(async () => {
-  showDeleteConfirm.value = false;
-  queueToDelete.value = null;
-  await namespaces.refreshNamespaceQueues(namespace.value);
-});
-
-// Local state for modals
-const showCreateForm = ref(false);
-const showDeleteConfirm = ref(false);
-const queueToDelete = ref<{ ns: string; name: string } | null>(null);
 
 // Route and Data State
 const namespace = computed(() => route.params.ns as string);
-const namespaceQueues = computed(() => namespaces.sortedNamespaceQueues.value);
-const isLoadingQueues = computed(
-  () => namespaces.isLoadingNamespaceQueues.value,
-);
-const queuesError = computed(() => namespaces.namespaceQueuesError.value);
-const hasQueues = computed(() => namespaceQueues.value.length > 0);
+
+// Fetch all namespaces to check if current namespace exists
+const {
+  data: namespacesData,
+  isLoading: isLoadingNamespaces,
+  error: namespacesError,
+} = useGetApiNamespaces();
+
+const namespaces = computed(() => namespacesData.value?.data || []);
+
 const namespaceExists = computed(() => {
   if (!namespace.value) return false;
-  return namespaces.namespaceExists.value(namespace.value);
+  return namespaces.value.includes(namespace.value);
 });
 
-// Mutation States (delete only, create is self-contained in the modal)
-const isDeletingQueue = computed(() => deleteQueue.isDeletingQueue.value);
-const deleteQueueError = computed(() => deleteQueue.deleteQueueError.value);
+// Fetch queues for this specific namespace
+const {
+  data: queuesData,
+  isLoading: isLoadingQueues,
+  error: queuesError,
+  refetch: refetchQueues,
+  isFetching,
+} = useGetApiNamespacesNsQueues(namespace, {
+  query: {
+    enabled: computed(() => !!namespace.value && namespaceExists.value),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  },
+});
 
-// Navigation
-function goToQueueDetails(ns: string, queue: string) {
-  selectedQueueStore.selectQueue(ns, queue);
-  router.push({ name: 'Queue', params: { ns, queue } });
-}
+// Get queues for the current namespace
+const namespaceQueues = computed(() => queuesData.value?.data || []);
+
+// Local state for modals
+const showCreateForm = ref(false);
+
+const hasQueues = computed(() => namespaceQueues.value.length > 0);
+
+// Combined loading state
+const isLoading = computed(
+  () => isLoadingNamespaces.value || isLoadingQueues.value,
+);
+
+// Combined error state
+const error = computed(() => namespacesError.value || queuesError.value);
 
 function goBackToNamespaces() {
   selectedNamespaceStore.clearSelectedNamespace();
@@ -79,65 +98,76 @@ function cancelCreate() {
   showCreateForm.value = false;
 }
 
-function confirmDelete(ns: string, name: string) {
-  queueToDelete.value = { ns, name };
-  showDeleteConfirm.value = true;
-}
-
-function cancelDelete() {
-  showDeleteConfirm.value = false;
-  queueToDelete.value = null;
-}
-
-// API Actions (delete only)
-async function deleteQueueConfirmed() {
-  if (!queueToDelete.value) return;
-  await deleteQueue.deleteQueueMutation.mutateAsync({
-    ns: queueToDelete.value.ns,
-    name: queueToDelete.value.name,
+function handleQueueDeleted() {
+  // Refresh the list after a queue is deleted
+  queryClient.invalidateQueries({
+    queryKey: getGetApiNamespacesNsQueuesQueryKey(namespace.value),
+    refetchType: 'all',
   });
 }
 
 function retryFetch() {
-  namespaces.refreshNamespaceQueues(namespace.value);
+  queryClient.invalidateQueries({
+    queryKey: getGetApiNamespacesNsQueuesQueryKey(namespace.value),
+    refetchType: 'all',
+  });
+  refetchQueues();
 }
 
+// Watch for namespace changes to fetch new data
+watch(namespace, (newNamespace, oldNamespace) => {
+  if (newNamespace && newNamespace !== oldNamespace) {
+    if (oldNamespace) {
+      queryClient.invalidateQueries({
+        queryKey: getGetApiNamespacesNsQueuesQueryKey(oldNamespace),
+      });
+    }
+    queryClient.invalidateQueries({
+      queryKey: getGetApiNamespacesNsQueuesQueryKey(newNamespace),
+      refetchType: 'all',
+    });
+  }
+});
+
 // Page Content Store Management
-const pageActions = computed((): PageAction[] => [
-  {
-    id: 'refresh-queues',
-    label: 'Refresh',
-    icon: 'bi bi-arrow-clockwise',
-    variant: 'secondary',
-    disabled: isLoadingQueues.value,
-    handler: retryFetch,
-  },
-  {
-    id: 'create-queue',
-    label: 'Create Queue',
-    icon: 'bi bi-plus-circle',
-    variant: 'primary',
-    disabled: false,
-    loading: false,
-    handler: openCreateForm,
-  },
-]);
+const pageActions = computed((): PageAction[] => {
+  if (!namespaceExists.value) {
+    return [];
+  }
+
+  return [
+    {
+      id: 'refresh-queues',
+      label: 'Refresh',
+      icon: 'bi bi-arrow-clockwise',
+      variant: 'secondary',
+      disabled: isLoading.value,
+      loading: isLoading.value,
+      handler: retryFetch,
+    },
+    {
+      id: 'create-queue',
+      label: 'Create Queue',
+      icon: 'bi bi-plus-circle',
+      variant: 'primary',
+      disabled: !namespaceExists.value,
+      loading: false,
+      handler: openCreateForm,
+    },
+  ];
+});
 
 watchEffect(() => {
-  // Set Header
   pageContentStore.setPageHeader({
     title: namespace.value,
-    subtitle: 'Manage queues in this namespace',
+    subtitle: `Manage queues in namespace: ${namespace.value}`,
     icon: 'bi bi-folder-fill',
   });
 
-  // Set Actions
   pageContentStore.setPageActions(pageActions.value);
+  pageContentStore.setLoadingState(isLoading.value);
 
-  // Set Content State
-  pageContentStore.setLoadingState(isLoadingQueues.value);
-
-  if (!isLoadingQueues.value) {
+  if (!isLoading.value) {
     if (!namespaceExists.value) {
       pageContentStore.setEmptyState(true, {
         icon: 'bi bi-folder-x',
@@ -147,8 +177,8 @@ watchEffect(() => {
         actionHandler: goBackToNamespaces,
       });
       pageContentStore.setPageActions([]);
-    } else if (queuesError.value) {
-      pageContentStore.setErrorState(getErrorMessage(queuesError.value));
+    } else if (error.value) {
+      pageContentStore.setErrorState(getErrorMessage(error.value));
       pageContentStore.setEmptyState(false);
     } else if (!hasQueues.value) {
       pageContentStore.setErrorState(null);
@@ -180,6 +210,10 @@ watch(
 onMounted(() => {
   if (namespace.value) {
     selectedNamespaceStore.selectNamespace(namespace.value);
+    queryClient.invalidateQueries({
+      queryKey: getGetApiNamespacesNsQueuesQueryKey(namespace.value),
+      refetchType: 'all',
+    });
   }
 });
 </script>
@@ -187,25 +221,6 @@ onMounted(() => {
 <template>
   <div>
     <PageContent>
-      <!-- Contextual Error Banner (Delete only; Create modal handles its own errors) -->
-      <div
-        v-if="deleteQueueError && !showDeleteConfirm"
-        class="alert alert-warning alert-dismissible fade show error-banner"
-      >
-        <div class="d-flex align-items-center">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          <span
-            >Failed to delete queue:
-            {{ getErrorMessage(deleteQueueError) }}</span
-          >
-        </div>
-        <button
-          type="button"
-          class="btn-close"
-          @click="deleteQueue.deleteQueueMutation.reset()"
-        ></button>
-      </div>
-
       <!-- Namespace Summary -->
       <div class="content-card namespace-summary">
         <div class="summary-content">
@@ -242,46 +257,48 @@ onMounted(() => {
               namespaceQueues.length !== 1 ? 's' : ''
             }}
           </h5>
+          <div v-if="isFetching" class="fetching-indicator">
+            <i class="bi bi-arrow-repeat spin"></i>
+            <span>Refreshing...</span>
+          </div>
         </div>
         <div class="queues-list">
           <QueueListItem
             v-for="queue in namespaceQueues"
             :key="`${queue.ns}-${queue.name}`"
-            :queue="queue"
-            @select="goToQueueDetails"
-            @delete="confirmDelete"
+            :ns="queue.ns"
+            :name="queue.name"
+            @deleted="handleQueueDeleted"
           />
+          <div
+            v-if="namespaceQueues.length === 0 && !isLoading"
+            class="empty-queues-message"
+          >
+            <i class="bi bi-inbox"></i>
+            <p>No queues found in this namespace</p>
+          </div>
         </div>
       </div>
     </PageContent>
 
-    <!-- Modals -->
+    <!-- Create Queue Modal -->
     <CreateQueueModal
       :is-visible="showCreateForm"
       :namespace="namespace"
       @close="cancelCreate"
-      @created="namespaces.refreshNamespaceQueues(namespace)"
-    />
-
-    <DeleteQueueModal
-      v-if="queueToDelete"
-      :is-visible="showDeleteConfirm"
-      :is-deleting="isDeletingQueue"
-      :queue="queueToDelete"
-      @cancel="cancelDelete"
-      @confirm="deleteQueueConfirmed"
+      @created="
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: getGetApiNamespacesNsQueuesQueryKey(namespace),
+            refetchType: 'all',
+          });
+        }
+      "
     />
   </div>
 </template>
 
 <style scoped>
-/* Minimal styles needed after refactoring */
-.error-banner {
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.25rem;
-}
-
 .content-card {
   background: white;
   border-radius: 12px;
@@ -329,11 +346,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.emoji-icon {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
 .stat-content {
   display: flex;
   flex-direction: column;
@@ -376,9 +388,56 @@ onMounted(() => {
   font-size: 1rem;
 }
 
+.fetching-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #0d6efd;
+}
+
+.fetching-indicator i {
+  font-size: 0.9rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .queues-list {
   max-height: calc(100vh - 400px);
   overflow-y: auto;
+  min-height: 200px;
+}
+
+.empty-queues-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+.empty-queues-message i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-queues-message p {
+  margin: 0;
+  font-size: 1rem;
 }
 
 /* Custom Scrollbar */

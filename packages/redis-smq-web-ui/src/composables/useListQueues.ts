@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { useGetApiV1Queues } from '@/api/generated/queues/queues.ts';
+import { useGetApiQueues } from '@/api/generated/queues/queues.ts';
 import { computed } from 'vue';
 
 /**
  * @returns an object with methods and state for listing and managing queues.
  */
 export function useListQueues() {
-  const queuesQuery = useGetApiV1Queues();
+  const queuesQuery = useGetApiQueues();
 
   const queues = computed(() => queuesQuery.data.value);
   const isLoadingQueues = computed(() => queuesQuery.isLoading.value);
