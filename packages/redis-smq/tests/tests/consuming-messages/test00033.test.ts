@@ -29,7 +29,9 @@ test('Consume message from different queues using a single consumer instance: ca
   await createQueue('test6', false);
 
   const messages: IMessageParams[] = [];
-  const consumer = bluebird.promisifyAll(new Consumer(true));
+  const consumer = bluebird.promisifyAll(
+    new Consumer({ enableMultiplexing: true }),
+  );
 
   await consumer.consumeAsync(
     'test1',

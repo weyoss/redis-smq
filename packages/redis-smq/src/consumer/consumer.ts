@@ -167,29 +167,10 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * });
    * ```
    */
-  constructor(consumerOptions?: IConsumerOptions);
-
-  /**
-   * Creates a new Consumer instance with multiplexing configuration.
-   *
-   * @param {boolean} [enableMultiplexing] - When true, enables message multiplexing across multiple queues.
-   * @deprecated This constructor signature is deprecated. Use `constructor(consumerOptions?: IConsumerOptions)` instead.
-   *
-   * @example
-   * ```typescript
-   * // Deprecated: Create consumer with multiplexing disabled
-   * const consumer = new Consumer(false);
-   *
-   * // Deprecated: Create consumer with multiplexing enabled
-   * const consumer = new Consumer(true);
-   * ```
-   */
-  constructor(enableMultiplexing?: boolean);
-
-  constructor(options?: boolean | IConsumerOptions) {
+  constructor(consumerOptions?: IConsumerOptions) {
     super();
     this.consumerOptions = _parseConsumerOptions(
-      options,
+      consumerOptions,
       Consumer.defaultOptions,
     );
     const config = Configuration.getConfig();

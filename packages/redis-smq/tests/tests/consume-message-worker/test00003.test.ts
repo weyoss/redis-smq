@@ -28,7 +28,9 @@ test('ConsumeMessageWorker: case 3', async () => {
   await createQueue('test7', false);
 
   const messages: string[] = [];
-  const consumer = bluebird.promisifyAll(new Consumer(true));
+  const consumer = bluebird.promisifyAll(
+    new Consumer({ enableMultiplexing: true }),
+  );
 
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg.destinationQueue.name);

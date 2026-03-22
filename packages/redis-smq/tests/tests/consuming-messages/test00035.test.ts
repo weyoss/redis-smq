@@ -27,7 +27,9 @@ test('Consume message from different queues using a single consumer instance: ca
   const eventBus = await getEventBus();
 
   const messages: IMessageParams[] = [];
-  const consumer = bluebird.promisifyAll(new Consumer(true));
+  const consumer = bluebird.promisifyAll(
+    new Consumer({ enableMultiplexing: true }),
+  );
   await consumer.runAsync();
 
   // running without message handlers

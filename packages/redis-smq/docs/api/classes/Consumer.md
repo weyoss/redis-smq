@@ -114,42 +114,6 @@ const consumer = new Consumer({
 
 `Runnable<TConsumerEvent>.constructor`
 
-### Constructor
-
-> **new Consumer**(`enableMultiplexing?`): `Consumer`
-
-Creates a new Consumer instance with multiplexing configuration.
-
-#### Parameters
-
-##### enableMultiplexing?
-
-`boolean`
-
-When true, enables message multiplexing across multiple queues.
-
-#### Returns
-
-`Consumer`
-
-#### Deprecated
-
-This constructor signature is deprecated. Use `constructor(consumerOptions?: IConsumerOptions)` instead.
-
-#### Example
-
-```typescript
-// Deprecated: Create consumer with multiplexing disabled
-const consumer = new Consumer(false);
-
-// Deprecated: Create consumer with multiplexing enabled
-const consumer = new Consumer(true);
-```
-
-#### Overrides
-
-`Runnable<TConsumerEvent>.constructor`
-
 ## Methods
 
 ### cancel()

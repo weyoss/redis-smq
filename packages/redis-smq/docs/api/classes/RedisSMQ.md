@@ -21,58 +21,30 @@ Must be initialized with Redis configuration before use.
 
 ### createConsumer()
 
-> `static` **createConsumer**: \{(): [`Consumer`](Consumer.md); (`consumerOptions`): [`Consumer`](Consumer.md); (`enableMultiplexing`): [`Consumer`](Consumer.md); \} = `ConsumerFactory.create`
-
-#### Call Signature
-
-> (): [`Consumer`](Consumer.md)
-
-Creates a new Consumer instance with default options.
-
-##### Returns
-
-[`Consumer`](Consumer.md)
-
-A new Consumer instance with default configuration
-
-##### See
-
-- [Consumer.constructor](Consumer.md#constructor) for detailed configuration options
-- [Consumer.getDefaultOptions](Consumer.md#getdefaultoptions) for viewing default settings
-
-##### Example
-
-```typescript
-const consumer = ConsumerFactory.create();
-console.log(Consumer.getDefaultOptions()); // View default settings
-```
-
-#### Call Signature
-
-> (`consumerOptions`): [`Consumer`](Consumer.md)
+> `static` **createConsumer**: (`consumerOptions?`) => [`Consumer`](Consumer.md) = `ConsumerFactory.create`
 
 Creates a new Consumer instance with custom configuration.
 
-##### Parameters
+#### Parameters
 
-###### consumerOptions
+##### consumerOptions?
 
 [`IConsumerOptions`](../interfaces/IConsumerOptions.md)
 
 Configuration options
 
-##### Returns
+#### Returns
 
 [`Consumer`](Consumer.md)
 
 A new Consumer instance with the specified configuration
 
-##### See
+#### See
 
 - [IConsumerOptions](../interfaces/IConsumerOptions.md) for all available configuration options
 - [Consumer.constructor](Consumer.md#constructor) for detailed documentation
 
-##### Example
+#### Example
 
 ```typescript
 const consumer = ConsumerFactory.create({
@@ -83,46 +55,6 @@ const consumer = ConsumerFactory.create({
     batchTimeoutMs: 5000,
   },
   batchUnacks: false,
-});
-```
-
-#### Call Signature
-
-> (`enableMultiplexing`): [`Consumer`](Consumer.md)
-
-Creates a new Consumer instance with multiplexing configuration.
-
-##### Parameters
-
-###### enableMultiplexing
-
-`boolean`
-
-Enable/disable message multiplexing
-
-##### Returns
-
-[`Consumer`](Consumer.md)
-
-A new Consumer instance
-
-##### Deprecated
-
-Use [IConsumerOptions](../interfaces/IConsumerOptions.md) object with `enableMultiplexing` property instead
-
-##### See
-
-[Consumer.constructor](Consumer.md#constructor) for the modern configuration API
-
-##### Example
-
-```typescript
-// Deprecated
-const consumer = ConsumerFactory.create(true);
-
-// Modern equivalent
-const consumer = ConsumerFactory.create({
-  enableMultiplexing: true,
 });
 ```
 
@@ -780,7 +712,7 @@ Callback invoked when shutdown completes
 
 ### startConsumer()
 
-> `static` **startConsumer**: \{(`consumerOptions`, `cb`): [`Consumer`](Consumer.md); (`enableMultiplexing`, `cb`): [`Consumer`](Consumer.md); (`cb`): [`Consumer`](Consumer.md); \}
+> `static` **startConsumer**: \{(`consumerOptions`, `cb`): [`Consumer`](Consumer.md); (`cb`): [`Consumer`](Consumer.md); \}
 
 #### Call Signature
 
@@ -839,57 +771,6 @@ const consumer = ConsumerFactory.startConsumer(
           console.error('Failed to setup consumption:', consumeErr);
       },
     );
-  },
-);
-```
-
-#### Call Signature
-
-> (`enableMultiplexing`, `cb`): [`Consumer`](Consumer.md)
-
-Creates and automatically starts a consumer with multiplexing configuration.
-
-##### Parameters
-
-###### enableMultiplexing
-
-`boolean`
-
-Enable/disable message multiplexing
-
-###### cb
-
-`ICallback`\<`void`\>
-
-Callback invoked when consumer starts
-
-##### Returns
-
-[`Consumer`](Consumer.md)
-
-The created Consumer instance
-
-##### Deprecated
-
-Use [IConsumerOptions](../interfaces/IConsumerOptions.md) object with `enableMultiplexing` property instead
-
-##### See
-
-[Consumer.run](Consumer.md#run) for startup behavior
-
-##### Example
-
-```typescript
-// Deprecated
-const consumer = ConsumerFactory.startConsumer(true, (err) => {
-  if (err) console.error('Failed to start:', err);
-});
-
-// Modern equivalent
-const consumer = ConsumerFactory.startConsumer(
-  { enableMultiplexing: true },
-  (err) => {
-    if (err) console.error('Failed to start:', err);
   },
 );
 ```

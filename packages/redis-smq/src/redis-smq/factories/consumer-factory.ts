@@ -20,11 +20,6 @@ import { IConsumerOptions } from '../../consumer/index.js';
  * automatically tracked for lifecycle management.
  *
  * @see {@link Consumer} for detailed Consumer API documentation
- * @see {@link Consumer.consume} for setting up message consumption
- * @see {@link Consumer.cancel} for stopping message consumption
- * @see {@link Consumer.getQueues} for listing active queues
- * @see {@link Consumer.run} for starting the consumer
- * @see {@link Consumer.shutdown} for graceful shutdown
  *
  * @example
  * ```typescript
@@ -38,22 +33,6 @@ import { IConsumerOptions } from '../../consumer/index.js';
  * ```
  */
 export class ConsumerFactory extends FactoryAbstract {
-  /**
-   * Creates a new Consumer instance with default options.
-   *
-   * @returns {Consumer} A new Consumer instance with default configuration
-   *
-   * @see {@link Consumer.constructor} for detailed configuration options
-   * @see {@link Consumer.getDefaultOptions} for viewing default settings
-   *
-   * @example
-   * ```typescript
-   * const consumer = ConsumerFactory.create();
-   * console.log(Consumer.getDefaultOptions()); // View default settings
-   * ```
-   */
-  static create(): Consumer;
-
   /**
    * Creates a new Consumer instance with custom configuration.
    *
@@ -76,34 +55,9 @@ export class ConsumerFactory extends FactoryAbstract {
    * });
    * ```
    */
-  static create(consumerOptions: IConsumerOptions): Consumer;
-
-  /**
-   * Creates a new Consumer instance with multiplexing configuration.
-   *
-   * @param {boolean} enableMultiplexing - Enable/disable message multiplexing
-   * @returns {Consumer} A new Consumer instance
-   * @deprecated Use {@link IConsumerOptions} object with `enableMultiplexing` property instead
-   *
-   * @see {@link Consumer.constructor} for the modern configuration API
-   *
-   * @example
-   * ```typescript
-   * // Deprecated
-   * const consumer = ConsumerFactory.create(true);
-   *
-   * // Modern equivalent
-   * const consumer = ConsumerFactory.create({
-   *   enableMultiplexing: true
-   * });
-   * ```
-   */
-  static create(enableMultiplexing: boolean): Consumer;
-
-  static create(mixed?: boolean | IConsumerOptions): Consumer {
+  static create(consumerOptions?: IConsumerOptions): Consumer {
     ConsumerFactory.ensureInitialized();
-    if (typeof mixed === 'boolean') return this.track(new Consumer(mixed));
-    return ConsumerFactory.track(new Consumer(mixed));
+    return ConsumerFactory.track(new Consumer(consumerOptions));
   }
 
   /**
@@ -146,37 +100,6 @@ export class ConsumerFactory extends FactoryAbstract {
   ): Consumer;
 
   /**
-   * Creates and automatically starts a consumer with multiplexing configuration.
-   *
-   * @param {boolean} enableMultiplexing - Enable/disable message multiplexing
-   * @param {ICallback<void>} cb - Callback invoked when consumer starts
-   * @returns {Consumer} The created Consumer instance
-   * @deprecated Use {@link IConsumerOptions} object with `enableMultiplexing` property instead
-   *
-   * @see {@link Consumer.run} for startup behavior
-   *
-   * @example
-   * ```typescript
-   * // Deprecated
-   * const consumer = ConsumerFactory.startConsumer(true, (err) => {
-   *   if (err) console.error('Failed to start:', err);
-   * });
-   *
-   * // Modern equivalent
-   * const consumer = ConsumerFactory.startConsumer(
-   *   { enableMultiplexing: true },
-   *   (err) => {
-   *     if (err) console.error('Failed to start:', err);
-   *   }
-   * );
-   * ```
-   */
-  static startConsumer(
-    enableMultiplexing: boolean,
-    cb: ICallback<void>,
-  ): Consumer;
-
-  /**
    * Creates and automatically starts a consumer with default configuration.
    *
    * @param {ICallback<void>} cb - Callback invoked when consumer starts
@@ -214,17 +137,14 @@ export class ConsumerFactory extends FactoryAbstract {
   static startConsumer(cb: ICallback<void>): Consumer;
 
   static startConsumer(
-    mixed: boolean | IConsumerOptions | ICallback<void>,
+    mixed: IConsumerOptions | ICallback<void>,
     cb?: ICallback<void>,
   ): Consumer {
-    let callback: ICallback<void> = () => void 0;
-    let consumer: Consumer | null = null;
+    let callback: ICallback<void>;
+    let consumer: Consumer | null;
     if (typeof mixed === 'function') {
       callback = mixed;
       consumer = this.create();
-    } else if (typeof mixed === 'boolean' && typeof cb === 'function') {
-      callback = cb;
-      consumer = this.create(mixed);
     } else if (typeof mixed === 'object' && typeof cb === 'function') {
       callback = cb;
       consumer = this.create(mixed);
