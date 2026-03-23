@@ -9,8 +9,7 @@ resource utilization. The library leverages Node.js's native asynchronous patter
 abstraction layers that could impact performance.
 
 However, RedisSMQ provides a **dual API** that supports both traditional Node.js callbacks **and** modern
-Promises/async-await patterns. This is achieved through a lightweight wrapper that adds promise support on top of the
-performant callback implementation, giving you the best of both worlds.
+Promises/async-await patterns, giving you the best of both worlds.
 
 ## Performance-First Architecture
 
@@ -18,17 +17,17 @@ performant callback implementation, giving you the best of both worlds.
 
 RedisSMQ's internals are implemented using pure callbacks to:
 
-- **Minimize overhead** - No additional promise wrapper overhead in the hot path
-- **Optimize memory usage** - Reduced object allocations compared to promise chains
-- **Enable fine-grained control** - Direct access to the event loop and execution flow
-- **Maximize throughput** - Efficient handling of high-volume message processing
+- **Minimize overhead** — native Node.js performance
+- **Optimize memory usage** — fewer allocations than promise chains
+- **Enable fine-grained control** — direct event-loop/execution access
+- **Maximize throughput** — efficient for high-volume processing
 
 ### Dual API Layer
 
 The public API provides both patterns through a simple wrapper that:
 
 - **Preserves performance** - When using callbacks, zero overhead
-- **Adds promise support** - Lightweight wrapper for modern async/await usage
+- **Adds promise support** - For modern async/await usage
 - **Maintains consistency** - Same behavior regardless of the chosen pattern
 - **Enables gradual migration** - Mix and match patterns as needed
 
@@ -41,11 +40,11 @@ method(params, callback?) => Promise<T> | void
 ```
 
 - **With callback**: Zero overhead, direct execution with callback
-- **Without callback**: Lightweight Promise wrapper on top of callback implementation
+- **Without callback**: Returns a Promise
 
 ## Performance Characteristics
 
-### Callback Mode (Zero Overhead)
+### Callback Mode
 
 ```typescript
 // Direct execution - maximum performance
@@ -58,19 +57,16 @@ producer.produce(message, (err, ids) => {
 });
 ```
 
-### Promise Mode (Minimal Overhead)
+### Promise Mode
 
 ```typescript
 // Lightweight wrapper - convenient async/await
 const ids = await producer.produce(message);
 ```
 
-The promise wrapper adds minimal overhead and is suitable for most use cases. For maximum throughput in
-high-performance scenarios, the callback pattern is recommended.
-
 ## Usage Examples
 
-### Callback Pattern - Maximum Performance
+### Callback Pattern
 
 ```typescript
 import { RedisSMQ } from 'redis-smq';
@@ -112,7 +108,7 @@ async.series(
 );
 ```
 
-### Promise Pattern - Clean & Readable
+### Promise Pattern
 
 ```typescript
 import { RedisSMQ } from 'redis-smq';
@@ -160,7 +156,7 @@ await RedisSMQ.shutdown();
 ```typescript
 const producer = RedisSMQ.createProducer();
 
-// Callback - zero overhead
+// Callback
 producer.run((err) => {
   /* ... */
 });
@@ -168,7 +164,7 @@ producer.produce(message, (err, ids) => {
   /* ... */
 });
 
-// Promise - with wrapper
+// Promise
 await producer.run();
 const ids = await producer.produce(message);
 ```
@@ -178,7 +174,7 @@ const ids = await producer.produce(message);
 ```typescript
 const consumer = RedisSMQ.createConsumer();
 
-// Callback - optimal for high-volume consumption
+// Callback
 consumer.run((err) => {
   /* ... */
 });
@@ -186,7 +182,7 @@ consumer.consume(queue, handler, (err) => {
   /* ... */
 });
 
-// Promise - clean for setup code
+// Promise
 await consumer.run();
 await consumer.consume(queue, handler);
 ```
@@ -196,7 +192,7 @@ await consumer.consume(queue, handler);
 ```typescript
 const queueManager = new QueueManager();
 
-// Callback - efficient for batch operations
+// Callback
 queueManager.getQueues((err, queues) => {
   /* ... */
 });
@@ -204,7 +200,7 @@ queueManager.save(queue, type, model, (err, result) => {
   /* ... */
 });
 
-// Promise - readable for sequential logic
+// Promise
 const queues = await queueManager.getQueues();
 const result = await queueManager.save(queue, type, model);
 ```
