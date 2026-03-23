@@ -30,7 +30,7 @@ test('ReapConsumersWorker', async () => {
   await crashAConsumerConsumingAMessage();
 
   const queueMessages = bluebird.promisifyAll(new QueuePublishedMessages());
-  const messages = await queueMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const messages = await queueMessages.getMessages(defaultQueue, 0, 100);
   expect(messages.totalItems).toBe(1);
   const [message] = messages.items;
 
@@ -46,7 +46,7 @@ test('ReapConsumersWorker', async () => {
       consumerId: randomUUID(),
     }),
   );
-  await reapConsumerWorker.runAsync();
+  await reapConsumerWorker.run();
 
   const requeueWorker = bluebird.promisifyAll(
     new RequeueImmediateWorker({
@@ -56,13 +56,13 @@ test('ReapConsumersWorker', async () => {
       consumerId: randomUUID(),
     }),
   );
-  await requeueWorker.runAsync();
+  await requeueWorker.run();
   await bluebird.delay(20000);
 
   const pendingMessages = await getQueuePendingMessages();
-  const res3 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res3 = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(res3.totalItems).toBe(1);
 
-  await requeueWorker.shutdownAsync();
-  await reapConsumerWorker.shutdownAsync();
+  await requeueWorker.shutdown();
+  await reapConsumerWorker.shutdown();
 });

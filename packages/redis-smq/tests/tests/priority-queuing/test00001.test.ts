@@ -17,12 +17,12 @@ import { getQueueManager } from '../../common/queue-manager.js';
 test('Priority queuing: case 1', async () => {
   const defaultQueue = getDefaultQueue();
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
   const consumer = bluebird.promisifyAll(getConsumer({ queue: defaultQueue }));
-  await consumer.runAsync();
+  await consumer.run();
 });

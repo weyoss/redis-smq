@@ -33,21 +33,21 @@ test('Consume message from different queues using a single consumer instance: ca
     new Consumer({ enableMultiplexing: true }),
   );
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test1',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
       cb();
     },
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test2',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
       cb();
     },
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test3',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
@@ -55,16 +55,16 @@ test('Consume message from different queues using a single consumer instance: ca
     },
   );
 
-  await consumer.runAsync();
+  await consumer.run();
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test4',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
       cb();
     },
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test5',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
@@ -82,10 +82,10 @@ test('Consume message from different queues using a single consumer instance: ca
   ]);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   for (let i = 0; i < 5; i += 1) {
-    await producer.produceAsync(
+    await producer.produce(
       new ProducibleMessage().setQueue(`test${i + 1}`).setBody(`body ${i + 1}`),
     );
   }
@@ -107,7 +107,7 @@ test('Consume message from different queues using a single consumer instance: ca
     'body 5',
   ]);
 
-  await consumer.cancelAsync('test4');
+  await consumer.cancel('test4');
   expect(consumer.getQueues().map((i) => i.queueParams.name)).toEqual([
     'test1',
     'test2',
@@ -115,14 +115,14 @@ test('Consume message from different queues using a single consumer instance: ca
     'test5',
   ]);
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test6',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
       cb();
     },
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setQueue(`test6`).setBody(`body 6`),
   );
   await bluebird.delay(10000);

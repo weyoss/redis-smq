@@ -7,10 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueRateLimit() {
-  const instance = RedisSMQ.createQueueRateLimit();
-  return bluebird.promisifyAll(instance);
+  return RedisSMQ.createQueueRateLimit();
 }

@@ -29,14 +29,14 @@ const _getQueueConsumersAsync = bluebird.promisify(_getQueueConsumers);
 test('Consume message from different queues using a single consumer instance: case 3', async () => {
   const defaultQueue = getDefaultQueue();
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     defaultQueue,
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
   const consumer = bluebird.promisifyAll(new Consumer());
-  await consumer.runAsync();
+  await consumer.run();
 
   const redisClient = await getRedisInstance();
 
@@ -46,7 +46,7 @@ test('Consume message from different queues using a single consumer instance: ca
   const a1 = await _getQueueConsumersAsync(redisClient, defaultQueue);
   expect(Object.keys(a1)).toEqual([]);
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     defaultQueue,
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
@@ -57,7 +57,7 @@ test('Consume message from different queues using a single consumer instance: ca
   const b1 = await _getQueueConsumersAsync(redisClient, defaultQueue);
   expect(Object.keys(b1)).toEqual([consumer.getId()]);
 
-  await consumer.cancelAsync(defaultQueue);
+  await consumer.cancel(defaultQueue);
 
   const c = await _getConsumerQueuesAsync(redisClient, consumer.getId());
   expect(c).toEqual([]);

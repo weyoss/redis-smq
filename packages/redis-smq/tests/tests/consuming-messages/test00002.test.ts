@@ -21,7 +21,7 @@ test('Produce and consume 1 message', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer({
     messageHandler: (msg1, cb) => cb(),
@@ -30,7 +30,7 @@ test('Produce and consume 1 message', async () => {
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  const [messageId] = await producer.produceAsync(msg);
+  const [messageId] = await producer.produce(msg);
   consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer, messageId);

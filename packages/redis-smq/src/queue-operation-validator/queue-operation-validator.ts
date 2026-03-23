@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from 'redis-smq-common';
+import { async, ICallback } from 'redis-smq-common';
 import { IQueueParams } from '../queue-manager/index.js';
 import { EQueueOperation } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
@@ -34,17 +34,26 @@ import { _checkOperation } from './_/_check-operation.js';
  *
  * @example
  * ```typescript
- * // Check if messages can be consumed
+ * // Callback pattern
  * QueueOperationValidator.canConsume('my-queue', (err, canConsume) => {
  *   if (err) {
  *     console.error('Error:', err);
  *     return;
  *   }
- *
  *   if (canConsume) {
- *     // Proceed with message consumption
+ *     consumer.consume();
  *   }
  * });
+ *
+ * // Promise pattern
+ * try {
+ *   const canConsume = await QueueOperationValidator.canConsume('my-queue');
+ *   if (canConsume) {
+ *     consumer.consume();
+ *   }
+ * } catch (err) {
+ *   console.error('Error:', err);
+ * }
  * ```
  */
 export class QueueOperationValidator {
@@ -54,36 +63,51 @@ export class QueueOperationValidator {
    *
    * @param queue - Queue identifier (string name or IQueueParams object with namespace and name)
    * @param operation - The operation to check
-   * @param cb - Callback function that receives (error, isAllowed)
+   * @param cb - Optional callback function that receives (error, isAllowed)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.checkOperation(
    *   'my-queue',
    *   EQueueOperation.CONSUME,
    *   (err, isAllowed) => {
    *     if (err) {
    *       console.error('Error checking operation:', err);
-   *       return;
+   *     } else {
+   *       console.log('Consume allowed:', isAllowed);
    *     }
-   *     console.log('Consume allowed:', isAllowed);
    *   }
    * );
+   *
+   * // Promise pattern
+   * try {
+   *   const isAllowed = await QueueOperationValidator.checkOperation(
+   *     'my-queue',
+   *     EQueueOperation.CONSUME
+   *   );
+   *   console.log('Consume allowed:', isAllowed);
+   * } catch (err) {
+   *   console.error('Error checking operation:', err);
+   * }
    * ```
    */
   protected static checkOperation(
     queue: string | IQueueParams,
     operation: EQueueOperation,
-    cb: ICallback<boolean>,
-  ): void {
-    const queueParams = _parseQueueParams(queue);
-    if (queueParams instanceof Error) return cb(queueParams);
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueParams = _parseQueueParams(queue);
+      if (queueParams instanceof Error) return callback(queueParams);
 
-    withSharedPoolConnection((client, cb) => {
-      _checkOperation(client, queueParams, operation, (err, result) =>
-        cb(err, result?.allowed),
-      );
-    }, cb);
+      withSharedPoolConnection((client, cb) => {
+        _checkOperation(client, queueParams, operation, (err, result) =>
+          cb(err, result?.allowed),
+        );
+      }, callback);
+    });
   }
 
   /**
@@ -91,19 +115,44 @@ export class QueueOperationValidator {
    * Consumption is typically only allowed when the queue is in ACTIVE state.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canConsume)
+   * @param cb - Optional callback function that receives (error, canConsume)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canConsume('orders-queue', (err, canConsume) => {
-   *   if (canConsume) {
+   *   if (err) {
+   *     console.error('Error checking consume permission:', err);
+   *   } else if (canConsume) {
+   *     console.log('Can consume from queue');
    *     consumer.consume();
+   *   } else {
+   *     console.log('Queue is not in ACTIVE state');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canConsume = await QueueOperationValidator.canConsume('orders-queue');
+   *   if (canConsume) {
+   *     console.log('Can consume from queue');
+   *     consumer.consume();
+   *   } else {
+   *     console.log('Queue is not in ACTIVE state');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking consume permission:', err);
+   * }
    * ```
    */
-  static canConsume(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.CONSUME, cb);
+  static canConsume(queue: string | IQueueParams): Promise<boolean>;
+  static canConsume(queue: string | IQueueParams, cb: ICallback<boolean>): void;
+  static canConsume(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.CONSUME, cb);
   }
 
   /**
@@ -111,21 +160,44 @@ export class QueueOperationValidator {
    * Production is allowed in ACTIVE and PAUSED states, but not in STOPPED or LOCKED states.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canProduce)
+   * @param cb - Optional callback function that receives (error, canProduce)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canProduce('notifications-queue', (err, canProduce) => {
-   *   if (canProduce) {
+   *   if (err) {
+   *     console.error('Error checking produce permission:', err);
+   *   } else if (canProduce) {
+   *     console.log('Can produce to queue');
    *     producer.produce(message);
    *   } else {
-   *     console.log('Queue is not accepting messages');
+   *     console.log('Queue is stopped or locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canProduce = await QueueOperationValidator.canProduce('notifications-queue');
+   *   if (canProduce) {
+   *     console.log('Can produce to queue');
+   *     await producer.produce(message);
+   *   } else {
+   *     console.log('Queue is stopped or locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking produce permission:', err);
+   * }
    * ```
    */
-  static canProduce(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.PRODUCE, cb);
+  static canProduce(queue: string | IQueueParams): Promise<boolean>;
+  static canProduce(queue: string | IQueueParams, cb: ICallback<boolean>): void;
+  static canProduce(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.PRODUCE, cb);
   }
 
   /**
@@ -133,19 +205,44 @@ export class QueueOperationValidator {
    * Queue deletion is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canDelete)
+   * @param cb - Optional callback function that receives (error, canDelete)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canDelete('temporary-queue', (err, canDelete) => {
-   *   if (canDelete) {
+   *   if (err) {
+   *     console.error('Error checking delete permission:', err);
+   *   } else if (canDelete) {
+   *     console.log('Can delete queue');
    *     queueManager.deleteQueue('temporary-queue');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canDelete = await QueueOperationValidator.canDelete('temporary-queue');
+   *   if (canDelete) {
+   *     console.log('Can delete queue');
+   *     await queueManager.deleteQueue('temporary-queue');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking delete permission:', err);
+   * }
    * ```
    */
-  static canDelete(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.DELETE, cb);
+  static canDelete(queue: string | IQueueParams): Promise<boolean>;
+  static canDelete(queue: string | IQueueParams, cb: ICallback<boolean>): void;
+  static canDelete(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.DELETE, cb);
   }
 
   /**
@@ -153,22 +250,47 @@ export class QueueOperationValidator {
    * Message deletion is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canDeleteMessage)
+   * @param cb - Optional callback function that receives (error, canDeleteMessage)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canDeleteMessage('my-queue', (err, canDelete) => {
-   *   if (canDelete) {
+   *   if (err) {
+   *     console.error('Error checking delete message permission:', err);
+   *   } else if (canDelete) {
+   *     console.log('Can delete messages');
    *     messageService.deleteMessage(messageId);
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canDelete = await QueueOperationValidator.canDeleteMessage('my-queue');
+   *   if (canDelete) {
+   *     console.log('Can delete messages');
+   *     await messageService.deleteMessage(messageId);
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking delete message permission:', err);
+   * }
    * ```
    */
+  static canDeleteMessage(queue: string | IQueueParams): Promise<boolean>;
   static canDeleteMessage(
     queue: string | IQueueParams,
     cb: ICallback<boolean>,
-  ) {
-    this.checkOperation(queue, EQueueOperation.DELETE_MESSAGE, cb);
+  ): void;
+  static canDeleteMessage(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.DELETE_MESSAGE, cb);
   }
 
   /**
@@ -176,19 +298,44 @@ export class QueueOperationValidator {
    * Queue purging is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canPurge)
+   * @param cb - Optional callback function that receives (error, canPurge)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canPurge('dead-letter-queue', (err, canPurge) => {
-   *   if (canPurge) {
+   *   if (err) {
+   *     console.error('Error checking purge permission:', err);
+   *   } else if (canPurge) {
+   *     console.log('Can purge queue');
    *     queueManager.purgeQueue('dead-letter-queue');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canPurge = await QueueOperationValidator.canPurge('dead-letter-queue');
+   *   if (canPurge) {
+   *     console.log('Can purge queue');
+   *     await queueManager.purgeQueue('dead-letter-queue');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking purge permission:', err);
+   * }
    * ```
    */
-  static canPurge(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.PURGE, cb);
+  static canPurge(queue: string | IQueueParams): Promise<boolean>;
+  static canPurge(queue: string | IQueueParams, cb: ICallback<boolean>): void;
+  static canPurge(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.PURGE, cb);
   }
 
   /**
@@ -196,19 +343,44 @@ export class QueueOperationValidator {
    * Requeuing is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canRequeue)
+   * @param cb - Optional callback function that receives (error, canRequeue)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canRequeue('failed-messages-queue', (err, canRequeue) => {
-   *   if (canRequeue) {
+   *   if (err) {
+   *     console.error('Error checking requeue permission:', err);
+   *   } else if (canRequeue) {
+   *     console.log('Can requeue messages');
    *     message.requeue();
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canRequeue = await QueueOperationValidator.canRequeue('failed-messages-queue');
+   *   if (canRequeue) {
+   *     console.log('Can requeue messages');
+   *     await message.requeue();
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking requeue permission:', err);
+   * }
    * ```
    */
-  static canRequeue(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.REQUEUE_MESSAGE, cb);
+  static canRequeue(queue: string | IQueueParams): Promise<boolean>;
+  static canRequeue(queue: string | IQueueParams, cb: ICallback<boolean>): void;
+  static canRequeue(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.REQUEUE_MESSAGE, cb);
   }
 
   /**
@@ -216,19 +388,47 @@ export class QueueOperationValidator {
    * Rate limiting configuration is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canSetRateLimit)
+   * @param cb - Optional callback function that receives (error, canSetRateLimit)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canSetRateLimit('api-queue', (err, canSet) => {
-   *   if (canSet) {
+   *   if (err) {
+   *     console.error('Error checking rate limit permission:', err);
+   *   } else if (canSet) {
+   *     console.log('Can set rate limit');
    *     queueManager.setRateLimit('api-queue', { limit: 100, interval: 1000 });
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canSet = await QueueOperationValidator.canSetRateLimit('api-queue');
+   *   if (canSet) {
+   *     console.log('Can set rate limit');
+   *     await queueManager.setRateLimit('api-queue', { limit: 100, interval: 1000 });
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking rate limit permission:', err);
+   * }
    * ```
    */
-  static canSetRateLimit(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.SET_RATE_LIMIT, cb);
+  static canSetRateLimit(queue: string | IQueueParams): Promise<boolean>;
+  static canSetRateLimit(
+    queue: string | IQueueParams,
+    cb: ICallback<boolean>,
+  ): void;
+  static canSetRateLimit(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.SET_RATE_LIMIT, cb);
   }
 
   /**
@@ -236,22 +436,47 @@ export class QueueOperationValidator {
    * Rate limit clearing is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canClearRateLimit)
+   * @param cb - Optional callback function that receives (error, canClearRateLimit)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canClearRateLimit('api-queue', (err, canClear) => {
-   *   if (canClear) {
+   *   if (err) {
+   *     console.error('Error checking clear rate limit permission:', err);
+   *   } else if (canClear) {
+   *     console.log('Can clear rate limit');
    *     queueManager.clearRateLimit('api-queue');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canClear = await QueueOperationValidator.canClearRateLimit('api-queue');
+   *   if (canClear) {
+   *     console.log('Can clear rate limit');
+   *     await queueManager.clearRateLimit('api-queue');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking clear rate limit permission:', err);
+   * }
    * ```
    */
+  static canClearRateLimit(queue: string | IQueueParams): Promise<boolean>;
   static canClearRateLimit(
     queue: string | IQueueParams,
     cb: ICallback<boolean>,
-  ) {
-    this.checkOperation(queue, EQueueOperation.CLEAR_RATE_LIMIT, cb);
+  ): void;
+  static canClearRateLimit(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.CLEAR_RATE_LIMIT, cb);
   }
 
   /**
@@ -259,22 +484,51 @@ export class QueueOperationValidator {
    * Consumer group creation is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canCreateConsumerGroup)
+   * @param cb - Optional callback function that receives (error, canCreateConsumerGroup)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canCreateConsumerGroup('orders-queue', (err, canCreate) => {
-   *   if (canCreate) {
+   *   if (err) {
+   *     console.error('Error checking create consumer group permission:', err);
+   *   } else if (canCreate) {
+   *     console.log('Can create consumer group');
    *     queueManager.createConsumerGroup('orders-queue', 'group-1');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canCreate = await QueueOperationValidator.canCreateConsumerGroup('orders-queue');
+   *   if (canCreate) {
+   *     console.log('Can create consumer group');
+   *     await queueManager.createConsumerGroup('orders-queue', 'group-1');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking create consumer group permission:', err);
+   * }
    * ```
    */
+  static canCreateConsumerGroup(queue: string | IQueueParams): Promise<boolean>;
   static canCreateConsumerGroup(
     queue: string | IQueueParams,
     cb: ICallback<boolean>,
-  ) {
-    this.checkOperation(queue, EQueueOperation.CREATE_CONSUMER_GROUP, cb);
+  ): void;
+  static canCreateConsumerGroup(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(
+      queue,
+      EQueueOperation.CREATE_CONSUMER_GROUP,
+      cb,
+    );
   }
 
   /**
@@ -282,22 +536,51 @@ export class QueueOperationValidator {
    * Consumer group deletion is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canDeleteConsumerGroup)
+   * @param cb - Optional callback function that receives (error, canDeleteConsumerGroup)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canDeleteConsumerGroup('orders-queue', (err, canDelete) => {
-   *   if (canDelete) {
+   *   if (err) {
+   *     console.error('Error checking delete consumer group permission:', err);
+   *   } else if (canDelete) {
+   *     console.log('Can delete consumer group');
    *     queueManager.deleteConsumerGroup('orders-queue', 'group-1');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canDelete = await QueueOperationValidator.canDeleteConsumerGroup('orders-queue');
+   *   if (canDelete) {
+   *     console.log('Can delete consumer group');
+   *     await queueManager.deleteConsumerGroup('orders-queue', 'group-1');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking delete consumer group permission:', err);
+   * }
    * ```
    */
+  static canDeleteConsumerGroup(queue: string | IQueueParams): Promise<boolean>;
   static canDeleteConsumerGroup(
     queue: string | IQueueParams,
     cb: ICallback<boolean>,
-  ) {
-    this.checkOperation(queue, EQueueOperation.DELETE_CONSUMER_GROUP, cb);
+  ): void;
+  static canDeleteConsumerGroup(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(
+      queue,
+      EQueueOperation.DELETE_CONSUMER_GROUP,
+      cb,
+    );
   }
 
   /**
@@ -305,19 +588,47 @@ export class QueueOperationValidator {
    * Exchange binding is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canBindExchange)
+   * @param cb - Optional callback function that receives (error, canBindExchange)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canBindExchange('my-queue', (err, canBind) => {
-   *   if (canBind) {
+   *   if (err) {
+   *     console.error('Error checking bind exchange permission:', err);
+   *   } else if (canBind) {
+   *     console.log('Can bind exchange');
    *     exchangeManager.bind('my-exchange', 'my-queue', 'routing-key');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canBind = await QueueOperationValidator.canBindExchange('my-queue');
+   *   if (canBind) {
+   *     console.log('Can bind exchange');
+   *     await exchangeManager.bind('my-exchange', 'my-queue', 'routing-key');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking bind exchange permission:', err);
+   * }
    * ```
    */
-  static canBindExchange(queue: string | IQueueParams, cb: ICallback<boolean>) {
-    this.checkOperation(queue, EQueueOperation.BIND_EXCHANGE, cb);
+  static canBindExchange(queue: string | IQueueParams): Promise<boolean>;
+  static canBindExchange(
+    queue: string | IQueueParams,
+    cb: ICallback<boolean>,
+  ): void;
+  static canBindExchange(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.BIND_EXCHANGE, cb);
   }
 
   /**
@@ -325,21 +636,46 @@ export class QueueOperationValidator {
    * Exchange unbinding is allowed in all states except LOCKED.
    *
    * @param queue - Queue identifier (string name or IQueueParams object)
-   * @param cb - Callback function that receives (error, canUnbindExchange)
+   * @param cb - Optional callback function that receives (error, canUnbindExchange)
+   * @returns {Promise<boolean> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * QueueOperationValidator.canUnbindExchange('my-queue', (err, canUnbind) => {
-   *   if (canUnbind) {
+   *   if (err) {
+   *     console.error('Error checking unbind exchange permission:', err);
+   *   } else if (canUnbind) {
+   *     console.log('Can unbind exchange');
    *     exchangeManager.unbind('my-exchange', 'my-queue', 'routing-key');
+   *   } else {
+   *     console.log('Queue is locked');
    *   }
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const canUnbind = await QueueOperationValidator.canUnbindExchange('my-queue');
+   *   if (canUnbind) {
+   *     console.log('Can unbind exchange');
+   *     await exchangeManager.unbind('my-exchange', 'my-queue', 'routing-key');
+   *   } else {
+   *     console.log('Queue is locked');
+   *   }
+   * } catch (err) {
+   *   console.error('Error checking unbind exchange permission:', err);
+   * }
    * ```
    */
+  static canUnbindExchange(queue: string | IQueueParams): Promise<boolean>;
   static canUnbindExchange(
     queue: string | IQueueParams,
     cb: ICallback<boolean>,
-  ) {
-    this.checkOperation(queue, EQueueOperation.UNBIND_EXCHANGE, cb);
+  ): void;
+  static canUnbindExchange(
+    queue: string | IQueueParams,
+    cb?: ICallback<boolean>,
+  ): Promise<boolean> | void {
+    return this.checkOperation(queue, EQueueOperation.UNBIND_EXCHANGE, cb);
   }
 }

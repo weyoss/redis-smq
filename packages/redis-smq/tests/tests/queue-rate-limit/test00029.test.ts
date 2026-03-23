@@ -27,30 +27,30 @@ test('Rate limit a queue without priority and check message rate', async () => {
   await createQueue(defaultQueue, false);
 
   const queueRateLimit = await getQueueRateLimit();
-  await queueRateLimit.setAsync(defaultQueue, {
+  await queueRateLimit.set(defaultQueue, {
     limit: 3,
     interval: 10000,
   });
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setBody('msg 1').setQueue(getDefaultQueue()),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setBody('msg 2').setQueue(getDefaultQueue()),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setBody('msg 3').setQueue(getDefaultQueue()),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setBody('msg 4').setQueue(getDefaultQueue()),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setBody('msg 5').setQueue(getDefaultQueue()),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setBody('msg 6').setQueue(getDefaultQueue()),
   );
 
@@ -64,7 +64,7 @@ test('Rate limit a queue without priority and check message rate', async () => {
     },
   );
 
-  await consumer.runAsync();
+  await consumer.run();
   await bluebird.delay(25000);
 
   expect(messages.length).toBe(6);

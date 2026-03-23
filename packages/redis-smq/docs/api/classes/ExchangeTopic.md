@@ -20,20 +20,15 @@ Topic Pattern Syntax:
 ```typescript
 const topicExchange = new ExchangeTopic();
 
-// Bind queue to pattern
-topicExchange.bindQueue(
-  'order-notifications',
-  'orders',
-  'order.*.created',
-  (err) => { ... }
-);
+// Callback pattern
+topicExchange.bindQueue('order-processor', 'events', 'order.#', (err) => {
+  if (err) console.error('Failed to bind:', err);
+  else console.log('Queue bound');
+});
 
-// Match queues for routing key
-topicExchange.matchQueues(
-  'orders',
-  'order.premium.created',
-  (err, queues) => { ... }
-);
+// Promise pattern
+await topicExchange.bindQueue('order-processor', 'events', 'order.#');
+console.log('Queue bound');
 ```
 
 ## Constructors
@@ -53,6 +48,93 @@ The logger is namespaced with the class name for consistent logging context.
 
 ### bindQueue()
 
+#### Call Signature
+
+> **bindQueue**(`queue`, `exchange`, `routingPattern`): `Promise`\<`void`\>
+
+Bind a queue to a topic exchange using a binding pattern.
+
+This method creates a binding between a queue and an exchange using a topic
+pattern. Messages published to the exchange with routing keys that match
+the pattern will be routed to the bound queue.
+
+Idempotency:
+
+- If the binding already exists, the operation succeeds without changes.
+
+##### Parameters
+
+###### queue
+
+Queue name or parameter object
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+###### routingPattern
+
+`string`
+
+Topic binding pattern (e.g., 'order.\*.created', 'user.#')
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidQueueParametersError
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Throws
+
+InvalidTopicBindingPatternError
+
+##### Throws
+
+QueueNotFoundError
+
+##### Throws
+
+ExchangeNotFoundError
+
+##### Throws
+
+NamespaceMismatchError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.bindQueue('order-processor', 'events', 'order.#', (err) => {
+  if (err) {
+    console.error('Failed to bind queue:', err);
+  } else {
+    console.log('Queue bound successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await topicExchange.bindQueue('order-processor', 'events', 'order.#');
+  console.log('Queue bound successfully');
+} catch (err) {
+  console.error('Failed to bind queue:', err);
+}
+```
+
+#### Call Signature
+
 > **bindQueue**(`queue`, `exchange`, `routingPattern`, `cb`): `void`
 
 Bind a queue to a topic exchange using a binding pattern.
@@ -65,125 +147,242 @@ Idempotency:
 
 - If the binding already exists, the operation succeeds without changes.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
-Queue name or parameter object.
+Queue name or parameter object
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### exchange
+###### exchange
 
-Exchange name or parameter object.
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### routingPattern
+###### routingPattern
 
 `string`
 
-Topic binding pattern (e.g., 'order.\*.created', 'user.#').
+Topic binding pattern (e.g., 'order.\*.created', 'user.#')
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback invoked when the operation completes.
+Optional callback invoked when binding completes
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+- Returns a Promise if no callback is provided
+
+##### Throws
 
 InvalidQueueParametersError
 
-#### Throws
+##### Throws
 
 InvalidExchangeParametersError
 
-#### Throws
+##### Throws
 
 InvalidTopicBindingPatternError
 
-#### Throws
+##### Throws
 
 QueueNotFoundError
 
-#### Throws
+##### Throws
 
 ExchangeNotFoundError
 
-#### Throws
+##### Throws
 
 NamespaceMismatchError
 
-#### Throws
-
-ExchangeTypeMismatchError
-
-#### Throws
-
-ExchangeQueuePolicyMismatchError
-
-#### Throws
-
-QueueLockedError
-
-#### Example
+##### Example
 
 ```typescript
-// Bind queue to receive all order-related events
-topicExchange.bindQueue(
-  'order-processor',
-  'events',
-  'order.#',
-  (err) => {
-    if (err) {
-      console.error('Failed to bind queue:', err);
-      return;
-    }
+// Callback pattern
+topicExchange.bindQueue('order-processor', 'events', 'order.#', (err) => {
+  if (err) {
+    console.error('Failed to bind queue:', err);
+  } else {
     console.log('Queue bound successfully');
   }
-);
+});
 
-// Bind queue to receive only creation events for any entity
-topicExchange.bindQueue(
-  { name: 'audit-log', ns: 'production' },
-  { name: 'events', ns: 'production' },
-  '*.created',
-  (err) => { ... }
-);
+// Promise pattern
+try {
+  await topicExchange.bindQueue('order-processor', 'events', 'order.#');
+  console.log('Queue bound successfully');
+} catch (err) {
+  console.error('Failed to bind queue:', err);
+}
 ```
 
 ---
 
 ### create()
 
-> **create**(`exchange`, `queuePolicy`, `cb`): `void`
+#### Call Signature
 
-#### Parameters
+> **create**(`exchange`, `queuePolicy`): `Promise`\<`void`\>
 
-##### exchange
+Creates a topic exchange.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### queuePolicy
+###### queuePolicy
 
 [`EExchangeQueuePolicy`](../enumerations/EExchangeQueuePolicy.md)
 
-##### cb
+The queue policy for this exchange (STANDARD or PRIORITY)
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.create('events', EExchangeQueuePolicy.STANDARD, (err) => {
+  if (err) console.error('Failed to create exchange:', err);
+  else console.log('Exchange created');
+});
+
+// Promise pattern
+try {
+  await topicExchange.create('events', EExchangeQueuePolicy.STANDARD);
+  console.log('Exchange created');
+} catch (err) {
+  console.error('Failed to create exchange:', err);
+}
+```
+
+#### Call Signature
+
+> **create**(`exchange`, `queuePolicy`, `cb`): `void`
+
+Creates a topic exchange.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+###### queuePolicy
+
+[`EExchangeQueuePolicy`](../enumerations/EExchangeQueuePolicy.md)
+
+The queue policy for this exchange (STANDARD or PRIORITY)
+
+###### cb
 
 `ICallback`
 
-#### Returns
+Optional callback invoked when creation completes
+
+##### Returns
 
 `void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.create('events', EExchangeQueuePolicy.STANDARD, (err) => {
+  if (err) console.error('Failed to create exchange:', err);
+  else console.log('Exchange created');
+});
+
+// Promise pattern
+try {
+  await topicExchange.create('events', EExchangeQueuePolicy.STANDARD);
+  console.log('Exchange created');
+} catch (err) {
+  console.error('Failed to create exchange:', err);
+}
+```
 
 ---
 
 ### delete()
+
+#### Call Signature
+
+> **delete**(`exchange`): `Promise`\<`void`\>
+
+Delete a topic exchange.
+
+This method removes a topic exchange and all its associated data structures.
+The operation is atomic and ensures data consistency across all related Redis keys.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Throws
+
+ExchangeHasBoundQueuesError
+
+##### Throws
+
+ExchangeNotFoundError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.delete('events', (err) => {
+  if (err) {
+    console.error('Failed to delete exchange:', err);
+  } else {
+    console.log('Exchange deleted successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await topicExchange.delete('events');
+  console.log('Exchange deleted successfully');
+} catch (err) {
+  console.error('Failed to delete exchange:', err);
+}
+```
+
+#### Call Signature
 
 > **delete**(`exchange`, `cb`): `void`
 
@@ -192,146 +391,357 @@ Delete a topic exchange.
 This method removes a topic exchange and all its associated data structures.
 The operation is atomic and ensures data consistency across all related Redis keys.
 
-#### Parameters
+##### Parameters
 
-##### exchange
+###### exchange
 
-Exchange name or parameter object.
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback invoked when the exchange is deleted or if an error occurs.
+Optional callback invoked when deletion completes
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+- Returns a Promise if no callback is provided
+
+##### Throws
 
 InvalidExchangeParametersError
 
-#### Throws
+##### Throws
 
 ExchangeHasBoundQueuesError
 
-#### Throws
+##### Throws
 
 ExchangeNotFoundError
 
-#### Throws
-
-ExchangeTypeMismatchError
-
-#### Example
+##### Example
 
 ```typescript
-// Delete a topic exchange
+// Callback pattern
 topicExchange.delete('events', (err) => {
   if (err) {
-    if (err instanceof ExchangeHasBoundQueuesError) {
-      console.error('Cannot delete exchange: queues are still bound');
-    } else {
-      console.error('Failed to delete exchange:', err);
-    }
-    return;
+    console.error('Failed to delete exchange:', err);
+  } else {
+    console.log('Exchange deleted successfully');
   }
-  console.log('Exchange deleted successfully');
 });
 
-// Delete with explicit namespace
-topicExchange.delete(
-  { name: 'notifications', ns: 'production' },
-  (err) => { ... }
-);
+// Promise pattern
+try {
+  await topicExchange.delete('events');
+  console.log('Exchange deleted successfully');
+} catch (err) {
+  console.error('Failed to delete exchange:', err);
+}
 ```
 
 ---
 
 ### getBindings()
 
-> **getBindings**(`exchange`, `cb`): `void`
+#### Call Signature
 
-#### Parameters
+> **getBindings**(`exchange`): `Promise`\<`Record`\<`string`, [`IQueueParams`](../interfaces/IQueueParams.md)[]\>\>
 
-##### exchange
+Retrieves all bindings for a topic exchange.
+
+This method returns a complete mapping of routing patterns to the queues bound to them.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### cb
+##### Returns
+
+`Promise`\<`Record`\<`string`, [`IQueueParams`](../interfaces/IQueueParams.md)[]\>\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.getBindings('notifications', (err, bindings) => {
+  if (err) {
+    console.error('Failed to get bindings:', err);
+  } else {
+    for (const [pattern, queues] of Object.entries(bindings)) {
+      console.log(`Pattern "${pattern}": ${queues.length} queues`);
+    }
+  }
+});
+
+// Promise pattern
+try {
+  const bindings = await topicExchange.getBindings('notifications');
+  for (const [pattern, queues] of Object.entries(bindings)) {
+    console.log(`Pattern "${pattern}": ${queues.length} queues`);
+  }
+} catch (err) {
+  console.error('Failed to get bindings:', err);
+}
+```
+
+#### Call Signature
+
+> **getBindings**(`exchange`, `cb`): `void`
+
+Retrieves all bindings for a topic exchange.
+
+This method returns a complete mapping of routing patterns to the queues bound to them.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+###### cb
 
 `ICallback`\<`Record`\<`string`, [`IQueueParams`](../interfaces/IQueueParams.md)[]\>\>
 
-#### Returns
+Optional callback invoked with the bindings mapping
+
+##### Returns
 
 `void`
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.getBindings('notifications', (err, bindings) => {
+  if (err) {
+    console.error('Failed to get bindings:', err);
+  } else {
+    for (const [pattern, queues] of Object.entries(bindings)) {
+      console.log(`Pattern "${pattern}": ${queues.length} queues`);
+    }
+  }
+});
+
+// Promise pattern
+try {
+  const bindings = await topicExchange.getBindings('notifications');
+  for (const [pattern, queues] of Object.entries(bindings)) {
+    console.log(`Pattern "${pattern}": ${queues.length} queues`);
+  }
+} catch (err) {
+  console.error('Failed to get bindings:', err);
+}
+```
 
 ---
 
 ### getRoutingPatternBoundQueues()
 
-> **getRoutingPatternBoundQueues**(`exchange`, `bindingPattern`, `cb`): `void`
+#### Call Signature
+
+> **getRoutingPatternBoundQueues**(`exchange`, `bindingPattern`): `Promise`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
 
 Retrieve all queues bound to a specific routing pattern within a topic exchange.
 
 This method returns all queues that are bound to the exchange using the
-specified routing pattern. This is useful for understanding which queues
-will receive messages for routing keys that match the pattern.
+specified routing pattern.
 
-#### Parameters
+##### Parameters
 
-##### exchange
+###### exchange
 
-Exchange name or parameter object.
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### bindingPattern
+###### bindingPattern
 
 `string`
 
-The binding pattern to query (e.g., 'order.\*.created').
+The binding pattern to query (e.g., 'order.\*.created')
 
-##### cb
+##### Returns
 
-`ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
+`Promise`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
 
-Callback invoked with an array of queues bound to the pattern or an error.
+- Returns a Promise if no callback is provided
 
-#### Returns
-
-`void`
-
-#### Throws
+##### Throws
 
 InvalidExchangeParametersError
 
-#### Example
+##### Example
 
 ```typescript
+// Callback pattern
 topicExchange.getRoutingPatternBoundQueues(
   'notifications',
   'user.#',
   (err, queues) => {
     if (err) {
       console.error('Failed to get pattern queues:', err);
-      return;
+    } else {
+      console.log(`Found ${queues.length} queues for pattern 'user.#'`);
     }
-
-    console.log(`Queues bound to pattern 'user.#':`);
-    queues.forEach((q) => {
-      console.log(`- ${q.name} in ${q.ns}`);
-    });
   },
 );
+
+// Promise pattern
+try {
+  const queues = await topicExchange.getRoutingPatternBoundQueues(
+    'notifications',
+    'user.#',
+  );
+  console.log(`Found ${queues.length} queues for pattern 'user.#'`);
+} catch (err) {
+  console.error('Failed to get pattern queues:', err);
+}
+```
+
+#### Call Signature
+
+> **getRoutingPatternBoundQueues**(`exchange`, `bindingPattern`, `cb`): `void`
+
+Retrieve all queues bound to a specific routing pattern within a topic exchange.
+
+This method returns all queues that are bound to the exchange using the
+specified routing pattern.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+###### bindingPattern
+
+`string`
+
+The binding pattern to query (e.g., 'order.\*.created')
+
+###### cb
+
+`ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
+
+Optional callback invoked with an array of queues bound to the pattern
+
+##### Returns
+
+`void`
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.getRoutingPatternBoundQueues(
+  'notifications',
+  'user.#',
+  (err, queues) => {
+    if (err) {
+      console.error('Failed to get pattern queues:', err);
+    } else {
+      console.log(`Found ${queues.length} queues for pattern 'user.#'`);
+    }
+  },
+);
+
+// Promise pattern
+try {
+  const queues = await topicExchange.getRoutingPatternBoundQueues(
+    'notifications',
+    'user.#',
+  );
+  console.log(`Found ${queues.length} queues for pattern 'user.#'`);
+} catch (err) {
+  console.error('Failed to get pattern queues:', err);
+}
 ```
 
 ---
 
 ### getRoutingPatterns()
+
+#### Call Signature
+
+> **getRoutingPatterns**(`exchange`): `Promise`\<`string`[]\>
+
+Retrieve all routing patterns registered for a topic exchange.
+
+This method returns all patterns that have been used to bind queues to the
+exchange. Each pattern represents a different routing rule that can match
+incoming routing keys.
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### Returns
+
+`Promise`\<`string`[]\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.getRoutingPatterns('notifications', (err, patterns) => {
+  if (err) {
+    console.error('Failed to get patterns:', err);
+  } else {
+    console.log('Routing patterns:', patterns);
+  }
+});
+
+// Promise pattern
+try {
+  const patterns = await topicExchange.getRoutingPatterns('notifications');
+  console.log('Routing patterns:', patterns);
+} catch (err) {
+  console.error('Failed to get patterns:', err);
+}
+```
+
+#### Call Signature
 
 > **getRoutingPatterns**(`exchange`, `cb`): `void`
 
@@ -341,47 +751,128 @@ This method returns all patterns that have been used to bind queues to the
 exchange. Each pattern represents a different routing rule that can match
 incoming routing keys.
 
-#### Parameters
+##### Parameters
 
-##### exchange
+###### exchange
 
-Exchange name or parameter object.
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### cb
+###### cb
 
 `ICallback`\<`string`[]\>
 
-Callback invoked with an array of binding patterns or an error.
+Optional callback invoked with an array of binding patterns
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+- Returns a Promise if no callback is provided
+
+##### Throws
 
 InvalidExchangeParametersError
 
-#### Example
+##### Example
 
 ```typescript
+// Callback pattern
 topicExchange.getRoutingPatterns('notifications', (err, patterns) => {
   if (err) {
     console.error('Failed to get patterns:', err);
-    return;
+  } else {
+    console.log('Routing patterns:', patterns);
   }
-
-  console.log('Routing patterns:');
-  patterns.forEach((pattern) => {
-    console.log(`- ${pattern}`);
-  });
 });
+
+// Promise pattern
+try {
+  const patterns = await topicExchange.getRoutingPatterns('notifications');
+  console.log('Routing patterns:', patterns);
+} catch (err) {
+  console.error('Failed to get patterns:', err);
+}
 ```
 
 ---
 
 ### matchQueues()
+
+#### Call Signature
+
+> **matchQueues**(`exchange`, `routingKey`): `Promise`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
+
+Resolve queues bound to a topic exchange for a given routing key.
+
+This method performs pattern matching between the routing key and all binding
+patterns registered for the exchange. Queues bound to matching patterns are
+returned, with duplicates removed (a queue may match multiple patterns).
+
+Pattern Matching Rules:
+
+- 'order.\*' matches 'order.created', 'order.updated', but not 'order.item.created'
+- 'order.#' matches 'order.created', 'order.item.created', 'order.item.variant.updated'
+- 'order.\*.created' matches 'order.premium.created', but not 'order.created'
+
+##### Parameters
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+###### routingKey
+
+`string`
+
+Routing key to match against binding patterns
+
+##### Returns
+
+`Promise`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Throws
+
+InvalidExchangeRoutingKeyError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.matchQueues(
+  'notifications',
+  'user.premium.signup',
+  (err, queues) => {
+    if (err) {
+      console.error('Failed to match queues:', err);
+    } else {
+      console.log(`Found ${queues.length} matching queues`);
+    }
+  },
+);
+
+// Promise pattern
+try {
+  const queues = await topicExchange.matchQueues(
+    'notifications',
+    'user.premium.signup',
+  );
+  console.log(`Found ${queues.length} matching queues`);
+} catch (err) {
+  console.error('Failed to match queues:', err);
+}
+```
+
+#### Call Signature
 
 > **matchQueues**(`exchange`, `routingKey`, `cb`): `void`
 
@@ -397,62 +888,159 @@ Pattern Matching Rules:
 - 'order.#' matches 'order.created', 'order.item.created', 'order.item.variant.updated'
 - 'order.\*.created' matches 'order.premium.created', but not 'order.created'
 
-#### Parameters
+##### Parameters
 
-##### exchange
+###### exchange
 
-Exchange name or parameter object.
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### routingKey
+###### routingKey
 
 `string`
 
-Routing key to match against binding patterns.
+Routing key to match against binding patterns
 
-##### cb
+###### cb
 
 `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
 
-Callback invoked with an array of matching queues or an error.
+Optional callback invoked with an array of matching queues
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+- Returns a Promise if no callback is provided
+
+##### Throws
 
 InvalidExchangeParametersError
 
-#### Throws
+##### Throws
 
 InvalidExchangeRoutingKeyError
 
-#### Example
+##### Example
 
 ```typescript
-// Match queues for a specific routing key
+// Callback pattern
 topicExchange.matchQueues(
   'notifications',
   'user.premium.signup',
   (err, queues) => {
     if (err) {
       console.error('Failed to match queues:', err);
-      return;
+    } else {
+      console.log(`Found ${queues.length} matching queues`);
     }
-
-    console.log(`Found ${queues.length} matching queues:`);
-    queues.forEach((q) => {
-      console.log(`- ${q.name} in namespace ${q.ns}`);
-    });
   },
 );
+
+// Promise pattern
+try {
+  const queues = await topicExchange.matchQueues(
+    'notifications',
+    'user.premium.signup',
+  );
+  console.log(`Found ${queues.length} matching queues`);
+} catch (err) {
+  console.error('Failed to match queues:', err);
+}
 ```
 
 ---
 
 ### unbindQueue()
+
+#### Call Signature
+
+> **unbindQueue**(`queue`, `exchange`, `routingPattern`): `Promise`\<`void`\>
+
+Unbind a queue from a topic exchange binding pattern.
+
+This method removes a binding between a queue and an exchange for a specific
+topic pattern. After unbinding, messages matching the pattern will no longer
+be routed to the queue.
+
+##### Parameters
+
+###### queue
+
+Queue name or parameter object
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+###### exchange
+
+Exchange name or parameter object
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+###### routingPattern
+
+`string`
+
+Topic binding pattern to unbind
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+InvalidQueueParametersError
+
+##### Throws
+
+InvalidExchangeParametersError
+
+##### Throws
+
+InvalidTopicBindingPatternError
+
+##### Throws
+
+NamespaceMismatchError
+
+##### Throws
+
+QueueNotBoundError
+
+##### Example
+
+```typescript
+// Callback pattern
+topicExchange.unbindQueue(
+  'order-processor',
+  'events',
+  'order.cancelled',
+  (err) => {
+    if (err) {
+      console.error('Failed to unbind queue:', err);
+    } else {
+      console.log('Queue unbound successfully');
+    }
+  },
+);
+
+// Promise pattern
+try {
+  await topicExchange.unbindQueue(
+    'order-processor',
+    'events',
+    'order.cancelled',
+  );
+  console.log('Queue unbound successfully');
+} catch (err) {
+  console.error('Failed to unbind queue:', err);
+}
+```
+
+#### Call Signature
 
 > **unbindQueue**(`queue`, `exchange`, `routingPattern`, `cb`): `void`
 
@@ -462,72 +1050,62 @@ This method removes a binding between a queue and an exchange for a specific
 topic pattern. After unbinding, messages matching the pattern will no longer
 be routed to the queue.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
-Queue name or parameter object.
+Queue name or parameter object
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### exchange
+###### exchange
 
-Exchange name or parameter object.
+Exchange name or parameter object
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
-##### routingPattern
+###### routingPattern
 
 `string`
 
-Topic binding pattern to unbind.
+Topic binding pattern to unbind
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback invoked when the operation completes.
+Optional callback invoked when unbinding completes
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+- Returns a Promise if no callback is provided
+
+##### Throws
 
 InvalidQueueParametersError
 
-#### Throws
+##### Throws
 
 InvalidExchangeParametersError
 
-#### Throws
+##### Throws
 
 InvalidTopicBindingPatternError
 
-#### Throws
+##### Throws
 
 NamespaceMismatchError
 
-#### Throws
-
-ExchangeNotFoundError
-
-#### Throws
-
-ExchangeTypeMismatchError
-
-#### Throws
+##### Throws
 
 QueueNotBoundError
 
-#### Throws
-
-QueueLockedError
-
-#### Example
+##### Example
 
 ```typescript
-// Unbind queue from specific pattern
+// Callback pattern
 topicExchange.unbindQueue(
   'order-processor',
   'events',
@@ -535,9 +1113,21 @@ topicExchange.unbindQueue(
   (err) => {
     if (err) {
       console.error('Failed to unbind queue:', err);
-      return;
+    } else {
+      console.log('Queue unbound successfully');
     }
-    console.log('Queue unbound successfully');
   },
 );
+
+// Promise pattern
+try {
+  await topicExchange.unbindQueue(
+    'order-processor',
+    'events',
+    'order.cancelled',
+  );
+  console.log('Queue unbound successfully');
+} catch (err) {
+  console.error('Failed to unbind queue:', err);
+}
 ```

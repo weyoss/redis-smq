@@ -23,7 +23,7 @@ test('Shutdown a producer and try to produce a message', async () => {
 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
-  await expect(producer.produceAsync(msg)).rejects.toThrowError(
+  await expect(producer.produce(msg)).rejects.toThrowError(
     ProducerNotRunningError,
   );
 });

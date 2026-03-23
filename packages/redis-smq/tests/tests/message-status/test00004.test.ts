@@ -27,7 +27,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   const msg = new ProducibleMessage();
 
   msg
@@ -35,15 +35,15 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     .setQueue(getDefaultQueue())
     .setRetryThreshold(2)
     .setRetryDelay(0);
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const messageManager = await getMessageManager();
-  const msg0 = await messageManager.getMessageByIdAsync(id);
+  const msg0 = await messageManager.getMessageById(id);
   expect(msg0.status).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer(false);
   const msg1: EMessagePropertyStatus[] = [];
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => {
+  await consumer.consume(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
       msg1.push(msg.status);
       cb(new Error());
@@ -52,18 +52,18 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
 
   consumer.run(() => void 0);
   await untilMessageUnacknowledged(consumer);
-  await consumer.shutdownAsync();
+  await consumer.shutdown();
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await messageManager.getMessageStatusAsync(id);
+  const msg2 = await messageManager.getMessageStatus(id);
   expect(msg2).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
-  await consumer.cancelAsync(defaultQueue);
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
+  await consumer.cancel(defaultQueue);
+  await consumer.consume(defaultQueue, (msg, cb) => cb());
   consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer);
 
-  const msg3 = await messageManager.getMessageStatusAsync(id);
+  const msg3 = await messageManager.getMessageStatus(id);
   expect(msg3).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

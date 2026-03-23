@@ -96,16 +96,16 @@ test('Event bus: case 1', async () => {
   await shutDownBaseInstance(c2);
 
   const c3 = bluebird.promisifyAll(new Consumer());
-  await c3.runAsync();
-  await c3.consumeAsync(anotherQueue, (msg, cb) => {
+  await c3.run();
+  await c3.consume(anotherQueue, (msg, cb) => {
     setTimeout(() => cb(), 1000);
   });
 
   const m3 = new ProducibleMessage().setQueue(anotherQueue).setBody('MMM');
-  const [id3] = await p2.produceAsync(m3);
+  const [id3] = await p2.produce(m3);
 
   const m4 = new ProducibleMessage().setQueue(anotherQueue).setBody('MMM');
-  const [id4] = await p2.produceAsync(m4);
+  const [id4] = await p2.produce(m4);
 
   await bluebird.delay(5000);
 
@@ -144,5 +144,5 @@ test('Event bus: case 1', async () => {
     messageId: id4,
   });
 
-  await c3.shutdownAsync();
+  await c3.shutdown();
 });

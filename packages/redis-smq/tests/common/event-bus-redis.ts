@@ -7,9 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { EventBus } from '../../src/index.js';
 
 export async function getEventBus() {
-  return bluebird.promisifyAll(EventBus.getInstance());
+  return EventBus.getInstance();
 }

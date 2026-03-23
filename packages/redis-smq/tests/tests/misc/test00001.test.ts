@@ -23,13 +23,13 @@ test('Consumer heartbeat: check online/offline consumers', async () => {
   const isConsumerAliveAsync = bluebird.promisify(_isConsumerAlive);
   await createQueue(defaultQueue, false);
   const consumer = getConsumer();
-  await consumer.runAsync();
+  await consumer.run();
 
   //
   const isAlive = await isConsumerAliveAsync(redisClient, consumer.getId());
   expect(isAlive).toBe(true);
 
-  await consumer.shutdownAsync();
+  await consumer.shutdown();
 
   const isAlive2 = await isConsumerAliveAsync(redisClient, consumer.getId());
   expect(isAlive2).toBe(false);

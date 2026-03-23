@@ -27,7 +27,7 @@ test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
   expect(mProducer.isGoingDown()).toBe(false);
   expect(mProducer.isUp()).toBe(false);
   expect(mProducer.isDown()).toBe(true);
-  await mProducer.runAsync();
+  await mProducer.run();
   expect(mProducer.isOperational()).toBe(true);
   expect(mProducer.isGoingUp()).toBe(false);
   expect(mProducer.isGoingDown()).toBe(false);

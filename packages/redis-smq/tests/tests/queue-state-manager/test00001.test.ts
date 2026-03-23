@@ -36,27 +36,27 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
     const queueManager = bluebird.promisifyAll(new QueueManager());
-    const props1 = await queueManager.getPropertiesAsync(defaultQueue);
+    const props1 = await queueManager.getProperties(defaultQueue);
     expect(props1.operationalState).toEqual(EQueueOperationalState.ACTIVE);
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
     // Test pause with metadata
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.SCHEDULED,
       description: 'Planned deployment',
     });
 
-    const props2 = await queueManager.getPropertiesAsync(defaultQueue);
+    const props2 = await queueManager.getProperties(defaultQueue);
     expect(props2.operationalState).toEqual(EQueueOperationalState.PAUSED);
 
     // Test resume
-    await stateManager.resumeAsync(defaultQueue, {
+    await stateManager.resume(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
       description: 'Deployment completed',
     });
 
-    const props3 = await queueManager.getPropertiesAsync(defaultQueue);
+    const props3 = await queueManager.getProperties(defaultQueue);
     expect(props3.operationalState).toEqual(EQueueOperationalState.ACTIVE);
   });
 
@@ -67,22 +67,22 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
     // Initial state (ACTIVE)
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.SCHEDULED,
       description: 'First pause',
     });
 
-    await stateManager.resumeAsync(defaultQueue, {
+    await stateManager.resume(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
       description: 'First resume',
     });
 
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.SCHEDULED,
       description: 'Second pause',
     });
 
-    const history = await stateManager.getStateHistoryAsync(defaultQueue);
+    const history = await stateManager.getStateHistory(defaultQueue);
     expect(history.length).toEqual(4);
 
     history.reverse();
@@ -116,18 +116,18 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.PERFORMANCE,
     });
 
     const consumer = bluebird.promisifyAll(new Consumer());
-    await consumer.runAsync();
+    await consumer.run();
 
     await expect(
-      consumer.consumeAsync(defaultQueue, (msg, done) => done()),
+      consumer.consume(defaultQueue, (msg, done) => done()),
     ).rejects.toThrow(QueuePausedError);
 
-    await consumer.shutdownAsync();
+    await consumer.shutdown();
   });
 
   test('should allow operations after resuming queue', async () => {
@@ -135,21 +135,21 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.TESTING,
     });
-    await stateManager.resumeAsync(defaultQueue, {
+    await stateManager.resume(defaultQueue, {
       reason: EStateTransitionReason.TESTING,
     });
 
     const consumer = bluebird.promisifyAll(new Consumer());
-    await consumer.runAsync();
+    await consumer.run();
 
     await expect(
-      consumer.consumeAsync(defaultQueue, (msg, done) => done()),
+      consumer.consume(defaultQueue, (msg, done) => done()),
     ).resolves.not.toThrow();
 
-    await consumer.shutdownAsync();
+    await consumer.shutdown();
   });
 
   test('should throw error when pausing an already paused queue', async () => {
@@ -157,12 +157,12 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.PERFORMANCE,
     });
 
     await expect(
-      stateManager.pauseAsync(defaultQueue, {
+      stateManager.pause(defaultQueue, {
         reason: EStateTransitionReason.PERFORMANCE,
       }),
     ).rejects.toThrow(QueueStateTransitionError);
@@ -175,7 +175,7 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
     await expect(
-      stateManager.resumeAsync(defaultQueue, {
+      stateManager.resume(defaultQueue, {
         reason: EStateTransitionReason.PERFORMANCE,
       }),
     ).rejects.toThrow(QueueStateTransitionError);
@@ -192,12 +192,12 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     const queueManager = bluebird.promisifyAll(new QueueManager());
 
     // Pause queue1 only
-    await stateManager.pauseAsync(queue1, {
+    await stateManager.pause(queue1, {
       reason: EStateTransitionReason.MANUAL,
     });
 
-    const props1 = await queueManager.getPropertiesAsync(queue1);
-    const props2 = await queueManager.getPropertiesAsync(queue2);
+    const props1 = await queueManager.getProperties(queue1);
+    const props2 = await queueManager.getProperties(queue2);
 
     expect(props1.operationalState).toEqual(EQueueOperationalState.PAUSED);
     expect(props2.operationalState).toEqual(EQueueOperationalState.ACTIVE);
@@ -218,9 +218,9 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
       },
     };
 
-    await stateManager.pauseAsync(defaultQueue, options);
+    await stateManager.pause(defaultQueue, options);
 
-    const history = await stateManager.getStateHistoryAsync(defaultQueue);
+    const history = await stateManager.getStateHistory(defaultQueue);
     const pauseTransition = history.find(
       (h) => h.to === EQueueOperationalState.PAUSED,
     );
@@ -235,7 +235,7 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
     });
 
@@ -244,13 +244,13 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     const consumer = bluebird.promisifyAll(new Consumer());
     const consumeSpy = vi.fn((msg, done) => done());
 
-    await consumer.runAsync();
-    await expect(
-      consumer.consumeAsync(defaultQueue, consumeSpy),
-    ).rejects.toThrow(QueuePausedError);
+    await consumer.run();
+    await expect(consumer.consume(defaultQueue, consumeSpy)).rejects.toThrow(
+      QueuePausedError,
+    );
 
-    await consumer.shutdownAsync();
-    await producer.shutdownAsync();
+    await consumer.shutdown();
+    await producer.shutdown();
   });
 
   test('should allow message consumption after resuming queue', async () => {
@@ -258,29 +258,29 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
     });
 
     const { producer } = await produceMessage(defaultQueue);
 
     // Resume queue
-    await stateManager.resumeAsync(defaultQueue, {
+    await stateManager.resume(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
     });
 
     const consumer = bluebird.promisifyAll(new Consumer());
     const consumeSpy = vi.fn((msg, done) => done());
 
-    await consumer.runAsync();
-    await consumer.consumeAsync(defaultQueue, consumeSpy);
+    await consumer.run();
+    await consumer.consume(defaultQueue, consumeSpy);
 
     await bluebird.delay(5000);
 
     expect(consumeSpy).toHaveBeenCalledTimes(1);
 
-    await consumer.shutdownAsync();
-    await producer.shutdownAsync();
+    await consumer.shutdown();
+    await producer.shutdown();
   });
 
   test('should get current operational state', async () => {
@@ -289,15 +289,15 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
-    const activeState = await stateManager.getStateAsync(defaultQueue);
+    const activeState = await stateManager.getState(defaultQueue);
     expect(activeState.from).toEqual(null);
     expect(activeState.to).toEqual(EQueueOperationalState.ACTIVE);
 
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
     });
 
-    const pausedState = await stateManager.getStateAsync(defaultQueue);
+    const pausedState = await stateManager.getState(defaultQueue);
 
     expect(pausedState.from).toEqual(EQueueOperationalState.ACTIVE);
     expect(pausedState.to).toEqual(EQueueOperationalState.PAUSED);
@@ -308,12 +308,12 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
     await expect(
-      stateManager.pauseAsync(nonExistentQueue, {
+      stateManager.pause(nonExistentQueue, {
         reason: EStateTransitionReason.MANUAL,
       }),
     ).rejects.toThrow();
 
-    await expect(stateManager.getStateAsync(nonExistentQueue)).rejects.toThrow(
+    await expect(stateManager.getState(nonExistentQueue)).rejects.toThrow(
       QueueNotFoundError,
     );
   });
@@ -326,35 +326,35 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     const queueManager = bluebird.promisifyAll(new QueueManager());
 
     // Verify initial state
-    const props1 = await queueManager.getPropertiesAsync(priorityQueue);
+    const props1 = await queueManager.getProperties(priorityQueue);
     expect(props1.operationalState).toEqual(EQueueOperationalState.ACTIVE);
 
     // Pause the priority queue
-    await stateManager.pauseAsync(priorityQueue, {
+    await stateManager.pause(priorityQueue, {
       reason: EStateTransitionReason.SCHEDULED,
       description: 'Testing pause on priority queue',
     });
 
-    const props2 = await queueManager.getPropertiesAsync(priorityQueue);
+    const props2 = await queueManager.getProperties(priorityQueue);
     expect(props2.operationalState).toEqual(EQueueOperationalState.PAUSED);
 
     // Try to consume from paused priority queue
     const consumer = bluebird.promisifyAll(new Consumer());
-    await consumer.runAsync();
+    await consumer.run();
 
     await expect(
-      consumer.consumeAsync(priorityQueue, (msg, done) => done()),
+      consumer.consume(priorityQueue, (msg, done) => done()),
     ).rejects.toThrow(QueuePausedError);
 
     // Resume and verify
-    await stateManager.resumeAsync(priorityQueue, {
+    await stateManager.resume(priorityQueue, {
       reason: EStateTransitionReason.MANUAL,
     });
 
-    const props3 = await queueManager.getPropertiesAsync(priorityQueue);
+    const props3 = await queueManager.getProperties(priorityQueue);
     expect(props3.operationalState).toEqual(EQueueOperationalState.ACTIVE);
 
-    await consumer.shutdownAsync();
+    await consumer.shutdown();
   });
 
   test('should maintain state history with timestamps', async () => {
@@ -363,11 +363,11 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
 
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
 
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.SCHEDULED,
     });
 
-    const history = await stateManager.getStateHistoryAsync(defaultQueue);
+    const history = await stateManager.getStateHistory(defaultQueue);
 
     expect(history.length).toBeGreaterThan(0);
 
@@ -395,22 +395,22 @@ describe('QueueStateManager: pause()/resume()/getStateHistory()/getState()', () 
     // Attempt concurrent pauses
     await expect(
       Promise.all([
-        stateManager.pauseAsync(defaultQueue, {
+        stateManager.pause(defaultQueue, {
           reason: EStateTransitionReason.MANUAL,
         }),
-        stateManager.pauseAsync(defaultQueue, {
+        stateManager.pause(defaultQueue, {
           reason: EStateTransitionReason.MANUAL,
         }),
       ]),
     ).rejects.toThrow(); // One should fail
 
     // Verify final state is paused
-    const finalState = await stateManager.getStateAsync(defaultQueue);
+    const finalState = await stateManager.getState(defaultQueue);
     expect(finalState.from).toEqual(EQueueOperationalState.ACTIVE);
     expect(finalState.to).toEqual(EQueueOperationalState.PAUSED);
 
     // Clean up by resuming
-    await stateManager.resumeAsync(defaultQueue, {
+    await stateManager.resume(defaultQueue, {
       reason: EStateTransitionReason.MANUAL,
     });
   });

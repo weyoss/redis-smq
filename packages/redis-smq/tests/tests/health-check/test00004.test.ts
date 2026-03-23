@@ -13,19 +13,19 @@ import { Consumer } from '../../../src/index.js';
 
 test('Health check: case 4', async () => {
   const consumer1 = bluebird.promisifyAll(new Consumer());
-  await consumer1.runAsync();
+  await consumer1.run();
 
   const consumer2 = bluebird.promisifyAll(new Consumer());
-  await consumer2.runAsync();
+  await consumer2.run();
 
   const consumer3 = bluebird.promisifyAll(new Consumer());
-  await consumer3.runAsync();
+  await consumer3.run();
 
   const consumer4 = bluebird.promisifyAll(new Consumer());
-  await consumer4.runAsync();
+  await consumer4.run();
 
-  await consumer1.shutdownAsync();
-  await consumer2.shutdownAsync();
-  await consumer3.shutdownAsync();
-  await consumer4.shutdownAsync();
+  await consumer1.shutdown();
+  await consumer2.shutdown();
+  await consumer3.shutdown();
+  await consumer4.shutdown();
 });

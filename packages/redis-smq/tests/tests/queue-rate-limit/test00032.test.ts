@@ -44,7 +44,7 @@ test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
 
   const queueRateLimit = bluebird.promisifyAll(new QueueRateLimit());
   await expect(
-    queueRateLimit.setAsync(defaultQueue, {
+    queueRateLimit.set(defaultQueue, {
       limit: 5,
       interval: 1000,
     }),

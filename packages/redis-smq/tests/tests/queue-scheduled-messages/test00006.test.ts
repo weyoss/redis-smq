@@ -32,16 +32,16 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () 
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   const producedAt = Date.now();
 
   await startScheduleWorker(getDefaultQueue(), randomUUID());
   await bluebird.delay(60000);
 
   const pendingMessages = await getQueuePendingMessages();
-  const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const r = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(r.items.length > 4).toBe(true);
 
   for (let i = 0; i < r.items.length; i += 1) {

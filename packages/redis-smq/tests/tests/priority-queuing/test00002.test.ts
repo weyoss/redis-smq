@@ -27,7 +27,7 @@ test('Priority queuing: case 2', async () => {
   const consumedMessages: string[] = [];
 
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
@@ -46,44 +46,44 @@ test('Priority queuing: case 2', async () => {
   );
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   // message 1
   const msg1 = new ProducibleMessage();
   msg1.setBody({ testing: 'message with low priority' });
   msg1.setPriority(EMessagePriority.LOW);
   msg1.setQueue(getDefaultQueue());
-  const [id1] = await producer.produceAsync(msg1);
+  const [id1] = await producer.produce(msg1);
 
   // message 2
   const msg2 = new ProducibleMessage();
   msg2.setBody({ testing: 'a message with very low priority' });
   msg2.setPriority(EMessagePriority.VERY_LOW);
   msg2.setQueue(defaultQueue);
-  const [id2] = await producer.produceAsync(msg2);
+  const [id2] = await producer.produce(msg2);
 
   // message 3
   const msg3 = new ProducibleMessage();
   msg3.setBody({ testing: 'a message with above normal priority' });
   msg3.setPriority(EMessagePriority.ABOVE_NORMAL);
   msg3.setQueue(defaultQueue);
-  const [id3] = await producer.produceAsync(msg3);
+  const [id3] = await producer.produce(msg3);
 
   // message 4
   const msg4 = new ProducibleMessage();
   msg4.setBody({ testing: 'a message with normal priority' });
   msg4.setPriority(EMessagePriority.NORMAL);
   msg4.setQueue(defaultQueue);
-  const [id4] = await producer.produceAsync(msg4);
+  const [id4] = await producer.produce(msg4);
 
   // message 5
   const msg5 = new ProducibleMessage();
   msg5.setBody({ testing: 'a message with high priority' });
   msg5.setPriority(EMessagePriority.HIGH);
   msg5.setQueue(defaultQueue);
-  const [id5] = await producer.produceAsync(msg5);
+  const [id5] = await producer.produce(msg5);
 
-  await consumer.runAsync();
+  await consumer.run();
   await bluebird.delay(10000);
 
   expect(consumedMessages.length).toBe(5);

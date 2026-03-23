@@ -24,13 +24,13 @@ test('Purging acknowledged queue using QueueMessages', async () => {
   await shutDownBaseInstance(consumer);
 
   const queueMessages = await getQueueMessages();
-  const m = await queueMessages.countMessagesByStatusAsync(queue);
+  const m = await queueMessages.countMessagesByStatus(queue);
   expect(m.acknowledged).toBe(1);
 
-  await queueMessages.purgeAsync(queue);
+  await queueMessages.purge(queue);
 
   await bluebird.delay(5000);
 
-  const m1 = await queueMessages.countMessagesByStatusAsync(queue);
+  const m1 = await queueMessages.countMessagesByStatus(queue);
   expect(m1.acknowledged).toBe(0);
 });

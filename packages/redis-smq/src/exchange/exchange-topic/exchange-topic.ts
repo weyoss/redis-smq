@@ -63,20 +63,15 @@ import { EQueueOperation } from '../../queue-operation-validator/index.js';
  * ```typescript
  * const topicExchange = new ExchangeTopic();
  *
- * // Bind queue to pattern
- * topicExchange.bindQueue(
- *   'order-notifications',
- *   'orders',
- *   'order.*.created',
- *   (err) => { ... }
- * );
+ * // Callback pattern
+ * topicExchange.bindQueue('order-processor', 'events', 'order.#', (err) => {
+ *   if (err) console.error('Failed to bind:', err);
+ *   else console.log('Queue bound');
+ * });
  *
- * // Match queues for routing key
- * topicExchange.matchQueues(
- *   'orders',
- *   'order.premium.created',
- *   (err, queues) => { ... }
- * );
+ * // Promise pattern
+ * await topicExchange.bindQueue('order-processor', 'events', 'order.#');
+ * console.log('Queue bound');
  * ```
  */
 export class ExchangeTopic {
@@ -113,79 +108,94 @@ export class ExchangeTopic {
    * - 'order.#' matches 'order.created', 'order.item.created', 'order.item.variant.updated'
    * - 'order.*.created' matches 'order.premium.created', but not 'order.created'
    *
-   * @param exchange - Exchange name or parameter object.
-   * @param routingKey - Routing key to match against binding patterns.
-   * @param cb - Callback invoked with an array of matching queues or an error.
+   * @param exchange - Exchange name or parameter object
+   * @param routingKey - Routing key to match against binding patterns
+   * @param cb - Optional callback invoked with an array of matching queues
+   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided
    *
    * @throws InvalidExchangeParametersError
    * @throws InvalidExchangeRoutingKeyError
    *
    * @example
    * ```typescript
-   * // Match queues for a specific routing key
+   * // Callback pattern
    * topicExchange.matchQueues('notifications', 'user.premium.signup', (err, queues) => {
    *   if (err) {
    *     console.error('Failed to match queues:', err);
-   *     return;
+   *   } else {
+   *     console.log(`Found ${queues.length} matching queues`);
    *   }
-   *
-   *   console.log(`Found ${queues.length} matching queues:`);
-   *   queues.forEach(q => {
-   *     console.log(`- ${q.name} in namespace ${q.ns}`);
-   *   });
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const queues = await topicExchange.matchQueues('notifications', 'user.premium.signup');
+   *   console.log(`Found ${queues.length} matching queues`);
+   * } catch (err) {
+   *   console.error('Failed to match queues:', err);
+   * }
    * ```
    */
   matchQueues(
     exchange: string | IExchangeParams,
     routingKey: string,
+  ): Promise<IQueueParams[]>;
+  matchQueues(
+    exchange: string | IExchangeParams,
+    routingKey: string,
     cb: ICallback<IQueueParams[]>,
-  ): void {
-    const topicParams = _parseExchangeParams(exchange, this.type);
-    if (topicParams instanceof Error) {
-      return cb(topicParams);
-    }
+  ): void;
+  matchQueues(
+    exchange: string | IExchangeParams,
+    routingKey: string,
+    cb?: ICallback<IQueueParams[]>,
+  ): Promise<IQueueParams[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const topicParams = _parseExchangeParams(exchange, this.type);
+      if (topicParams instanceof Error) {
+        return callback(topicParams);
+      }
 
-    const validatedRoutingKey = routingKey.trim();
-    if (!validatedRoutingKey) {
-      return cb(
-        new InvalidExchangeRoutingKeyError({
-          metadata: {
-            exchange: topicParams,
-            routingKey: routingKey,
-          },
-        }),
-      );
-    }
-
-    withSharedPoolConnection((client, topCb) => {
-      _getRoutingPatterns(client, topicParams, (err, patterns) => {
-        if (err) return topCb(err);
-        const allPatterns = patterns ?? [];
-        if (allPatterns.length === 0) return topCb(null, []);
-
-        const matched = allPatterns.filter((p) =>
-          _matchRoutingKey(validatedRoutingKey, p),
+      const validatedRoutingKey = routingKey.trim();
+      if (!validatedRoutingKey) {
+        return callback(
+          new InvalidExchangeRoutingKeyError({
+            metadata: {
+              exchange: topicParams,
+              routingKey: routingKey,
+            },
+          }),
         );
-        if (matched.length === 0) return topCb(null, []);
+      }
 
-        const union = new Map<string, IQueueParams>();
+      withSharedPoolConnection((client, topCb) => {
+        _getRoutingPatterns(client, topicParams, (err, patterns) => {
+          if (err) return topCb(err);
+          const allPatterns = patterns ?? [];
+          if (allPatterns.length === 0) return topCb(null, []);
 
-        // Fetch queues for each matched pattern in parallel
-        const tasks = matched.map((p) => (tcb: ICallback) => {
-          _getRoutingPatternBoundQueues(client, p, topicParams, (e, qs) => {
-            if (e) return tcb(e);
-            (qs ?? []).forEach((q) => union.set(`${q.name}@${q.ns}`, q));
-            tcb();
+          const matched = allPatterns.filter((p) =>
+            _matchRoutingKey(validatedRoutingKey, p),
+          );
+          if (matched.length === 0) return topCb(null, []);
+
+          const union = new Map<string, IQueueParams>();
+
+          const tasks = matched.map((p) => (tcb: ICallback) => {
+            _getRoutingPatternBoundQueues(client, p, topicParams, (e, qs) => {
+              if (e) return tcb(e);
+              (qs ?? []).forEach((q) => union.set(`${q.name}@${q.ns}`, q));
+              tcb();
+            });
+          });
+
+          async.parallel(tasks, (e) => {
+            if (e) return topCb(e);
+            topCb(null, Array.from(union.values()));
           });
         });
-
-        async.parallel(tasks, (e) => {
-          if (e) return topCb(e);
-          topCb(null, Array.from(union.values()));
-        });
-      });
-    }, cb);
+      }, callback);
+    });
   }
 
   /**
@@ -195,78 +205,103 @@ export class ExchangeTopic {
    * exchange. Each pattern represents a different routing rule that can match
    * incoming routing keys.
    *
-   * @param exchange - Exchange name or parameter object.
-   * @param cb - Callback invoked with an array of binding patterns or an error.
+   * @param exchange - Exchange name or parameter object
+   * @param cb - Optional callback invoked with an array of binding patterns
+   * @returns {Promise<string[]> | void} - Returns a Promise if no callback is provided
    *
    * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * topicExchange.getRoutingPatterns('notifications', (err, patterns) => {
    *   if (err) {
    *     console.error('Failed to get patterns:', err);
-   *     return;
+   *   } else {
+   *     console.log('Routing patterns:', patterns);
    *   }
-   *
-   *   console.log('Routing patterns:');
-   *   patterns.forEach(pattern => {
-   *     console.log(`- ${pattern}`);
-   *   });
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const patterns = await topicExchange.getRoutingPatterns('notifications');
+   *   console.log('Routing patterns:', patterns);
+   * } catch (err) {
+   *   console.error('Failed to get patterns:', err);
+   * }
    * ```
    */
+  getRoutingPatterns(exchange: string | IExchangeParams): Promise<string[]>;
   getRoutingPatterns(
     exchange: string | IExchangeParams,
     cb: ICallback<string[]>,
-  ): void {
-    withSharedPoolConnection(
-      (client, cb) => _getRoutingPatterns(client, exchange, cb),
-      cb,
-    );
+  ): void;
+  getRoutingPatterns(
+    exchange: string | IExchangeParams,
+    cb?: ICallback<string[]>,
+  ): Promise<string[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      withSharedPoolConnection(
+        (client, cb) => _getRoutingPatterns(client, exchange, cb),
+        callback,
+      );
+    });
   }
 
   /**
    * Retrieve all queues bound to a specific routing pattern within a topic exchange.
    *
    * This method returns all queues that are bound to the exchange using the
-   * specified routing pattern. This is useful for understanding which queues
-   * will receive messages for routing keys that match the pattern.
+   * specified routing pattern.
    *
-   * @param exchange - Exchange name or parameter object.
-   * @param bindingPattern - The binding pattern to query (e.g., 'order.*.created').
-   * @param cb - Callback invoked with an array of queues bound to the pattern or an error.
+   * @param exchange - Exchange name or parameter object
+   * @param bindingPattern - The binding pattern to query (e.g., 'order.*.created')
+   * @param cb - Optional callback invoked with an array of queues bound to the pattern
+   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided
    *
    * @throws InvalidExchangeParametersError
    *
    * @example
    * ```typescript
-   * topicExchange.getRoutingPatternBoundQueues(
-   *   'notifications',
-   *   'user.#',
-   *   (err, queues) => {
-   *     if (err) {
-   *       console.error('Failed to get pattern queues:', err);
-   *       return;
-   *     }
-   *
-   *     console.log(`Queues bound to pattern 'user.#':`);
-   *     queues.forEach(q => {
-   *       console.log(`- ${q.name} in ${q.ns}`);
-   *     });
+   * // Callback pattern
+   * topicExchange.getRoutingPatternBoundQueues('notifications', 'user.#', (err, queues) => {
+   *   if (err) {
+   *     console.error('Failed to get pattern queues:', err);
+   *   } else {
+   *     console.log(`Found ${queues.length} queues for pattern 'user.#'`);
    *   }
-   * );
+   * });
+   *
+   * // Promise pattern
+   * try {
+   *   const queues = await topicExchange.getRoutingPatternBoundQueues('notifications', 'user.#');
+   *   console.log(`Found ${queues.length} queues for pattern 'user.#'`);
+   * } catch (err) {
+   *   console.error('Failed to get pattern queues:', err);
+   * }
    * ```
    */
   getRoutingPatternBoundQueues(
     exchange: string | IExchangeParams,
     bindingPattern: string,
+  ): Promise<IQueueParams[]>;
+  getRoutingPatternBoundQueues(
+    exchange: string | IExchangeParams,
+    bindingPattern: string,
     cb: ICallback<IQueueParams[]>,
-  ): void {
-    withSharedPoolConnection(
-      (client, cb) =>
-        _getRoutingPatternBoundQueues(client, bindingPattern, exchange, cb),
-      cb,
-    );
+  ): void;
+  getRoutingPatternBoundQueues(
+    exchange: string | IExchangeParams,
+    bindingPattern: string,
+    cb?: ICallback<IQueueParams[]>,
+  ): Promise<IQueueParams[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      withSharedPoolConnection(
+        (client, cb) =>
+          _getRoutingPatternBoundQueues(client, bindingPattern, exchange, cb),
+        callback,
+      );
+    });
   }
 
   /**
@@ -279,10 +314,11 @@ export class ExchangeTopic {
    * Idempotency:
    * - If the binding already exists, the operation succeeds without changes.
    *
-   * @param queue - Queue name or parameter object.
-   * @param exchange - Exchange name or parameter object.
-   * @param routingPattern - Topic binding pattern (e.g., 'order.*.created', 'user.#').
-   * @param cb - Callback invoked when the operation completes.
+   * @param queue - Queue name or parameter object
+   * @param exchange - Exchange name or parameter object
+   * @param routingPattern - Topic binding pattern (e.g., 'order.*.created', 'user.#')
+   * @param cb - Optional callback invoked when binding completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @throws InvalidQueueParametersError
    * @throws InvalidExchangeParametersError
@@ -290,200 +326,196 @@ export class ExchangeTopic {
    * @throws QueueNotFoundError
    * @throws ExchangeNotFoundError
    * @throws NamespaceMismatchError
-   * @throws ExchangeTypeMismatchError
-   * @throws ExchangeQueuePolicyMismatchError
-   * @throws QueueLockedError
    *
    * @example
    * ```typescript
-   * // Bind queue to receive all order-related events
-   * topicExchange.bindQueue(
-   *   'order-processor',
-   *   'events',
-   *   'order.#',
-   *   (err) => {
-   *     if (err) {
-   *       console.error('Failed to bind queue:', err);
-   *       return;
-   *     }
+   * // Callback pattern
+   * topicExchange.bindQueue('order-processor', 'events', 'order.#', (err) => {
+   *   if (err) {
+   *     console.error('Failed to bind queue:', err);
+   *   } else {
    *     console.log('Queue bound successfully');
    *   }
-   * );
+   * });
    *
-   * // Bind queue to receive only creation events for any entity
-   * topicExchange.bindQueue(
-   *   { name: 'audit-log', ns: 'production' },
-   *   { name: 'events', ns: 'production' },
-   *   '*.created',
-   *   (err) => { ... }
-   * );
+   * // Promise pattern
+   * try {
+   *   await topicExchange.bindQueue('order-processor', 'events', 'order.#');
+   *   console.log('Queue bound successfully');
+   * } catch (err) {
+   *   console.error('Failed to bind queue:', err);
+   * }
    * ```
    */
   bindQueue(
     queue: string | IQueueParams,
     exchange: string | IExchangeParams,
     routingPattern: string,
+  ): Promise<void>;
+  bindQueue(
+    queue: string | IQueueParams,
+    exchange: string | IExchangeParams,
+    routingPattern: string,
     cb: ICallback,
-  ): void {
-    const queueParams = _parseQueueParams(queue);
-    const exchangeParams = _parseExchangeParams(exchange, this.type);
+  ): void;
+  bindQueue(
+    queue: string | IQueueParams,
+    exchange: string | IExchangeParams,
+    routingPattern: string,
+    cb?: ICallback,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueParams = _parseQueueParams(queue);
+      const exchangeParams = _parseExchangeParams(exchange, this.type);
 
-    if (queueParams instanceof Error) return cb(queueParams);
-    if (exchangeParams instanceof Error) return cb(exchangeParams);
+      if (queueParams instanceof Error) return callback(queueParams);
+      if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-    if (queueParams.ns !== exchangeParams.ns) {
-      return cb(new NamespaceMismatchError());
-    }
-    if (!_validateRoutingPattern(routingPattern)) {
-      return cb(
-        new InvalidTopicBindingPatternError({
-          metadata: { pattern: routingPattern },
-        }),
+      if (queueParams.ns !== exchangeParams.ns) {
+        return callback(new NamespaceMismatchError());
+      }
+      if (!_validateRoutingPattern(routingPattern)) {
+        return callback(
+          new InvalidTopicBindingPatternError({
+            metadata: { pattern: routingPattern },
+          }),
+        );
+      }
+
+      const { keyQueueProperties, keyQueueExchangeBindings } =
+        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      const { keyExchange, keyExchangeBindingPatterns } =
+        redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyBindingPatternQueues } =
+        redisKeys.getExchangeTopicBindingPatternKeys(
+          exchangeParams.ns,
+          exchangeParams.name,
+          routingPattern,
+        );
+      const { keyExchanges } = redisKeys.getMainKeys();
+      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+        queueParams.ns,
       );
-    }
 
-    const { keyQueueProperties, keyQueueExchangeBindings } =
-      redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-    const { keyExchange, keyExchangeBindingPatterns } =
-      redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
-    const { keyBindingPatternQueues } =
-      redisKeys.getExchangeTopicBindingPatternKeys(
-        exchangeParams.ns,
-        exchangeParams.name,
-        routingPattern,
-      );
-    const { keyExchanges } = redisKeys.getMainKeys();
-    const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
-      queueParams.ns,
-    );
+      const queueStr = JSON.stringify(queueParams);
+      const exchangeStr = JSON.stringify(exchangeParams);
 
-    const queueStr = JSON.stringify(queueParams);
-    const exchangeStr = JSON.stringify(exchangeParams);
+      withSharedPoolConnection((client, outerCb) => {
+        async.series(
+          [
+            (cb) =>
+              _validateOperation(
+                client,
+                queueParams,
+                EQueueOperation.BIND_EXCHANGE,
+                cb,
+              ),
+            (cb) =>
+              withWatchTransaction(
+                client,
+                (c, watch, done) => {
+                  let exchangeQueuePolicy: EExchangeQueuePolicy | null = null;
 
-    withSharedPoolConnection((client, outerCb) => {
-      async.series(
-        [
-          (cb) =>
-            _validateOperation(
-              client,
-              queueParams,
-              EQueueOperation.BIND_EXCHANGE,
-              cb,
-            ),
-          (cb) =>
-            withWatchTransaction(
-              client,
-              (c, watch, done) => {
-                let exchangeQueuePolicy: EExchangeQueuePolicy | null = null;
+                  async.waterfall(
+                    [
+                      (cb1: ICallback<void>) =>
+                        watch(
+                          [
+                            keyExchange,
+                            keyQueueProperties,
+                            keyExchangeBindingPatterns,
+                            keyBindingPatternQueues,
+                            keyQueueExchangeBindings,
+                            keyExchanges,
+                            keyNamespaceExchanges,
+                          ],
+                          cb1,
+                        ),
 
-                async.waterfall(
-                  [
-                    // WATCH base keys BEFORE any reads
-                    (cb1: ICallback<void>) =>
-                      watch(
-                        [
-                          keyExchange,
-                          keyQueueProperties,
-                          keyExchangeBindingPatterns,
+                      (_: void, cb1: ICallback<void>) =>
+                        _validateQueueBinding(
+                          c,
+                          exchangeParams,
+                          queueParams,
+                          (err, reply) => {
+                            if (err) return cb1(err);
+                            if (!reply)
+                              return cb1(new CallbackEmptyReplyError());
+                            const [queueProperties] = reply;
+                            exchangeQueuePolicy =
+                              queueProperties.queueType ===
+                              EQueueType.PRIORITY_QUEUE
+                                ? EExchangeQueuePolicy.PRIORITY
+                                : EExchangeQueuePolicy.STANDARD;
+                            cb1();
+                          },
+                        ),
+
+                      (_: void, cb1: ICallback<void>) =>
+                        c.sismember(
                           keyBindingPatternQueues,
-                          keyQueueExchangeBindings,
-                          keyExchanges,
-                          keyNamespaceExchanges,
-                        ],
-                        cb1,
-                      ),
+                          queueStr,
+                          (err, reply) => {
+                            if (err) return cb1(err);
+                            if (reply === 1) {
+                              this.logger.debug('bindQueue: already bound');
+                              return cb1(new QueueAlreadyBound());
+                            }
+                            cb1();
+                          },
+                        ),
 
-                    // Validate queue/exchange under WATCH and compute policy
-                    (_: void, cb1: ICallback<void>) =>
-                      _validateQueueBinding(
-                        c,
-                        exchangeParams,
-                        queueParams,
-                        (err, reply) => {
-                          if (err) return cb1(err);
-                          if (!reply) return cb1(new CallbackEmptyReplyError());
-                          const [queueProperties] = reply;
-                          exchangeQueuePolicy =
-                            queueProperties.queueType ===
-                            EQueueType.PRIORITY_QUEUE
-                              ? EExchangeQueuePolicy.PRIORITY
-                              : EExchangeQueuePolicy.STANDARD;
-                          cb1();
-                        },
-                      ),
+                      (
+                        _: void,
+                        cb1: ICallback<IWatchTransactionAttemptResult>,
+                      ) => {
+                        const typeField = String(EExchangeProperty.TYPE);
+                        const queuePolicyField = String(
+                          EExchangeProperty.QUEUE_POLICY,
+                        );
 
-                    // Check if already bound (under WATCH)
-                    (_: void, cb1: ICallback<void>) =>
-                      c.sismember(
-                        keyBindingPatternQueues,
-                        queueStr,
-                        (err, reply) => {
-                          if (err) return cb1(err);
-                          if (reply === 1) {
-                            this.logger.debug('bindQueue: already bound');
-                            return cb1(new QueueAlreadyBound());
-                          }
-                          cb1();
-                        },
-                      ),
+                        const multi = c.multi();
+                        multi.hset(keyExchange, typeField, EExchangeType.TOPIC);
+                        multi.hset(
+                          keyExchange,
+                          queuePolicyField,
+                          Number(exchangeQueuePolicy),
+                        );
+                        multi.sadd(keyExchanges, exchangeStr);
+                        multi.sadd(keyNamespaceExchanges, exchangeStr);
+                        multi.sadd(keyExchangeBindingPatterns, routingPattern);
+                        multi.sadd(keyBindingPatternQueues, queueStr);
+                        multi.sadd(keyQueueExchangeBindings, exchangeStr);
 
-                    // Build MULTI atomically
-                    (
-                      _: void,
-                      cb1: ICallback<IWatchTransactionAttemptResult>,
-                    ) => {
-                      const typeField = String(EExchangeProperty.TYPE);
-                      const queuePolicyField = String(
-                        EExchangeProperty.QUEUE_POLICY,
-                      );
-
-                      const multi = c.multi();
-
-                      // Exchange meta
-                      multi.hset(keyExchange, typeField, EExchangeType.TOPIC);
-                      multi.hset(
-                        keyExchange,
-                        queuePolicyField,
-                        Number(exchangeQueuePolicy),
-                      );
-
-                      // Indexes
-                      multi.sadd(keyExchanges, exchangeStr);
-                      multi.sadd(keyNamespaceExchanges, exchangeStr);
-
-                      // Bindings
-                      multi.sadd(keyExchangeBindingPatterns, routingPattern);
-                      multi.sadd(keyBindingPatternQueues, queueStr);
-                      multi.sadd(keyQueueExchangeBindings, exchangeStr);
-
-                      cb1(null, { multi });
-                    },
-                  ],
-                  done,
-                );
-              },
-              (err) => {
-                if (err) {
-                  if (err instanceof QueueAlreadyBound) return cb();
-                  return cb(err);
-                }
-                this.logger.info(
-                  `bindQueue: bound queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns} pat=${routingPattern}`,
-                );
-                cb();
-              },
-              {
-                maxAttempts: 5,
-                onRetry: (attemptNo, maxAttempts) =>
-                  this.logger.warn(
-                    `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
-                  ),
-              },
-            ),
-        ],
-        (err) => outerCb(err),
-      );
-    }, cb);
+                        cb1(null, { multi });
+                      },
+                    ],
+                    done,
+                  );
+                },
+                (err) => {
+                  if (err) {
+                    if (err instanceof QueueAlreadyBound) return cb();
+                    return cb(err);
+                  }
+                  this.logger.info(
+                    `bindQueue: bound queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns} pat=${routingPattern}`,
+                  );
+                  cb();
+                },
+                {
+                  maxAttempts: 5,
+                  onRetry: (attemptNo, maxAttempts) =>
+                    this.logger.warn(
+                      `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+                    ),
+                },
+              ),
+          ],
+          (err) => outerCb(err),
+        );
+      }, callback);
+    });
   }
 
   /**
@@ -493,251 +525,290 @@ export class ExchangeTopic {
    * topic pattern. After unbinding, messages matching the pattern will no longer
    * be routed to the queue.
    *
-   * @param queue - Queue name or parameter object.
-   * @param exchange - Exchange name or parameter object.
-   * @param routingPattern - Topic binding pattern to unbind.
-   * @param cb - Callback invoked when the operation completes.
+   * @param queue - Queue name or parameter object
+   * @param exchange - Exchange name or parameter object
+   * @param routingPattern - Topic binding pattern to unbind
+   * @param cb - Optional callback invoked when unbinding completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @throws InvalidQueueParametersError
    * @throws InvalidExchangeParametersError
    * @throws InvalidTopicBindingPatternError
    * @throws NamespaceMismatchError
-   * @throws ExchangeNotFoundError
-   * @throws ExchangeTypeMismatchError
    * @throws QueueNotBoundError
-   * @throws QueueLockedError
    *
    * @example
    * ```typescript
-   * // Unbind queue from specific pattern
-   * topicExchange.unbindQueue(
-   *   'order-processor',
-   *   'events',
-   *   'order.cancelled',
-   *   (err) => {
-   *     if (err) {
-   *       console.error('Failed to unbind queue:', err);
-   *       return;
-   *     }
+   * // Callback pattern
+   * topicExchange.unbindQueue('order-processor', 'events', 'order.cancelled', (err) => {
+   *   if (err) {
+   *     console.error('Failed to unbind queue:', err);
+   *   } else {
    *     console.log('Queue unbound successfully');
    *   }
-   * );
+   * });
+   *
+   * // Promise pattern
+   * try {
+   *   await topicExchange.unbindQueue('order-processor', 'events', 'order.cancelled');
+   *   console.log('Queue unbound successfully');
+   * } catch (err) {
+   *   console.error('Failed to unbind queue:', err);
+   * }
    * ```
    */
   unbindQueue(
     queue: string | IQueueParams,
     exchange: string | IExchangeParams,
     routingPattern: string,
+  ): Promise<void>;
+  unbindQueue(
+    queue: string | IQueueParams,
+    exchange: string | IExchangeParams,
+    routingPattern: string,
     cb: ICallback,
-  ): void {
-    const queueParams = _parseQueueParams(queue);
-    const exchangeParams = _parseExchangeParams(exchange, this.type);
+  ): void;
+  unbindQueue(
+    queue: string | IQueueParams,
+    exchange: string | IExchangeParams,
+    routingPattern: string,
+    cb?: ICallback,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueParams = _parseQueueParams(queue);
+      const exchangeParams = _parseExchangeParams(exchange, this.type);
 
-    if (queueParams instanceof Error) return cb(queueParams);
-    if (exchangeParams instanceof Error) return cb(exchangeParams);
+      if (queueParams instanceof Error) return callback(queueParams);
+      if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-    if (queueParams.ns !== exchangeParams.ns) {
-      return cb(new NamespaceMismatchError());
-    }
-    if (!_validateRoutingPattern(routingPattern)) {
-      return cb(
-        new InvalidTopicBindingPatternError({
-          metadata: { pattern: routingPattern },
-        }),
+      if (queueParams.ns !== exchangeParams.ns) {
+        return callback(new NamespaceMismatchError());
+      }
+      if (!_validateRoutingPattern(routingPattern)) {
+        return callback(
+          new InvalidTopicBindingPatternError({
+            metadata: { pattern: routingPattern },
+          }),
+        );
+      }
+
+      const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
+        queueParams.ns,
+        queueParams.name,
+        null,
       );
-    }
+      const { keyExchange, keyExchangeBindingPatterns } =
+        redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyBindingPatternQueues } =
+        redisKeys.getExchangeTopicBindingPatternKeys(
+          exchangeParams.ns,
+          exchangeParams.name,
+          routingPattern,
+        );
 
-    const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
-      queueParams.ns,
-      queueParams.name,
-      null,
-    );
-    const { keyExchange, keyExchangeBindingPatterns } =
-      redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
-    const { keyBindingPatternQueues } =
-      redisKeys.getExchangeTopicBindingPatternKeys(
-        exchangeParams.ns,
-        exchangeParams.name,
-        routingPattern,
-      );
+      const queueStr = JSON.stringify(queueParams);
+      const exchangeStr = JSON.stringify(exchangeParams);
 
-    const queueStr = JSON.stringify(queueParams);
-    const exchangeStr = JSON.stringify(exchangeParams);
+      withSharedPoolConnection((client, outerCb) => {
+        async.series(
+          [
+            (cb) =>
+              _validateOperation(
+                client,
+                queueParams,
+                EQueueOperation.UNBIND_EXCHANGE,
+                cb,
+              ),
+            (cb) =>
+              withWatchTransaction(
+                client,
+                (c, watch, done) => {
+                  let allPatterns: string[] = [];
+                  let currentPatternCount = 0;
+                  let stillBoundViaOtherPattern = false;
 
-    withSharedPoolConnection((client, outerCb) => {
-      async.series(
-        [
-          (cb) =>
-            _validateOperation(
-              client,
-              queueParams,
-              EQueueOperation.UNBIND_EXCHANGE,
-              cb,
-            ),
-          (cb) =>
-            withWatchTransaction(
-              client,
-              (c, watch, done) => {
-                let allPatterns: string[] = [];
-                let currentPatternCount = 0;
-                let stillBoundViaOtherPattern = false;
-
-                async.waterfall(
-                  [
-                    // WATCH base keys BEFORE reads
-                    (cb1: ICallback<void>) =>
-                      watch(
-                        [
-                          keyExchange,
-                          keyExchangeBindingPatterns,
-                          keyBindingPatternQueues,
-                          keyQueueExchangeBindings,
-                        ],
-                        cb1,
-                      ),
-
-                    // Validate exchange type under WATCH
-                    (_: void, cb1: ICallback<void>) =>
-                      _validateExchange(c, exchangeParams, true, cb1),
-
-                    // Ensure this queue is currently bound to the pattern (under WATCH)
-                    (_: void, cb1: ICallback<void>) =>
-                      c.sismember(
-                        keyBindingPatternQueues,
-                        queueStr,
-                        (err, reply) => {
-                          if (err) return cb1(err);
-                          if (reply !== 1) return cb1(new QueueNotBoundError());
-                          cb1();
-                        },
-                      ),
-
-                    // Read all patterns under WATCH
-                    (_: void, cb1: ICallback<void>) =>
-                      c.smembers(keyExchangeBindingPatterns, (err, pats) => {
-                        if (err) return cb1(err);
-                        allPatterns = (pats ?? []).filter((p) => p && p.length);
-                        cb1();
-                      }),
-
-                    // WATCH derived keys for other patterns and compute flags
-                    (_: void, cb1: ICallback<void>) => {
-                      const otherPatterns = allPatterns.filter(
-                        (p) => p !== routingPattern,
-                      );
-
-                      const otherPatternSets = otherPatterns.map((p) => {
-                        const { keyBindingPatternQueues: k } =
-                          redisKeys.getExchangeTopicBindingPatternKeys(
-                            exchangeParams.ns,
-                            exchangeParams.name,
-                            p,
-                          );
-                        return k;
-                      });
-
-                      // Extend WATCH set with derived keys
-                      const doWatch = (next: ICallback<void>) =>
-                        otherPatternSets.length
-                          ? watch(otherPatternSets, next)
-                          : next();
-
-                      doWatch((err) => {
-                        if (err) return cb1(err);
-
-                        // Compute counts and cross-pattern binding status
-                        async.series(
+                  async.waterfall(
+                    [
+                      (cb1: ICallback<void>) =>
+                        watch(
                           [
-                            // Count members in current pattern set
-                            (cbx: ICallback<void>) =>
-                              c.scard(keyBindingPatternQueues, (e, count) => {
-                                if (e) return cbx(e);
-                                currentPatternCount = count || 0;
-                                cbx();
-                              }),
-
-                            // Check if queue is bound via any other pattern
-                            (cbx: ICallback<void>) => {
-                              if (otherPatternSets.length === 0) return cbx();
-                              async.eachOf(
-                                otherPatternSets,
-                                (setKey, _i, next) => {
-                                  if (stillBoundViaOtherPattern) return next();
-                                  c.sismember(setKey, queueStr, (e2, rep) => {
-                                    if (e2) return next(e2);
-                                    if (rep === 1)
-                                      stillBoundViaOtherPattern = true;
-                                    next();
-                                  });
-                                },
-                                (e3) => cbx(e3 || null),
-                              );
-                            },
+                            keyExchange,
+                            keyExchangeBindingPatterns,
+                            keyBindingPatternQueues,
+                            keyQueueExchangeBindings,
                           ],
-                          (err) => cb1(err),
+                          cb1,
+                        ),
+
+                      (_: void, cb1: ICallback<void>) =>
+                        _validateExchange(c, exchangeParams, true, cb1),
+
+                      (_: void, cb1: ICallback<void>) =>
+                        c.sismember(
+                          keyBindingPatternQueues,
+                          queueStr,
+                          (err, reply) => {
+                            if (err) return cb1(err);
+                            if (reply !== 1)
+                              return cb1(new QueueNotBoundError());
+                            cb1();
+                          },
+                        ),
+
+                      (_: void, cb1: ICallback<void>) =>
+                        c.smembers(keyExchangeBindingPatterns, (err, pats) => {
+                          if (err) return cb1(err);
+                          allPatterns = (pats ?? []).filter(
+                            (p) => p && p.length,
+                          );
+                          cb1();
+                        }),
+
+                      (_: void, cb1: ICallback<void>) => {
+                        const otherPatterns = allPatterns.filter(
+                          (p) => p !== routingPattern,
                         );
-                      });
-                    },
 
-                    // Build MULTI to unbind and perform conditional cleanups atomically
-                    (
-                      _: void,
-                      cb1: ICallback<IWatchTransactionAttemptResult>,
-                    ) => {
-                      const multi = c.multi();
+                        const otherPatternSets = otherPatterns.map((p) => {
+                          const { keyBindingPatternQueues: k } =
+                            redisKeys.getExchangeTopicBindingPatternKeys(
+                              exchangeParams.ns,
+                              exchangeParams.name,
+                              p,
+                            );
+                          return k;
+                        });
 
-                      // Always remove the queue from the current pattern set
-                      multi.srem(keyBindingPatternQueues, queueStr);
+                        const doWatch = (next: ICallback<void>) =>
+                          otherPatternSets.length
+                            ? watch(otherPatternSets, next)
+                            : next();
 
-                      // If this was the last queue for this pattern, remove the pattern from the exchange index
-                      if (currentPatternCount === 1) {
-                        multi.srem(keyExchangeBindingPatterns, routingPattern);
-                      }
+                        doWatch((err) => {
+                          if (err) return cb1(err);
 
-                      // If the queue is no longer bound to this exchange via any other pattern, remove reverse index
-                      if (!stillBoundViaOtherPattern) {
-                        multi.srem(keyQueueExchangeBindings, exchangeStr);
-                      }
+                          async.series(
+                            [
+                              (cbx: ICallback<void>) =>
+                                c.scard(keyBindingPatternQueues, (e, count) => {
+                                  if (e) return cbx(e);
+                                  currentPatternCount = count || 0;
+                                  cbx();
+                                }),
+                              (cbx: ICallback<void>) => {
+                                if (otherPatternSets.length === 0) return cbx();
+                                async.eachOf(
+                                  otherPatternSets,
+                                  (setKey, _i, next) => {
+                                    if (stillBoundViaOtherPattern)
+                                      return next();
+                                    c.sismember(setKey, queueStr, (e2, rep) => {
+                                      if (e2) return next(e2);
+                                      if (rep === 1)
+                                        stillBoundViaOtherPattern = true;
+                                      next();
+                                    });
+                                  },
+                                  (e3) => cbx(e3 || null),
+                                );
+                              },
+                            ],
+                            (err) => cb1(err),
+                          );
+                        });
+                      },
 
-                      cb1(null, { multi });
-                    },
-                  ],
-                  done,
-                );
-              },
-              (err) => {
-                if (err) return cb(err);
-                this.logger.info(
-                  `unbindQueue: unbound queue=${queueParams.name}@${queueParams.ns} from ex=${exchangeParams.name}@${exchangeParams.ns} pat=${routingPattern}`,
-                );
-                cb();
-              },
-              {
-                maxAttempts: 5,
-                onRetry: (attemptNo, maxAttempts) =>
-                  this.logger.warn(
-                    `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
-                  ),
-              },
-            ),
-        ],
-        (err) => outerCb(err),
-      );
-    }, cb);
+                      (
+                        _: void,
+                        cb1: ICallback<IWatchTransactionAttemptResult>,
+                      ) => {
+                        const multi = c.multi();
+                        multi.srem(keyBindingPatternQueues, queueStr);
+                        if (currentPatternCount === 1) {
+                          multi.srem(
+                            keyExchangeBindingPatterns,
+                            routingPattern,
+                          );
+                        }
+                        if (!stillBoundViaOtherPattern) {
+                          multi.srem(keyQueueExchangeBindings, exchangeStr);
+                        }
+                        cb1(null, { multi });
+                      },
+                    ],
+                    done,
+                  );
+                },
+                (err) => {
+                  if (err) return cb(err);
+                  this.logger.info(
+                    `unbindQueue: unbound queue=${queueParams.name}@${queueParams.ns} from ex=${exchangeParams.name}@${exchangeParams.ns} pat=${routingPattern}`,
+                  );
+                  cb();
+                },
+                {
+                  maxAttempts: 5,
+                  onRetry: (attemptNo, maxAttempts) =>
+                    this.logger.warn(
+                      `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+                    ),
+                },
+              ),
+          ],
+          (err) => outerCb(err),
+        );
+      }, callback);
+    });
   }
 
+  /**
+   * Creates a topic exchange.
+   *
+   * @param exchange - Exchange name or parameter object
+   * @param queuePolicy - The queue policy for this exchange (STANDARD or PRIORITY)
+   * @param cb - Optional callback invoked when creation completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   *
+   * @example
+   * ```typescript
+   * // Callback pattern
+   * topicExchange.create('events', EExchangeQueuePolicy.STANDARD, (err) => {
+   *   if (err) console.error('Failed to create exchange:', err);
+   *   else console.log('Exchange created');
+   * });
+   *
+   * // Promise pattern
+   * try {
+   *   await topicExchange.create('events', EExchangeQueuePolicy.STANDARD);
+   *   console.log('Exchange created');
+   * } catch (err) {
+   *   console.error('Failed to create exchange:', err);
+   * }
+   * ```
+   */
+  create(
+    exchange: string | IExchangeParams,
+    queuePolicy: EExchangeQueuePolicy,
+  ): Promise<void>;
   create(
     exchange: string | IExchangeParams,
     queuePolicy: EExchangeQueuePolicy,
     cb: ICallback,
-  ) {
-    const exchangeParams = _parseExchangeParams(exchange, this.type);
-    if (exchangeParams instanceof Error)
-      return cb(new InvalidTopicExchangeParamsError());
-    withSharedPoolConnection(
-      (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
-      cb,
-    );
+  ): void;
+  create(
+    exchange: string | IExchangeParams,
+    queuePolicy: EExchangeQueuePolicy,
+    cb?: ICallback,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const exchangeParams = _parseExchangeParams(exchange, this.type);
+      if (exchangeParams instanceof Error)
+        return callback(new InvalidTopicExchangeParamsError());
+      withSharedPoolConnection(
+        (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
+        callback,
+      );
+    });
   }
 
   /**
@@ -746,211 +817,247 @@ export class ExchangeTopic {
    * This method removes a topic exchange and all its associated data structures.
    * The operation is atomic and ensures data consistency across all related Redis keys.
    *
-   * @param exchange - Exchange name or parameter object.
-   * @param cb - Callback invoked when the exchange is deleted or if an error occurs.
+   * @param exchange - Exchange name or parameter object
+   * @param cb - Optional callback invoked when deletion completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @throws InvalidExchangeParametersError
    * @throws ExchangeHasBoundQueuesError
    * @throws ExchangeNotFoundError
-   * @throws ExchangeTypeMismatchError
    *
    * @example
    * ```typescript
-   * // Delete a topic exchange
+   * // Callback pattern
    * topicExchange.delete('events', (err) => {
    *   if (err) {
-   *     if (err instanceof ExchangeHasBoundQueuesError) {
-   *       console.error('Cannot delete exchange: queues are still bound');
-   *     } else {
-   *       console.error('Failed to delete exchange:', err);
-   *     }
-   *     return;
+   *     console.error('Failed to delete exchange:', err);
+   *   } else {
+   *     console.log('Exchange deleted successfully');
    *   }
-   *   console.log('Exchange deleted successfully');
    * });
    *
-   * // Delete with explicit namespace
-   * topicExchange.delete(
-   *   { name: 'notifications', ns: 'production' },
-   *   (err) => { ... }
-   * );
+   * // Promise pattern
+   * try {
+   *   await topicExchange.delete('events');
+   *   console.log('Exchange deleted successfully');
+   * } catch (err) {
+   *   console.error('Failed to delete exchange:', err);
+   * }
    * ```
    */
-  delete(exchange: string | IExchangeParams, cb: ICallback): void {
-    const exchangeParams = _parseExchangeParams(exchange, this.type);
-    if (exchangeParams instanceof Error) return cb(exchangeParams);
+  delete(exchange: string | IExchangeParams): Promise<void>;
+  delete(exchange: string | IExchangeParams, cb: ICallback): void;
+  delete(
+    exchange: string | IExchangeParams,
+    cb?: ICallback,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const exchangeParams = _parseExchangeParams(exchange, this.type);
+      if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-    const { keyExchanges } = redisKeys.getMainKeys();
-    const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
-      exchangeParams.ns,
-    );
-    const { keyExchange, keyExchangeBindingPatterns } =
-      redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchanges } = redisKeys.getMainKeys();
+      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+        exchangeParams.ns,
+      );
+      const { keyExchange, keyExchangeBindingPatterns } =
+        redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
 
-    const exchangeStr = JSON.stringify(exchangeParams);
+      const exchangeStr = JSON.stringify(exchangeParams);
 
-    withSharedPoolConnection((client, outerCb) => {
-      withWatchTransaction(
-        client,
-        (c, watch, done) => {
-          let patterns: string[] = [];
+      withSharedPoolConnection((client, outerCb) => {
+        withWatchTransaction(
+          client,
+          (c, watch, done) => {
+            let patterns: string[] = [];
 
-          async.waterfall(
-            [
-              // 1) WATCH base keys BEFORE any reads that inform writes
-              (cb1: ICallback<void>) =>
-                watch(
-                  [
-                    keyExchange,
-                    keyExchangeBindingPatterns,
-                    keyExchanges,
-                    keyNamespaceExchanges,
-                  ],
-                  cb1,
-                ),
+            async.waterfall(
+              [
+                (cb1: ICallback<void>) =>
+                  watch(
+                    [
+                      keyExchange,
+                      keyExchangeBindingPatterns,
+                      keyExchanges,
+                      keyNamespaceExchanges,
+                    ],
+                    cb1,
+                  ),
 
-              // 2) Validate exchange type (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                _validateExchange(c, exchangeParams, true, cb1),
+                (_: void, cb1: ICallback<void>) =>
+                  _validateExchange(c, exchangeParams, true, cb1),
 
-              // 3) Read all binding patterns (under WATCH)
-              (_: void, cb1: ICallback<void>) =>
-                c.smembers(keyExchangeBindingPatterns, (err, pats) => {
-                  if (err) return cb1(err);
-                  patterns = (pats ?? []).filter((p) => p && p.length);
-                  cb1();
-                }),
+                (_: void, cb1: ICallback<void>) =>
+                  c.smembers(keyExchangeBindingPatterns, (err, pats) => {
+                    if (err) return cb1(err);
+                    patterns = (pats ?? []).filter((p) => p && p.length);
+                    cb1();
+                  }),
 
-              // 4) WATCH derived keys (per-pattern queues sets) AFTER we know them
-              (_: void, cb1: ICallback<void>) => {
-                if (patterns.length === 0) return cb1();
-                const derivedKeys = patterns.map((p) => {
-                  const { keyBindingPatternQueues } =
-                    redisKeys.getExchangeTopicBindingPatternKeys(
-                      exchangeParams.ns,
-                      exchangeParams.name,
-                      p,
-                    );
-                  return keyBindingPatternQueues;
-                });
-                watch(derivedKeys, cb1);
-              },
-
-              // 5) Ensure there are no bound queues for any pattern (reads under WATCH)
-              (_: void, cb1: ICallback<void>) => {
-                if (patterns.length === 0) return cb1();
-
-                let hasBoundQueues = false;
-                async.eachOf(
-                  patterns,
-                  (p, _idx, next) => {
+                (_: void, cb1: ICallback<void>) => {
+                  if (patterns.length === 0) return cb1();
+                  const derivedKeys = patterns.map((p) => {
                     const { keyBindingPatternQueues } =
                       redisKeys.getExchangeTopicBindingPatternKeys(
                         exchangeParams.ns,
                         exchangeParams.name,
                         p,
                       );
-                    c.scard(keyBindingPatternQueues, (err, count) => {
-                      if (!err && (count || 0) > 0) {
-                        hasBoundQueues = true;
-                        this.logger.debug(
-                          `delete: pattern "${p}" has ${count} bound queue(s)`,
+                    return keyBindingPatternQueues;
+                  });
+                  watch(derivedKeys, cb1);
+                },
+
+                (_: void, cb1: ICallback<void>) => {
+                  if (patterns.length === 0) return cb1();
+
+                  let hasBoundQueues = false;
+                  async.eachOf(
+                    patterns,
+                    (p, _idx, next) => {
+                      const { keyBindingPatternQueues } =
+                        redisKeys.getExchangeTopicBindingPatternKeys(
+                          exchangeParams.ns,
+                          exchangeParams.name,
+                          p,
                         );
-                      }
-                      next(err || null);
-                    });
-                  },
-                  (err) => {
-                    if (err) return cb1(err);
-                    if (hasBoundQueues)
-                      return cb1(new ExchangeHasBoundQueuesError());
-                    cb1();
-                  },
-                );
-              },
+                      c.scard(keyBindingPatternQueues, (err, count) => {
+                        if (!err && (count || 0) > 0) {
+                          hasBoundQueues = true;
+                          this.logger.debug(
+                            `delete: pattern "${p}" has ${count} bound queue(s)`,
+                          );
+                        }
+                        next(err || null);
+                      });
+                    },
+                    (err) => {
+                      if (err) return cb1(err);
+                      if (hasBoundQueues)
+                        return cb1(new ExchangeHasBoundQueuesError());
+                      cb1();
+                    },
+                  );
+                },
 
-              // 6) Build MULTI to delete atomically
-              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
-                const multi = c.multi();
-
-                // Delete exchange meta and pattern index
-                multi.del(keyExchange);
-                multi.del(keyExchangeBindingPatterns);
-
-                // Remove from global and namespace indexes
-                multi.srem(keyExchanges, exchangeStr);
-                multi.srem(keyNamespaceExchanges, exchangeStr);
-
-                // Delete each per-pattern queues set
-                for (const p of patterns) {
-                  const { keyBindingPatternQueues } =
-                    redisKeys.getExchangeTopicBindingPatternKeys(
-                      exchangeParams.ns,
-                      exchangeParams.name,
-                      p,
-                    );
-                  multi.del(keyBindingPatternQueues);
-                }
-
-                cb1(null, { multi });
-              },
-            ],
-            done,
-          );
-        },
-        (err) => {
-          if (err) return outerCb(err);
-          this.logger.info(
-            `delete: exchange ${exchangeParams.name}@${exchangeParams.ns} deleted`,
-          );
-          outerCb();
-        },
-      );
-    }, cb);
+                (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
+                  const multi = c.multi();
+                  multi.del(keyExchange);
+                  multi.del(keyExchangeBindingPatterns);
+                  multi.srem(keyExchanges, exchangeStr);
+                  multi.srem(keyNamespaceExchanges, exchangeStr);
+                  for (const p of patterns) {
+                    const { keyBindingPatternQueues } =
+                      redisKeys.getExchangeTopicBindingPatternKeys(
+                        exchangeParams.ns,
+                        exchangeParams.name,
+                        p,
+                      );
+                    multi.del(keyBindingPatternQueues);
+                  }
+                  cb1(null, { multi });
+                },
+              ],
+              done,
+            );
+          },
+          (err) => {
+            if (err) return outerCb(err);
+            this.logger.info(
+              `delete: exchange ${exchangeParams.name}@${exchangeParams.ns} deleted`,
+            );
+            outerCb();
+          },
+        );
+      }, callback);
+    });
   }
 
+  /**
+   * Retrieves all bindings for a topic exchange.
+   *
+   * This method returns a complete mapping of routing patterns to the queues bound to them.
+   *
+   * @param exchange - Exchange name or parameter object
+   * @param cb - Optional callback invoked with the bindings mapping
+   * @returns {Promise<Record<string, IQueueParams[]>> | void} - Returns a Promise if no callback is provided
+   *
+   * @throws InvalidExchangeParametersError
+   *
+   * @example
+   * ```typescript
+   * // Callback pattern
+   * topicExchange.getBindings('notifications', (err, bindings) => {
+   *   if (err) {
+   *     console.error('Failed to get bindings:', err);
+   *   } else {
+   *     for (const [pattern, queues] of Object.entries(bindings)) {
+   *       console.log(`Pattern "${pattern}": ${queues.length} queues`);
+   *     }
+   *   }
+   * });
+   *
+   * // Promise pattern
+   * try {
+   *   const bindings = await topicExchange.getBindings('notifications');
+   *   for (const [pattern, queues] of Object.entries(bindings)) {
+   *     console.log(`Pattern "${pattern}": ${queues.length} queues`);
+   *   }
+   * } catch (err) {
+   *   console.error('Failed to get bindings:', err);
+   * }
+   * ```
+   */
+  getBindings(
+    exchange: string | IExchangeParams,
+  ): Promise<Record<string, IQueueParams[]>>;
   getBindings(
     exchange: string | IExchangeParams,
     cb: ICallback<Record<string, IQueueParams[]>>,
-  ) {
-    const exchangeParams = _parseExchangeParams(exchange, this.type);
-    if (exchangeParams instanceof Error) return cb(exchangeParams);
+  ): void;
+  getBindings(
+    exchange: string | IExchangeParams,
+    cb?: ICallback<Record<string, IQueueParams[]>>,
+  ): Promise<Record<string, IQueueParams[]>> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const exchangeParams = _parseExchangeParams(exchange, this.type);
+      if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-    withSharedPoolConnection((client, done) => {
-      async.waterfall(
-        [
-          (cb: ICallback<string[]>) => {
-            _getRoutingPatterns(client, exchangeParams, cb);
-          },
-          (
-            bindingPatterns,
-            done: ICallback<Record<string, IQueueParams[]>>,
-          ) => {
-            const bindings: Record<string, IQueueParams[]> = {};
-            async.eachOf(
+      withSharedPoolConnection((client, done) => {
+        async.waterfall(
+          [
+            (cb: ICallback<string[]>) => {
+              _getRoutingPatterns(client, exchangeParams, cb);
+            },
+            (
               bindingPatterns,
-              (bindingPattern, _, done) => {
-                bindings[bindingPattern] = [];
-                _getRoutingPatternBoundQueues(
-                  client,
-                  bindingPattern,
-                  exchangeParams,
-                  (err, queues) => {
-                    if (err) return done(err);
-                    bindings[bindingPattern].push(...(queues ?? []));
-                    done();
-                  },
-                );
-              },
-              (err) => {
-                if (err) return done(err);
-                done(null, bindings);
-              },
-            );
-          },
-        ],
-        done,
-      );
-    }, cb);
+              done: ICallback<Record<string, IQueueParams[]>>,
+            ) => {
+              const bindings: Record<string, IQueueParams[]> = {};
+              async.eachOf(
+                bindingPatterns,
+                (bindingPattern, _, done) => {
+                  bindings[bindingPattern] = [];
+                  _getRoutingPatternBoundQueues(
+                    client,
+                    bindingPattern,
+                    exchangeParams,
+                    (err, queues) => {
+                      if (err) return done(err);
+                      bindings[bindingPattern].push(...(queues ?? []));
+                      done();
+                    },
+                  );
+                },
+                (err) => {
+                  if (err) return done(err);
+                  done(null, bindings);
+                },
+              );
+            },
+          ],
+          done,
+        );
+      }, callback);
+    });
   }
 }

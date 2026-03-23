@@ -23,7 +23,7 @@ import { DeadLetterAuditDisabledError } from '../../../src/errors/index.js';
 
 test('Message audit: acknowledged = true, deadLettered = false', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfigAsync({
+  await configInstance.updateConfig({
     messageAudit: {
       acknowledgedMessages: true,
       deadLetteredMessages: false,
@@ -38,7 +38,7 @@ test('Message audit: acknowledged = true, deadLettered = false', async () => {
   await shutDownBaseInstance(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   await expect(
-    deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100),
+    deadLetteredMessages.getMessages(defaultQueue, 0, 100),
   ).rejects.toThrowError(DeadLetterAuditDisabledError);
 
   const { producer: p, consumer: c } =
@@ -48,11 +48,7 @@ test('Message audit: acknowledged = true, deadLettered = false', async () => {
   await shutDownBaseInstance(c);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  const res2 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res2 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
 });

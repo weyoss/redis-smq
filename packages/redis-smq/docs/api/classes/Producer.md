@@ -11,6 +11,8 @@ components are properly managed.
 
 ```typescript
 const producer = new Producer();
+
+// Using callback
 producer.run((err) => {
   if (err) {
     console.error('Failed to start producer:', err);
@@ -18,6 +20,9 @@ producer.run((err) => {
   }
   console.log('Producer is running');
 });
+
+// Using promise
+await producer.run();
 ```
 
 ## Extends
@@ -76,19 +81,33 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ### ensureIsOperational()
 
+#### Call Signature
+
+> **ensureIsOperational**(): `Promise`\<`void`\>
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Inherited from
+
+`Runnable.ensureIsOperational`
+
+#### Call Signature
+
 > **ensureIsOperational**(`cb`): `void`
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Inherited from
+##### Inherited from
 
 `Runnable.ensureIsOperational`
 
@@ -254,6 +273,190 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ### produce()
 
+#### Call Signature
+
+> **produce**(`msg`): `Promise`\<`string`[]\>
+
+Publishes a message to a queue or an exchange.
+
+This method orchestrates the message publication process and supports two main workflows:
+
+1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
+    the message is sent directly to that queue.
+2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
+    this method resolves the exchange to a set of matching queues and publishes a copy
+    of the message to each one.
+
+The method performs the following validations:
+
+- Ensures the producer is running; returns `ProducerNotRunningError` if not.
+- Ensures the message specifies either a queue or an exchange; returns
+  `MessageExchangeRequiredError` if neither is specified.
+- For exchange-based routing, ensures at least one queue matches the exchange;
+  returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
+
+**State Requirements:**
+
+- The producer must be operational (running) before calling this method.
+  Use `producer.run()` to start the producer and `producer.ensureIsOperational()`
+  to automatically start it if needed.
+
+**Error Handling:**
+
+- If the producer is not running, a `ProducerNotRunningError` is returned.
+- If the message has neither queue nor exchange, a `MessageExchangeRequiredError` is returned.
+- For exchange routing, if no queues match, a `NoMatchingQueuesError` is returned.
+- For PUB/SUB queues without consumer groups, a `QueueHasNoConsumerGroupsError` is returned.
+- Various other errors may be returned from underlying operations (queue not found,
+  consumer group not found, queue stopped, queue locked, etc.).
+
+##### Parameters
+
+###### msg
+
+[`ProducibleMessage`](ProducibleMessage.md)
+
+The message to be published. Must specify either a destination queue
+or an exchange (or both).
+
+##### Returns
+
+`Promise`\<`string`[]\>
+
+- Returns a Promise if no callback is provided,
+  otherwise returns void.
+
+##### Throws
+
+When the producer is not running.
+
+##### Throws
+
+When the message has neither queue nor exchange.
+
+##### Throws
+
+When a routing key is required but not provided for DIRECT/TOPIC exchanges.
+
+##### Throws
+
+When the exchange matches no queues.
+
+##### Throws
+
+When publishing to a PUB/SUB queue with no consumer groups.
+
+##### Throws
+
+When the target queue does not exist.
+
+##### Throws
+
+When the consumer group does not exist (PUB/SUB).
+
+##### Throws
+
+When priority is required but not set.
+
+##### Throws
+
+When a message with the same ID already exists.
+
+##### Throws
+
+When priority queueing is not enabled.
+
+##### Throws
+
+When the queue type is invalid.
+
+##### Throws
+
+When the target queue is stopped.
+
+##### Throws
+
+When the target queue is locked.
+
+##### Throws
+
+When the queue is in an invalid state.
+
+##### Throws
+
+When Redis returns an unexpected response.
+
+##### Example
+
+```typescript
+// Callback pattern
+const producer = new Producer();
+await producer.run();
+
+const msg = new ProducibleMessage()
+  .setQueue({ name: 'my-queue', ns: 'default' })
+  .setBody({ data: 'example' });
+
+producer.produce(msg, (err, messageIds) => {
+  if (err) {
+    console.error('Failed to produce message:', err);
+  } else {
+    console.log('Published message IDs:', messageIds);
+  }
+});
+
+// Promise pattern
+try {
+  const messageIds = await producer.produce(msg);
+  console.log('Published message IDs:', messageIds);
+} catch (err) {
+  console.error('Failed to produce message:', err);
+}
+
+// Direct-to-queue with callback
+const directMsg = new ProducibleMessage()
+  .setQueue({ name: 'orders', ns: 'processing' })
+  .setBody({ orderId: 12345 });
+
+producer.produce(directMsg, (err, ids) => {
+  if (err) console.error('Direct publish failed:', err);
+});
+
+// Exchange-based routing with promise
+const exchangeMsg = new ProducibleMessage()
+  .setExchange({ name: 'events', ns: 'system', type: 'topic' })
+  .setExchangeRoutingKey('user.created')
+  .setBody({ userId: 456 });
+
+const ids = await producer.produce(exchangeMsg);
+console.log(`Message published to ${ids.length} queues`);
+
+// Auto-start producer using ensureIsOperational
+const autoStartProducer = new Producer();
+
+// This will automatically start the producer if needed
+await autoStartProducer.ensureIsOperational();
+await autoStartProducer.produce(msg);
+
+// Using ensureIsOperational with produce (callback)
+const anotherProducer = new Producer();
+anotherProducer.ensureIsOperational((err) => {
+  if (err) return console.error('Failed to start:', err);
+  anotherProducer.produce(msg, (err, ids) => {
+    if (err) console.error('Publish failed:', err);
+  });
+});
+```
+
+##### See
+
+- [ProducibleMessage](ProducibleMessage.md) For message configuration options.
+- [Exchange](Exchange.md) For exchange types and routing patterns.
+- [Producer#run](#run) For starting the producer.
+- [Producer#ensureIsOperational](#ensureisoperational) For lazy initialization.
+
+#### Call Signature
+
 > **produce**(`msg`, `cb`): `void`
 
 Publishes a message to a queue or an exchange.
@@ -274,90 +477,113 @@ The method performs the following validations:
 - For exchange-based routing, ensures at least one queue matches the exchange;
   returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
 
-#### Parameters
+**State Requirements:**
 
-##### msg
+- The producer must be operational (running) before calling this method.
+  Use `producer.run()` to start the producer and `producer.ensureIsOperational()`
+  to automatically start it if needed.
+
+**Error Handling:**
+
+- If the producer is not running, a `ProducerNotRunningError` is returned.
+- If the message has neither queue nor exchange, a `MessageExchangeRequiredError` is returned.
+- For exchange routing, if no queues match, a `NoMatchingQueuesError` is returned.
+- For PUB/SUB queues without consumer groups, a `QueueHasNoConsumerGroupsError` is returned.
+- Various other errors may be returned from underlying operations (queue not found,
+  consumer group not found, queue stopped, queue locked, etc.).
+
+##### Parameters
+
+###### msg
 
 [`ProducibleMessage`](ProducibleMessage.md)
 
 The message to be published. Must specify either a destination queue
 or an exchange (or both).
 
-##### cb
+###### cb
 
 `ICallback`\<`string`[]\>
 
-A callback function invoked upon completion. - On success: `cb(null, messageIds)` where `messageIds` is an array of
+Optional callback function invoked upon completion. - On success: `cb(null, messageIds)` where `messageIds` is an array of
 published message IDs (one per queue for exchange routing, or one for
-direct queue routing). - On error: `cb(error)` where `error` is one of: - `ProducerNotRunningError`: Producer is not running. - `MessageExchangeRequiredError`: Message has neither queue nor exchange. - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues. - Other errors from queue or exchange operations.
+direct queue routing). - On error: `cb(error)` where `error` is one of the errors listed below. - If not provided, the method returns a Promise that resolves with the
+array of message IDs or rejects with an error.
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+- Returns a Promise if no callback is provided,
+  otherwise returns void.
 
-ProducerNotRunningError
+##### Throws
 
-#### Throws
+When the producer is not running.
 
-MessageExchangeRequiredError
+##### Throws
 
-#### Throws
+When the message has neither queue nor exchange.
 
-RoutingKeyRequiredError
+##### Throws
 
-#### Throws
+When a routing key is required but not provided for DIRECT/TOPIC exchanges.
 
-NoMatchingQueuesError
+##### Throws
 
-#### Throws
+When the exchange matches no queues.
 
-QueueHasNoConsumerGroupsError
+##### Throws
 
-#### Throws
+When publishing to a PUB/SUB queue with no consumer groups.
 
-QueueNotFoundError
+##### Throws
 
-#### Throws
+When the target queue does not exist.
 
-ConsumerGroupNotFoundError
+##### Throws
 
-#### Throws
+When the consumer group does not exist (PUB/SUB).
 
-MessagePriorityRequiredError
+##### Throws
 
-#### Throws
+When priority is required but not set.
 
-MessageAlreadyExistsError
+##### Throws
 
-#### Throws
+When a message with the same ID already exists.
 
-PriorityQueuingNotEnabledError
+##### Throws
 
-#### Throws
+When priority queueing is not enabled.
 
-InvalidQueueTypeError
+##### Throws
 
-#### Throws
+When the queue type is invalid.
 
-QueueStoppedError
+##### Throws
 
-#### Throws
+When the target queue is stopped.
 
-QueueLockedError
+##### Throws
 
-#### Throws
+When the target queue is locked.
 
-InvalidQueueStateError
+##### Throws
 
-#### Throws
+When the queue is in an invalid state.
 
-UnexpectedScriptReplyError
+##### Throws
 
-#### Example
+When Redis returns an unexpected response.
+
+##### Example
 
 ```typescript
+// Callback pattern
+const producer = new Producer();
+await producer.run();
+
 const msg = new ProducibleMessage()
   .setQueue({ name: 'my-queue', ns: 'default' })
   .setBody({ data: 'example' });
@@ -369,7 +595,56 @@ producer.produce(msg, (err, messageIds) => {
     console.log('Published message IDs:', messageIds);
   }
 });
+
+// Promise pattern
+try {
+  const messageIds = await producer.produce(msg);
+  console.log('Published message IDs:', messageIds);
+} catch (err) {
+  console.error('Failed to produce message:', err);
+}
+
+// Direct-to-queue with callback
+const directMsg = new ProducibleMessage()
+  .setQueue({ name: 'orders', ns: 'processing' })
+  .setBody({ orderId: 12345 });
+
+producer.produce(directMsg, (err, ids) => {
+  if (err) console.error('Direct publish failed:', err);
+});
+
+// Exchange-based routing with promise
+const exchangeMsg = new ProducibleMessage()
+  .setExchange({ name: 'events', ns: 'system', type: 'topic' })
+  .setExchangeRoutingKey('user.created')
+  .setBody({ userId: 456 });
+
+const ids = await producer.produce(exchangeMsg);
+console.log(`Message published to ${ids.length} queues`);
+
+// Auto-start producer using ensureIsOperational
+const autoStartProducer = new Producer();
+
+// This will automatically start the producer if needed
+await autoStartProducer.ensureIsOperational();
+await autoStartProducer.produce(msg);
+
+// Using ensureIsOperational with produce (callback)
+const anotherProducer = new Producer();
+anotherProducer.ensureIsOperational((err) => {
+  if (err) return console.error('Failed to start:', err);
+  anotherProducer.produce(msg, (err, ids) => {
+    if (err) console.error('Publish failed:', err);
+  });
+});
 ```
+
+##### See
+
+- [ProducibleMessage](ProducibleMessage.md) For message configuration options.
+- [Exchange](Exchange.md) For exchange types and routing patterns.
+- [Producer#run](#run) For starting the producer.
+- [Producer#ensureIsOperational](#ensureisoperational) For lazy initialization.
 
 ---
 
@@ -431,19 +706,33 @@ producer.produce(msg, (err, messageIds) => {
 
 ### run()
 
+#### Call Signature
+
+> **run**(): `Promise`\<`void`\>
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Inherited from
+
+`Runnable.run`
+
+#### Call Signature
+
 > **run**(`cb`): `void`
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Inherited from
+##### Inherited from
 
 `Runnable.run`
 
@@ -451,18 +740,32 @@ producer.produce(msg, (err, messageIds) => {
 
 ### shutdown()
 
+#### Call Signature
+
+> **shutdown**(): `Promise`\<`void`\>
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Inherited from
+
+`Runnable.shutdown`
+
+#### Call Signature
+
 > **shutdown**(`cb`): `void`
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Inherited from
+##### Inherited from
 
 `Runnable.shutdown`

@@ -26,15 +26,15 @@ test('Combined test: Delete pending priority messages by IDs. Check pending prio
 
   const pendingMessages = await getQueuePendingMessages();
 
-  const res1 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res1 = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(2);
   const items = res1.items.map((i) => i.id).sort((a, b) => (a > b ? 1 : -1));
   expect(items).toEqual(ids);
-  const count = await pendingMessages.countMessagesAsync(getDefaultQueue());
+  const count = await pendingMessages.countMessages(getDefaultQueue());
   expect(count).toBe(2);
 
   const message = await getMessageManager();
-  const reply = await message.deleteMessagesByIdsAsync([msg1, msg2]);
+  const reply = await message.deleteMessagesByIds([msg1, msg2]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({
     processed: 2,
@@ -43,10 +43,10 @@ test('Combined test: Delete pending priority messages by IDs. Check pending prio
     inProcess: 0,
   });
 
-  const res2 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res2 = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(res2.totalItems).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const count2 = await pendingMessages.countMessagesAsync(getDefaultQueue());
+  const count2 = await pendingMessages.countMessages(getDefaultQueue());
   expect(count2).toBe(0);
 });

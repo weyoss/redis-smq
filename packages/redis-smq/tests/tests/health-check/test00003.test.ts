@@ -21,7 +21,7 @@ import { getQueueManager } from '../../common/queue-manager.js';
 test('Health check: case 3', async () => {
   const queueName = `queue_${Date.now()}`;
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     queueName,
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
@@ -37,14 +37,14 @@ test('Health check: case 3', async () => {
   producer.on('producer.down', producerDownMock);
   producer.on('producer.goingDown', producerGoingDownMock);
   producer.on('producer.goingUp', producerGoingUpMock);
-  await producer.runAsync();
+  await producer.run();
 
   const produceForever = async () => {
     try {
       const message = new ProducibleMessage()
         .setBody('some data')
         .setQueue(queueName);
-      await producer.produceAsync(message);
+      await producer.produce(message);
       await produceForever();
     } catch {
       /* empty */
@@ -65,28 +65,28 @@ test('Health check: case 3', async () => {
   consumer.on('consumer.goingDown', consumerGoingDownMock);
   consumer.on('consumer.goingUp', consumerGoingUpMock);
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     queueName, // using the default namespace
     (message, cb) => cb(),
   );
 
-  await consumer.runAsync();
+  await consumer.run();
   await bluebird.delay(5000);
-  await consumer.shutdownAsync();
-  await consumer.runAsync();
+  await consumer.shutdown();
+  await consumer.run();
   await bluebird.delay(10000);
-  await consumer.shutdownAsync();
-  await consumer.runAsync();
-  await consumer.shutdownAsync();
-  await consumer.runAsync();
-  await consumer.shutdownAsync();
-  await consumer.runAsync();
-  await consumer.shutdownAsync();
-  await consumer.runAsync();
-  await consumer.shutdownAsync();
-  await consumer.shutdownAsync();
-  await producer.shutdownAsync();
-  await producer.shutdownAsync();
+  await consumer.shutdown();
+  await consumer.run();
+  await consumer.shutdown();
+  await consumer.run();
+  await consumer.shutdown();
+  await consumer.run();
+  await consumer.shutdown();
+  await consumer.run();
+  await consumer.shutdown();
+  await consumer.shutdown();
+  await producer.shutdown();
+  await producer.shutdown();
 
   expect(producerGoingUpMock).toHaveBeenCalledTimes(1);
   expect(producerUpMock).toHaveBeenCalledTimes(1);

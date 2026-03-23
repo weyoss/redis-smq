@@ -20,7 +20,7 @@ import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-me
 
 test('ProducibleMessage storage: acknowledged.expire = 10000', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfigAsync({
+  await configInstance.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
         expire: 20000,
@@ -37,21 +37,13 @@ test('ProducibleMessage storage: acknowledged.expire = 10000', async () => {
   await shutDownBaseInstance(c);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  const res1 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res1 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(1);
   expect(res1.items.length).toBe(1);
 
   await bluebird.delay(20000);
 
-  const res2 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res2 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res2.totalItems).toBe(0);
   expect(res2.items.length).toBe(0);
 });

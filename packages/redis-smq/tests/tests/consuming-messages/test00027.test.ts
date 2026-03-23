@@ -20,7 +20,7 @@ import bluebird from 'bluebird';
 
 test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfigAsync({
+  await configInstance.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
         queueSize: 3,
@@ -36,11 +36,7 @@ test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   await shutDownBaseInstance(p1);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  const res1 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res1 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(1);
   expect(res1.items.length).toBe(1);
 
@@ -49,11 +45,7 @@ test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   await shutDownBaseInstance(c2);
   await shutDownBaseInstance(p2);
 
-  const res2 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res2 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res2.totalItems).toBe(2);
   expect(res2.items.length).toBe(2);
 
@@ -62,11 +54,7 @@ test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   await shutDownBaseInstance(c3);
   await shutDownBaseInstance(p3);
 
-  const res3 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res3 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res3.totalItems).toBe(3);
   expect(res3.items.length).toBe(3);
 
@@ -75,11 +63,7 @@ test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   await shutDownBaseInstance(c4);
   await shutDownBaseInstance(p4);
 
-  const res4 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res4 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res4.totalItems).toBe(3);
   expect(res4.items.length).toBe(3);
 });

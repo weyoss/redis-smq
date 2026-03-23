@@ -26,7 +26,7 @@ import {
 
 test('Message audit: enabled = false', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfigAsync({
+  await configInstance.updateConfig({
     messageAudit: false,
   });
 
@@ -38,7 +38,7 @@ test('Message audit: enabled = false', async () => {
   await shutDownBaseInstance(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   await expect(
-    deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100),
+    deadLetteredMessages.getMessages(defaultQueue, 0, 100),
   ).rejects.toThrowError(DeadLetterAuditDisabledError);
 
   const { producer: p, consumer: c } =
@@ -49,6 +49,6 @@ test('Message audit: enabled = false', async () => {
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
   await expect(
-    acknowledgedMessages.getMessagesAsync(defaultQueue, 0, 100),
+    acknowledgedMessages.getMessages(defaultQueue, 0, 100),
   ).rejects.toThrowError(AcknowledgmentAuditDisabledError);
 });

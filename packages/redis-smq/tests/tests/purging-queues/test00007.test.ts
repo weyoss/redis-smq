@@ -27,7 +27,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   // Consuming defaultQueue
   const consumerA = getConsumer();
-  await consumerA.runAsync();
+  await consumerA.run();
 
   // queueInstance.delete() calls processingQueue.getQueueProcessingQueues() after validation is passed.
   // Within getQueueProcessingQueues() method, we can take more time than usual to return a response, to allow the
@@ -82,12 +82,12 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   // instanceof returns false due to different contexts
   // await expect(
-  //   Promise.all([q.deleteAsync(getDefaultQueue()), consumerB.runAsync()]),
+  //   Promise.all([q.delete(getDefaultQueue()), consumerB.run()]),
   // ).rejects.toThrow(ConsumerSetMismatchError);
 
   let error: unknown = null;
   try {
-    await Promise.all([q.deleteAsync(getDefaultQueue()), consumerB.runAsync()]);
+    await Promise.all([q.delete(getDefaultQueue()), consumerB.run()]);
   } catch (err) {
     error = err;
   }

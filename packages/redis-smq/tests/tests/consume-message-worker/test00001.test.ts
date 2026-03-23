@@ -23,11 +23,11 @@ import { getQueueManager } from '../../common/queue-manager.js';
 
 it('ConsumeMessageWorker: case 1', async () => {
   const consumer = bluebird.promisifyAll(new Consumer());
-  await consumer.runAsync();
+  await consumer.run();
 
   const queue1 = 'test';
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     queue1,
     EQueueType.FIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
@@ -37,19 +37,19 @@ it('ConsumeMessageWorker: case 1', async () => {
     env.getCurrentDir(),
     '../../common/message-handler-worker-acks.js',
   );
-  await consumer.consumeAsync(queue1, handlerFilename);
+  await consumer.consume(queue1, handlerFilename);
 
   const producer = bluebird.promisifyAll(new Producer());
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setQueue(queue1).setBody('123'),
   );
 
   await bluebird.delay(5000);
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesByStatusAsync(queue1);
+  const count = await queueMessages.countMessagesByStatus(queue1);
   expect(count).toEqual({
     acknowledged: 1,
     deadLettered: 0,
@@ -57,6 +57,6 @@ it('ConsumeMessageWorker: case 1', async () => {
     scheduled: 0,
   });
 
-  await consumer.shutdownAsync();
-  await producer.shutdownAsync();
+  await consumer.shutdown();
+  await producer.shutdown();
 });

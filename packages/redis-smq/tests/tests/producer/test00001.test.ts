@@ -19,11 +19,11 @@ test('Producing a message', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
   expect(typeof id).toBe('string');
 });

@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import {
   IMessageTransferable,
@@ -23,7 +22,7 @@ type TGetConsumerArgs = {
 };
 
 export function getConsumer(args?: TGetConsumerArgs | false) {
-  const c = bluebird.promisifyAll(RedisSMQ.createConsumer());
+  const c = RedisSMQ.createConsumer();
   if (args === false) {
     return c;
   }

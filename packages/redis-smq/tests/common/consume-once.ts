@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import {
   IMessageTransferable,
   IQueueParams,
@@ -18,8 +17,8 @@ export async function consumeOnce(
   queue: IQueueParams,
   timeoutMs = 2000,
 ): Promise<IMessageTransferable | null> {
-  const consumer = bluebird.promisifyAll(RedisSMQ.createConsumer());
-  await consumer.runAsync();
+  const consumer = RedisSMQ.createConsumer();
+  await consumer.run();
 
   return await new Promise((resolve) => {
     let settled = false;

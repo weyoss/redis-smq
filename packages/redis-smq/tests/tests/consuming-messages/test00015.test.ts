@@ -26,28 +26,28 @@ test('Consume message from different queues using a single consumer instance: ca
 
   expect(consumer.getQueues()).toEqual([]);
 
-  await queueInstance.saveAsync(
+  await queueInstance.save(
     'test_queue',
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test_queue',
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
 
-  await queueInstance.saveAsync(
+  await queueInstance.save(
     'another_queue',
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'another_queue',
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
 
-  expect(
-    consumer.consumeAsync(
+  await expect(
+    consumer.consume(
       'another_queue',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
@@ -58,13 +58,13 @@ test('Consume message from different queues using a single consumer instance: ca
     { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await consumer.cancelAsync('another_queue');
+  await consumer.cancel('another_queue');
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     'another_queue',
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
@@ -74,25 +74,25 @@ test('Consume message from different queues using a single consumer instance: ca
     { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await consumer.runAsync();
+  await consumer.run();
 
-  expect(
-    consumer.consumeAsync(
+  await expect(
+    consumer.consume(
       'another_queue',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
   ).rejects.toThrow(MessageHandlerAlreadyExistsError);
 
-  await consumer.cancelAsync('another_queue');
+  await consumer.cancel('another_queue');
 
   // does not throw an error
-  await consumer.cancelAsync('another_queue');
+  await consumer.cancel('another_queue');
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     'another_queue',
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
@@ -102,18 +102,18 @@ test('Consume message from different queues using a single consumer instance: ca
     { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await queueInstance.saveAsync(
+  await queueInstance.save(
     'queue_a',
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'queue_a',
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
 
-  expect(
-    consumer.consumeAsync(
+  await expect(
+    consumer.consume(
       'queue_a',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),

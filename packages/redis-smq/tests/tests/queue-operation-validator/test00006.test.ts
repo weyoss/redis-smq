@@ -23,11 +23,11 @@ describe('QueueOperationValidator: Different queue types', () => {
     await createQueue(priorityQueue, EQueueType.PRIORITY_QUEUE);
 
     const consumeAllowed =
-      await QueueOperationValidatorAsync.canConsumeAsync(priorityQueue);
+      await QueueOperationValidatorAsync.canConsume(priorityQueue);
     expect(consumeAllowed).toBe(true);
 
     const produceAllowed =
-      await QueueOperationValidatorAsync.canProduceAsync(priorityQueue);
+      await QueueOperationValidatorAsync.canProduce(priorityQueue);
     expect(produceAllowed).toBe(true);
   });
 
@@ -35,8 +35,7 @@ describe('QueueOperationValidator: Different queue types', () => {
     const lifoQueue = { name: 'lifo-validator-queue', ns: 'testing' };
     await createQueue(lifoQueue, EQueueType.LIFO_QUEUE);
 
-    const allowed =
-      await QueueOperationValidatorAsync.canConsumeAsync(lifoQueue);
+    const allowed = await QueueOperationValidatorAsync.canConsume(lifoQueue);
     expect(allowed).toBe(true);
   });
 });

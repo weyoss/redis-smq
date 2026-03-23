@@ -8,6 +8,7 @@
  */
 
 import {
+  async,
   ICallback,
   OperationNotAllowedError,
   PanicError,
@@ -37,22 +38,15 @@ import {
  *
  * @example
  * ```typescript
- * // Initialize configuration
+ * // Callback pattern
  * Configuration.initialize((err) => {
- *   if (err) {
- *     console.error('Failed to initialize configuration:', err);
- *     return;
- *   }
- *
- *   // Get configuration instance
- *   const config = Configuration.getInstance();
- *   const currentConfig = config.getConfig();
- *
- *   // Update configuration
- *   config.updateConfig({ logger: { enabled: false } }, (err) => {
- *     if (!err) console.log('Configuration updated');
- *   });
+ *   if (err) console.error('Failed to initialize:', err);
+ *   else console.log('Configuration initialized');
  * });
+ *
+ * // Promise pattern
+ * await Configuration.initialize();
+ * console.log('Configuration initialized');
  * ```
  */
 export class Configuration {
@@ -220,35 +214,49 @@ export class Configuration {
    * is found, it creates and saves a default configuration. This ensures that the
    * configuration is always persisted and available for subsequent application starts.
    *
-   * @param cb - Callback function called when initialization completes
+   * @param cb - Optional callback function called when initialization completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * Configuration.initialize((err) => {
    *   if (err) {
    *     console.error('Configuration initialization failed:', err);
    *     return;
    *   }
-   *
    *   console.log('Configuration initialized successfully');
    *   const config = Configuration.getConfig();
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   await Configuration.initialize();
+   *   console.log('Configuration initialized successfully');
+   *   const config = Configuration.getConfig();
+   * } catch (err) {
+   *   console.error('Configuration initialization failed:', err);
+   * }
    * ```
    */
-  static initialize(cb: ICallback): void {
-    Configuration.performInitialization((instance, cb) => {
-      instance.load((err) => {
-        if (err && !(err instanceof ConfigurationNotFoundError)) {
-          return cb(err);
-        }
+  static initialize(): Promise<void>;
+  static initialize(cb: ICallback): void;
+  static initialize(cb?: ICallback): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      Configuration.performInitialization((instance, cb) => {
+        instance.load((err) => {
+          if (err && !(err instanceof ConfigurationNotFoundError)) {
+            return cb(err);
+          }
 
-        if (err instanceof ConfigurationNotFoundError) {
-          instance.saveCurrentConfig(cb);
-        } else {
-          cb();
-        }
-      });
-    }, cb);
+          if (err instanceof ConfigurationNotFoundError) {
+            instance.saveCurrentConfig(cb);
+          } else {
+            cb();
+          }
+        });
+      }, callback);
+    });
   }
 
   /**
@@ -259,11 +267,12 @@ export class Configuration {
    * and saved to Redis for persistence.
    *
    * @param config - Configuration object to initialize with
-   * @param cb - Callback function called when initialization completes
-   *
+   * @param cb - Optional callback function called when initialization completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * const customConfig = {
    *   namespace: 'production',
    *   redis: { options: { host: 'redis.example.com' } },
@@ -275,25 +284,40 @@ export class Configuration {
    *     console.error('Configuration initialization failed:', err);
    *     return;
    *   }
-   *
    *   console.log('Configuration initialized with custom config');
    *   const config = Configuration.getConfig();
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   await Configuration.initializeWithConfig(customConfig);
+   *   console.log('Configuration initialized with custom config');
+   *   const config = Configuration.getConfig();
+   * } catch (err) {
+   *   console.error('Configuration initialization failed:', err);
+   * }
    * ```
    */
-  static initializeWithConfig(config: IRedisSMQConfig, cb: ICallback): void {
-    Configuration.performInitialization((instance, cb) => {
-      try {
-        instance.config = parseConfig(config);
-        instance.saveCurrentConfig(cb);
-      } catch (parseErr) {
-        const error =
-          parseErr instanceof Error
-            ? parseErr
-            : new InvalidConfigurationError();
-        cb(error);
-      }
-    }, cb);
+  static initializeWithConfig(config: IRedisSMQConfig): Promise<void>;
+  static initializeWithConfig(config: IRedisSMQConfig, cb: ICallback): void;
+  static initializeWithConfig(
+    config: IRedisSMQConfig,
+    cb?: ICallback,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      Configuration.performInitialization((instance, cb) => {
+        try {
+          instance.config = parseConfig(config);
+          instance.saveCurrentConfig(cb);
+        } catch (parseErr) {
+          const error =
+            parseErr instanceof Error
+              ? parseErr
+              : new InvalidConfigurationError();
+          cb(error);
+        }
+      }, callback);
+    });
   }
 
   /**
@@ -307,10 +331,12 @@ export class Configuration {
    * configuration instance. This is particularly useful for testing scenarios,
    * application restarts, or when you need to reconfigure the application at runtime.
    *
-   * @param cb - Callback function called when the shutdown operation completes.
+   * @param cb - Optional callback function called when the shutdown operation completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * Configuration.shutdown((err) => {
    *   if (err) {
    *     console.error('Configuration shutdown failed:', err);
@@ -318,41 +344,53 @@ export class Configuration {
    *   }
    *   console.log('Configuration shut down successfully');
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   await Configuration.shutdown();
+   *   console.log('Configuration shut down successfully');
+   * } catch (err) {
+   *   console.error('Configuration shutdown failed:', err);
+   * }
    * ```
    */
-  static shutdown(cb: ICallback): void {
-    if (Configuration.state.isDown()) {
-      return cb();
-    }
+  static shutdown(): Promise<void>;
+  static shutdown(cb: ICallback): void;
+  static shutdown(cb?: ICallback): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      if (Configuration.state.isDown()) {
+        return callback();
+      }
 
-    if (Configuration.state.isGoingDown()) {
-      return cb(
-        new OperationNotAllowedError({
-          message: 'Configuration is already shutting down',
-        }),
-      );
-    }
+      if (Configuration.state.isGoingDown()) {
+        return callback(
+          new OperationNotAllowedError({
+            message: 'Configuration is already shutting down',
+          }),
+        );
+      }
 
-    if (Configuration.state.isGoingUp()) {
-      return cb(
-        new OperationNotAllowedError({
-          message: 'Cannot shutdown while initializing',
-        }),
-      );
-    }
+      if (Configuration.state.isGoingUp()) {
+        return callback(
+          new OperationNotAllowedError({
+            message: 'Cannot shutdown while initializing',
+          }),
+        );
+      }
 
-    Configuration.state.goingDown();
+      Configuration.state.goingDown();
 
-    if (Configuration.instance) {
-      Configuration.instance.waitForOperationCompletion(() => {
-        Configuration.instance = null;
+      if (Configuration.instance) {
+        Configuration.instance.waitForOperationCompletion(() => {
+          Configuration.instance = null;
+          Configuration.state.commit();
+          callback();
+        });
+      } else {
         Configuration.state.commit();
-        cb();
-      });
-    } else {
-      Configuration.state.commit();
-      cb();
-    }
+        callback();
+      }
+    });
   }
 
   /**
@@ -457,39 +495,93 @@ export class Configuration {
   /**
    * Loads the configuration from Redis. If not found, returns ConfigurationNotFoundError.
    *
-   * @param cb - Callback function called with the loaded configuration or error
+   * @param cb - Optional callback function called with the loaded configuration or error
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   *
+   * // Callback pattern
+   * config.load((err) => {
+   *   if (err) {
+   *     console.error('Failed to load configuration:', err);
+   *   } else {
+   *     console.log('Configuration loaded successfully');
+   *   }
+   * });
+   *
+   * // Promise pattern
+   * try {
+   *   await config.load();
+   *   console.log('Configuration loaded successfully');
+   * } catch (err) {
+   *   console.error('Failed to load configuration:', err);
+   * }
+   * ```
    */
-  load(cb: ICallback): void {
-    this.runExclusive((done) => {
-      withSharedPoolConnection((client, cb) => {
-        const key = redisKeys.getMainKeys().keyConfiguration;
-        client.get(key, (err, configData) => {
-          if (err) return cb(err);
-          if (!configData) return cb(new ConfigurationNotFoundError());
+  load(): Promise<void>;
+  load(cb: ICallback): void;
+  load(cb?: ICallback): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      this.runExclusive((done) => {
+        withSharedPoolConnection((client, cb) => {
+          const key = redisKeys.getMainKeys().keyConfiguration;
+          client.get(key, (err, configData) => {
+            if (err) return cb(err);
+            if (!configData) return cb(new ConfigurationNotFoundError());
 
-          this.config = JSON.parse(configData);
-          return cb();
-        });
-      }, done);
-    }, cb);
+            this.config = JSON.parse(configData);
+            return cb();
+          });
+        }, done);
+      }, callback);
+    });
   }
 
   /**
    * Persists the current in-memory parsed configuration into Redis.
    *
-   * @param cb - Callback function called when save completes
+   * @param cb - Optional callback function called when save completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   *
+   * // Callback pattern
+   * config.saveCurrentConfig((err) => {
+   *   if (err) {
+   *     console.error('Failed to save configuration:', err);
+   *   } else {
+   *     console.log('Configuration saved successfully');
+   *   }
+   * });
+   *
+   * // Promise pattern
+   * try {
+   *   await config.saveCurrentConfig();
+   *   console.log('Configuration saved successfully');
+   * } catch (err) {
+   *   console.error('Failed to save configuration:', err);
+   * }
+   * ```
    */
-  saveCurrentConfig(cb: ICallback): void {
-    this.runExclusive((done) => {
-      withSharedPoolConnection((client, cb) => {
-        const key = redisKeys.getMainKeys().keyConfiguration;
-        const configData = JSON.stringify(this.config);
-        client.set(key, configData, {}, (err) => {
-          if (err) return cb(err);
-          cb();
-        });
-      }, done);
-    }, cb);
+  saveCurrentConfig(): Promise<void>;
+  saveCurrentConfig(cb: ICallback): void;
+  saveCurrentConfig(cb?: ICallback): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      this.runExclusive((done) => {
+        withSharedPoolConnection((client, cb) => {
+          const key = redisKeys.getMainKeys().keyConfiguration;
+          const configData = JSON.stringify(this.config);
+          client.set(key, configData, {}, (err) => {
+            if (err) return cb(err);
+            cb();
+          });
+        }, done);
+      }, callback);
+    });
   }
 
   /**
@@ -499,42 +591,60 @@ export class Configuration {
    * configuration, validates the result, and saves it to Redis.
    *
    * @param updates - Partial configuration object with updates
-   * @param cb - Callback function called when update completes
+   * @param cb - Optional callback function called when update completes
+   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
    * const config = Configuration.getInstance();
+   *
+   * // Callback pattern
    * config.updateConfig({
    *   logger: { enabled: false },
    *   redis: { options: { host: 'new-host' } }
    * }, (err) => {
    *   if (err) {
    *     console.error('Failed to update configuration:', err);
-   *     return;
+   *   } else {
+   *     console.log('Configuration updated successfully');
    *   }
-   *   console.log('Configuration updated successfully');
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   await config.updateConfig({
+   *     logger: { enabled: false },
+   *     redis: { options: { host: 'new-host' } }
+   *   });
+   *   console.log('Configuration updated successfully');
+   * } catch (err) {
+   *   console.error('Failed to update configuration:', err);
+   * }
    * ```
    */
-  updateConfig(updates: IRedisSMQConfig, cb: ICallback): void {
-    this.runExclusive((done) => {
-      try {
-        const updatedConfig = this.mergeConfig(this.config, updates);
-        this.config = parseConfig(updatedConfig);
-      } catch (e: unknown) {
-        const err = e instanceof Error ? e : new InvalidConfigurationError();
-        return done(err);
-      }
+  updateConfig(updates: IRedisSMQConfig): Promise<void>;
+  updateConfig(updates: IRedisSMQConfig, cb: ICallback): void;
+  updateConfig(updates: IRedisSMQConfig, cb?: ICallback): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      this.runExclusive((done) => {
+        try {
+          const updatedConfig = this.mergeConfig(this.config, updates);
+          this.config = parseConfig(updatedConfig);
+        } catch (e: unknown) {
+          const err = e instanceof Error ? e : new InvalidConfigurationError();
+          return done(err);
+        }
 
-      withSharedPoolConnection((client, cb) => {
-        const key = redisKeys.getMainKeys().keyConfiguration;
-        const configData = JSON.stringify(this.config);
+        withSharedPoolConnection((client, cb) => {
+          const key = redisKeys.getMainKeys().keyConfiguration;
+          const configData = JSON.stringify(this.config);
 
-        client.set(key, configData, {}, (err) => {
-          if (err) return cb(err);
-          cb();
-        });
-      }, done);
-    }, cb);
+          client.set(key, configData, {}, (err) => {
+            if (err) return cb(err);
+            cb();
+          });
+        }, done);
+      }, callback);
+    });
   }
 }

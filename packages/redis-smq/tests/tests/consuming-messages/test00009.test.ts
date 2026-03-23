@@ -24,7 +24,7 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer({
     messageHandler: vitest.fn(() => {
@@ -40,17 +40,13 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
   consumer.run(() => void 0);
 
   await bluebird.delay(30000);
   expect(unacknowledged).toBe(3);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const list = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const list = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(list.totalItems).toBe(1);
   expect(list.items[0].id).toBe(id);
 });

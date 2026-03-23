@@ -38,8 +38,8 @@ test('An unacked message without retryDelay should be moved to queueRequeued. Re
   });
 
   const producer = getProducer();
-  await producer.runAsync();
-  const [messageId] = await producer.produceAsync(
+  await producer.run();
+  const [messageId] = await producer.produce(
     new ProducibleMessage()
       .setRetryDelay(0)
       .setBody('message body')
@@ -51,7 +51,7 @@ test('An unacked message without retryDelay should be moved to queueRequeued. Re
   await shutDownBaseInstance(consumer);
 
   const message = bluebird.promisifyAll(new MessageManager());
-  const msg = await message.getMessageByIdAsync(messageId);
+  const msg = await message.getMessageById(messageId);
 
   expect(msg.status === EMessagePropertyStatus.UNACK_REQUEUING).toBe(true);
 
@@ -66,15 +66,15 @@ test('An unacked message without retryDelay should be moved to queueRequeued. Re
       consumerId: randomUUID(),
     }),
   );
-  await requeueImmediateWorker.runAsync();
+  await requeueImmediateWorker.run();
   await bluebird.delay(5000);
 
-  const msg2 = await message.getMessageByIdAsync(messageId);
+  const msg2 = await message.getMessageById(messageId);
   expect(msg2.status === EMessagePropertyStatus.PENDING).toBe(true);
 
   const pendingMessages = await getQueuePendingMessages();
-  const res = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
 
-  await requeueImmediateWorker.shutdownAsync();
+  await requeueImmediateWorker.shutdown();
 });

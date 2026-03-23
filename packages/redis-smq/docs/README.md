@@ -29,6 +29,7 @@ message auditing, worker threads, and more — all while keeping operations atom
 ### 📚 Core Concepts
 
 - [RedisSMQ Architecture Overview](redis-smq-architecture.md) — _High-level design, message flow, lifecycle_
+- [Dual Callback & Promise Support](dual-callback-and-promise-support.md) — _Performance-first callbacks with optional promise wrappers_
 - [Queues](queues.md) — _FIFO, LIFO, Priority queues_
 - [Messages](messages.md) — _ProducibleMessage, TTL, priority, retries_
 - [Message Lifecycle](message-lifecycle.md) — _Complete walkthrough of a message's journey through RedisSMQ_
@@ -83,6 +84,7 @@ Manage RedisSMQ through various interfaces:
 - Need maximum speed? → Read Performance and prefer direct queue publishing + FIFO/LIFO + no audit/EventBus.
 - Building a microservices event bus? → See Exchanges and Delivery Models + Pub/Sub.
 - Debugging? → Enable EventBus and Message Audit.
+- **Want both performance and clean syntax?** → Read Dual Callback & Promise Support.
 
 ---
 

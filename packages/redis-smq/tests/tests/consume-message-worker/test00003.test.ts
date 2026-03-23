@@ -32,11 +32,11 @@ test('ConsumeMessageWorker: case 3', async () => {
     new Consumer({ enableMultiplexing: true }),
   );
 
-  await consumer.consumeAsync('test1', (msg, cb) => {
+  await consumer.consume('test1', (msg, cb) => {
     messages.push(msg.destinationQueue.name);
     cb();
   });
-  await consumer.consumeAsync('test2', (msg, cb) => {
+  await consumer.consume('test2', (msg, cb) => {
     messages.push(msg.destinationQueue.name);
     cb();
   });
@@ -44,15 +44,15 @@ test('ConsumeMessageWorker: case 3', async () => {
     env.getCurrentDir(),
     '../../common/message-handler-worker-acks.js',
   );
-  await consumer.consumeAsync('test3', handlerFilename1);
+  await consumer.consume('test3', handlerFilename1);
 
-  await consumer.runAsync();
+  await consumer.run();
 
-  await consumer.consumeAsync('test4', (msg, cb) => {
+  await consumer.consume('test4', (msg, cb) => {
     messages.push(msg.destinationQueue.name);
     cb();
   });
-  await consumer.consumeAsync('test5', (msg, cb) => {
+  await consumer.consume('test5', (msg, cb) => {
     messages.push(msg.destinationQueue.name);
     cb();
   });
@@ -61,7 +61,7 @@ test('ConsumeMessageWorker: case 3', async () => {
     env.getCurrentDir(),
     '../../common/message-handler-worker-acks.js',
   );
-  await consumer.consumeAsync('test6', handlerFilename2);
+  await consumer.consume('test6', handlerFilename2);
 
   const queues = consumer.getQueues();
   expect(queues.map((i) => i.queueParams.name)).toEqual([
@@ -80,10 +80,10 @@ test('ConsumeMessageWorker: case 3', async () => {
   });
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   for (let i = 0; i < 6; i += 1) {
-    await producer.produceAsync(
+    await producer.produce(
       new ProducibleMessage().setQueue(`test${i + 1}`).setBody(`body ${i + 1}`),
     );
   }
@@ -99,7 +99,7 @@ test('ConsumeMessageWorker: case 3', async () => {
     'test6',
   ]);
 
-  await consumer.cancelAsync('test4');
+  await consumer.cancel('test4');
   expect(consumer.getQueues().map((i) => i.queueParams.name)).toEqual([
     'test1',
     'test2',
@@ -108,11 +108,11 @@ test('ConsumeMessageWorker: case 3', async () => {
     'test6',
   ]);
 
-  await consumer.consumeAsync('test7', (msg, cb) => {
+  await consumer.consume('test7', (msg, cb) => {
     messages.push(msg.destinationQueue.name);
     cb();
   });
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage().setQueue(`test7`).setBody(`body 7`),
   );
   await bluebird.delay(10000);
@@ -134,7 +134,7 @@ test('ConsumeMessageWorker: case 3', async () => {
     'test7',
   ]);
 
-  await consumer.cancelAsync('test6');
+  await consumer.cancel('test6');
   expect(consumer.getQueues().map((i) => i.queueParams.name)).toEqual([
     'test1',
     'test2',
@@ -143,5 +143,5 @@ test('ConsumeMessageWorker: case 3', async () => {
     'test7',
   ]);
 
-  await consumer.shutdownAsync();
+  await consumer.shutdown();
 });

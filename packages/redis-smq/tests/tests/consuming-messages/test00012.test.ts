@@ -61,9 +61,9 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
     .setRetryThreshold(retryThreshold);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer);

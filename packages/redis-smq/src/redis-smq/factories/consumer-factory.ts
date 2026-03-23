@@ -9,7 +9,7 @@
 
 import { FactoryAbstract } from './factory-abstract.js';
 import { Consumer } from '../../consumer/index.js';
-import { ICallback, InvalidArgumentsError } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common';
 import { IConsumerOptions } from '../../consumer/index.js';
 
 /**
@@ -23,35 +23,41 @@ import { IConsumerOptions } from '../../consumer/index.js';
  *
  * @example
  * ```typescript
- * // Create a consumer with default options
+ * // Callback pattern
  * const consumer = ConsumerFactory.create();
- *
- * // Start the consumer
  * consumer.run((err) => {
  *   if (err) console.error('Failed to start consumer:', err);
  * });
+ *
+ * // Promise pattern
+ * const consumer = ConsumerFactory.create();
+ * await consumer.run();
+ * console.log('Consumer started');
  * ```
  */
 export class ConsumerFactory extends FactoryAbstract {
   /**
    * Creates a new Consumer instance with custom configuration.
    *
-   * @param {IConsumerOptions} consumerOptions - Configuration options
-   * @returns {Consumer} A new Consumer instance with the specified configuration
+   * @param consumerOptions - Configuration options for the consumer
+   * @returns A new Consumer instance with the specified configuration
    *
    * @see {@link IConsumerOptions} for all available configuration options
    * @see {@link Consumer.constructor} for detailed documentation
    *
    * @example
    * ```typescript
+   * // Create with default options
+   * const consumer = ConsumerFactory.create();
+   *
+   * // Create with custom options
    * const consumer = ConsumerFactory.create({
    *   enableMultiplexing: true,
    *   heartbeatTTL: 60000,
    *   batchAcks: {
    *     batchSize: 500,
    *     batchTimeoutMs: 5000
-   *   },
-   *   batchUnacks: false
+   *   }
    * });
    * ```
    */
@@ -63,96 +69,72 @@ export class ConsumerFactory extends FactoryAbstract {
   /**
    * Creates and automatically starts a consumer with custom configuration.
    *
-   * @param {IConsumerOptions} consumerOptions - Configuration options
-   * @param {ICallback<void>} cb - Callback invoked when consumer starts
-   * @returns {Consumer} The created Consumer instance
+   * This method creates a consumer and starts it in a single operation.
+   * The consumer is automatically tracked for lifecycle management.
+   *
+   * @param consumerOptions - Configuration options for the consumer
+   * @param cb - Optional callback invoked when consumer starts or if an error occurs
+   * @returns The created Consumer instance (started automatically)
    *
    * @see {@link Consumer.run} for startup behavior
    * @see {@link Consumer.consume} for setting up message handlers after startup
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * const consumer = ConsumerFactory.startConsumer(
-   *   {
-   *     enableMultiplexing: true,
-   *     batchAcks: { batchSize: 200 }
-   *   },
+   *   { enableMultiplexing: true },
    *   (err) => {
    *     if (err) {
    *       console.error('Failed to start:', err);
    *       return;
    *     }
-   *
-   *     // Consumer is running, set up message consumption
-   *     consumer.consume('orders', (message, done) => {
-   *       console.log('Processing order:', message);
+   *     console.log('Consumer started');
+   *     consumer.consume('my-queue', (message, done) => {
+   *       console.log('Processing:', message);
    *       done();
-   *     }, (consumeErr) => {
-   *       if (consumeErr) console.error('Failed to setup consumption:', consumeErr);
    *     });
    *   }
    * );
+   *
+   * // Promise pattern
+   * try {
+   *   const consumer = await ConsumerFactory.startConsumer({
+   *     enableMultiplexing: true,
+   *     batchAcks: { batchSize: 200 }
+   *   });
+   *   console.log('Consumer started');
+   *   await consumer.consume('orders', (message, done) => {
+   *     console.log('Processing order:', message);
+   *     done();
+   *   });
+   * } catch (err) {
+   *   console.error('Failed to start consumer:', err);
+   * }
    * ```
    */
+  static startConsumer(consumerOptions: IConsumerOptions): Promise<Consumer>;
   static startConsumer(
     consumerOptions: IConsumerOptions,
     cb: ICallback<void>,
   ): Consumer;
-
-  /**
-   * Creates and automatically starts a consumer with default configuration.
-   *
-   * @param {ICallback<void>} cb - Callback invoked when consumer starts
-   * @returns {Consumer} The created Consumer instance
-   *
-   * @see {@link Consumer.run} for startup behavior
-   * @see {@link Consumer.getDefaultOptions} to view default settings
-   *
-   * @example
-   * ```typescript
-   * // Create and start consumer with default settings
-   * const consumer = ConsumerFactory.startConsumer((err) => {
-   *   if (err) {
-   *     console.error('Failed to start consumer:', err);
-   *     return;
-   *   }
-   *
-   *   // Consumer is now running, set up message consumption
-   *   consumer.consume('my-queue', (message, done) => {
-   *     console.log('Processing message:', message);
-   *     done();
-   *   }, (consumeErr) => {
-   *     if (consumeErr) console.error('Failed to start consumption:', consumeErr);
-   *   });
-   *
-   *   // Later, shut down gracefully
-   *   process.on('SIGTERM', () => {
-   *     consumer.shutdown(() => {
-   *       console.log('Consumer shut down');
-   *     });
-   *   });
-   * });
-   * ```
-   */
-  static startConsumer(cb: ICallback<void>): Consumer;
-
   static startConsumer(
-    mixed: IConsumerOptions | ICallback<void>,
+    consumerOptions: IConsumerOptions,
     cb?: ICallback<void>,
-  ): Consumer {
-    let callback: ICallback<void>;
-    let consumer: Consumer | null;
-    if (typeof mixed === 'function') {
-      callback = mixed;
-      consumer = this.create();
-    } else if (typeof mixed === 'object' && typeof cb === 'function') {
-      callback = cb;
-      consumer = this.create(mixed);
-    } else {
-      throw new InvalidArgumentsError();
+  ): Promise<Consumer> | Consumer {
+    const consumer = new Consumer(consumerOptions);
+
+    if (cb) {
+      consumer.run((err) => {
+        if (err) return cb(err);
+        cb(null);
+      });
+      return consumer;
     }
 
-    consumer.run(callback);
-    return consumer;
+    return (async () => {
+      await consumer.run();
+      return consumer;
+    })();
   }
 }

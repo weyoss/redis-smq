@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { PublishScheduledWorker } from '../../src/consumer/message-handler/queue-workers/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
 import { config } from './config.js';
@@ -29,13 +28,13 @@ export async function startScheduleWorker(
       loggerContext: { namespaces: [] },
       consumerId,
     });
-    await bluebird.promisifyAll(scheduleWorker[key]).runAsync();
+    await scheduleWorker[key].run();
   }
 }
 
 export async function stopScheduleWorker(): Promise<void> {
   for (const key in scheduleWorker) {
-    await bluebird.promisifyAll(scheduleWorker[key]).shutdownAsync();
+    await scheduleWorker[key].shutdown();
     delete scheduleWorker[key];
   }
 }

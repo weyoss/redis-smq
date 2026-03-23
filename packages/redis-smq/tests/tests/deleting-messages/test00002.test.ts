@@ -22,17 +22,17 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   await createQueue(defaultQueue, true);
   const { messageId, queue } = await produceMessageWithPriority();
   const pendingMessages = await getQueuePendingMessages();
-  const res1 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  const res1 = await pendingMessages.getMessages(queue, 0, 100);
 
   expect(res1.totalItems).toBe(1);
   expect(res1.items[0].id).toBe(messageId);
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesByStatusAsync(queue);
+  const count = await queueMessages.countMessagesByStatus(queue);
   expect(count.pending).toBe(1);
 
   const message = await getMessageManager();
-  const reply = await message.deleteMessageByIdAsync(messageId);
+  const reply = await message.deleteMessageById(messageId);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({
     processed: 1,
@@ -41,10 +41,10 @@ test('Combined test: Delete a pending message with priority. Check pending messa
     inProcess: 0,
   });
 
-  const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  const res2 = await pendingMessages.getMessages(queue, 0, 100);
   expect(res2.totalItems).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const count2 = await queueMessages.countMessagesByStatusAsync(queue);
+  const count2 = await queueMessages.countMessagesByStatus(queue);
   expect(count2.pending).toBe(0);
 });

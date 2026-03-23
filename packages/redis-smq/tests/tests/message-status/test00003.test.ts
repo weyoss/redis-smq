@@ -28,7 +28,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   const msg = new ProducibleMessage();
 
   msg
@@ -36,15 +36,15 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     .setQueue(getDefaultQueue())
     .setRetryThreshold(2)
     .setRetryDelay(10000);
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const message = await getMessageManager();
-  const msg0 = await message.getMessageStatusAsync(id);
+  const msg0 = await message.getMessageStatus(id);
   expect(msg0).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer(false);
   const msg1: EMessagePropertyStatus[] = [];
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => {
+  await consumer.consume(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
       msg1.push(msg.status);
       cb(new Error());
@@ -55,15 +55,15 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
 
   await untilMessageUnacknowledged(consumer);
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
-  const status = await message.getMessageStatusAsync(id);
+  const status = await message.getMessageStatus(id);
   expect(status).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
   await bluebird.delay(10000);
 
-  const status1 = await message.getMessageStatusAsync(id);
+  const status1 = await message.getMessageStatus(id);
   expect(status1).toBe(EMessagePropertyStatus.UNACK_DELAYING);
 
   await untilMessageAcknowledged(consumer);
-  const msg3 = await message.getMessageStatusAsync(id);
+  const msg3 = await message.getMessageStatus(id);
   expect(msg3).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

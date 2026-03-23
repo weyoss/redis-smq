@@ -22,7 +22,7 @@ import { getProducer } from '../../common/producer.js';
 test('Unacknowledged message are re-queued when messageRetryThreshold is not exceeded', async () => {
   const eventBus = await getEventBus();
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
@@ -50,7 +50,7 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer);

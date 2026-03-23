@@ -25,14 +25,14 @@ test('Purging dead letter queue', async () => {
   await shutDownBaseInstance(consumer);
 
   const queueMessages = await getQueueMessages();
-  const m = await queueMessages.countMessagesByStatusAsync(queue);
+  const m = await queueMessages.countMessagesByStatus(queue);
   expect(m.deadLettered).toBe(1);
 
   const dlm = await getQueueDeadLetteredMessages();
-  await dlm.purgeAsync(queue);
+  await dlm.purge(queue);
 
   await bluebird.delay(5000);
 
-  const m1 = await queueMessages.countMessagesByStatusAsync(queue);
+  const m1 = await queueMessages.countMessagesByStatus(queue);
   expect(m1.deadLettered).toBe(0);
 });

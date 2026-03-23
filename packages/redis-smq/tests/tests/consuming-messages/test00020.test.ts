@@ -14,12 +14,12 @@ import { MessageExchangeRequiredError } from '../../../src/errors/index.js';
 
 test('Producing a message without a message queue', async () => {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' });
 
-  await expect(producer.produceAsync(msg)).rejects.toThrow(
+  await expect(producer.produce(msg)).rejects.toThrow(
     MessageExchangeRequiredError,
   );
 });

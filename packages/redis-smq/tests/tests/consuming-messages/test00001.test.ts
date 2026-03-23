@@ -25,7 +25,7 @@ describe('QueueMessages: countMessagesByStatus()', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await produceMessage();
     const queueMessages = await getQueueMessages();
-    const m = await queueMessages.countMessagesByStatusAsync(queue);
+    const m = await queueMessages.countMessagesByStatus(queue);
     expect(m.pending).toBe(1);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
@@ -37,7 +37,7 @@ describe('QueueMessages: countMessagesByStatus()', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await produceAndDeadLetterMessage();
     const queueMessages = await getQueueMessages();
-    const m = await queueMessages.countMessagesByStatusAsync(queue);
+    const m = await queueMessages.countMessagesByStatus(queue);
     expect(m.pending).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(1);
@@ -49,7 +49,7 @@ describe('QueueMessages: countMessagesByStatus()', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await produceAndAcknowledgeMessage();
     const queueMessages = await getQueueMessages();
-    const m = await queueMessages.countMessagesByStatusAsync(queue);
+    const m = await queueMessages.countMessagesByStatus(queue);
     expect(m.pending).toBe(0);
     expect(m.acknowledged).toBe(1);
     expect(m.deadLettered).toBe(0);
@@ -61,7 +61,7 @@ describe('QueueMessages: countMessagesByStatus()', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await scheduleMessage();
     const queueMessages = await getQueueMessages();
-    const m = await queueMessages.countMessagesByStatusAsync(queue);
+    const m = await queueMessages.countMessagesByStatus(queue);
     expect(m.pending).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
@@ -73,7 +73,7 @@ describe('QueueMessages: countMessagesByStatus()', () => {
     await createQueue(defaultQueue, true);
     const { queue } = await produceMessageWithPriority();
     const queueMessages = await getQueueMessages();
-    const m = await queueMessages.countMessagesByStatusAsync(queue);
+    const m = await queueMessages.countMessagesByStatus(queue);
     expect(m.pending).toBe(1);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);

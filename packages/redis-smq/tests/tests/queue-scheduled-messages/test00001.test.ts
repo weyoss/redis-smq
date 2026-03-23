@@ -21,7 +21,7 @@ test('Scheduled message', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const msg = new ProducibleMessage();
   msg
@@ -30,14 +30,13 @@ test('Scheduled message', async () => {
     .setScheduledRepeat(5)
     .setScheduledRepeatPeriod(5000);
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const queueScheduledMessages = await getQueueScheduledMessages();
-  const count =
-    await queueScheduledMessages.countMessagesAsync(getDefaultQueue());
+  const count = await queueScheduledMessages.countMessages(getDefaultQueue());
   expect(count).toEqual(1);
 
-  const messages = await queueScheduledMessages.getMessagesAsync(
+  const messages = await queueScheduledMessages.getMessages(
     defaultQueue,
     0,
     100,
@@ -48,11 +47,10 @@ test('Scheduled message', async () => {
   expect(messages.items[0].id).toBe(id);
 
   const queueMessages = await getQueueMessages();
-  const count1 = await queueMessages.countMessagesAsync(getDefaultQueue());
+  const count1 = await queueMessages.countMessages(getDefaultQueue());
   expect(count1).toBe(1);
 
-  const count2 =
-    await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const count2 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(count2).toEqual({
     pending: 0,
     acknowledged: 0,

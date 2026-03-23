@@ -39,8 +39,8 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
   });
 
   const producer = getProducer();
-  await producer.runAsync();
-  const [messageId] = await producer.produceAsync(
+  await producer.run();
+  const [messageId] = await producer.produce(
     new ProducibleMessage()
       .setRetryDelay(10000)
       .setBody('message body')
@@ -51,8 +51,8 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
   await untilConsumerDown(consumer);
   await shutDownBaseInstance(consumer);
 
-  const message = bluebird.promisifyAll(new MessageManager());
-  const msg = await message.getMessageByIdAsync(messageId);
+  const message = new MessageManager();
+  const msg = await message.getMessageById(messageId);
 
   expect(msg.status === EMessagePropertyStatus.UNACK_REQUEUING).toBe(true);
 
@@ -70,10 +70,10 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
       consumerId: randomUUID(),
     }),
   );
-  await requeueImmediateWorker.runAsync();
+  await requeueImmediateWorker.run();
   await bluebird.delay(5000);
 
-  const msg2 = await message.getMessageByIdAsync(messageId);
+  const msg2 = await message.getMessageById(messageId);
   expect(msg2.status === EMessagePropertyStatus.UNACK_DELAYING).toBe(true);
 
   // should move from requeue queue to delay queue
@@ -90,16 +90,16 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
       consumerId: randomUUID(),
     }),
   );
-  await requeueDelayedWorker.runAsync();
+  await requeueDelayedWorker.run();
   await bluebird.delay(10000);
 
-  const msg3 = await message.getMessageByIdAsync(messageId);
+  const msg3 = await message.getMessageById(messageId);
   expect(msg3.status === EMessagePropertyStatus.PENDING).toBe(true);
 
   const pendingMessages = await getQueuePendingMessages();
-  const res = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
 
-  await requeueDelayedWorker.shutdownAsync();
-  await requeueImmediateWorker.shutdownAsync();
+  await requeueDelayedWorker.shutdown();
+  await requeueImmediateWorker.shutdown();
 });

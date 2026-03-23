@@ -30,17 +30,17 @@ test('Event bus: case 2', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const p0 = getProducer();
-  await p0.runAsync();
+  await p0.run();
   const m0 = new ProducibleMessage().setQueue(getDefaultQueue()).setBody(123);
-  const [id0] = await p0.produceAsync(m0);
+  const [id0] = await p0.produce(m0);
   const m1 = new ProducibleMessage().setQueue(getDefaultQueue()).setBody(123);
-  const [id1] = await p0.produceAsync(m1);
+  const [id1] = await p0.produce(m1);
   const p1 = getProducer();
-  await p1.runAsync();
+  await p1.run();
   const m2 = new ProducibleMessage().setQueue(getDefaultQueue()).setBody(123);
-  const [id2] = await p1.produceAsync(m2);
+  const [id2] = await p1.produce(m2);
   const m3 = new ProducibleMessage().setQueue(getDefaultQueue()).setBody(123);
-  const [id3] = await p1.produceAsync(m3);
+  const [id3] = await p1.produce(m3);
 
   await bluebird.delay(5000);
 

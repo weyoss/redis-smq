@@ -23,14 +23,14 @@ test('Purging scheduled message queue', async () => {
   await scheduleMessage();
 
   const queueMessages = await getQueueMessages();
-  const m = await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const m = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(m.scheduled).toBe(1);
 
   const sm = await getQueueScheduledMessages();
-  await sm.purgeAsync(getDefaultQueue());
+  await sm.purge(getDefaultQueue());
 
   await bluebird.delay(5000);
 
-  const m1 = await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const m1 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(m1.scheduled).toBe(0);
 });

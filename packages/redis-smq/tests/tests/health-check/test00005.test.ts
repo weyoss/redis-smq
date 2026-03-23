@@ -18,16 +18,16 @@ test('Health check: case 5', async () => {
   const consumer4 = bluebird.promisifyAll(new Consumer());
 
   await Promise.all([
-    consumer1.runAsync(),
-    consumer2.runAsync(),
-    consumer3.runAsync(),
-    consumer4.runAsync(),
+    consumer1.run(),
+    consumer2.run(),
+    consumer3.run(),
+    consumer4.run(),
   ]);
 
   await Promise.all([
-    consumer1.shutdownAsync(),
-    consumer2.shutdownAsync(),
-    consumer3.shutdownAsync(),
-    consumer4.shutdownAsync(),
+    consumer1.shutdown(),
+    consumer2.shutdown(),
+    consumer3.shutdown(),
+    consumer4.shutdown(),
   ]);
 });

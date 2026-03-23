@@ -25,33 +25,33 @@ test('Consume message from different queues using a single consumer instance: ca
   await createQueue('another_queue', false);
 
   const consumer = bluebird.promisifyAll(new Consumer());
-  await consumer.consumeAsync(
+  await consumer.consume(
     'test_queue',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       setTimeout(() => cb(), 1000);
     },
   );
-  await consumer.consumeAsync(
+  await consumer.consume(
     'another_queue',
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       cb();
     },
   );
-  await consumer.runAsync();
+  await consumer.run();
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const msg1 = new ProducibleMessage()
     .setQueue('test_queue')
     .setBody('some data');
-  const [id1] = await producer.produceAsync(msg1);
+  const [id1] = await producer.produce(msg1);
   await untilMessageAcknowledged(consumer, id1);
 
   const msg2 = new ProducibleMessage()
     .setQueue('another_queue')
     .setBody('some data');
-  const [id2] = await producer.produceAsync(msg2);
+  const [id2] = await producer.produce(msg2);
   await untilMessageAcknowledged(consumer, id2);
 
   await shutDownBaseInstance(consumer);

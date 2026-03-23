@@ -16,22 +16,15 @@ Features:
 ## Example
 
 ```typescript
-// Initialize configuration
+// Callback pattern
 Configuration.initialize((err) => {
-  if (err) {
-    console.error('Failed to initialize configuration:', err);
-    return;
-  }
-
-  // Get configuration instance
-  const config = Configuration.getInstance();
-  const currentConfig = config.getConfig();
-
-  // Update configuration
-  config.updateConfig({ logger: { enabled: false } }, (err) => {
-    if (!err) console.log('Configuration updated');
-  });
+  if (err) console.error('Failed to initialize:', err);
+  else console.log('Configuration initialized');
 });
+
+// Promise pattern
+await Configuration.initialize();
+console.log('Configuration initialized');
 ```
 
 ## Methods
@@ -52,75 +45,199 @@ The current configuration object
 
 ### load()
 
+#### Call Signature
+
+> **load**(): `Promise`\<`void`\>
+
+Loads the configuration from Redis. If not found, returns ConfigurationNotFoundError.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+const config = Configuration.getInstance();
+
+// Callback pattern
+config.load((err) => {
+  if (err) {
+    console.error('Failed to load configuration:', err);
+  } else {
+    console.log('Configuration loaded successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await config.load();
+  console.log('Configuration loaded successfully');
+} catch (err) {
+  console.error('Failed to load configuration:', err);
+}
+```
+
+#### Call Signature
+
 > **load**(`cb`): `void`
 
 Loads the configuration from Redis. If not found, returns ConfigurationNotFoundError.
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback function called with the loaded configuration or error
+Optional callback function called with the loaded configuration or error
 
-#### Returns
+##### Returns
 
 `void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+const config = Configuration.getInstance();
+
+// Callback pattern
+config.load((err) => {
+  if (err) {
+    console.error('Failed to load configuration:', err);
+  } else {
+    console.log('Configuration loaded successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await config.load();
+  console.log('Configuration loaded successfully');
+} catch (err) {
+  console.error('Failed to load configuration:', err);
+}
+```
 
 ---
 
 ### saveCurrentConfig()
 
+#### Call Signature
+
+> **saveCurrentConfig**(): `Promise`\<`void`\>
+
+Persists the current in-memory parsed configuration into Redis.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+const config = Configuration.getInstance();
+
+// Callback pattern
+config.saveCurrentConfig((err) => {
+  if (err) {
+    console.error('Failed to save configuration:', err);
+  } else {
+    console.log('Configuration saved successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await config.saveCurrentConfig();
+  console.log('Configuration saved successfully');
+} catch (err) {
+  console.error('Failed to save configuration:', err);
+}
+```
+
+#### Call Signature
+
 > **saveCurrentConfig**(`cb`): `void`
 
 Persists the current in-memory parsed configuration into Redis.
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback function called when save completes
+Optional callback function called when save completes
 
-#### Returns
+##### Returns
 
 `void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+const config = Configuration.getInstance();
+
+// Callback pattern
+config.saveCurrentConfig((err) => {
+  if (err) {
+    console.error('Failed to save configuration:', err);
+  } else {
+    console.log('Configuration saved successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await config.saveCurrentConfig();
+  console.log('Configuration saved successfully');
+} catch (err) {
+  console.error('Failed to save configuration:', err);
+}
+```
 
 ---
 
 ### updateConfig()
 
-> **updateConfig**(`updates`, `cb`): `void`
+#### Call Signature
+
+> **updateConfig**(`updates`): `Promise`\<`void`\>
 
 Updates the configuration with new values and persists to Redis.
 
 This method merges the provided configuration updates with the current
 configuration, validates the result, and saves it to Redis.
 
-#### Parameters
+##### Parameters
 
-##### updates
+###### updates
 
 [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
 
 Partial configuration object with updates
 
-##### cb
+##### Returns
 
-`ICallback`
+`Promise`\<`void`\>
 
-Callback function called when update completes
+- Returns a Promise if no callback is provided
 
-#### Returns
-
-`void`
-
-#### Example
+##### Example
 
 ```typescript
 const config = Configuration.getInstance();
+
+// Callback pattern
 config.updateConfig(
   {
     logger: { enabled: false },
@@ -129,11 +246,83 @@ config.updateConfig(
   (err) => {
     if (err) {
       console.error('Failed to update configuration:', err);
-      return;
+    } else {
+      console.log('Configuration updated successfully');
     }
-    console.log('Configuration updated successfully');
   },
 );
+
+// Promise pattern
+try {
+  await config.updateConfig({
+    logger: { enabled: false },
+    redis: { options: { host: 'new-host' } },
+  });
+  console.log('Configuration updated successfully');
+} catch (err) {
+  console.error('Failed to update configuration:', err);
+}
+```
+
+#### Call Signature
+
+> **updateConfig**(`updates`, `cb`): `void`
+
+Updates the configuration with new values and persists to Redis.
+
+This method merges the provided configuration updates with the current
+configuration, validates the result, and saves it to Redis.
+
+##### Parameters
+
+###### updates
+
+[`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
+
+Partial configuration object with updates
+
+###### cb
+
+`ICallback`
+
+Optional callback function called when update completes
+
+##### Returns
+
+`void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+const config = Configuration.getInstance();
+
+// Callback pattern
+config.updateConfig(
+  {
+    logger: { enabled: false },
+    redis: { options: { host: 'new-host' } },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to update configuration:', err);
+    } else {
+      console.log('Configuration updated successfully');
+    }
+  },
+);
+
+// Promise pattern
+try {
+  await config.updateConfig({
+    logger: { enabled: false },
+    redis: { options: { host: 'new-host' } },
+  });
+  console.log('Configuration updated successfully');
+} catch (err) {
+  console.error('Failed to update configuration:', err);
+}
 ```
 
 ---
@@ -205,6 +394,47 @@ try {
 
 ### initialize()
 
+#### Call Signature
+
+> `static` **initialize**(): `Promise`\<`void`\>
+
+Initializes the Configuration singleton.
+
+This method attempts to load existing configuration from Redis. If no configuration
+is found, it creates and saves a default configuration. This ensures that the
+configuration is always persisted and available for subsequent application starts.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+Configuration.initialize((err) => {
+  if (err) {
+    console.error('Configuration initialization failed:', err);
+    return;
+  }
+  console.log('Configuration initialized successfully');
+  const config = Configuration.getConfig();
+});
+
+// Promise pattern
+try {
+  await Configuration.initialize();
+  console.log('Configuration initialized successfully');
+  const config = Configuration.getConfig();
+} catch (err) {
+  console.error('Configuration initialization failed:', err);
+}
+```
+
+#### Call Signature
+
 > `static` **initialize**(`cb`): `void`
 
 Initializes the Configuration singleton.
@@ -213,37 +443,50 @@ This method attempts to load existing configuration from Redis. If no configurat
 is found, it creates and saves a default configuration. This ensures that the
 configuration is always persisted and available for subsequent application starts.
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback function called when initialization completes
+Optional callback function called when initialization completes
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Example
 
 ```typescript
+// Callback pattern
 Configuration.initialize((err) => {
   if (err) {
     console.error('Configuration initialization failed:', err);
     return;
   }
-
   console.log('Configuration initialized successfully');
   const config = Configuration.getConfig();
 });
+
+// Promise pattern
+try {
+  await Configuration.initialize();
+  console.log('Configuration initialized successfully');
+  const config = Configuration.getConfig();
+} catch (err) {
+  console.error('Configuration initialization failed:', err);
+}
 ```
 
 ---
 
 ### initializeWithConfig()
 
-> `static` **initializeWithConfig**(`config`, `cb`): `void`
+#### Call Signature
+
+> `static` **initializeWithConfig**(`config`): `Promise`\<`void`\>
 
 Initializes the Configuration singleton with a specific configuration.
 
@@ -251,27 +494,24 @@ This method allows you to initialize the configuration with a custom config obje
 instead of loading from Redis. The provided configuration will be validated, parsed,
 and saved to Redis for persistence.
 
-#### Parameters
+##### Parameters
 
-##### config
+###### config
 
 [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
 
 Configuration object to initialize with
 
-##### cb
+##### Returns
 
-`ICallback`
+`Promise`\<`void`\>
 
-Callback function called when initialization completes
+- Returns a Promise if no callback is provided
 
-#### Returns
-
-`void`
-
-#### Example
+##### Example
 
 ```typescript
+// Callback pattern
 const customConfig = {
   namespace: 'production',
   redis: { options: { host: 'redis.example.com' } },
@@ -283,15 +523,125 @@ Configuration.initializeWithConfig(customConfig, (err) => {
     console.error('Configuration initialization failed:', err);
     return;
   }
-
   console.log('Configuration initialized with custom config');
   const config = Configuration.getConfig();
 });
+
+// Promise pattern
+try {
+  await Configuration.initializeWithConfig(customConfig);
+  console.log('Configuration initialized with custom config');
+  const config = Configuration.getConfig();
+} catch (err) {
+  console.error('Configuration initialization failed:', err);
+}
+```
+
+#### Call Signature
+
+> `static` **initializeWithConfig**(`config`, `cb`): `void`
+
+Initializes the Configuration singleton with a specific configuration.
+
+This method allows you to initialize the configuration with a custom config object
+instead of loading from Redis. The provided configuration will be validated, parsed,
+and saved to Redis for persistence.
+
+##### Parameters
+
+###### config
+
+[`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
+
+Configuration object to initialize with
+
+###### cb
+
+`ICallback`
+
+Optional callback function called when initialization completes
+
+##### Returns
+
+`void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+const customConfig = {
+  namespace: 'production',
+  redis: { options: { host: 'redis.example.com' } },
+  logger: { enabled: true },
+};
+
+Configuration.initializeWithConfig(customConfig, (err) => {
+  if (err) {
+    console.error('Configuration initialization failed:', err);
+    return;
+  }
+  console.log('Configuration initialized with custom config');
+  const config = Configuration.getConfig();
+});
+
+// Promise pattern
+try {
+  await Configuration.initializeWithConfig(customConfig);
+  console.log('Configuration initialized with custom config');
+  const config = Configuration.getConfig();
+} catch (err) {
+  console.error('Configuration initialization failed:', err);
+}
 ```
 
 ---
 
 ### shutdown()
+
+#### Call Signature
+
+> `static` **shutdown**(): `Promise`\<`void`\>
+
+Shuts down the Configuration singleton and cleans up resources.
+
+This method safely shuts down the configuration instance, ensuring that
+any ongoing operations complete before cleanup. It prevents new operations
+from starting during shutdown.
+
+After calling this method, you can call `initialize` again to create a new
+configuration instance. This is particularly useful for testing scenarios,
+application restarts, or when you need to reconfigure the application at runtime.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+Configuration.shutdown((err) => {
+  if (err) {
+    console.error('Configuration shutdown failed:', err);
+    return;
+  }
+  console.log('Configuration shut down successfully');
+});
+
+// Promise pattern
+try {
+  await Configuration.shutdown();
+  console.log('Configuration shut down successfully');
+} catch (err) {
+  console.error('Configuration shutdown failed:', err);
+}
+```
+
+#### Call Signature
 
 > `static` **shutdown**(`cb`): `void`
 
@@ -305,21 +655,24 @@ After calling this method, you can call `initialize` again to create a new
 configuration instance. This is particularly useful for testing scenarios,
 application restarts, or when you need to reconfigure the application at runtime.
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-Callback function called when the shutdown operation completes.
+Optional callback function called when the shutdown operation completes
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Example
 
 ```typescript
+// Callback pattern
 Configuration.shutdown((err) => {
   if (err) {
     console.error('Configuration shutdown failed:', err);
@@ -327,4 +680,12 @@ Configuration.shutdown((err) => {
   }
   console.log('Configuration shut down successfully');
 });
+
+// Promise pattern
+try {
+  await Configuration.shutdown();
+  console.log('Configuration shut down successfully');
+} catch (err) {
+  console.error('Configuration shutdown failed:', err);
+}
 ```

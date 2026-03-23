@@ -36,9 +36,9 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
 
   let ids: string[] = [];
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   for (let i = 0; i < 500; i++) {
-    const [id] = await producer.produceAsync(
+    const [id] = await producer.produce(
       new ProducibleMessage()
         .setBody(`msg-${i}`)
         .setQueue(defaultQueue)

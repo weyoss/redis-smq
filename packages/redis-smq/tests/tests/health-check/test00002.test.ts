@@ -23,8 +23,8 @@ test('Health check: case 2', async () => {
   consumer.on('consumer.goingDown', consumerGoingDownMock);
   consumer.on('consumer.goingUp', consumerGoingUpMock);
 
-  await consumer.runAsync();
-  await consumer.shutdownAsync();
+  await consumer.run();
+  await consumer.shutdown();
 
   expect(consumerGoingUpMock).toHaveBeenCalledTimes(1);
   expect(consumerUpMock).toHaveBeenCalledTimes(1);

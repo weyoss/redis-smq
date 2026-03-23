@@ -25,7 +25,7 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
   const { queue, messageId } = await produceMessage();
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesByStatusAsync(queue);
+  const count = await queueMessages.countMessagesByStatus(queue);
   expect(count.pending).toBe(1);
   expect(count.acknowledged).toBe(0);
 
@@ -34,12 +34,12 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
       setTimeout(() => cb(), 20000); // 20s
     },
   });
-  await consumer.runAsync();
+  await consumer.run();
 
   await bluebird.delay(5000);
 
   const message = await getMessageManager();
-  const reply = await message.deleteMessageByIdAsync(messageId);
+  const reply = await message.deleteMessageById(messageId);
   expect(reply.status).toBe('MESSAGE_NOT_DELETED');
   expect(reply.stats).toEqual({
     processed: 1,
@@ -50,11 +50,11 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
 
   await bluebird.delay(20000);
 
-  const count2 = await queueMessages.countMessagesByStatusAsync(queue);
+  const count2 = await queueMessages.countMessagesByStatus(queue);
   expect(count2.pending).toBe(0);
   expect(count2.acknowledged).toBe(1);
 
-  const reply1 = await message.deleteMessageByIdAsync(messageId);
+  const reply1 = await message.deleteMessageById(messageId);
   expect(reply1.status).toBe('OK');
   expect(reply1.stats).toEqual({
     processed: 1,
@@ -63,11 +63,11 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
     inProcess: 0,
   });
 
-  const count3 = await queueMessages.countMessagesByStatusAsync(queue);
+  const count3 = await queueMessages.countMessagesByStatus(queue);
   expect(count3.pending).toBe(0);
   expect(count3.acknowledged).toBe(0);
 
-  const reply2 = await message.deleteMessageByIdAsync(messageId);
+  const reply2 = await message.deleteMessageById(messageId);
   expect(reply2.status).toBe('MESSAGE_NOT_DELETED');
   expect(reply2.stats).toEqual({
     processed: 1,

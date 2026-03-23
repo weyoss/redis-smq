@@ -32,18 +32,17 @@ test('Schedule a message: DELAY', async () => {
     .setQueue(getDefaultQueue());
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   const producedAt = Date.now();
 
   const queueMessages = await getQueueMessages();
 
-  const count = await queueMessages.countMessagesAsync(getDefaultQueue());
+  const count = await queueMessages.countMessages(getDefaultQueue());
   expect(count).toEqual(1);
 
-  const count1 =
-    await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const count1 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(count1).toEqual({
     pending: 0,
     acknowledged: 0,
@@ -55,14 +54,13 @@ test('Schedule a message: DELAY', async () => {
   await bluebird.delay(30000);
 
   const pendingMessages = await getQueuePendingMessages();
-  const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const r = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
 
   const diff = (r.items[0].messageState.publishedAt ?? 0) - producedAt;
   expect(validateTime(diff, 10000)).toBe(true);
 
-  const count2 =
-    await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const count2 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(count2).toEqual({
     pending: 1,
     acknowledged: 0,
@@ -70,6 +68,6 @@ test('Schedule a message: DELAY', async () => {
     scheduled: 0,
   });
 
-  const count3 = await queueMessages.countMessagesAsync(getDefaultQueue());
+  const count3 = await queueMessages.countMessages(getDefaultQueue());
   expect(count3).toEqual(1);
 });

@@ -33,16 +33,16 @@ test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 1', async (
     .setQueue(getDefaultQueue());
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   const producedAt = Date.now();
 
   await startScheduleWorker(getDefaultQueue(), randomUUID());
   await bluebird.delay(30000);
 
   const pendingMessages = await getQueuePendingMessages();
-  const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const r = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(r.items.length).toBe(4);
 
   const diff1 = (r.items[0].messageState.publishedAt ?? 0) - producedAt;

@@ -50,7 +50,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
     if (args[3] === queueAConsumer.getId()) defaultQueueMetrics.acks += 1;
   });
-  await queueAConsumer.runAsync();
+  await queueAConsumer.run();
 
   const queueBConsumer = getConsumer({
     queue: 'queue_b',
@@ -62,15 +62,15 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
     if (args[3] === queueBConsumer.getId()) queueBMetrics.acks += 1;
   });
-  await queueBConsumer.runAsync();
+  await queueBConsumer.run();
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   // Produce a message to QUEUE B
   const anotherMsg = new ProducibleMessage();
   anotherMsg.setBody({ id: 'b' }).setQueue('queue_b');
-  const [id] = await producer.produceAsync(anotherMsg);
+  const [id] = await producer.produce(anotherMsg);
 
   // using defaultQueue
   await crashAConsumerConsumingAMessage();

@@ -26,17 +26,17 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   await shutDownBaseInstance(consumer);
 
   const message = await getMessageManager();
-  const newMessageId = await message.requeueMessageByIdAsync(messageId);
+  const newMessageId = await message.requeueMessageById(messageId);
 
   const pendingMessages = await getQueuePendingMessages();
-  const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  const res2 = await pendingMessages.getMessages(queue, 0, 100);
   expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
   expect(res2.items[0].id).toBe(newMessageId);
   expect(res2.items[0].messageState.requeuedMessageParentId).toEqual(messageId);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  const res3 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
+  const res3 = await acknowledgedMessages.getMessages(queue, 0, 100);
   expect(res3.totalItems).toBe(1);
   expect(res3.items.length).toBe(1);
   expect(res3.items[0].messageState.requeuedAt).toBe(
@@ -47,15 +47,15 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   );
   expect(res3.items[0].messageState.requeueCount).toBe(1);
 
-  const newMessageId2 = await message.requeueMessageByIdAsync(messageId);
+  const newMessageId2 = await message.requeueMessageById(messageId);
 
-  const res4 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  const res4 = await pendingMessages.getMessages(queue, 0, 100);
   expect(res4.totalItems).toBe(2);
   expect(res4.items.length).toBe(2);
   expect(res4.items[1].id).toBe(newMessageId2);
   expect(res4.items[1].messageState.requeuedMessageParentId).toEqual(messageId);
 
-  const res5 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
+  const res5 = await acknowledgedMessages.getMessages(queue, 0, 100);
   expect(res5.totalItems).toBe(1);
   expect(res5.items.length).toBe(1);
   expect(res5.items[0].messageState.requeuedAt).toBe(
@@ -67,7 +67,7 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   expect(res5.items[0].messageState.requeueCount).toBe(2);
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesByStatusAsync(queue);
+  const count = await queueMessages.countMessagesByStatus(queue);
   expect(count.acknowledged).toBe(1);
   expect(count.pending).toBe(2);
 });

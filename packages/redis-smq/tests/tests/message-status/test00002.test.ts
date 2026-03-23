@@ -24,22 +24,22 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTERED', as
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   const msg = new ProducibleMessage();
 
   msg
     .setBody({ hello: 'world' })
     .setQueue(getDefaultQueue())
     .setRetryThreshold(0);
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const message = await getMessageManager();
-  const msg0 = await message.getMessageStatusAsync(id);
+  const msg0 = await message.getMessageStatus(id);
   expect(msg0).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer(false);
   const msg1: EMessagePropertyStatus[] = [];
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => {
+  await consumer.consume(defaultQueue, (msg, cb) => {
     msg1.push(msg.status);
     cb(new Error());
   });
@@ -48,6 +48,6 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTERED', as
   await untilMessageDeadLettered(consumer);
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await message.getMessageStatusAsync(id);
+  const msg2 = await message.getMessageStatus(id);
   expect(msg2).toBe(EMessagePropertyStatus.DEAD_LETTERED);
 });

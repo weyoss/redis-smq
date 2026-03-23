@@ -23,8 +23,8 @@ test('Health check: case 1', async () => {
   producer.on('producer.goingDown', producerGoingDownMock);
   producer.on('producer.goingUp', producerGoingUpMock);
 
-  await producer.runAsync();
-  await producer.shutdownAsync();
+  await producer.run();
+  await producer.shutdown();
 
   expect(producerGoingUpMock).toHaveBeenCalledTimes(1);
   expect(producerUpMock).toHaveBeenCalledTimes(1);

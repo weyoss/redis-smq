@@ -26,7 +26,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer();
   const consume = vitest.spyOn(consumer, 'consume');
@@ -39,7 +39,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setTTL(3000).setQueue(getDefaultQueue());
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
   await bluebird.delay(5000);
   consumer.run(() => void 0);
 
@@ -47,11 +47,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacknowledged).toBe(1);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const list = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const list = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(list.totalItems).toBe(1);
   expect(list.items[0].id).toBe(id);
 });

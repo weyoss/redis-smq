@@ -33,13 +33,13 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
     .setBody('message body')
     .setQueue(getDefaultQueue());
   const producer = getProducer();
-  await producer.runAsync();
-  const [id] = await producer.produceAsync(msg);
+  await producer.run();
+  const [id] = await producer.produce(msg);
 
   consumer.run(() => void 0);
   await untilConsumerDown(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
   expect(typeof res.items[0].id).toBe('string');
   expect(res.items[0].id).toBe(id);

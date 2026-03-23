@@ -23,14 +23,14 @@ test('Produce and consume 100 message: LIFO Queues', async () => {
   await createQueue(defaultQueue, EQueueType.LIFO_QUEUE);
 
   const producer = await getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const total = 100;
   const publishedMsg: string[] = [];
   for (let i = 0; i < total; i += 1) {
     const msg = new ProducibleMessage();
     msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
-    const [id] = await producer.produceAsync(msg);
+    const [id] = await producer.produce(msg);
     publishedMsg.push(id);
   }
 
@@ -41,7 +41,7 @@ test('Produce and consume 100 message: LIFO Queues', async () => {
       cb();
     },
   });
-  await consumer.runAsync();
+  await consumer.run();
   await bluebird.delay(20000);
 
   expect(deliveredMessages.length).toEqual(publishedMsg.length);

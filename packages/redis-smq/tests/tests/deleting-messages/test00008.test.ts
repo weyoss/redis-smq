@@ -32,21 +32,16 @@ test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered m
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
 
-  const res1 = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res1 = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(2);
   const items = res1.items.map((i) => i.id).sort((a, b) => (a > b ? 1 : -1));
   expect(items).toEqual(ids);
 
-  const count =
-    await deadLetteredMessages.countMessagesAsync(getDefaultQueue());
+  const count = await deadLetteredMessages.countMessages(getDefaultQueue());
   expect(count).toBe(2);
 
   const messageManager = await getMessageManager();
-  const reply = await messageManager.deleteMessagesByIdsAsync([msg1, msg2]);
+  const reply = await messageManager.deleteMessagesByIds([msg1, msg2]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({
     processed: 2,
@@ -55,15 +50,10 @@ test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered m
     inProcess: 0,
   });
 
-  const res2 = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res2 = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(res2.totalItems).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const count2 =
-    await deadLetteredMessages.countMessagesAsync(getDefaultQueue());
+  const count2 = await deadLetteredMessages.countMessages(getDefaultQueue());
   expect(count2).toBe(0);
 });

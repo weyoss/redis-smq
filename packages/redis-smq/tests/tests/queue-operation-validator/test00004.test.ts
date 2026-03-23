@@ -22,7 +22,7 @@ describe('QueueOperationValidator: Edge cases and error handling', () => {
     const nonExistentQueue = { name: 'non-existent', ns: 'testing' };
 
     await expect(
-      QueueOperationValidatorAsync.canConsumeAsync(nonExistentQueue),
+      QueueOperationValidatorAsync.canConsume(nonExistentQueue),
     ).rejects.toThrow();
   });
 
@@ -30,8 +30,7 @@ describe('QueueOperationValidator: Edge cases and error handling', () => {
     const queueName = `queue-${Date.now()}`;
     await createQueue(queueName, EQueueType.FIFO_QUEUE);
 
-    const allowed =
-      await QueueOperationValidatorAsync.canProduceAsync(queueName);
+    const allowed = await QueueOperationValidatorAsync.canProduce(queueName);
     expect(allowed).toBe(true);
   });
 
@@ -39,8 +38,7 @@ describe('QueueOperationValidator: Edge cases and error handling', () => {
     const queueWithNs = { name: 'namespaced-queue', ns: 'custom-namespace' };
     await createQueue(queueWithNs, EQueueType.FIFO_QUEUE);
 
-    const allowed =
-      await QueueOperationValidatorAsync.canConsumeAsync(queueWithNs);
+    const allowed = await QueueOperationValidatorAsync.canConsume(queueWithNs);
     expect(allowed).toBe(true);
   });
 });

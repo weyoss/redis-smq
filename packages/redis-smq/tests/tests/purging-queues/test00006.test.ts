@@ -30,27 +30,25 @@ test('Deleting a message queue with all of its data', async () => {
 
   const queueMessages = await getQueueMessages();
 
-  const m = await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const m = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(m.acknowledged).toBe(1);
 
   const q = await getQueueManager();
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotEmptyError);
+  await expect(q.delete(queue)).rejects.toThrow(QueueNotEmptyError);
 
-  await queueMessages.purgeAsync(getDefaultQueue());
+  await queueMessages.purge(getDefaultQueue());
 
   await bluebird.delay(5000);
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(
-    QueueHasActiveConsumersError,
-  );
+  await expect(q.delete(queue)).rejects.toThrow(QueueHasActiveConsumersError);
 
   await shutDownBaseInstance(consumer);
-  await q.deleteAsync(queue);
+  await q.delete(queue);
 
-  await expect(queueMessages.countMessagesByStatusAsync(queue)).rejects.toThrow(
+  await expect(queueMessages.countMessagesByStatus(queue)).rejects.toThrow(
     QueueNotFoundError,
   );
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotFoundError);
+  await expect(q.delete(queue)).rejects.toThrow(QueueNotFoundError);
 });

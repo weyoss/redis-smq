@@ -25,15 +25,15 @@ test('PUB/SUB Delivery: consuming a PUB_SUB queue without providing consumer gro
     name: 'q1',
     ns: 'ns1',
   };
-  await qm.saveAsync(queue, EQueueType.FIFO_QUEUE, EQueueDeliveryModel.PUB_SUB);
+  await qm.save(queue, EQueueType.FIFO_QUEUE, EQueueDeliveryModel.PUB_SUB);
 
   const consumer = bluebird.promisifyAll(RedisSMQ.createConsumer());
-  await consumer.runAsync();
+  await consumer.run();
 
-  await consumer.consumeAsync(queue, (msg, cb) => cb());
+  await consumer.consume(queue, (msg, cb) => cb());
 
   const cg = bluebird.promisifyAll(RedisSMQ.createConsumerGroups());
-  const consumerGroups = await cg.getConsumerGroupsAsync(queue);
+  const consumerGroups = await cg.getConsumerGroups(queue);
   expect(consumerGroups).toEqual([
     _generateEphemeralConsumerGroupId(consumer.getId()),
   ]);
@@ -41,12 +41,12 @@ test('PUB/SUB Delivery: consuming a PUB_SUB queue without providing consumer gro
   const p = bluebird.promisifyAll(RedisSMQ.createProducer());
   const msg = new ProducibleMessage();
   msg.setQueue(queue).setBody('hello');
-  await p.runAsync();
-  const ids = await p.produceAsync(msg);
+  await p.run();
+  const ids = await p.produce(msg);
   expect(ids.length).toEqual(1);
 
   await bluebird.delay(5000);
 
-  const properties = await qm.getPropertiesAsync(queue);
+  const properties = await qm.getProperties(queue);
   expect(properties.acknowledgedMessagesCount).toEqual(1);
 });

@@ -37,72 +37,67 @@ describe('QueueOperationValidator: ACTIVE state operations', () => {
   test('should allow consume when queue is ACTIVE', async () => {
     // Verify queue is ACTIVE
     const queueManager = await getQueueManager();
-    const props = await queueManager.getPropertiesAsync(queue);
+    const props = await queueManager.getProperties(queue);
     expect(props.operationalState).toEqual(EQueueOperationalState.ACTIVE);
 
-    const allowed = await QueueOperationValidatorAsync.canConsumeAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canConsume(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow produce when queue is ACTIVE', async () => {
-    const allowed = await QueueOperationValidatorAsync.canProduceAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canProduce(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow delete when queue is ACTIVE', async () => {
-    const allowed = await QueueOperationValidatorAsync.canDeleteAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canDelete(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow delete message when queue is ACTIVE', async () => {
-    const allowed =
-      await QueueOperationValidatorAsync.canDeleteMessageAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canDeleteMessage(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow purge when queue is ACTIVE', async () => {
-    const allowed = await QueueOperationValidatorAsync.canPurgeAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canPurge(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow requeue when queue is ACTIVE', async () => {
-    const allowed = await QueueOperationValidatorAsync.canRequeueAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canRequeue(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow set rate limit when queue is ACTIVE', async () => {
-    const allowed =
-      await QueueOperationValidatorAsync.canSetRateLimitAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canSetRateLimit(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow clear rate limit when queue is ACTIVE', async () => {
-    const allowed =
-      await QueueOperationValidatorAsync.canClearRateLimitAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canClearRateLimit(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow create consumer group when queue is ACTIVE', async () => {
     const allowed =
-      await QueueOperationValidatorAsync.canCreateConsumerGroupAsync(queue);
+      await QueueOperationValidatorAsync.canCreateConsumerGroup(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow delete consumer group when queue is ACTIVE', async () => {
     const allowed =
-      await QueueOperationValidatorAsync.canDeleteConsumerGroupAsync(queue);
+      await QueueOperationValidatorAsync.canDeleteConsumerGroup(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow bind exchange when queue is ACTIVE', async () => {
-    const allowed =
-      await QueueOperationValidatorAsync.canBindExchangeAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canBindExchange(queue);
     expect(allowed).toBe(true);
   });
 
   test('should allow unbind exchange when queue is ACTIVE', async () => {
-    const allowed =
-      await QueueOperationValidatorAsync.canUnbindExchangeAsync(queue);
+    const allowed = await QueueOperationValidatorAsync.canUnbindExchange(queue);
     expect(allowed).toBe(true);
   });
 });

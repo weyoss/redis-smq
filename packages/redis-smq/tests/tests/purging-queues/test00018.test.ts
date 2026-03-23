@@ -22,19 +22,19 @@ test('Deleting a message queue having live consumers', async () => {
   await createQueue(defaultQueue, false);
 
   const consumer = getConsumer();
-  await consumer.runAsync();
+  await consumer.run();
 
   await bluebird.delay(5000);
 
   const q = await getQueueManager();
-  await expect(q.deleteAsync(defaultQueue)).rejects.toThrow(
+  await expect(q.delete(defaultQueue)).rejects.toThrow(
     QueueHasActiveConsumersError,
   );
 
-  await consumer.shutdownAsync();
+  await consumer.shutdown();
 
   await bluebird.delay(5000);
 
   // should succeed
-  await q.deleteAsync(defaultQueue);
+  await q.delete(defaultQueue);
 });

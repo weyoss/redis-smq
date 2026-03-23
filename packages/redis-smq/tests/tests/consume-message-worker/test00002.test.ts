@@ -27,11 +27,11 @@ import {
 
 it('ConsumeMessageWorker: case 2', async () => {
   const consumer = bluebird.promisifyAll(new Consumer());
-  await consumer.runAsync();
+  await consumer.run();
 
   const queue1 = 'test';
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     queue1,
     EQueueType.FIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
@@ -42,7 +42,7 @@ it('ConsumeMessageWorker: case 2', async () => {
     '../../common/non-existent-handler.js',
   );
 
-  await expect(consumer.consumeAsync(queue1, handlerFilename)).rejects.toThrow(
+  await expect(consumer.consume(queue1, handlerFilename)).rejects.toThrow(
     MessageHandlerFileError,
   );
 
@@ -51,7 +51,7 @@ it('ConsumeMessageWorker: case 2', async () => {
     '../../common/non-existent-handler.jsf',
   );
 
-  await expect(consumer.consumeAsync(queue1, handlerFilename2)).rejects.toThrow(
+  await expect(consumer.consume(queue1, handlerFilename2)).rejects.toThrow(
     MessageHandlerFilenameExtensionError,
   );
 
@@ -59,12 +59,12 @@ it('ConsumeMessageWorker: case 2', async () => {
     env.getCurrentDir(),
     '../../common/message-handler-worker-unacks.js',
   );
-  await consumer.consumeAsync(queue1, handlerFilename3);
+  await consumer.consume(queue1, handlerFilename3);
 
   const producer = bluebird.promisifyAll(new Producer());
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setQueue(queue1)
       .setBody('123')
@@ -74,7 +74,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   await bluebird.delay(5000);
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesByStatusAsync(queue1);
+  const count = await queueMessages.countMessagesByStatus(queue1);
   expect(count).toEqual({
     acknowledged: 0,
     deadLettered: 1,
@@ -82,15 +82,15 @@ it('ConsumeMessageWorker: case 2', async () => {
     scheduled: 0,
   });
 
-  await consumer.cancelAsync(queue1);
+  await consumer.cancel(queue1);
 
   const handlerFilename4 = path.resolve(
     env.getCurrentDir(),
     '../../common/message-handler-worker-unacks-exception.js',
   );
-  await consumer.consumeAsync(queue1, handlerFilename4);
+  await consumer.consume(queue1, handlerFilename4);
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setQueue(queue1)
       .setBody('123')
@@ -99,7 +99,7 @@ it('ConsumeMessageWorker: case 2', async () => {
 
   await bluebird.delay(5000);
 
-  const count2 = await queueMessages.countMessagesByStatusAsync(queue1);
+  const count2 = await queueMessages.countMessagesByStatus(queue1);
   expect(count2).toEqual({
     acknowledged: 0,
     deadLettered: 2,
@@ -107,15 +107,15 @@ it('ConsumeMessageWorker: case 2', async () => {
     scheduled: 0,
   });
 
-  await consumer.cancelAsync(queue1);
+  await consumer.cancel(queue1);
 
   const handlerFilename5 = path.resolve(
     env.getCurrentDir(),
     '../../common/message-handler-worker-faulty.js',
   );
-  await consumer.consumeAsync(queue1, handlerFilename5);
+  await consumer.consume(queue1, handlerFilename5);
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setQueue(queue1)
       .setBody('123')
@@ -124,15 +124,15 @@ it('ConsumeMessageWorker: case 2', async () => {
 
   await bluebird.delay(5000);
 
-  await consumer.cancelAsync(queue1);
+  await consumer.cancel(queue1);
 
   const handlerFilename6 = path.resolve(
     env.getCurrentDir(),
     '../../common/message-handler-worker-faulty-exit.js',
   );
-  await consumer.consumeAsync(queue1, handlerFilename6);
+  await consumer.consume(queue1, handlerFilename6);
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setQueue(queue1)
       .setBody('123')
@@ -141,6 +141,6 @@ it('ConsumeMessageWorker: case 2', async () => {
 
   await bluebird.delay(5000);
 
-  await consumer.shutdownAsync();
-  await producer.shutdownAsync();
+  await consumer.shutdown();
+  await producer.shutdown();
 });

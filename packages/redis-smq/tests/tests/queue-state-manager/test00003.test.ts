@@ -28,14 +28,14 @@ describe('QueueStateManager: consumers stop consuming messages from a queue when
 
     // Start a consumer first
     const consumer = bluebird.promisifyAll(new Consumer());
-    await consumer.runAsync();
+    await consumer.run();
 
     const consumeSpy = vi.fn((msg, done) => done());
-    await consumer.consumeAsync(defaultQueue, consumeSpy);
+    await consumer.consume(defaultQueue, consumeSpy);
 
     const queueManager = await getQueueManager();
     await expect(
-      queueManager.getConsumersAsync(defaultQueue),
+      queueManager.getConsumers(defaultQueue),
     ).resolves.toHaveProperty(consumer.getId());
 
     //
@@ -51,7 +51,7 @@ describe('QueueStateManager: consumers stop consuming messages from a queue when
 
     // Stop the queue
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.pauseAsync(defaultQueue, {
+    await stateManager.pause(defaultQueue, {
       reason: EStateTransitionReason.SCHEDULED,
     });
 
@@ -70,11 +70,9 @@ describe('QueueStateManager: consumers stop consuming messages from a queue when
       },
     ]);
 
-    await expect(queueManager.getConsumersAsync(defaultQueue)).resolves.toEqual(
-      {},
-    );
+    await expect(queueManager.getConsumers(defaultQueue)).resolves.toEqual({});
 
-    await consumer.shutdownAsync();
+    await consumer.shutdown();
   });
 
   test('stop a queue -> consumer stops consuming messages', async () => {
@@ -85,10 +83,10 @@ describe('QueueStateManager: consumers stop consuming messages from a queue when
 
     // Start a consumer first
     const consumer = bluebird.promisifyAll(new Consumer());
-    await consumer.runAsync();
+    await consumer.run();
 
     const consumeSpy = vi.fn((msg, done) => done());
-    await consumer.consumeAsync(defaultQueue, consumeSpy);
+    await consumer.consume(defaultQueue, consumeSpy);
 
     //
     expect(consumer.getQueuesWithStatus()).toEqual([
@@ -102,12 +100,12 @@ describe('QueueStateManager: consumers stop consuming messages from a queue when
     ]);
 
     await expect(
-      queueManager.getConsumersAsync(defaultQueue),
+      queueManager.getConsumers(defaultQueue),
     ).resolves.toHaveProperty(consumer.getId());
 
     // Stop the queue
     const stateManager = bluebird.promisifyAll(new QueueStateManager());
-    await stateManager.stopAsync(defaultQueue, {
+    await stateManager.stop(defaultQueue, {
       reason: EStateTransitionReason.SCHEDULED,
     });
 
@@ -127,10 +125,8 @@ describe('QueueStateManager: consumers stop consuming messages from a queue when
     ]);
 
     //
-    await expect(queueManager.getConsumersAsync(defaultQueue)).resolves.toEqual(
-      {},
-    );
+    await expect(queueManager.getConsumers(defaultQueue)).resolves.toEqual({});
 
-    await consumer.shutdownAsync();
+    await consumer.shutdown();
   });
 });

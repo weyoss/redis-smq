@@ -19,7 +19,7 @@ import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Consume message from different queues and published by a single producer instance', async () => {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   for (let i = 0; i < 5; i += 1) {
     const queue = `QuEue_${i}`;
     await createQueue(queue, false);
@@ -27,12 +27,12 @@ test('Consume message from different queues and published by a single producer i
     const message = new ProducibleMessage();
     // queue name should be normalized to lowercase
     message.setBody(`Message ${i}`).setQueue(queue);
-    await producer.produceAsync(message);
+    await producer.produce(message);
   }
   const queueMessages = await getQueueMessages();
   for (let i = 0; i < 5; i += 1) {
     // Be carefull here: queue name is always in lowercase. Otherwise it will be not normalized
-    const m1 = await queueMessages.countMessagesByStatusAsync(`queue_${i}`);
+    const m1 = await queueMessages.countMessagesByStatus(`queue_${i}`);
     expect(m1).toEqual({
       acknowledged: 0,
       deadLettered: 0,
@@ -50,12 +50,12 @@ test('Consume message from different queues and published by a single producer i
         setTimeout(() => cb(), 10000);
       },
     });
-    await consumer.runAsync();
+    await consumer.run();
     await untilMessageAcknowledged(consumer);
     await shutDownBaseInstance(consumer);
 
     //
-    const m2 = await queueMessages.countMessagesByStatusAsync(`queue_${i}`);
+    const m2 = await queueMessages.countMessagesByStatus(`queue_${i}`);
     expect(m2).toEqual({
       acknowledged: 1,
       deadLettered: 0,

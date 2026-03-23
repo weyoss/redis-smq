@@ -28,7 +28,7 @@ test('Deleting a message queue bound to an exchange', async () => {
   const directExchange = bluebird.promisifyAll(RedisSMQ.createDirectExchange());
   const rkOrderCreated = 'order.created';
 
-  await directExchange.bindQueueAsync(
+  await directExchange.bindQueue(
     defaultQueue,
     exchangeDirectParams,
     rkOrderCreated,
@@ -36,7 +36,7 @@ test('Deleting a message queue bound to an exchange', async () => {
 
   const q = await getQueueManager();
 
-  await expect(q.deleteAsync(defaultQueue)).rejects.toThrow(
+  await expect(q.delete(defaultQueue)).rejects.toThrow(
     QueueHasBoundExchangesError,
   );
 });

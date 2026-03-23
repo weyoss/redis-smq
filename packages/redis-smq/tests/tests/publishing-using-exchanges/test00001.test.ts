@@ -49,7 +49,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
       .setDirectExchange(exchange)
       .setExchangeRoutingKey(routingKey)
       .setBody(payload);
-    await producer.produceAsync(msg);
+    await producer.produce(msg);
   }
 
   async function publishViaTopic(
@@ -62,13 +62,13 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
       .setTopicExchange(exchange)
       .setExchangeRoutingKey(routingKey)
       .setBody(payload);
-    await producer.produceAsync(msg);
+    await producer.produce(msg);
   }
 
   async function publishViaFanout(exchange: IExchangeParams, payload: unknown) {
     const msg = new ProducibleMessage();
     msg.setFanoutExchange(exchange).setBody(payload);
-    await producer.produceAsync(msg);
+    await producer.produce(msg);
   }
 
   beforeEach(async () => {
@@ -84,7 +84,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
 
     // Producer
     producer = bluebird.promisifyAll(RedisSMQ.createProducer());
-    await producer.runAsync();
+    await producer.run();
   });
 
   describe('Direct exchange publishing', () => {
@@ -95,12 +95,12 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
       // Bind:
       // queueA -> order.created
       // queueB -> order.cancelled
-      await directExchange.bindQueueAsync(
+      await directExchange.bindQueue(
         queueA,
         exchangeDirectParams,
         rkOrderCreated,
       );
-      await directExchange.bindQueueAsync(
+      await directExchange.bindQueue(
         queueB,
         exchangeDirectParams,
         rkOrderCancelled,
@@ -131,7 +131,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
     });
 
     it('no deliveries when routing key has no bindings', async () => {
-      await directExchange.bindQueueAsync(
+      await directExchange.bindQueue(
         queueA,
         exchangeDirectParams,
         rkOrderCreated,
@@ -147,12 +147,12 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
 
     it('delivers to multiple queues bound to the same key', async () => {
       // Both queues bound to the same key
-      await directExchange.bindQueueAsync(
+      await directExchange.bindQueue(
         queueA,
         exchangeDirectParams,
         rkOrderCreated,
       );
-      await directExchange.bindQueueAsync(
+      await directExchange.bindQueue(
         queueB,
         exchangeDirectParams,
         rkOrderCreated,
@@ -177,16 +177,8 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
       // Bind patterns:
       // queueA -> order.* (matches "order.created", not "order.vip.created")
       // queueB -> order.# (matches "order", "order.created", "order.vip.created", ...)
-      await topicExchange.bindQueueAsync(
-        queueA,
-        exchangeTopicParams,
-        'order.*',
-      );
-      await topicExchange.bindQueueAsync(
-        queueB,
-        exchangeTopicParams,
-        'order.#',
-      );
+      await topicExchange.bindQueue(queueA, exchangeTopicParams, 'order.*');
+      await topicExchange.bindQueue(queueB, exchangeTopicParams, 'order.#');
 
       // Publish: "order.created" -> both queues should receive
       await publishViaTopic(exchangeTopicParams, 'order.created', {
@@ -227,9 +219,9 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
 
     it('multiple patterns can duplicate-match but each queue receives only one copy', async () => {
       // queueA bound to multiple patterns that both match "user.created"
-      await topicExchange.bindQueueAsync(queueA, exchangeTopicParams, 'user.#');
-      await topicExchange.bindQueueAsync(queueA, exchangeTopicParams, 'user.*');
-      await topicExchange.bindQueueAsync(
+      await topicExchange.bindQueue(queueA, exchangeTopicParams, 'user.#');
+      await topicExchange.bindQueue(queueA, exchangeTopicParams, 'user.*');
+      await topicExchange.bindQueue(
         queueB,
         exchangeTopicParams,
         'user.created',
@@ -257,11 +249,7 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
     });
 
     it('non-matching routing keys do not deliver', async () => {
-      await topicExchange.bindQueueAsync(
-        queueA,
-        exchangeTopicParams,
-        'payment.*',
-      );
+      await topicExchange.bindQueue(queueA, exchangeTopicParams, 'payment.*');
       await expect(
         publishViaTopic(exchangeTopicParams, 'order.created', {
           nope: true,
@@ -273,9 +261,9 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
   describe('Fanout exchange publishing', () => {
     it('delivers to all bound queues regardless of routing key', async () => {
       // Bind three queues
-      await fanoutExchange.bindQueueAsync(queueA, exchangeFanoutParams);
-      await fanoutExchange.bindQueueAsync(queueB, exchangeFanoutParams);
-      await fanoutExchange.bindQueueAsync(queueC, exchangeFanoutParams);
+      await fanoutExchange.bindQueue(queueA, exchangeFanoutParams);
+      await fanoutExchange.bindQueue(queueB, exchangeFanoutParams);
+      await fanoutExchange.bindQueue(queueC, exchangeFanoutParams);
 
       // Publish (routing key ignored for fanout)
       await publishViaFanout(exchangeFanoutParams, { hello: 'fanout' });
@@ -308,17 +296,13 @@ describe('Producer publishing to exchanges (direct/topic/fanout)', () => {
       };
 
       // Bind queueA to direct in ns1, queueB to direct in ns2 (namespaces isolated)
-      await directExchange.bindQueueAsync(
-        queueA,
-        exchangeDirectParams,
-        'ns.test',
-      );
+      await directExchange.bindQueue(queueA, exchangeDirectParams, 'ns.test');
 
       const directExchangeOtherNs = bluebird.promisifyAll(
         RedisSMQ.createDirectExchange(),
       );
       await createQueue({ ns: otherNs, name: 'queueB' }, EQueueType.FIFO_QUEUE);
-      await directExchangeOtherNs.bindQueueAsync(
+      await directExchangeOtherNs.bindQueue(
         { ns: otherNs, name: 'queueB' },
         directOtherNs,
         'ns.test',

@@ -29,7 +29,7 @@ test('Consume message from different queues using a single consumer instance: ca
   await createQueue(defaultQueue, false);
 
   const queueRateLimit = await getQueueRateLimit();
-  await queueRateLimit.setAsync(defaultQueue, {
+  await queueRateLimit.set(defaultQueue, {
     limit: 3,
     interval: 5000,
   });
@@ -39,7 +39,7 @@ test('Consume message from different queues using a single consumer instance: ca
     new Consumer({ enableMultiplexing: true }),
   );
 
-  await consumer.consumeAsync(
+  await consumer.consume(
     defaultQueue,
     (msg: IMessageTransferable, cb: ICallback<void>) => {
       messages.push(msg);
@@ -47,13 +47,13 @@ test('Consume message from different queues using a single consumer instance: ca
     },
   );
 
-  await consumer.runAsync();
+  await consumer.run();
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   for (let i = 0; i < 5; i += 1) {
-    await producer.produceAsync(
+    await producer.produce(
       new ProducibleMessage().setQueue(defaultQueue).setBody(`body ${i + 1}`),
     );
   }

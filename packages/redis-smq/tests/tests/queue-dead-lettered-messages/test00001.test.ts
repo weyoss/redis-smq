@@ -23,12 +23,12 @@ test('Queue dead-lettered message', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const consumer = getConsumer({
     messageHandler: (msg1, cb) => cb(new Error()),
@@ -37,26 +37,20 @@ test('Queue dead-lettered message', async () => {
   await untilMessageDeadLettered(consumer, id);
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const count =
-    await deadLetteredMessages.countMessagesAsync(getDefaultQueue());
+  const count = await deadLetteredMessages.countMessages(getDefaultQueue());
   expect(count).toEqual(1);
 
-  const messages = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const messages = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(Object.keys(messages)).toEqual(['totalItems', 'items']);
   expect(messages.totalItems).toBe(1);
   expect(messages.items.length).toBe(1);
   expect(messages.items[0].id).toBe(id);
 
   const queueMessages = await getQueueMessages();
-  const count1 = await queueMessages.countMessagesAsync(getDefaultQueue());
+  const count1 = await queueMessages.countMessages(getDefaultQueue());
   expect(count1).toBe(1);
 
-  const count2 =
-    await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const count2 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(count2).toEqual({
     pending: 0,
     acknowledged: 0,

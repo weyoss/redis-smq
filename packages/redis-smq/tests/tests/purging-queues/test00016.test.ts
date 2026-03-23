@@ -23,16 +23,16 @@ test('Deleting a message queue having messages', async () => {
   await createQueue(defaultQueue, false);
 
   const { consumer: c1 } = await produceAndAcknowledgeMessage(defaultQueue);
-  await c1.shutdownAsync();
+  await c1.shutdown();
 
   const q = await getQueueManager();
-  await expect(q.deleteAsync(defaultQueue)).rejects.toThrow(QueueNotEmptyError);
+  await expect(q.delete(defaultQueue)).rejects.toThrow(QueueNotEmptyError);
 
   const qm = await getQueueMessages();
-  await qm.purgeAsync(defaultQueue);
+  await qm.purge(defaultQueue);
 
   await bluebird.delay(5000);
 
   // should succeed
-  await q.deleteAsync(defaultQueue);
+  await q.delete(defaultQueue);
 });

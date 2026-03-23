@@ -7,10 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueMessages() {
-  const instance = RedisSMQ.createQueuePublishedMessages();
-  return bluebird.promisifyAll(instance);
+  return RedisSMQ.createQueuePublishedMessages();
 }

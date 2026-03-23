@@ -26,7 +26,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   let consumeCount = 0;
   const consumer = getConsumer({
@@ -45,7 +45,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
     .setConsumeTimeout(2000)
     .setRetryDelay(6000);
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   consumer.run(() => void 0);
   await untilMessageUnacknowledged(consumer);
   await untilMessageAcknowledged(consumer);

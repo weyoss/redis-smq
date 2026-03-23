@@ -61,8 +61,8 @@ test('Given many consumers, a message is delivered only to one consumer', async 
       if (args[3] === consumer2.getId()) acks2 += 1;
     });
 
-  await consumer1.runAsync();
-  await consumer2.runAsync();
+  await consumer1.run();
+  await consumer2.run();
 
   /**
    *
@@ -71,9 +71,9 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
 
   /**
    *

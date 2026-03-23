@@ -8,6 +8,7 @@
  */
 
 import {
+  async,
   CallbackEmptyReplyError,
   createLogger,
   Heartbeat,
@@ -411,7 +412,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *   - An object with `{ ns: string, name: string, groupId: string }` for consumer groups
    * @param {TConsumerMessageHandler} messageHandler - Function that processes each message.
    *   Receives the message and a `done` callback that must be called to acknowledge processing.
-   * @param {ICallback<void>} cb - Callback invoked after consumption setup completes.
+   * @param {ICallback<void>} [cb] - Optional callback invoked after consumption setup completes.
+   *   If not provided, returns a Promise.
+   * @returns {Promise<void> | void} Promise if no callback provided, otherwise void.
    *
    * @throws {InvalidQueueParametersError} When queue parameters are invalid.
    * @throws {MessageHandlerAlreadyExistsError} When a handler for this queue already exists.
@@ -427,34 +430,33 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *
    * @example
    * ```typescript
-   * // Consume from queue with default namespace
+   * // Using callback
    * consumer.consume('my-queue', (message, done) => {
    *   console.log('Processing message:', message);
-   *   // Process message...
-   *   done(); // Acknowledge successful processing
+   *   done();
    * }, (err) => {
    *   if (err) console.error('Failed to setup consumption:', err);
    * });
    *
+   * // Using promise
+   * await consumer.consume('my-queue', (message, done) => {
+   *   console.log('Processing message:', message);
+   *   done();
+   * });
+   *
    * // Consume from queue with custom namespace
-   * consumer.consume(
+   * await consumer.consume(
    *   { ns: 'orders', name: 'incoming' },
    *   (message, done) => {
    *     // Process order...
    *     done();
-   *   },
-   *   (err) => {
-   *     if (err) console.error('Failed to setup consumption:', err);
    *   }
    * );
    *
    * // Consume from consumer group
-   * consumer.consume(
+   * await consumer.consume(
    *   { ns: 'chat', name: 'messages', groupId: 'group-1' },
-   *   messageHandler,
-   *   (err) => {
-   *     if (err) console.error('Failed to setup consumption:', err);
-   *   }
+   *   messageHandler
    * );
    * ```
    *
@@ -463,36 +465,49 @@ export class Consumer extends Runnable<TConsumerEvent> {
   consume(
     queue: TQueueExtendedParams,
     messageHandler: TConsumerMessageHandler,
+  ): Promise<void>;
+  consume(
+    queue: TQueueExtendedParams,
+    messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
-  ): void {
-    this.logger.info(
-      `Setting up consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
-    );
-    const parsedQueueParams = _parseQueueExtendedParams(queue);
-    if (parsedQueueParams instanceof Error) {
-      this.logger.error(
-        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+  ): void;
+  consume(
+    queue: TQueueExtendedParams,
+    messageHandler: TConsumerMessageHandler,
+    cb?: ICallback<void>,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      this.logger.info(
+        `Setting up consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
       );
-      cb(parsedQueueParams);
-    } else {
-      this.logger.debug(
-        `Adding message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
-      );
-      this.messageHandlerRunner.addMessageHandler(
-        parsedQueueParams,
-        messageHandler,
-        (err) => {
-          if (err) {
-            this.logger.error(`Failed to add message handler: ${err.message}`);
-            return cb(err);
-          }
-          this.logger.info(
-            `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''}`,
-          );
-          cb();
-        },
-      );
-    }
+      const parsedQueueParams = _parseQueueExtendedParams(queue);
+      if (parsedQueueParams instanceof Error) {
+        this.logger.error(
+          `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+        );
+        callback(parsedQueueParams);
+      } else {
+        this.logger.debug(
+          `Adding message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
+        );
+        this.messageHandlerRunner.addMessageHandler(
+          parsedQueueParams,
+          messageHandler,
+          (err) => {
+            if (err) {
+              this.logger.error(
+                `Failed to add message handler: ${err.message}`,
+              );
+              return callback(err);
+            }
+            this.logger.info(
+              `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''}`,
+            );
+            callback();
+          },
+        );
+      }
+    });
   }
 
   /**
@@ -503,49 +518,51 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *
    * @param {TQueueExtendedParams} queue - Queue to stop consuming from.
    *   Accepts the same formats as the `consume` method.
-   * @param {ICallback<void>} cb - Callback invoked after cancellation completes.
+   * @param {ICallback<void>} [cb] - Optional callback invoked after cancellation completes.
+   *   If not provided, returns a Promise.
+   * @returns {Promise<void> | void} Promise if no callback provided, otherwise void.
    *
    * @throws {InvalidQueueParametersError} When queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
    *
    * @example
    * ```typescript
-   * // Start consuming
-   * consumer.consume('my-queue', messageHandler, (err) => {
-   *   if (err) return console.error('Failed to setup consumption:', err);
-   *
-   *   // Cancel consumption after 10 seconds
-   *   setTimeout(() => {
-   *     consumer.cancel('my-queue', (err) => {
-   *       if (err) {
-   *         console.error('Error canceling consumption:', err);
-   *       } else {
-   *         console.log('Consumption cancelled successfully');
-   *       }
-   *     });
-   *   }, 10000);
+   * // Using callback
+   * consumer.cancel('my-queue', (err) => {
+   *   if (err) {
+   *     console.error('Error canceling consumption:', err);
+   *   } else {
+   *     console.log('Consumption cancelled successfully');
+   *   }
    * });
    *
+   * // Using promise
+   * await consumer.cancel('my-queue');
+   *
    * // Cancel consumption from a consumer group
-   * consumer.cancel(
-   *   { ns: 'chat', name: 'messages', groupId: 'group-1' },
-   *   (err) => {
-   *     if (err) console.error('Failed to cancel:', err);
-   *   }
-   * );
+   * await consumer.cancel({ ns: 'chat', name: 'messages', groupId: 'group-1' });
    * ```
    */
-  cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
-    this.logger.info(
-      `Canceling consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
-    );
-    const parsedQueueParams = _parseQueueExtendedParams(queue);
-    if (parsedQueueParams instanceof Error) {
-      this.logger.error(
-        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+  cancel(queue: TQueueExtendedParams): Promise<void>;
+  cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void;
+  cancel(
+    queue: TQueueExtendedParams,
+    cb?: ICallback<void>,
+  ): Promise<void> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      this.logger.info(
+        `Canceling consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
       );
-      cb(parsedQueueParams);
-    } else {
+
+      const parsedQueueParams = _parseQueueExtendedParams(queue);
+      if (parsedQueueParams instanceof Error) {
+        this.logger.error(
+          `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+        );
+        callback(parsedQueueParams);
+        return;
+      }
+
       this.logger.debug(
         `Removing message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
       );
@@ -556,16 +573,16 @@ export class Consumer extends Runnable<TConsumerEvent> {
             this.logger.error(
               `Failed to remove message handler: ${err.message}`,
             );
-            cb(err);
+            callback(err);
           } else {
             this.logger.info(
               `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
             );
-            cb();
+            callback();
           }
         },
       );
-    }
+    });
   }
 
   /**

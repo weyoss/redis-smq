@@ -31,7 +31,7 @@ test('Set a rate limit for a queue and consume message using many consumers', as
   await createQueue(defaultQueue, false);
 
   const queueRateLimit = await getQueueRateLimit();
-  await queueRateLimit.setAsync(defaultQueue, {
+  await queueRateLimit.set(defaultQueue, {
     limit: 3,
     interval: 10000,
   });
@@ -46,14 +46,14 @@ test('Set a rate limit for a queue and consume message using many consumers', as
 
   for (let i = 0; i < 6; i += 1) {
     const consumer = getConsumer();
-    await consumer.runAsync();
+    await consumer.run();
   }
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   for (let i = 0; i < 100; i += 1) {
-    await producer.produceAsync(
+    await producer.produce(
       new ProducibleMessage().setBody(`msg ${i}`).setQueue(getDefaultQueue()),
     );
   }

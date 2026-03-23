@@ -34,9 +34,9 @@ it('QueueStorageSortedSet: should fetch all items for a small list', async () =>
 
   const ids: string[] = [];
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   for (let i = 0; i < 20; i++) {
-    const [id] = await producer.produceAsync(
+    const [id] = await producer.produce(
       new ProducibleMessage()
         .setBody(`msg-${i}`)
         .setQueue(defaultQueue)

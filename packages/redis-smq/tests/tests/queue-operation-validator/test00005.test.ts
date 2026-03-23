@@ -36,7 +36,7 @@ describe('QueueOperationValidator: Concurrent validation', () => {
     const validationPromises = Array(10)
       .fill(null)
       .map(() => {
-        return QueueOperationValidatorAsync.canProduceAsync(queue);
+        return QueueOperationValidatorAsync.canProduce(queue);
       });
 
     const results = await Promise.all(validationPromises);
@@ -45,10 +45,10 @@ describe('QueueOperationValidator: Concurrent validation', () => {
 
   test('should handle mixed operation types concurrently', async () => {
     const operations = [
-      QueueOperationValidatorAsync.canConsumeAsync(queue),
-      QueueOperationValidatorAsync.canProduceAsync(queue),
-      QueueOperationValidatorAsync.canDeleteAsync(queue),
-      QueueOperationValidatorAsync.canPurgeAsync(queue),
+      QueueOperationValidatorAsync.canConsume(queue),
+      QueueOperationValidatorAsync.canProduce(queue),
+      QueueOperationValidatorAsync.canDelete(queue),
+      QueueOperationValidatorAsync.canPurge(queue),
     ];
 
     const results = await Promise.all(operations);

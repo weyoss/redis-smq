@@ -22,7 +22,7 @@ import { getProducer } from '../../common/producer.js';
 test('Async exceptions are caught when consuming a message', async () => {
   const eventBus = await getEventBus();
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
@@ -55,7 +55,7 @@ test('Async exceptions are caught when consuming a message', async () => {
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
   consumer.run(() => void 0);
 
   await bluebird.delay(15000);

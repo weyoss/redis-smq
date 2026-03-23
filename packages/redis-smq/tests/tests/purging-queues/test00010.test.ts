@@ -23,14 +23,14 @@ test('Purging priority queue', async () => {
   const { queue } = await produceMessageWithPriority();
   const queueMessages = await getQueueMessages();
 
-  const m2 = await queueMessages.countMessagesByStatusAsync(queue);
+  const m2 = await queueMessages.countMessagesByStatus(queue);
   expect(m2.pending).toBe(1);
 
   const pm = await getQueuePendingMessages();
-  await pm.purgeAsync(queue);
+  await pm.purge(queue);
 
   await bluebird.delay(5000);
 
-  const m3 = await queueMessages.countMessagesByStatusAsync(queue);
+  const m3 = await queueMessages.countMessagesByStatus(queue);
   expect(m3.pending).toBe(0);
 });

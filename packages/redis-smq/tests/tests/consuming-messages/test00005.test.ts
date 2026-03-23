@@ -27,7 +27,7 @@ test('Setting default message TTL from configuration', async () => {
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer();
   const consume = vitest.spyOn(consumer, 'consume');
@@ -39,7 +39,7 @@ test('Setting default message TTL from configuration', async () => {
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue()).setTTL(2000);
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
   await bluebird.delay(5000);
   consumer.run(() => void 0);
 
@@ -48,11 +48,7 @@ test('Setting default message TTL from configuration', async () => {
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const list = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const list = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(list.totalItems).toBe(1);
   expect(list.items[0].id).toBe(id);
 });

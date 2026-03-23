@@ -35,16 +35,16 @@ test('Schedule a message: CRON', async () => {
     .setQueue(getDefaultQueue());
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
 
   await startScheduleWorker(getDefaultQueue(), randomUUID());
   await bluebird.delay(60000);
   await stopScheduleWorker();
 
   const pendingMessages = await getQueuePendingMessages();
-  const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const r = await pendingMessages.getMessages(defaultQueue, 0, 100);
 
   expect(r.totalItems).toBeGreaterThan(8);
   for (let i = 0; i < r.items.length; i += 1) {
@@ -55,11 +55,10 @@ test('Schedule a message: CRON', async () => {
   }
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesAsync(getDefaultQueue());
+  const count = await queueMessages.countMessages(getDefaultQueue());
   expect(count).toBe(r.totalItems + 1);
 
-  const count2 =
-    await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const count2 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(count2).toEqual({
     pending: r.totalItems,
     acknowledged: 0,

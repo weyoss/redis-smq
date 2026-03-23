@@ -8,6 +8,7 @@
  */
 
 import {
+  async,
   CallbackEmptyReplyError,
   createLogger,
   ICallback,
@@ -33,6 +34,21 @@ import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
  * All methods are read-only operations that query existing exchange data from Redis.
  * For exchange creation, binding, and deletion operations, use the specific exchange
  * type classes (ExchangeDirect, ExchangeTopic, ExchangeFanout).
+ *
+ * @example
+ * ```typescript
+ * const exchange = new Exchange();
+ *
+ * // Callback pattern
+ * exchange.getAllExchanges((err, exchanges) => {
+ *   if (err) console.error('Failed:', err);
+ *   else console.log('Exchanges:', exchanges.length);
+ * });
+ *
+ * // Promise pattern
+ * const exchanges = await exchange.getAllExchanges();
+ * console.log('Exchanges:', exchanges.length);
+ * ```
  */
 export class Exchange {
   protected readonly logger: ReturnType<typeof createLogger>;
@@ -56,54 +72,76 @@ export class Exchange {
    * exchanges regardless of their namespace or type. Each exchange entry includes
    * its namespace, name, and type information.
    *
-   * @param cb - Callback invoked with an array of all exchange parameters or an error.
+   * @param cb - Optional callback invoked with an array of all exchange parameters or an error
+   * @returns {Promise<IExchangeParsedParams[]> | void} - Returns a Promise if no callback is provided
    *
    * @throws CallbackEmptyReplyError via callback on unexpected empty Redis reply.
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * exchange.getAllExchanges((err, exchanges) => {
    *   if (err) {
    *     console.error('Failed to get exchanges:', err);
    *     return;
    *   }
-   *
-   *   console.log(`Found ${exchanges.length} exchanges:`);
+   *   console.log(`Found ${exchanges.length} exchanges`);
    *   exchanges.forEach(ex => {
-   *     console.log(`- ${ex.name} (${ex.type}) in namespace ${ex.ns}`);
+   *     console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
    *   });
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const exchanges = await exchange.getAllExchanges();
+   *   console.log(`Found ${exchanges.length} exchanges`);
+   *   exchanges.forEach(ex => {
+   *     console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
+   *   });
+   * } catch (err) {
+   *   console.error('Failed to get exchanges:', err);
+   * }
    * ```
    */
-  getAllExchanges(cb: ICallback<IExchangeParsedParams[]>): void {
-    const { keyExchanges } = redisKeys.getMainKeys();
-    withSharedPoolConnection((client, done) => {
-      client.smembers(keyExchanges, (err, members) => {
-        if (err) {
-          this.logger.error(`getAllExchanges: redis error err=${err.message}`);
-          return done(err);
-        }
-        if (!members) {
-          this.logger.error('getAllExchanges: empty reply');
-          return done(new CallbackEmptyReplyError());
-        }
-        const exchanges: IExchangeParsedParams[] = [];
-        for (const s of members) {
-          try {
-            const ex: IExchangeParsedParams = JSON.parse(s);
-            if (ex && ex.ns && ex.name) exchanges.push(ex);
-          } catch {
-            this.logger.warn(
-              'getAllExchanges: ignoring malformed exchange entry',
+  getAllExchanges(
+    cb?: ICallback<IExchangeParsedParams[]>,
+  ): Promise<IExchangeParsedParams[]>;
+  getAllExchanges(cb: ICallback<IExchangeParsedParams[]>): void;
+  getAllExchanges(
+    cb?: ICallback<IExchangeParsedParams[]>,
+  ): Promise<IExchangeParsedParams[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const { keyExchanges } = redisKeys.getMainKeys();
+      withSharedPoolConnection((client, done) => {
+        client.smembers(keyExchanges, (err, members) => {
+          if (err) {
+            this.logger.error(
+              `getAllExchanges: redis error err=${err.message}`,
             );
+            return done(err);
           }
-        }
-        this.logger.debug(
-          `getAllExchanges: found ${exchanges.length} exchange(s)`,
-        );
-        done(null, exchanges);
-      });
-    }, cb);
+          if (!members) {
+            this.logger.error('getAllExchanges: empty reply');
+            return done(new CallbackEmptyReplyError());
+          }
+          const exchanges: IExchangeParsedParams[] = [];
+          for (const s of members) {
+            try {
+              const ex: IExchangeParsedParams = JSON.parse(s);
+              if (ex && ex.ns && ex.name) exchanges.push(ex);
+            } catch {
+              this.logger.warn(
+                'getAllExchanges: ignoring malformed exchange entry',
+              );
+            }
+          }
+          this.logger.debug(
+            `getAllExchanges: found ${exchanges.length} exchange(s)`,
+          );
+          done(null, exchanges);
+        });
+      }, callback);
+    });
   }
 
   /**
@@ -114,56 +152,73 @@ export class Exchange {
    * is validated to ensure it conforms to Redis key naming requirements.
    *
    * @param ns - The namespace to query. Must be a valid Redis key identifier.
-   * @param cb - Callback invoked with an array of exchange parameters for the namespace or an error.
+   * @param cb - Optional callback invoked with an array of exchange parameters for the namespace or an error
+   * @returns {Promise<IExchangeParsedParams[]> | void} - Returns a Promise if no callback is provided
    *
-   * @throws InvalidNamespaceError
+   * @throws {InvalidNamespaceError} When the namespace is invalid.
    *
    * @example
    * ```typescript
+   * // Callback pattern
    * exchange.getNamespaceExchanges('production', (err, exchanges) => {
    *   if (err) {
    *     console.error('Failed to get namespace exchanges:', err);
    *     return;
    *   }
-   *
    *   console.log(`Production namespace has ${exchanges.length} exchanges:`);
    *   exchanges.forEach(ex => {
    *     console.log(`- ${ex.name} (${ex.type})`);
    *   });
    * });
+   *
+   * // Promise pattern
+   * try {
+   *   const exchanges = await exchange.getNamespaceExchanges('staging');
+   *   console.log(`Staging namespace has ${exchanges.length} exchanges`);
+   *   exchanges.forEach(ex => console.log(`- ${ex.name} (${ex.type})`));
+   * } catch (err) {
+   *   console.error('Failed to get namespace exchanges:', err);
+   * }
    * ```
    */
+  getNamespaceExchanges(ns: string): Promise<IExchangeParsedParams[]>;
   getNamespaceExchanges(
     ns: string,
     cb: ICallback<IExchangeParsedParams[]>,
-  ): void {
-    const namespace = redisKeys.validateRedisKey(ns);
-    if (namespace instanceof InvalidRedisKeyError) {
-      this.logger.error('getNamespaceExchanges: invalid namespace');
-      return cb(new InvalidNamespaceError());
-    }
-    const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(namespace);
-    withSharedPoolConnection((client, done) => {
-      client.smembers(keyNamespaceExchanges, (err, members) => {
-        if (err) {
-          this.logger.error(
-            `getNamespaceExchanges: redis error ns=${ns} err=${err.message}`,
+  ): void;
+  getNamespaceExchanges(
+    ns: string,
+    cb?: ICallback<IExchangeParsedParams[]>,
+  ): Promise<IExchangeParsedParams[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const namespace = redisKeys.validateRedisKey(ns);
+      if (namespace instanceof InvalidRedisKeyError) {
+        this.logger.error('getNamespaceExchanges: invalid namespace');
+        return callback(new InvalidNamespaceError());
+      }
+      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(namespace);
+      withSharedPoolConnection((client, done) => {
+        client.smembers(keyNamespaceExchanges, (err, members) => {
+          if (err) {
+            this.logger.error(
+              `getNamespaceExchanges: redis error ns=${ns} err=${err.message}`,
+            );
+            return done(err);
+          }
+          if (!members) {
+            this.logger.error(`getNamespaceExchanges: empty reply ns=${ns}`);
+            return done(new CallbackEmptyReplyError());
+          }
+          const exchanges: IExchangeParsedParams[] = members.map((i) =>
+            JSON.parse(i),
           );
-          return done(err);
-        }
-        if (!members) {
-          this.logger.error(`getNamespaceExchanges: empty reply ns=${ns}`);
-          return done(new CallbackEmptyReplyError());
-        }
-        const exchanges: IExchangeParsedParams[] = members.map((i) =>
-          JSON.parse(i),
-        );
-        this.logger.debug(
-          `getNamespaceExchanges: ns=${ns} count=${exchanges.length}`,
-        );
-        done(null, exchanges);
-      });
-    }, cb);
+          this.logger.debug(
+            `getNamespaceExchanges: ns=${ns} count=${exchanges.length}`,
+          );
+          done(null, exchanges);
+        });
+      }, callback);
+    });
   }
 
   /**
@@ -176,71 +231,84 @@ export class Exchange {
    * The queue parameter can be either a string name (using the default namespace)
    * or a complete IQueueParams object specifying both namespace and name.
    *
-   * @param queue - Queue name (string) or complete queue parameters (IQueueParams).
-   * @param cb - Callback invoked with an array of exchange parameters the queue is bound to or an error.
+   * @param queue - Queue name (string) or complete queue parameters (IQueueParams)
+   * @param cb - Optional callback invoked with an array of exchange parameters the queue is bound to or an error
+   * @returns {Promise<IExchangeParsedParams[]> | void} - Returns a Promise if no callback is provided
    *
-   * @throws InvalidQueueParametersError
+   * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    *
    * @example
    * ```typescript
-   * // Using queue name (default namespace)
-   * exchange.getQueueBoundExchanges('order-processing', (err, exchanges) => {
+   * // Callback pattern - using queue name (default namespace)
+   * exchange.getQueueExchanges('order-processing', (err, exchanges) => {
    *   if (err) {
    *     console.error('Failed to get queue bindings:', err);
    *     return;
    *   }
-   *
    *   console.log(`Queue is bound to ${exchanges.length} exchanges:`);
    *   exchanges.forEach(ex => {
    *     console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
    *   });
    * });
    *
-   * // Using complete queue parameters
-   * exchange.getQueueBoundExchanges(
-   *   { name: 'notifications', ns: 'production' },
-   *   (err, exchanges) => {
-   *     // Handle results...
-   *   }
-   * );
+   * // Promise pattern - using complete queue parameters
+   * try {
+   *   const exchanges = await exchange.getQueueExchanges({
+   *     name: 'notifications',
+   *     ns: 'production'
+   *   });
+   *   console.log(`Queue bound to ${exchanges.length} exchanges`);
+   *   exchanges.forEach(ex => console.log(`- ${ex.name} (${ex.type})`));
+   * } catch (err) {
+   *   console.error('Failed to get queue bindings:', err);
+   * }
    * ```
    */
   getQueueExchanges(
     queue: string | IQueueParams,
+  ): Promise<IExchangeParsedParams[]>;
+  getQueueExchanges(
+    queue: string | IQueueParams,
     cb: ICallback<IExchangeParsedParams[]>,
-  ): void {
-    const queueParams = _parseQueueParams(queue);
-    if (queueParams instanceof Error) {
-      this.logger.error('getQueueBoundExchanges: invalid queue params');
-      return cb(queueParams);
-    }
-    const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
-      queueParams.ns,
-      queueParams.name,
-      null,
-    );
-    withSharedPoolConnection((client, done) => {
-      client.smembers(keyQueueExchangeBindings, (err, members) => {
-        if (err) {
-          this.logger.error(
-            `getQueueBoundExchanges: redis error ns=${queueParams.ns} q=${queueParams.name} err=${err.message}`,
+  ): void;
+  getQueueExchanges(
+    queue: string | IQueueParams,
+    cb?: ICallback<IExchangeParsedParams[]>,
+  ): Promise<IExchangeParsedParams[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueParams = _parseQueueParams(queue);
+      if (queueParams instanceof Error) {
+        this.logger.error('getQueueBoundExchanges: invalid queue params');
+        return callback(queueParams);
+      }
+      const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
+        queueParams.ns,
+        queueParams.name,
+        null,
+      );
+      withSharedPoolConnection((client, done) => {
+        client.smembers(keyQueueExchangeBindings, (err, members) => {
+          if (err) {
+            this.logger.error(
+              `getQueueBoundExchanges: redis error ns=${queueParams.ns} q=${queueParams.name} err=${err.message}`,
+            );
+            return done(err);
+          }
+          if (!members) {
+            this.logger.error(
+              `getQueueBoundExchanges: empty reply ns=${queueParams.ns} q=${queueParams.name}`,
+            );
+            return done(new CallbackEmptyReplyError());
+          }
+          const exchanges: IExchangeParsedParams[] = members.map((i) =>
+            JSON.parse(i),
           );
-          return done(err);
-        }
-        if (!members) {
-          this.logger.error(
-            `getQueueBoundExchanges: empty reply ns=${queueParams.ns} q=${queueParams.name}`,
+          this.logger.debug(
+            `getQueueBoundExchanges: ns=${queueParams.ns} q=${queueParams.name} count=${exchanges.length}`,
           );
-          return done(new CallbackEmptyReplyError());
-        }
-        const exchanges: IExchangeParsedParams[] = members.map((i) =>
-          JSON.parse(i),
-        );
-        this.logger.debug(
-          `getQueueBoundExchanges: ns=${queueParams.ns} q=${queueParams.name} count=${exchanges.length}`,
-        );
-        done(null, exchanges);
-      });
-    }, cb);
+          done(null, exchanges);
+        });
+      }, callback);
+    });
   }
 }

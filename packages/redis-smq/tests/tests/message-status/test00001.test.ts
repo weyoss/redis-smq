@@ -24,19 +24,19 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', asy
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
   const msg = new ProducibleMessage();
 
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const message = await getMessageManager();
-  const status0 = await message.getMessageStatusAsync(id);
+  const status0 = await message.getMessageStatus(id);
   expect(status0).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer(false);
   const statuses: EMessagePropertyStatus[] = [];
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => {
+  await consumer.consume(defaultQueue, (msg, cb) => {
     statuses.push(msg.status);
     message.getMessageStatus(msg.id, (err, status) => {
       if (err) cb(err);
@@ -53,6 +53,6 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', asy
   expect(statuses[0]).toBe(EMessagePropertyStatus.PROCESSING);
   expect(statuses[1]).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const status1 = await message.getMessageStatusAsync(id);
+  const status1 = await message.getMessageStatus(id);
   expect(status1).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

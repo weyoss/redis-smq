@@ -31,7 +31,7 @@ Creates a new Consumer instance with custom configuration.
 
 [`IConsumerOptions`](../interfaces/IConsumerOptions.md)
 
-Configuration options
+Configuration options for the consumer
 
 #### Returns
 
@@ -47,6 +47,10 @@ A new Consumer instance with the specified configuration
 #### Example
 
 ```typescript
+// Create with default options
+const consumer = ConsumerFactory.create();
+
+// Create with custom options
 const consumer = ConsumerFactory.create({
   enableMultiplexing: true,
   heartbeatTTL: 60000,
@@ -54,7 +58,6 @@ const consumer = ConsumerFactory.create({
     batchSize: 500,
     batchTimeoutMs: 5000,
   },
-  batchUnacks: false,
 });
 ```
 
@@ -258,10 +261,14 @@ Error if RedisSMQ is not initialized
 #### Example
 
 ```typescript
-const producer = RedisSMQ.createProducer();
+// Create producer with default settings
+const producer = ProducerFactory.create();
+
+// Create and start producer
+const producer = ProducerFactory.create();
 producer.run((err) => {
-  if (err) return console.error('Producer failed to start:', err);
-  // Producer is ready to send messages
+  if (err) console.error('Failed to start:', err);
+  else console.log('Producer ready');
 });
 ```
 
@@ -523,35 +530,36 @@ RedisSMQ.initialize(
 
 ### initialize()
 
-> `static` **initialize**: (`redisConfig`, `cb`) => `void` = `LifecycleManager.initialize`
+> `static` **initialize**: \{(`redisConfig`): `Promise`\<`void`\>; (`redisConfig`, `cb`): `void`; \} = `LifecycleManager.initialize`
+
+#### Call Signature
+
+> (`redisConfig`): `Promise`\<`void`\>
 
 Initializes RedisSMQ with Redis connection settings.
 This is the simplest way to get started - just provide Redis connection once.
 
-#### Parameters
+##### Parameters
 
-##### redisConfig
+###### redisConfig
 
 `IRedisConfig`
 
 Redis connection configuration
 
-##### cb
+##### Returns
 
-`ICallback`
+`Promise`\<`void`\>
 
-Callback function called when initialization completes
+- Returns a Promise if no callback is provided
 
-#### Returns
-
-`void`
-
-#### Example
+##### Example
 
 ```typescript
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
+// Callback pattern
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
@@ -563,86 +571,225 @@ RedisSMQ.initialize(
   },
   (err) => {
     if (err) {
-      console.error('Failed to initialize RedisSMQ:', err);
+      console.error('Failed to initialize:', err);
       return;
     }
     console.log('RedisSMQ initialized successfully');
-
-    // Now you can create producers and consumers without Redis config!
-    const producer = RedisSMQ.createProducer();
-    const consumer = RedisSMQ.createConsumer();
-
-    producer.run((e) => {
-      if (e) return console.error('Producer failed to start:', e);
-      console.log('Producer ready');
-    });
-
-    consumer.run((e) => {
-      if (e) return console.error('Consumer failed to start:', e);
-      console.log('Consumer ready');
-    });
   },
 );
+
+// Promise pattern
+try {
+  await RedisSMQ.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  });
+  console.log('RedisSMQ initialized successfully');
+} catch (err) {
+  console.error('Failed to initialize:', err);
+}
+```
+
+#### Call Signature
+
+> (`redisConfig`, `cb`): `void`
+
+Initializes RedisSMQ with Redis connection settings.
+This is the simplest way to get started - just provide Redis connection once.
+
+##### Parameters
+
+###### redisConfig
+
+`IRedisConfig`
+
+Redis connection configuration
+
+###### cb
+
+`ICallback`
+
+Optional callback function called when initialization completes
+
+##### Returns
+
+`void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
+
+// Callback pattern
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: 'localhost',
+      port: 6379,
+      db: 0,
+    },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize:', err);
+      return;
+    }
+    console.log('RedisSMQ initialized successfully');
+  },
+);
+
+// Promise pattern
+try {
+  await RedisSMQ.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  });
+  console.log('RedisSMQ initialized successfully');
+} catch (err) {
+  console.error('Failed to initialize:', err);
+}
 ```
 
 ---
 
 ### initializeWithConfig()
 
-> `static` **initializeWithConfig**: (`redisSMQConfig`, `cb`) => `void` = `LifecycleManager.initializeWithConfig`
+> `static` **initializeWithConfig**: \{(`redisSMQConfig`): `Promise`\<`void`\>; (`redisSMQConfig`, `cb`): `void`; \} = `LifecycleManager.initializeWithConfig`
+
+#### Call Signature
+
+> (`redisSMQConfig`): `Promise`\<`void`\>
 
 Initializes RedisSMQ with custom RedisSMQ configuration.
 This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
 The Redis connection configuration is extracted from the provided RedisSMQ configuration.
 
-#### Parameters
+##### Parameters
 
-##### redisSMQConfig
+###### redisSMQConfig
 
 [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
 
 Complete RedisSMQ configuration including Redis settings
 
-##### cb
+##### Returns
 
-`ICallback`
+`Promise`\<`void`\>
 
-Callback function called when initialization completes
+- Returns a Promise if no callback is provided
 
-#### Returns
-
-`void`
-
-#### Example
+##### Example
 
 ```typescript
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
+// Callback pattern
 RedisSMQ.initializeWithConfig(
   {
     namespace: 'my-custom-app',
     redis: {
       client: ERedisConfigClient.IOREDIS,
-      options: {
-        host: 'localhost',
-        port: 6379,
-        db: 0,
-      },
+      options: { host: 'localhost', port: 6379 },
     },
-    logger: {
-      enabled: true,
-    },
+    logger: { enabled: true },
     eventBus: { enabled: true },
   },
   (err) => {
     if (err) {
-      console.error('Failed to initialize RedisSMQ:', err);
+      console.error('Failed to initialize:', err);
     } else {
-      console.log('RedisSMQ initialized with custom configuration');
+      console.log('Initialized with custom config');
     }
   },
 );
+
+// Promise pattern
+try {
+  await RedisSMQ.initializeWithConfig({
+    namespace: 'production',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: { host: 'redis.example.com', port: 6379 },
+    },
+  });
+  console.log('RedisSMQ initialized with custom config');
+} catch (err) {
+  console.error('Failed to initialize:', err);
+}
+```
+
+#### Call Signature
+
+> (`redisSMQConfig`, `cb`): `void`
+
+Initializes RedisSMQ with custom RedisSMQ configuration.
+This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
+The Redis connection configuration is extracted from the provided RedisSMQ configuration.
+
+##### Parameters
+
+###### redisSMQConfig
+
+[`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
+
+Complete RedisSMQ configuration including Redis settings
+
+###### cb
+
+`ICallback`
+
+Optional callback function called when initialization completes
+
+##### Returns
+
+`void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
+
+// Callback pattern
+RedisSMQ.initializeWithConfig(
+  {
+    namespace: 'my-custom-app',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: { host: 'localhost', port: 6379 },
+    },
+    logger: { enabled: true },
+    eventBus: { enabled: true },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize:', err);
+    } else {
+      console.log('Initialized with custom config');
+    }
+  },
+);
+
+// Promise pattern
+try {
+  await RedisSMQ.initializeWithConfig({
+    namespace: 'production',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: { host: 'redis.example.com', port: 6379 },
+    },
+  });
+  console.log('RedisSMQ initialized with custom config');
+} catch (err) {
+  console.error('Failed to initialize:', err);
+}
 ```
 
 ---
@@ -659,30 +806,120 @@ Checks if RedisSMQ has been initialized.
 
 True if initialized, false otherwise
 
+#### Example
+
+```typescript
+if (RedisSMQ.isInitialized()) {
+  console.log('RedisSMQ is ready to use');
+} else {
+  console.log('RedisSMQ not initialized yet');
+}
+
+// Use in conditional logic
+if (!RedisSMQ.isInitialized()) {
+  await RedisSMQ.initialize({ host: 'localhost', port: 6379 });
+}
+```
+
 ---
 
 ### reset()
 
-> `static` **reset**: (`cb`) => `void` = `LifecycleManager.reset`
+> `static` **reset**: \{(): `Promise`\<`void`\>; (`cb`): `void`; \} = `LifecycleManager.reset`
+
+#### Call Signature
+
+> (): `Promise`\<`void`\>
 
 Resets RedisSMQ initialization state.
 Useful for testing or reconfiguration.
 
-#### Parameters
+##### Returns
 
-##### cb
+`Promise`\<`void`\>
 
-`ICallback` = `...`
+- Returns a Promise if no callback is provided
 
-#### Returns
+##### Example
+
+```typescript
+// Callback pattern
+RedisSMQ.reset((err) => {
+  if (err) {
+    console.error('Reset failed:', err);
+  } else {
+    console.log('RedisSMQ reset successfully');
+    // Can now reinitialize with new configuration
+    RedisSMQ.initialize(newConfig);
+  }
+});
+
+// Promise pattern
+try {
+  await RedisSMQ.reset();
+  console.log('RedisSMQ reset successfully');
+  // Reinitialize with new configuration
+  await RedisSMQ.initialize(newConfig);
+} catch (err) {
+  console.error('Reset failed:', err);
+}
+```
+
+#### Call Signature
+
+> (`cb`): `void`
+
+Resets RedisSMQ initialization state.
+Useful for testing or reconfiguration.
+
+##### Parameters
+
+###### cb
+
+`ICallback`
+
+Optional callback function called when reset completes
+
+##### Returns
 
 `void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+RedisSMQ.reset((err) => {
+  if (err) {
+    console.error('Reset failed:', err);
+  } else {
+    console.log('RedisSMQ reset successfully');
+    // Can now reinitialize with new configuration
+    RedisSMQ.initialize(newConfig);
+  }
+});
+
+// Promise pattern
+try {
+  await RedisSMQ.reset();
+  console.log('RedisSMQ reset successfully');
+  // Reinitialize with new configuration
+  await RedisSMQ.initialize(newConfig);
+} catch (err) {
+  console.error('Reset failed:', err);
+}
+```
 
 ---
 
 ### shutdown()
 
-> `static` **shutdown**: (`cb`) => `void` = `LifecycleManager.shutdown`
+> `static` **shutdown**: \{(): `Promise`\<`void`\>; (`cb`): `void`; \} = `LifecycleManager.shutdown`
+
+#### Call Signature
+
+> (): `Promise`\<`void`\>
 
 Shuts down RedisSMQ and closes shared resources.
 
@@ -696,29 +933,98 @@ Note: You should still shutdown any created components (e.g. Producer, Consumer,
 QueueManagers, MessageManager, etc.) prior to calling this method to ensure all
 in-flight operations complete and connections are released back to the pool.
 
-#### Parameters
+##### Returns
 
-##### cb
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+RedisSMQ.shutdown((err) => {
+  if (err) {
+    console.error('Shutdown failed:', err);
+  } else {
+    console.log('RedisSMQ shut down successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await RedisSMQ.shutdown();
+  console.log('RedisSMQ shut down successfully');
+} catch (err) {
+  console.error('Shutdown failed:', err);
+}
+```
+
+#### Call Signature
+
+> (`cb`): `void`
+
+Shuts down RedisSMQ and closes shared resources.
+
+This convenience method:
+
+- Gracefully shuts down the Redis connection pool
+- Closes the configuration Redis client
+- Resets RedisSMQ initialization state
+
+Note: You should still shutdown any created components (e.g. Producer, Consumer,
+QueueManagers, MessageManager, etc.) prior to calling this method to ensure all
+in-flight operations complete and connections are released back to the pool.
+
+##### Parameters
+
+###### cb
 
 `ICallback`
 
-Callback invoked when shutdown completes
+Optional callback invoked when shutdown completes
 
-#### Returns
+##### Returns
 
 `void`
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern
+RedisSMQ.shutdown((err) => {
+  if (err) {
+    console.error('Shutdown failed:', err);
+  } else {
+    console.log('RedisSMQ shut down successfully');
+  }
+});
+
+// Promise pattern
+try {
+  await RedisSMQ.shutdown();
+  console.log('RedisSMQ shut down successfully');
+} catch (err) {
+  console.error('Shutdown failed:', err);
+}
+```
 
 ---
 
 ### startConsumer()
 
-> `static` **startConsumer**: \{(`consumerOptions`, `cb`): [`Consumer`](Consumer.md); (`cb`): [`Consumer`](Consumer.md); \}
+> `static` **startConsumer**: \{(`consumerOptions`): `Promise`\<[`Consumer`](Consumer.md)\>; (`consumerOptions`, `cb`): [`Consumer`](Consumer.md); \}
 
 #### Call Signature
 
-> (`consumerOptions`, `cb`): [`Consumer`](Consumer.md)
+> (`consumerOptions`): `Promise`\<[`Consumer`](Consumer.md)\>
 
 Creates and automatically starts a consumer with custom configuration.
+
+This method creates a consumer and starts it in a single operation.
+The consumer is automatically tracked for lifecycle management.
 
 ##### Parameters
 
@@ -726,19 +1032,13 @@ Creates and automatically starts a consumer with custom configuration.
 
 [`IConsumerOptions`](../interfaces/IConsumerOptions.md)
 
-Configuration options
-
-###### cb
-
-`ICallback`\<`void`\>
-
-Callback invoked when consumer starts
+Configuration options for the consumer
 
 ##### Returns
 
-[`Consumer`](Consumer.md)
+`Promise`\<[`Consumer`](Consumer.md)\>
 
-The created Consumer instance
+The created Consumer instance (started automatically)
 
 ##### See
 
@@ -748,119 +1048,195 @@ The created Consumer instance
 ##### Example
 
 ```typescript
+// Callback pattern
 const consumer = ConsumerFactory.startConsumer(
-  {
-    enableMultiplexing: true,
-    batchAcks: { batchSize: 200 },
-  },
+  { enableMultiplexing: true },
   (err) => {
     if (err) {
       console.error('Failed to start:', err);
       return;
     }
-
-    // Consumer is running, set up message consumption
-    consumer.consume(
-      'orders',
-      (message, done) => {
-        console.log('Processing order:', message);
-        done();
-      },
-      (consumeErr) => {
-        if (consumeErr)
-          console.error('Failed to setup consumption:', consumeErr);
-      },
-    );
+    console.log('Consumer started');
+    consumer.consume('my-queue', (message, done) => {
+      console.log('Processing:', message);
+      done();
+    });
   },
 );
+
+// Promise pattern
+try {
+  const consumer = await ConsumerFactory.startConsumer({
+    enableMultiplexing: true,
+    batchAcks: { batchSize: 200 },
+  });
+  console.log('Consumer started');
+  await consumer.consume('orders', (message, done) => {
+    console.log('Processing order:', message);
+    done();
+  });
+} catch (err) {
+  console.error('Failed to start consumer:', err);
+}
 ```
 
 #### Call Signature
 
-> (`cb`): [`Consumer`](Consumer.md)
+> (`consumerOptions`, `cb`): [`Consumer`](Consumer.md)
 
-Creates and automatically starts a consumer with default configuration.
+Creates and automatically starts a consumer with custom configuration.
+
+This method creates a consumer and starts it in a single operation.
+The consumer is automatically tracked for lifecycle management.
 
 ##### Parameters
+
+###### consumerOptions
+
+[`IConsumerOptions`](../interfaces/IConsumerOptions.md)
+
+Configuration options for the consumer
 
 ###### cb
 
 `ICallback`\<`void`\>
 
-Callback invoked when consumer starts
+Optional callback invoked when consumer starts or if an error occurs
 
 ##### Returns
 
 [`Consumer`](Consumer.md)
 
-The created Consumer instance
+The created Consumer instance (started automatically)
 
 ##### See
 
 - [Consumer.run](Consumer.md#run) for startup behavior
-- [Consumer.getDefaultOptions](Consumer.md#getdefaultoptions) to view default settings
+- [Consumer.consume](Consumer.md#consume) for setting up message handlers after startup
 
 ##### Example
 
 ```typescript
-// Create and start consumer with default settings
-const consumer = ConsumerFactory.startConsumer((err) => {
-  if (err) {
-    console.error('Failed to start consumer:', err);
-    return;
-  }
-
-  // Consumer is now running, set up message consumption
-  consumer.consume(
-    'my-queue',
-    (message, done) => {
-      console.log('Processing message:', message);
+// Callback pattern
+const consumer = ConsumerFactory.startConsumer(
+  { enableMultiplexing: true },
+  (err) => {
+    if (err) {
+      console.error('Failed to start:', err);
+      return;
+    }
+    console.log('Consumer started');
+    consumer.consume('my-queue', (message, done) => {
+      console.log('Processing:', message);
       done();
-    },
-    (consumeErr) => {
-      if (consumeErr) console.error('Failed to start consumption:', consumeErr);
-    },
-  );
-
-  // Later, shut down gracefully
-  process.on('SIGTERM', () => {
-    consumer.shutdown(() => {
-      console.log('Consumer shut down');
     });
+  },
+);
+
+// Promise pattern
+try {
+  const consumer = await ConsumerFactory.startConsumer({
+    enableMultiplexing: true,
+    batchAcks: { batchSize: 200 },
   });
-});
+  console.log('Consumer started');
+  await consumer.consume('orders', (message, done) => {
+    console.log('Processing order:', message);
+    done();
+  });
+} catch (err) {
+  console.error('Failed to start consumer:', err);
+}
 ```
 
 ---
 
 ### startProducer()
 
-> `static` **startProducer**: (`cb`) => [`Producer`](Producer.md)
+> `static` **startProducer**: \{(): `Promise`\<[`Producer`](Producer.md)\>; (`cb`): [`Producer`](Producer.md); \}
+
+#### Call Signature
+
+> (): `Promise`\<[`Producer`](Producer.md)\>
 
 Convenience method to create and start a producer in one call.
 
-#### Parameters
+##### Returns
 
-##### cb
+`Promise`\<[`Producer`](Producer.md)\>
+
+The created Producer instance (started automatically)
+
+##### Example
+
+```typescript
+// Callback pattern
+const producer = ProducerFactory.startProducer((err) => {
+  if (err) {
+    console.error('Failed to start producer:', err);
+    return;
+  }
+  console.log('Producer started');
+  producer.produce(message, (produceErr, messageIds) => {
+    if (produceErr) console.error('Failed to produce:', produceErr);
+    else console.log('Message sent:', messageIds);
+  });
+});
+
+// Promise pattern
+try {
+  const producer = await ProducerFactory.startProducer();
+  console.log('Producer started');
+  const messageIds = await producer.produce(message);
+  console.log('Message sent:', messageIds);
+} catch (err) {
+  console.error('Failed to start producer or send message:', err);
+}
+```
+
+#### Call Signature
+
+> (`cb`): [`Producer`](Producer.md)
+
+Convenience method to create and start a producer in one call.
+
+##### Parameters
+
+###### cb
 
 `ICallback`
 
-Callback function called when producer is ready
+Optional callback function called when producer is ready or if an error occurs
 
-#### Returns
+##### Returns
 
 [`Producer`](Producer.md)
 
-The created Producer instance
+The created Producer instance (started automatically)
 
-#### Example
+##### Example
 
 ```typescript
-const producer = RedisSMQ.startProducer((err) => {
-  if (err) return console.error('Failed to start producer:', err);
+// Callback pattern
+const producer = ProducerFactory.startProducer((err) => {
+  if (err) {
+    console.error('Failed to start producer:', err);
+    return;
+  }
+  console.log('Producer started');
   producer.produce(message, (produceErr, messageIds) => {
-    if (produceErr) return console.error('Failed to produce:', produceErr);
-    console.log('Message sent:', messageIds);
+    if (produceErr) console.error('Failed to produce:', produceErr);
+    else console.log('Message sent:', messageIds);
   });
 });
+
+// Promise pattern
+try {
+  const producer = await ProducerFactory.startProducer();
+  console.log('Producer started');
+  const messageIds = await producer.produce(message);
+  console.log('Message sent:', messageIds);
+} catch (err) {
+  console.error('Failed to start producer or send message:', err);
+}
 ```

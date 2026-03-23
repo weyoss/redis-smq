@@ -8,6 +8,7 @@
  */
 
 import {
+  async,
   CallbackEmptyReplyError,
   createLogger,
   ICallback,
@@ -47,24 +48,15 @@ import { _transitQueueTo } from './_/_transit-queue-to.js';
  * ```typescript
  * const stateManager = new QueueStateManager();
  *
- * // Pause a queue for maintenance
- * stateManager.pause(
- *   { name: 'orders', ns: 'production' },
- *   {
- *     reason: EQueueStateTransitionReason.SCHEDULED,
- *     description: 'Database maintenance window'
- *   },
- *   (err, transition) => {
- *     if (err) console.error('Failed to pause:', err);
- *     console.log('Queue paused at:', new Date(transition.timestamp));
- *   }
- * );
- *
- * // Get current state
+ * // Using callback
  * stateManager.getState('orders@production', (err, state) => {
- *   console.log('Current state:', EQueueOperationalState[state.to]);
- *   console.log('Last transition:', new Date(state.timestamp));
+ *   if (err) console.error('Failed to get state:', err);
+ *   else console.log('Queue state:', EQueueOperationalState[state.to]);
  * });
+ *
+ * // Using promise
+ * const state = await stateManager.getState('orders@production');
+ * console.log('Queue state:', EQueueOperationalState[state.to]);
  * ```
  */
 export class QueueStateManager {
@@ -83,59 +75,71 @@ export class QueueStateManager {
    * the last transition.
    *
    * @param queue - Queue identifier (either string in format "name@namespace" or IQueueParams object)
-   * @param cb - Callback function that receives either an error or the current state information
+   * @param cb - Optional callback function that receives either an error or the current state information
+   * @returns {Promise<IQueueStateTransition> | void} - Returns a Promise if no callback is provided
+   *
+   * @throws {CallbackEmptyReplyError} If queue exists but no state information is found
    *
    * @example
    * ```typescript
-   * // Using string format
+   * // Callback pattern
    * stateManager.getState('orders@production', (err, state) => {
-   *   if (err) return;
-   *
-   *   console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
-   *   console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
-   *   console.log(`Reason: ${state.reason}`);
-   *
-   *   if (state.lockOwner) {
-   *     console.log(`Locked by: ${state.lockOwner}`); // Internal use only
+   *   if (err) {
+   *     console.error('Failed to get state:', err);
+   *   } else {
+   *     console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
+   *     console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
+   *     console.log(`Reason: ${state.reason}`);
    *   }
    * });
    *
-   * // Using object format
-   * stateManager.getState({ name: 'orders', ns: 'production' }, callback);
+   * // Promise pattern
+   * try {
+   *   const state = await stateManager.getState({ name: 'orders', ns: 'production' });
+   *   console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
+   *   console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
+   * } catch (err) {
+   *   console.error('Failed to get state:', err);
+   * }
    * ```
-   *
-   * @throws {CallbackEmptyReplyError} If queue exists but no state information is found
    */
+  getState(queue: string | IQueueParams): Promise<IQueueStateTransition>;
   getState(
     queue: string | IQueueParams,
     cb: ICallback<IQueueStateTransition>,
-  ): void {
-    const queueDesc =
-      typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Getting operational state for queue: ${queueDesc}`);
+  ): void;
+  getState(
+    queue: string | IQueueParams,
+    cb?: ICallback<IQueueStateTransition>,
+  ): Promise<IQueueStateTransition> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueDesc =
+        typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
+      this.logger.debug(`Getting operational state for queue: ${queueDesc}`);
 
-    withSharedPoolConnection((client, done) => {
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) return done(err);
-        if (!queueParams) return done(new CallbackEmptyReplyError());
+      withSharedPoolConnection((client, done) => {
+        _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
+          if (err) return done(err);
+          if (!queueParams) return done(new CallbackEmptyReplyError());
 
-        _getQueueState(client, queueParams, (err, stateTransition) => {
-          if (err) {
-            this.logger.error(
-              `Error getting state for ${queueDesc}: ${err.message}`,
-              err,
+          _getQueueState(client, queueParams, (err, stateTransition) => {
+            if (err) {
+              this.logger.error(
+                `Error getting state for ${queueDesc}: ${err.message}`,
+                err,
+              );
+              return done(err);
+            }
+            if (!stateTransition) return done(new CallbackEmptyReplyError());
+
+            this.logger.debug(
+              `Queue ${queueDesc} state: ${EQueueOperationalState[stateTransition.to]}`,
             );
-            return done(err);
-          }
-          if (!stateTransition) return done(new CallbackEmptyReplyError());
-
-          this.logger.debug(
-            `Queue ${queueDesc} state: ${EQueueOperationalState[stateTransition.to]}`,
-          );
-          done(null, stateTransition);
+            done(null, stateTransition);
+          });
         });
-      });
-    }, cb);
+      }, callback);
+    });
   }
 
   /**
@@ -151,69 +155,67 @@ export class QueueStateManager {
    *
    * @param queue - Queue identifier (string or IQueueParams)
    * @param options - Configuration options for the pause operation
-   * @param options.reason - Why the queue is being paused (defaults to MANUAL)
-   * @param options.description - Human-readable description of the pause reason
-   * @param options.metadata - Additional context data for auditing
-   * @param cb - Callback receiving the completed state transition record
+   * @param cb - Optional callback receiving the completed state transition record
+   * @returns {Promise<IQueueStateTransition> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
-   * // Simple pause
+   * // Callback pattern - simple pause
    * stateManager.pause('orders@production', null, (err, transition) => {
-   *   if (err) console.error('Failed to pause:', err);
+   *   if (err) {
+   *     console.error('Failed to pause:', err);
+   *   } else {
+   *     console.log('Queue paused at:', new Date(transition.timestamp));
+   *   }
    * });
    *
-   * // Pause with detailed reason
-   * stateManager.pause(
-   *   { name: 'email-worker', ns: 'production' },
-   *   {
-   *     reason: EQueueStateTransitionReason.PERFORMANCE,
-   *     description: 'Email service latency spike detected',
-   *     metadata: {
-   *       service: 'smtp-provider',
-   *       latency: '2500ms',
-   *       incidentId: 'INC-2024-123'
+   * // Promise pattern - pause with detailed reason
+   * try {
+   *   const transition = await stateManager.pause(
+   *     { name: 'email-worker', ns: 'production' },
+   *     {
+   *       reason: EStateTransitionReason.PERFORMANCE,
+   *       description: 'Email service latency spike detected',
+   *       metadata: { latency: '2500ms' }
    *     }
-   *   },
-   *   (err, transition) => {
-   *     if (err) {
-   *       if (err.code === 'INVALID_STATE_TRANSITION') {
-   *         console.log('Queue cannot be paused from its current state');
-   *       }
-   *       return;
-   *     }
-   *
-   *     // Notify monitoring system
-   *     notifyMonitoring('queue-paused', {
-   *       queue: 'email-worker@production',
-   *       timestamp: transition.timestamp
-   *     });
-   *   }
-   * );
+   *   );
+   *   console.log('Queue paused at:', new Date(transition.timestamp));
+   * } catch (err) {
+   *   console.error('Failed to pause:', err);
+   * }
    * ```
-   *
-   * @emits queue.stateChanged - Emitted after successful state transition
    */
   pause(
     queue: string | IQueueParams,
     options: TQueueStateTransitionUserOptions | null,
+  ): Promise<IQueueStateTransition>;
+  pause(
+    queue: string | IQueueParams,
+    options: TQueueStateTransitionUserOptions | null,
     cb: ICallback<IQueueStateTransition>,
-  ): void {
-    const queueDesc =
-      typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Pausing queue: ${queueDesc}`);
+  ): void;
+  pause(
+    queue: string | IQueueParams,
+    options: TQueueStateTransitionUserOptions | null,
+    cb?: ICallback<IQueueStateTransition>,
+  ): Promise<IQueueStateTransition> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueDesc =
+        typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
+      this.logger.debug(`Pausing queue: ${queueDesc}`);
 
-    _transitQueueTo(
-      queue,
-      EQueueOperationalState.PAUSED,
-      {
-        ...options,
-        reason: options?.reason || EStateTransitionReason.MANUAL,
-        description: options?.description || 'Manual pause',
-      },
-      this.logger,
-      cb,
-    );
+      _transitQueueTo(
+        queue,
+        EQueueOperationalState.PAUSED,
+        {
+          ...options,
+          reason: options?.reason || EStateTransitionReason.MANUAL,
+          description: options?.description || 'Manual pause',
+        },
+        this.logger,
+        callback,
+      );
+    });
   }
 
   /**
@@ -232,62 +234,67 @@ export class QueueStateManager {
    *
    * @param queue - Queue identifier (string or IQueueParams)
    * @param options - Configuration options for the resume operation
-   * @param options.reason - Why the queue is being resumed (defaults to MANUAL)
-   * @param options.description - Human-readable description
-   * @param options.metadata - Additional context data
-   * @param cb - Callback receiving the completed state transition record
+   * @param cb - Optional callback receiving the completed state transition record
+   * @returns {Promise<IQueueStateTransition> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
-   * // Resume a paused queue
-   * stateManager.resume(
-   *   'orders@production',
-   *   {
-   *     reason: EQueueStateTransitionReason.RECOVERY,
-   *     description: 'Database maintenance completed',
-   *     metadata: {
-   *       downtime: '45s',
-   *       maintenanceWindow: '2024-01-15T02:00:00Z'
-   *     }
-   *   },
-   *   (err, transition) => {
-   *     if (err) {
-   *       if (err.code === 'QUEUE_NOT_FOUND') {
-   *         console.log('Queue does not exist');
-   *       }
-   *       return;
-   *     }
-   *
+   * // Callback pattern - simple resume
+   * stateManager.resume('orders', null, (err, transition) => {
+   *   if (err) {
+   *     console.error('Failed to resume:', err);
+   *   } else {
    *     console.log('Queue resumed at:', new Date(transition.timestamp));
    *   }
-   * );
+   * });
    *
-   * // Resume with default options
-   * stateManager.resume('email-worker@production', null, callback);
+   * // Promise pattern - resume with detailed reason
+   * try {
+   *   const transition = await stateManager.resume(
+   *     { name: 'email-worker', ns: 'production' },
+   *     {
+   *       reason: EStateTransitionReason.MANUAL,
+   *       description: 'Database maintenance completed',
+   *       metadata: { downtime: '45s' }
+   *     }
+   *   );
+   *   console.log('Queue resumed at:', new Date(transition.timestamp));
+   * } catch (err) {
+   *   console.error('Failed to resume:', err);
+   * }
    * ```
-   *
-   * @emits queue.stateChanged - Emitted after successful state transition
    */
   resume(
     queue: string | IQueueParams,
     options: TQueueStateTransitionUserOptions | null,
+  ): Promise<IQueueStateTransition>;
+  resume(
+    queue: string | IQueueParams,
+    options: TQueueStateTransitionUserOptions | null,
     cb: ICallback<IQueueStateTransition>,
-  ): void {
-    const queueDesc =
-      typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Resuming queue: ${queueDesc}`);
+  ): void;
+  resume(
+    queue: string | IQueueParams,
+    options: TQueueStateTransitionUserOptions | null,
+    cb?: ICallback<IQueueStateTransition>,
+  ): Promise<IQueueStateTransition> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueDesc =
+        typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
+      this.logger.debug(`Resuming queue: ${queueDesc}`);
 
-    _transitQueueTo(
-      queue,
-      EQueueOperationalState.ACTIVE,
-      {
-        ...options,
-        reason: options?.reason || EStateTransitionReason.MANUAL,
-        description: options?.description || 'Manual resume',
-      },
-      this.logger,
-      cb,
-    );
+      _transitQueueTo(
+        queue,
+        EQueueOperationalState.ACTIVE,
+        {
+          ...options,
+          reason: options?.reason || EStateTransitionReason.MANUAL,
+          description: options?.description || 'Manual resume',
+        },
+        this.logger,
+        callback,
+      );
+    });
   }
 
   /**
@@ -302,77 +309,69 @@ export class QueueStateManager {
    * Valid transitions to STOPPED:
    * - From ACTIVE (emergency stop)
    * - From PAUSED (stop from paused state)
-   * - From LOCKED (internal use only)
    *
    * @param queue - Queue identifier (string or IQueueParams)
    * @param options - Configuration options for the stop operation
-   * @param options.reason - Why the queue is being stopped (defaults to MANUAL)
-   * @param options.description - Human-readable description
-   * @param options.metadata - Additional context data
-   * @param cb - Callback receiving the completed state transition record
+   * @param cb - Optional callback receiving the completed state transition record
+   * @returns {Promise<IQueueStateTransition> | void} - Returns a Promise if no callback is provided
    *
    * @example
    * ```typescript
-   * // Emergency stop due to system error
-   * stateManager.stop(
-   *   'payment-processor@production',
-   *   {
-   *     reason: EQueueStateTransitionReason.EMERGENCY,
-   *     description: 'Payment gateway security breach detected',
-   *     metadata: {
-   *       incidentId: 'SEC-2024-456',
-   *       severity: 'critical',
-   *       timestamp: Date.now()
-   *     }
-   *   },
-   *   (err, transition) => {
-   *     if (err) {
-   *       console.error('Failed to stop queue:', err);
-   *       return;
-   *     }
-   *
-   *     // Alert on-call team
-   *     alertTeam({
-   *       type: 'queue-emergency-stop',
-   *       queue: 'payment-processor@production',
-   *       time: new Date(transition.timestamp)
-   *     });
+   * // Callback pattern - emergency stop
+   * stateManager.stop('payment-processor', null, (err, transition) => {
+   *   if (err) {
+   *     console.error('Failed to stop:', err);
+   *   } else {
+   *     console.log('Queue stopped at:', new Date(transition.timestamp));
    *   }
-   * );
+   * });
    *
-   * // Scheduled maintenance stop
-   * stateManager.stop(
-   *   'analytics@production',
-   *   {
-   *     reason: EQueueStateTransitionReason.SCHEDULED,
-   *     description: 'Weekly maintenance window'
-   *   },
-   *   callback
-   * );
+   * // Promise pattern - scheduled maintenance stop
+   * try {
+   *   const transition = await stateManager.stop(
+   *     { name: 'analytics', ns: 'production' },
+   *     {
+   *       reason: EStateTransitionReason.SCHEDULED,
+   *       description: 'Weekly maintenance window'
+   *     }
+   *   );
+   *   console.log('Queue stopped at:', new Date(transition.timestamp));
+   * } catch (err) {
+   *   console.error('Failed to stop:', err);
+   * }
    * ```
-   *
-   * @emits queue.stateChanged - Emitted after successful state transition
    */
   stop(
     queue: string | IQueueParams,
     options: TQueueStateTransitionUserOptions | null,
+  ): Promise<IQueueStateTransition>;
+  stop(
+    queue: string | IQueueParams,
+    options: TQueueStateTransitionUserOptions | null,
     cb: ICallback<IQueueStateTransition>,
-  ): void {
-    const queueDesc =
-      typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Stopping queue: ${queueDesc}`);
+  ): void;
+  stop(
+    queue: string | IQueueParams,
+    options: TQueueStateTransitionUserOptions | null,
+    cb?: ICallback<IQueueStateTransition>,
+  ): Promise<IQueueStateTransition> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueDesc =
+        typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
+      this.logger.debug(`Stopping queue: ${queueDesc}`);
 
-    _transitQueueTo(
-      queue,
-      EQueueOperationalState.STOPPED,
-      {
-        ...options,
-        reason: options?.reason || EStateTransitionReason.MANUAL,
-        description: options?.description || 'Manual stop',
-      },
-      this.logger,
-      cb,
-    );
+      _transitQueueTo(
+        queue,
+        EQueueOperationalState.STOPPED,
+        {
+          ...options,
+          reason: options?.reason || EStateTransitionReason.MANUAL,
+          description: options?.description || 'Manual stop',
+        },
+        this.logger,
+        callback,
+      );
+    });
   }
 
   /**
@@ -386,95 +385,84 @@ export class QueueStateManager {
    * - Analyzing queue behavior over time
    * - Generating reports on queue availability
    *
-   * The history is limited to recent transitions (configurable via
-   * maxQueueStateHistorySize in the state transition script).
+   * The history is limited to recent transitions.
    *
    * @param queue - Queue identifier (string or IQueueParams)
-   * @param cb - Callback receiving either an error or an array of state transitions
+   * @param cb - Optional callback receiving either an error or an array of state transitions
+   * @returns {Promise<IQueueStateTransition[]> | void} - Returns a Promise if no callback is provided
+   *
+   * @throws {CallbackEmptyReplyError} If queue exists but no history is found
    *
    * @example
    * ```typescript
-   * // Get full history
+   * // Callback pattern - get history
    * stateManager.getStateHistory('orders@production', (err, history) => {
    *   if (err) {
    *     console.error('Failed to get history:', err);
-   *     return;
+   *   } else {
+   *     console.log(`Queue has ${history.length} state transitions`);
+   *     history.forEach((transition, idx) => {
+   *       const from = transition.from ? EQueueOperationalState[transition.from] : 'INITIAL';
+   *       const to = EQueueOperationalState[transition.to];
+   *       console.log(`${idx}: ${from} → ${to} at ${new Date(transition.timestamp).toISOString()}`);
+   *     });
    *   }
-   *
-   *   console.log(`Queue has ${history.length} state transitions`);
-   *
-   *   // Analyze uptime/downtime
-   *   let totalDowntime = 0;
-   *   let lastActiveTime = null;
-   *
-   *   history.forEach((transition, index) => {
-   *     const from = transition.from ?
-   *       EQueueOperationalState[transition.from] : 'INITIAL';
-   *     const to = EQueueOperationalState[transition.to];
-   *     const time = new Date(transition.timestamp);
-   *
-   *     console.log(`${index}: ${from} → ${to} at ${time.toISOString()}`);
-   *     console.log(`  Reason: ${transition.reason}`);
-   *     console.log(`  Description: ${transition.description || 'N/A'}`);
-   *
-   *     // Calculate downtime if leaving ACTIVE state
-   *     if (from === 'ACTIVE' && to !== 'ACTIVE' && lastActiveTime) {
-   *       const downtime = transition.timestamp - lastActiveTime;
-   *       totalDowntime += downtime;
-   *       console.log(`  Downtime: ${downtime}ms`);
-   *     }
-   *
-   *     if (to === 'ACTIVE') {
-   *       lastActiveTime = transition.timestamp;
-   *     }
-   *   });
-   *
-   *   console.log(`Total downtime: ${totalDowntime}ms`);
    * });
    *
-   * // Filter for specific reasons
-   * stateManager.getStateHistory('email-worker@production', (err, history) => {
+   * // Promise pattern - analyze emergency stops
+   * try {
+   *   const history = await stateManager.getStateHistory('email-worker@production');
    *   const emergencyStops = history.filter(
-   *     t => t.reason === EQueueStateTransitionReason.EMERGENCY
+   *     t => t.reason === EStateTransitionReason.EMERGENCY
    *   );
    *   console.log(`Emergency stops: ${emergencyStops.length}`);
-   * });
+   *   console.log(`Total transitions: ${history.length}`);
+   * } catch (err) {
+   *   console.error('Failed to get history:', err);
+   * }
    * ```
-   *
-   * @throws {CallbackEmptyReplyError} If queue exists but no history is found
    */
   getStateHistory(
     queue: string | IQueueParams,
+  ): Promise<IQueueStateTransition[]>;
+  getStateHistory(
+    queue: string | IQueueParams,
     cb: ICallback<IQueueStateTransition[]>,
-  ): void {
-    const queueDesc =
-      typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Getting state history for queue: ${queueDesc}`);
+  ): void;
+  getStateHistory(
+    queue: string | IQueueParams,
+    cb?: ICallback<IQueueStateTransition[]>,
+  ): Promise<IQueueStateTransition[]> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      const queueDesc =
+        typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
+      this.logger.debug(`Getting state history for queue: ${queueDesc}`);
 
-    withSharedPoolConnection((client, done) => {
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) return done(err);
-        if (!queueParams) return done(new CallbackEmptyReplyError());
-
-        const { keyQueueStateHistory } = redisKeys.getQueueKeys(
-          queueParams.ns,
-          queueParams.name,
-          null,
-        );
-
-        client.lrange(keyQueueStateHistory, 0, -1, (err, reply) => {
+      withSharedPoolConnection((client, done) => {
+        _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
           if (err) return done(err);
+          if (!queueParams) return done(new CallbackEmptyReplyError());
 
-          const history: IQueueStateTransition[] = (reply || []).map((item) =>
-            JSON.parse(item),
+          const { keyQueueStateHistory } = redisKeys.getQueueKeys(
+            queueParams.ns,
+            queueParams.name,
+            null,
           );
 
-          this.logger.debug(
-            `Retrieved ${history.length} state transitions for ${queueDesc}`,
-          );
-          done(null, history);
+          client.lrange(keyQueueStateHistory, 0, -1, (err, reply) => {
+            if (err) return done(err);
+
+            const history: IQueueStateTransition[] = (reply || []).map((item) =>
+              JSON.parse(item),
+            );
+
+            this.logger.debug(
+              `Retrieved ${history.length} state transitions for ${queueDesc}`,
+            );
+            done(null, history);
+          });
         });
-      });
-    }, cb);
+      }, callback);
+    });
   }
 }

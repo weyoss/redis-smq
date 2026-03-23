@@ -24,40 +24,40 @@ import {
 
 test('Producing a message and expecting different kind of failures', async () => {
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     'test0',
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await queue.saveAsync(
+  await queue.save(
     'test1',
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   try {
     const msg = new ProducibleMessage()
       .setQueue('test0')
       .setBody('body')
       .setPriority(EMessagePriority.LOW);
-    await producer.produceAsync(msg);
+    await producer.produce(msg);
   } catch (e: unknown) {
     expect(e instanceof PriorityQueuingNotEnabledError).toBe(true);
   }
 
   try {
     const msg1 = new ProducibleMessage().setQueue('test1').setBody('body');
-    await producer.produceAsync(msg1);
+    await producer.produce(msg1);
   } catch (e: unknown) {
     expect(e instanceof MessagePriorityRequiredError).toBe(true);
   }
 
   try {
     const msg2 = new ProducibleMessage().setQueue('test2').setBody('body');
-    await producer.produceAsync(msg2);
+    await producer.produce(msg2);
   } catch (e: unknown) {
     expect(e instanceof QueueNotFoundError).toBe(true);
   }

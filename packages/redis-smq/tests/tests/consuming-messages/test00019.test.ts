@@ -24,7 +24,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer({
     messageHandler: () => {
@@ -37,15 +37,15 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
     .setBody({ hello: 'world' })
     .setQueue(getDefaultQueue())
     .setRetryThreshold(0);
-  await producer.produceAsync(msg);
+  await producer.produce(msg);
 
   consumer.run(() => void 0);
   await untilMessageDeadLettered(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const r = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const r = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
 
   const m = await getMessageManager();
-  const mState = await m.getMessageStateAsync(r.items[0].id);
+  const mState = await m.getMessageState(r.items[0].id);
   expect(mState.attempts).toBe(1);
 });

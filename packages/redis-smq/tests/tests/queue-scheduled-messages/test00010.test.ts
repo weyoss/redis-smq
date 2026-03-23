@@ -24,19 +24,19 @@ import {
 
 test('Scheduling a message and expecting different kind of failures', async () => {
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     'test0',
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await queue.saveAsync(
+  await queue.save(
     'test1',
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   try {
     const msg = new ProducibleMessage()
@@ -44,7 +44,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setBody('body')
       .setPriority(EMessagePriority.LOW)
       .setScheduledCRON('* * * * * *');
-    await producer.produceAsync(msg);
+    await producer.produce(msg);
   } catch (e: unknown) {
     expect(e instanceof PriorityQueuingNotEnabledError).toBe(true);
   }
@@ -54,7 +54,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setQueue('test1')
       .setBody('body')
       .setScheduledCRON('* * * * * *');
-    await producer.produceAsync(msg1);
+    await producer.produce(msg1);
   } catch (e: unknown) {
     expect(e instanceof MessagePriorityRequiredError).toBe(true);
   }
@@ -64,7 +64,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setQueue('test2')
       .setBody('body')
       .setScheduledCRON('* * * * * *');
-    await producer.produceAsync(msg2);
+    await producer.produce(msg2);
   } catch (e: unknown) {
     expect(e instanceof QueueNotFoundError).toBe(true);
   }

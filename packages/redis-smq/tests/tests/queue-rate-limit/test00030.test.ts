@@ -27,52 +27,52 @@ test('Rate limit a priority queue and check message rate', async () => {
   const defaultQueue = getDefaultQueue();
   const eventBus = await getEventBus();
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
   const queueRateLimit = await getQueueRateLimit();
-  await queueRateLimit.setAsync(defaultQueue, {
+  await queueRateLimit.set(defaultQueue, {
     limit: 3,
     interval: 10000,
   });
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setBody('msg 1')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setBody('msg 2')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setBody('msg 3')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setBody('msg 4')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setBody('msg 5')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
-  await producer.produceAsync(
+  await producer.produce(
     new ProducibleMessage()
       .setBody('msg 6')
       .setQueue(defaultQueue)
@@ -81,8 +81,8 @@ test('Rate limit a priority queue and check message rate', async () => {
 
   const messages: { ts: number; messageId: string }[] = [];
   const consumer = await getConsumer();
-  await consumer.cancelAsync(defaultQueue);
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
+  await consumer.cancel(defaultQueue);
+  await consumer.consume(defaultQueue, (msg, cb) => cb());
 
   eventBus.on(
     'consumer.consumeMessage.messageAcknowledged',
@@ -91,7 +91,7 @@ test('Rate limit a priority queue and check message rate', async () => {
     },
   );
 
-  await consumer.runAsync();
+  await consumer.run();
   await bluebird.delay(25000);
 
   expect(messages.length).toBe(6);

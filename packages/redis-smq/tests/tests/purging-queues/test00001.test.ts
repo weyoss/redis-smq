@@ -22,12 +22,12 @@ test('Purging pending queue', async () => {
   const { queue } = await produceMessage();
   const queueMessages = await getQueueMessages();
 
-  const m2 = await queueMessages.countMessagesByStatusAsync(queue);
+  const m2 = await queueMessages.countMessagesByStatus(queue);
   expect(m2.pending).toBe(1);
-  await queueMessages.purgeAsync(queue);
+  await queueMessages.purge(queue);
 
   await bluebird.delay(5000);
 
-  const m3 = await queueMessages.countMessagesByStatusAsync(queue);
+  const m3 = await queueMessages.countMessagesByStatus(queue);
   expect(m3.pending).toBe(0);
 });

@@ -13,5 +13,5 @@ import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Deleting a non-existing message queue', async () => {
   const q = await getQueueManager();
-  await expect(q.deleteAsync('my-queue')).rejects.toThrow(QueueNotFoundError);
+  await expect(q.delete('my-queue')).rejects.toThrow(QueueNotFoundError);
 });

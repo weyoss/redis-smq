@@ -23,35 +23,35 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
   const defaultQueue = getDefaultQueue();
   const queueRateLimit = await getQueueRateLimit();
   await expect(
-    queueRateLimit.setAsync(defaultQueue, {
+    queueRateLimit.set(defaultQueue, {
       limit: 5,
       interval: 1000,
     }),
   ).rejects.toThrow(QueueNotFoundError);
 
   await createQueue(defaultQueue, false);
-  await queueRateLimit.setAsync(defaultQueue, {
+  await queueRateLimit.set(defaultQueue, {
     limit: 5,
     interval: 1000,
   });
 
-  const rateLimit = await queueRateLimit.getAsync(getDefaultQueue());
+  const rateLimit = await queueRateLimit.get(getDefaultQueue());
   expect(rateLimit).toEqual({ limit: 5, interval: 1000 });
 
-  await queueRateLimit.clearAsync(getDefaultQueue());
+  await queueRateLimit.clear(getDefaultQueue());
 
-  const rateLimit2 = await queueRateLimit.getAsync(getDefaultQueue());
+  const rateLimit2 = await queueRateLimit.get(getDefaultQueue());
   expect(rateLimit2).toEqual(null);
 
   await expect(
-    queueRateLimit.setAsync(defaultQueue, {
+    queueRateLimit.set(defaultQueue, {
       limit: 0,
       interval: 1000,
     }),
   ).rejects.toThrow(InvalidRateLimitValueError);
 
   await expect(
-    queueRateLimit.setAsync(defaultQueue, {
+    queueRateLimit.set(defaultQueue, {
       limit: 4,
       interval: 0,
     }),

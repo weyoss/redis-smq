@@ -28,26 +28,25 @@ test('PurgeQueueWorker', async () => {
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   for (let i = 0; i < totalMessages; i++) {
-    await producer.produceAsync(
+    await producer.produce(
       new ProducibleMessage().setBody(`m${i}`).setQueue(defaultQueue),
     );
   }
 
   const queueMessages = await getQueuePendingMessages();
 
-  const m1 = await queueMessages.countMessagesAsync(defaultQueue);
+  const m1 = await queueMessages.countMessages(defaultQueue);
   expect(m1).toBe(totalMessages);
 
   //
   const jobs: IBackgroundJob<TPurgeQueueJobTarget>[] = [];
-  const jobId = await queueMessages.purgeAsync(defaultQueue);
+  const jobId = await queueMessages.purge(defaultQueue);
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
-    const job = await queueMessages.getPurgeJobAsync(defaultQueue, jobId);
+    const job = await queueMessages.getPurgeJob(defaultQueue, jobId);
     jobs.push(job);
     if (job.status === EBackgroundJobStatus.COMPLETED) break;
     await bluebird.delay(1000);
@@ -68,6 +67,6 @@ test('PurgeQueueWorker', async () => {
   expect(jobs.find((i) => i.purged === 3000)).toBeDefined();
   expect(jobs.find((i) => i.purged === 3007)).toBeDefined();
 
-  const m2 = await queueMessages.countMessagesAsync(defaultQueue);
+  const m2 = await queueMessages.countMessages(defaultQueue);
   expect(m2).toBe(0);
 });

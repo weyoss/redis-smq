@@ -32,24 +32,20 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
 
   const namespaceManager = await getNamespaceManager();
 
-  const m0 = await namespaceManager.getNamespacesAsync();
+  const m0 = await namespaceManager.getNamespaces();
   expect(m0).toEqual(['ns1']);
 
-  await namespaceManager.deleteAsync('ns1');
+  await namespaceManager.delete('ns1');
 
-  const m1 = await namespaceManager.getNamespacesAsync();
+  const m1 = await namespaceManager.getNamespaces();
   expect(m1).toEqual([]);
 
-  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
+  await expect(namespaceManager.delete('ns1')).rejects.toThrow(
     NamespaceNotFoundError,
   );
 
   //
   const qm = await getQueueManager();
-  await expect(qm.getPropertiesAsync(queueA)).rejects.toThrow(
-    QueueNotFoundError,
-  );
-  await expect(qm.getPropertiesAsync(queueB)).rejects.toThrow(
-    QueueNotFoundError,
-  );
+  await expect(qm.getProperties(queueA)).rejects.toThrow(QueueNotFoundError);
+  await expect(qm.getProperties(queueB)).rejects.toThrow(QueueNotFoundError);
 });

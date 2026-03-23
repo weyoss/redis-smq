@@ -37,19 +37,19 @@ test('MessageList produced from scheduled message are processed like normal mess
     .setRetryDelay(0)
     .setQueue(getDefaultQueue());
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   consumer.run(() => void 0);
   await untilMessageDeadLettered(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res = await deadLetteredMessages.getMessages(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
   expect(typeof res.items[0].id).toBe('string');
 
   const m = await getMessageManager();
-  const mState = await m.getMessageStateAsync(res.items[0].id);
+  const mState = await m.getMessageState(res.items[0].id);
   expect(mState.scheduledMessageParentId).toBe(id);
   expect(mState.attempts).toBe(2);
 });

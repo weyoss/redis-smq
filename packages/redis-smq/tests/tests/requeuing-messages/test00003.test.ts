@@ -29,7 +29,7 @@ import { getQueueManager } from '../../common/queue-manager.js';
 test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   const queue = await getQueueManager();
-  await queue.saveAsync(
+  await queue.save(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
@@ -51,44 +51,36 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
     .setPriority(EMessagePriority.ABOVE_NORMAL);
 
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  const res2 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res2 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
 
   const queueMessages = await getQueueMessages();
-  const count = await queueMessages.countMessagesByStatusAsync(defaultQueue);
+  const count = await queueMessages.countMessagesByStatus(defaultQueue);
   expect(count.pending).toBe(0);
   expect(count.acknowledged).toBe(1);
 
   const message = await getMessageManager();
-  const newMessageId = await message.requeueMessageByIdAsync(id);
+  const newMessageId = await message.requeueMessageById(id);
 
-  const count2 = await queueMessages.countMessagesByStatusAsync(defaultQueue);
+  const count2 = await queueMessages.countMessagesByStatus(defaultQueue);
   expect(count2.pending).toBe(1);
   expect(count2.acknowledged).toBe(1);
 
-  const res6 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res6 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res6.totalItems).toBe(1);
   expect(res6.items.length).toBe(1);
 
   const pendingMessages = await getQueuePendingMessages();
-  const res7 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  const res7 = await pendingMessages.getMessages(defaultQueue, 0, 100);
   expect(res7.totalItems).toBe(1);
   expect(res7.items.length).toBe(1);
   expect(res7.items[0].id).toEqual(newMessageId);

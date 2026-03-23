@@ -118,6 +118,59 @@ const consumer = new Consumer({
 
 ### cancel()
 
+#### Call Signature
+
+> **cancel**(`queue`): `Promise`\<`void`\>
+
+Stops message consumption from a specified queue.
+
+This method removes the message handler associated with the given queue,
+stopping any further message processing from that queue.
+
+##### Parameters
+
+###### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+Queue to stop consuming from.
+Accepts the same formats as the `consume` method.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+Promise if no callback provided, otherwise void.
+
+##### Throws
+
+When queue parameters are invalid.
+
+##### Throws
+
+When the specified queue doesn't exist.
+
+##### Example
+
+```typescript
+// Using callback
+consumer.cancel('my-queue', (err) => {
+  if (err) {
+    console.error('Error canceling consumption:', err);
+  } else {
+    console.log('Consumption cancelled successfully');
+  }
+});
+
+// Using promise
+await consumer.cancel('my-queue');
+
+// Cancel consumption from a consumer group
+await consumer.cancel({ ns: 'chat', name: 'messages', groupId: 'group-1' });
+```
+
+#### Call Signature
+
 > **cancel**(`queue`, `cb`): `void`
 
 Stops message consumption from a specified queue.
@@ -125,63 +178,62 @@ Stops message consumption from a specified queue.
 This method removes the message handler associated with the given queue,
 stopping any further message processing from that queue.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
 Queue to stop consuming from.
 Accepts the same formats as the `consume` method.
 
-##### cb
+###### cb
 
 `ICallback`\<`void`\>
 
-Callback invoked after cancellation completes.
+Optional callback invoked after cancellation completes.
+If not provided, returns a Promise.
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Throws
+Promise if no callback provided, otherwise void.
+
+##### Throws
 
 When queue parameters are invalid.
 
-#### Throws
+##### Throws
 
 When the specified queue doesn't exist.
 
-#### Example
+##### Example
 
 ```typescript
-// Start consuming
-consumer.consume('my-queue', messageHandler, (err) => {
-  if (err) return console.error('Failed to setup consumption:', err);
-
-  // Cancel consumption after 10 seconds
-  setTimeout(() => {
-    consumer.cancel('my-queue', (err) => {
-      if (err) {
-        console.error('Error canceling consumption:', err);
-      } else {
-        console.log('Consumption cancelled successfully');
-      }
-    });
-  }, 10000);
+// Using callback
+consumer.cancel('my-queue', (err) => {
+  if (err) {
+    console.error('Error canceling consumption:', err);
+  } else {
+    console.log('Consumption cancelled successfully');
+  }
 });
+
+// Using promise
+await consumer.cancel('my-queue');
 
 // Cancel consumption from a consumer group
-consumer.cancel({ ns: 'chat', name: 'messages', groupId: 'group-1' }, (err) => {
-  if (err) console.error('Failed to cancel:', err);
-});
+await consumer.cancel({ ns: 'chat', name: 'messages', groupId: 'group-1' });
 ```
 
 ---
 
 ### consume()
 
-> **consume**(`queue`, `messageHandler`, `cb`): `void`
+#### Call Signature
+
+> **consume**(`queue`, `messageHandler`): `Promise`\<`void`\>
 
 Configures the consumer to process messages from a specified queue.
 
@@ -189,9 +241,9 @@ This method registers a message handler for the given queue. The handler functio
 will be called for each message received from the queue. Before consuming messages,
 ensure the queue exists in the system.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
@@ -201,88 +253,71 @@ Queue to consume messages from. Can be:
 - An object with `{ ns: string, name: string }` for custom namespace
 - An object with `{ ns: string, name: string, groupId: string }` for consumer groups
 
-##### messageHandler
+###### messageHandler
 
 [`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
 
 Function that processes each message.
 Receives the message and a `done` callback that must be called to acknowledge processing.
 
-##### cb
+##### Returns
 
-`ICallback`\<`void`\>
+`Promise`\<`void`\>
 
-Callback invoked after consumption setup completes.
+Promise if no callback provided, otherwise void.
 
-#### Returns
-
-`void`
-
-#### Throws
+##### Throws
 
 When queue parameters are invalid.
 
-#### Throws
+##### Throws
 
 When a handler for this queue already exists.
 
-#### Throws
+##### Throws
 
 When consumer groups are not supported with the specified queue.
 
-#### Throws
+##### Throws
 
 When the specified queue doesn't exist.
 
-#### Throws
+##### Throws
 
 When there are issues with message handler file.
 
-#### Throws
+##### Throws
 
 When message handler file has invalid extension.
 
-#### Throws
+##### Throws
 
 When the queue is paused.
 
-#### Throws
+##### Throws
 
 When the queue is stopped.
 
-#### Throws
+##### Throws
 
 When the queue is locked.
 
-#### Throws
+##### Throws
 
 When the queue is in an invalid state.
 
-#### Throws
+##### Throws
 
 When Redis returns unexpected response.
 
-#### Example
+##### Example
 
 ```typescript
-// Consume from queue with default namespace
+// Using callback
 consumer.consume(
   'my-queue',
   (message, done) => {
     console.log('Processing message:', message);
-    // Process message...
-    done(); // Acknowledge successful processing
-  },
-  (err) => {
-    if (err) console.error('Failed to setup consumption:', err);
-  },
-);
-
-// Consume from queue with custom namespace
-consumer.consume(
-  { ns: 'orders', name: 'incoming' },
-  (message, done) => {
-    // Process order...
     done();
   },
   (err) => {
@@ -290,17 +325,150 @@ consumer.consume(
   },
 );
 
+// Using promise
+await consumer.consume('my-queue', (message, done) => {
+  console.log('Processing message:', message);
+  done();
+});
+
+// Consume from queue with custom namespace
+await consumer.consume({ ns: 'orders', name: 'incoming' }, (message, done) => {
+  // Process order...
+  done();
+});
+
 // Consume from consumer group
-consumer.consume(
+await consumer.consume(
   { ns: 'chat', name: 'messages', groupId: 'group-1' },
   messageHandler,
+);
+```
+
+##### See
+
+/packages/redis-smq/docs/consuming-messages.md
+
+#### Call Signature
+
+> **consume**(`queue`, `messageHandler`, `cb`): `void`
+
+Configures the consumer to process messages from a specified queue.
+
+This method registers a message handler for the given queue. The handler function
+will be called for each message received from the queue. Before consuming messages,
+ensure the queue exists in the system.
+
+##### Parameters
+
+###### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+Queue to consume messages from. Can be:
+
+- A string representing the queue name (uses default namespace)
+- An object with `{ ns: string, name: string }` for custom namespace
+- An object with `{ ns: string, name: string, groupId: string }` for consumer groups
+
+###### messageHandler
+
+[`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
+
+Function that processes each message.
+Receives the message and a `done` callback that must be called to acknowledge processing.
+
+###### cb
+
+`ICallback`\<`void`\>
+
+Optional callback invoked after consumption setup completes.
+If not provided, returns a Promise.
+
+##### Returns
+
+`void`
+
+Promise if no callback provided, otherwise void.
+
+##### Throws
+
+When queue parameters are invalid.
+
+##### Throws
+
+When a handler for this queue already exists.
+
+##### Throws
+
+When consumer groups are not supported with the specified queue.
+
+##### Throws
+
+When the specified queue doesn't exist.
+
+##### Throws
+
+When there are issues with message handler file.
+
+##### Throws
+
+When message handler file has invalid extension.
+
+##### Throws
+
+When the queue is paused.
+
+##### Throws
+
+When the queue is stopped.
+
+##### Throws
+
+When the queue is locked.
+
+##### Throws
+
+When the queue is in an invalid state.
+
+##### Throws
+
+When Redis returns unexpected response.
+
+##### Example
+
+```typescript
+// Using callback
+consumer.consume(
+  'my-queue',
+  (message, done) => {
+    console.log('Processing message:', message);
+    done();
+  },
   (err) => {
     if (err) console.error('Failed to setup consumption:', err);
   },
 );
+
+// Using promise
+await consumer.consume('my-queue', (message, done) => {
+  console.log('Processing message:', message);
+  done();
+});
+
+// Consume from queue with custom namespace
+await consumer.consume({ ns: 'orders', name: 'incoming' }, (message, done) => {
+  // Process order...
+  done();
+});
+
+// Consume from consumer group
+await consumer.consume(
+  { ns: 'chat', name: 'messages', groupId: 'group-1' },
+  messageHandler,
+);
 ```
 
-#### See
+##### See
 
 /packages/redis-smq/docs/consuming-messages.md
 
@@ -338,19 +506,33 @@ consumer.consume(
 
 ### ensureIsOperational()
 
+#### Call Signature
+
+> **ensureIsOperational**(): `Promise`\<`void`\>
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Inherited from
+
+`Runnable.ensureIsOperational`
+
+#### Call Signature
+
 > **ensureIsOperational**(`cb`): `void`
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Inherited from
+##### Inherited from
 
 `Runnable.ensureIsOperational`
 
@@ -656,19 +838,33 @@ console.log(queuesWithStatus);
 
 ### run()
 
+#### Call Signature
+
+> **run**(): `Promise`\<`void`\>
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Inherited from
+
+`Runnable.run`
+
+#### Call Signature
+
 > **run**(`cb`): `void`
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Inherited from
+##### Inherited from
 
 `Runnable.run`
 
@@ -676,19 +872,33 @@ console.log(queuesWithStatus);
 
 ### shutdown()
 
+#### Call Signature
+
+> **shutdown**(): `Promise`\<`void`\>
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Inherited from
+
+`Runnable.shutdown`
+
+#### Call Signature
+
 > **shutdown**(`cb`): `void`
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 `ICallback`
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Inherited from
+##### Inherited from
 
 `Runnable.shutdown`
 

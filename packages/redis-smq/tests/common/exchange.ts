@@ -7,17 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { RedisSMQ } from '../../src/index.js';
 
 export function getFanOutExchange() {
-  return bluebird.promisifyAll(RedisSMQ.createFanoutExchange());
+  return RedisSMQ.createFanoutExchange();
 }
 
 export function getTopicExchange() {
-  return bluebird.promisifyAll(RedisSMQ.createTopicExchange());
+  return RedisSMQ.createTopicExchange();
 }
 
 export function getDirectExchange() {
-  return bluebird.promisifyAll(RedisSMQ.createDirectExchange());
+  return RedisSMQ.createDirectExchange();
 }

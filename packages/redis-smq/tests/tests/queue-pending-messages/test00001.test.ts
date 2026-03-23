@@ -21,34 +21,28 @@ test('Pending message', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
 
-  const [id] = await producer.produceAsync(msg);
+  const [id] = await producer.produce(msg);
 
   const queuePendingMessages = await getQueuePendingMessages();
-  const count =
-    await queuePendingMessages.countMessagesAsync(getDefaultQueue());
+  const count = await queuePendingMessages.countMessages(getDefaultQueue());
   expect(count).toEqual(1);
 
-  const messages = await queuePendingMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const messages = await queuePendingMessages.getMessages(defaultQueue, 0, 100);
   expect(Object.keys(messages)).toEqual(['totalItems', 'items']);
   expect(messages.totalItems).toBe(1);
   expect(messages.items.length).toBe(1);
   expect(messages.items[0].id).toBe(id);
 
   const queueMessages = await getQueueMessages();
-  const count1 = await queueMessages.countMessagesAsync(getDefaultQueue());
+  const count1 = await queueMessages.countMessages(getDefaultQueue());
   expect(count1).toBe(1);
 
-  const count2 =
-    await queueMessages.countMessagesByStatusAsync(getDefaultQueue());
+  const count2 = await queueMessages.countMessagesByStatus(getDefaultQueue());
   expect(count2).toEqual({
     pending: 1,
     acknowledged: 0,

@@ -22,24 +22,15 @@ Key features:
 ```typescript
 const stateManager = new QueueStateManager();
 
-// Pause a queue for maintenance
-stateManager.pause(
-  { name: 'orders', ns: 'production' },
-  {
-    reason: EQueueStateTransitionReason.SCHEDULED,
-    description: 'Database maintenance window',
-  },
-  (err, transition) => {
-    if (err) console.error('Failed to pause:', err);
-    console.log('Queue paused at:', new Date(transition.timestamp));
-  },
-);
-
-// Get current state
+// Using callback
 stateManager.getState('orders@production', (err, state) => {
-  console.log('Current state:', EQueueOperationalState[state.to]);
-  console.log('Last transition:', new Date(state.timestamp));
+  if (err) console.error('Failed to get state:', err);
+  else console.log('Queue state:', EQueueOperationalState[state.to]);
 });
+
+// Using promise
+const state = await stateManager.getState('orders@production');
+console.log('Queue state:', EQueueOperationalState[state.to]);
 ```
 
 ## Constructors
@@ -56,6 +47,63 @@ stateManager.getState('orders@production', (err, state) => {
 
 ### getState()
 
+#### Call Signature
+
+> **getState**(`queue`): `Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+Retrieves the current operational state of a queue
+
+This method returns the complete state transition information for the queue,
+including the current state, when it was last changed, and the reason for
+the last transition.
+
+##### Parameters
+
+###### queue
+
+Queue identifier (either string in format "name@namespace" or IQueueParams object)
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### Returns
+
+`Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+If queue exists but no state information is found
+
+##### Example
+
+```typescript
+// Callback pattern
+stateManager.getState('orders@production', (err, state) => {
+  if (err) {
+    console.error('Failed to get state:', err);
+  } else {
+    console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
+    console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
+    console.log(`Reason: ${state.reason}`);
+  }
+});
+
+// Promise pattern
+try {
+  const state = await stateManager.getState({
+    name: 'orders',
+    ns: 'production',
+  });
+  console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
+  console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
+} catch (err) {
+  console.error('Failed to get state:', err);
+}
+```
+
+#### Call Signature
+
 > **getState**(`queue`, `cb`): `void`
 
 Retrieves the current operational state of a queue
@@ -64,51 +112,131 @@ This method returns the complete state transition information for the queue,
 including the current state, when it was last changed, and the reason for
 the last transition.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 Queue identifier (either string in format "name@namespace" or IQueueParams object)
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### cb
+###### cb
 
 `ICallback`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
 
-Callback function that receives either an error or the current state information
+Optional callback function that receives either an error or the current state information
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+If queue exists but no state information is found
+
+##### Example
 
 ```typescript
-// Using string format
+// Callback pattern
 stateManager.getState('orders@production', (err, state) => {
-  if (err) return;
-
-  console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
-  console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
-  console.log(`Reason: ${state.reason}`);
-
-  if (state.lockOwner) {
-    console.log(`Locked by: ${state.lockOwner}`); // Internal use only
+  if (err) {
+    console.error('Failed to get state:', err);
+  } else {
+    console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
+    console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
+    console.log(`Reason: ${state.reason}`);
   }
 });
 
-// Using object format
-stateManager.getState({ name: 'orders', ns: 'production' }, callback);
+// Promise pattern
+try {
+  const state = await stateManager.getState({
+    name: 'orders',
+    ns: 'production',
+  });
+  console.log(`Queue is: ${EQueueOperationalState[state.to]}`);
+  console.log(`Last changed: ${new Date(state.timestamp).toISOString()}`);
+} catch (err) {
+  console.error('Failed to get state:', err);
+}
 ```
-
-#### Throws
-
-If queue exists but no state information is found
 
 ---
 
 ### getStateHistory()
+
+#### Call Signature
+
+> **getStateHistory**(`queue`): `Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)[]\>
+
+Retrieves the complete state transition history for a queue
+
+This method returns an array of all state transitions that have occurred
+for the specified queue, from oldest to newest. The history is maintained
+as an audit trail and can be used for:
+
+- Compliance and auditing
+- Debugging operational issues
+- Analyzing queue behavior over time
+- Generating reports on queue availability
+
+The history is limited to recent transitions.
+
+##### Parameters
+
+###### queue
+
+Queue identifier (string or IQueueParams)
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### Returns
+
+`Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)[]\>
+
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+If queue exists but no history is found
+
+##### Example
+
+```typescript
+// Callback pattern - get history
+stateManager.getStateHistory('orders@production', (err, history) => {
+  if (err) {
+    console.error('Failed to get history:', err);
+  } else {
+    console.log(`Queue has ${history.length} state transitions`);
+    history.forEach((transition, idx) => {
+      const from = transition.from
+        ? EQueueOperationalState[transition.from]
+        : 'INITIAL';
+      const to = EQueueOperationalState[transition.to];
+      console.log(
+        `${idx}: ${from} → ${to} at ${new Date(transition.timestamp).toISOString()}`,
+      );
+    });
+  }
+});
+
+// Promise pattern - analyze emergency stops
+try {
+  const history = await stateManager.getStateHistory('email-worker@production');
+  const emergencyStops = history.filter(
+    (t) => t.reason === EStateTransitionReason.EMERGENCY,
+  );
+  console.log(`Emergency stops: ${emergencyStops.length}`);
+  console.log(`Total transitions: ${history.length}`);
+} catch (err) {
+  console.error('Failed to get history:', err);
+}
+```
+
+#### Call Signature
 
 > **getStateHistory**(`queue`, `cb`): `void`
 
@@ -123,85 +251,134 @@ as an audit trail and can be used for:
 - Analyzing queue behavior over time
 - Generating reports on queue availability
 
-The history is limited to recent transitions (configurable via
-maxQueueStateHistorySize in the state transition script).
+The history is limited to recent transitions.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 Queue identifier (string or IQueueParams)
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### cb
+###### cb
 
 `ICallback`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)[]\>
 
-Callback receiving either an error or an array of state transitions
+Optional callback receiving either an error or an array of state transitions
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Throws
+
+If queue exists but no history is found
+
+##### Example
 
 ```typescript
-// Get full history
+// Callback pattern - get history
 stateManager.getStateHistory('orders@production', (err, history) => {
   if (err) {
     console.error('Failed to get history:', err);
-    return;
+  } else {
+    console.log(`Queue has ${history.length} state transitions`);
+    history.forEach((transition, idx) => {
+      const from = transition.from
+        ? EQueueOperationalState[transition.from]
+        : 'INITIAL';
+      const to = EQueueOperationalState[transition.to];
+      console.log(
+        `${idx}: ${from} → ${to} at ${new Date(transition.timestamp).toISOString()}`,
+      );
+    });
   }
-
-  console.log(`Queue has ${history.length} state transitions`);
-
-  // Analyze uptime/downtime
-  let totalDowntime = 0;
-  let lastActiveTime = null;
-
-  history.forEach((transition, index) => {
-    const from = transition.from
-      ? EQueueOperationalState[transition.from]
-      : 'INITIAL';
-    const to = EQueueOperationalState[transition.to];
-    const time = new Date(transition.timestamp);
-
-    console.log(`${index}: ${from} → ${to} at ${time.toISOString()}`);
-    console.log(`  Reason: ${transition.reason}`);
-    console.log(`  Description: ${transition.description || 'N/A'}`);
-
-    // Calculate downtime if leaving ACTIVE state
-    if (from === 'ACTIVE' && to !== 'ACTIVE' && lastActiveTime) {
-      const downtime = transition.timestamp - lastActiveTime;
-      totalDowntime += downtime;
-      console.log(`  Downtime: ${downtime}ms`);
-    }
-
-    if (to === 'ACTIVE') {
-      lastActiveTime = transition.timestamp;
-    }
-  });
-
-  console.log(`Total downtime: ${totalDowntime}ms`);
 });
 
-// Filter for specific reasons
-stateManager.getStateHistory('email-worker@production', (err, history) => {
+// Promise pattern - analyze emergency stops
+try {
+  const history = await stateManager.getStateHistory('email-worker@production');
   const emergencyStops = history.filter(
-    (t) => t.reason === EQueueStateTransitionReason.EMERGENCY,
+    (t) => t.reason === EStateTransitionReason.EMERGENCY,
   );
   console.log(`Emergency stops: ${emergencyStops.length}`);
-});
+  console.log(`Total transitions: ${history.length}`);
+} catch (err) {
+  console.error('Failed to get history:', err);
+}
 ```
-
-#### Throws
-
-If queue exists but no history is found
 
 ---
 
 ### pause()
+
+#### Call Signature
+
+> **pause**(`queue`, `options`): `Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+Temporarily pauses message processing for a queue
+
+When paused, the queue continues to accept new messages but stops processing them.
+This is useful for maintenance activities, deployment windows, or temporarily
+halting processing due to downstream issues.
+
+Valid transitions to PAUSED:
+
+- From ACTIVE (normal operation → paused)
+- From STOPPED (if resuming then immediately pausing is not recommended - use resume instead)
+
+##### Parameters
+
+###### queue
+
+Queue identifier (string or IQueueParams)
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+###### options
+
+Configuration options for the pause operation
+
+[`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
+
+##### Returns
+
+`Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern - simple pause
+stateManager.pause('orders@production', null, (err, transition) => {
+  if (err) {
+    console.error('Failed to pause:', err);
+  } else {
+    console.log('Queue paused at:', new Date(transition.timestamp));
+  }
+});
+
+// Promise pattern - pause with detailed reason
+try {
+  const transition = await stateManager.pause(
+    { name: 'email-worker', ns: 'production' },
+    {
+      reason: EStateTransitionReason.PERFORMANCE,
+      description: 'Email service latency spike detected',
+      metadata: { latency: '2500ms' },
+    },
+  );
+  console.log('Queue paused at:', new Date(transition.timestamp));
+} catch (err) {
+  console.error('Failed to pause:', err);
+}
+```
+
+#### Call Signature
 
 > **pause**(`queue`, `options`, `cb`): `void`
 
@@ -216,74 +393,131 @@ Valid transitions to PAUSED:
 - From ACTIVE (normal operation → paused)
 - From STOPPED (if resuming then immediately pausing is not recommended - use resume instead)
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 Queue identifier (string or IQueueParams)
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### options
+###### options
 
 Configuration options for the pause operation
 
 [`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
 
-##### cb
+###### cb
 
 `ICallback`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
 
-Callback receiving the completed state transition record
+Optional callback receiving the completed state transition record
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Example
 
 ```typescript
-// Simple pause
+// Callback pattern - simple pause
 stateManager.pause('orders@production', null, (err, transition) => {
-  if (err) console.error('Failed to pause:', err);
+  if (err) {
+    console.error('Failed to pause:', err);
+  } else {
+    console.log('Queue paused at:', new Date(transition.timestamp));
+  }
 });
 
-// Pause with detailed reason
-stateManager.pause(
-  { name: 'email-worker', ns: 'production' },
-  {
-    reason: EQueueStateTransitionReason.PERFORMANCE,
-    description: 'Email service latency spike detected',
-    metadata: {
-      service: 'smtp-provider',
-      latency: '2500ms',
-      incidentId: 'INC-2024-123',
+// Promise pattern - pause with detailed reason
+try {
+  const transition = await stateManager.pause(
+    { name: 'email-worker', ns: 'production' },
+    {
+      reason: EStateTransitionReason.PERFORMANCE,
+      description: 'Email service latency spike detected',
+      metadata: { latency: '2500ms' },
     },
-  },
-  (err, transition) => {
-    if (err) {
-      if (err.code === 'INVALID_STATE_TRANSITION') {
-        console.log('Queue cannot be paused from its current state');
-      }
-      return;
-    }
-
-    // Notify monitoring system
-    notifyMonitoring('queue-paused', {
-      queue: 'email-worker@production',
-      timestamp: transition.timestamp,
-    });
-  },
-);
+  );
+  console.log('Queue paused at:', new Date(transition.timestamp));
+} catch (err) {
+  console.error('Failed to pause:', err);
+}
 ```
-
-#### Emits
-
-queue.stateChanged - Emitted after successful state transition
 
 ---
 
 ### resume()
+
+#### Call Signature
+
+> **resume**(`queue`, `options`): `Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+Resumes message processing for a previously paused or stopped queue
+
+This method transitions a queue back to the ACTIVE state, allowing it to
+resume normal message processing. It can be called on queues in either
+PAUSED or STOPPED states.
+
+Valid transitions to ACTIVE:
+
+- From PAUSED (resume normal operation)
+- From STOPPED (restart a stopped queue)
+
+Note: Cannot resume a queue that is LOCKED (internal state) - locks are
+managed automatically by system components.
+
+##### Parameters
+
+###### queue
+
+Queue identifier (string or IQueueParams)
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+###### options
+
+Configuration options for the resume operation
+
+[`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
+
+##### Returns
+
+`Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern - simple resume
+stateManager.resume('orders', null, (err, transition) => {
+  if (err) {
+    console.error('Failed to resume:', err);
+  } else {
+    console.log('Queue resumed at:', new Date(transition.timestamp));
+  }
+});
+
+// Promise pattern - resume with detailed reason
+try {
+  const transition = await stateManager.resume(
+    { name: 'email-worker', ns: 'production' },
+    {
+      reason: EStateTransitionReason.MANUAL,
+      description: 'Database maintenance completed',
+      metadata: { downtime: '45s' },
+    },
+  );
+  console.log('Queue resumed at:', new Date(transition.timestamp));
+} catch (err) {
+  console.error('Failed to resume:', err);
+}
+```
+
+#### Call Signature
 
 > **resume**(`queue`, `options`, `cb`): `void`
 
@@ -301,67 +535,130 @@ Valid transitions to ACTIVE:
 Note: Cannot resume a queue that is LOCKED (internal state) - locks are
 managed automatically by system components.
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 Queue identifier (string or IQueueParams)
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### options
+###### options
 
 Configuration options for the resume operation
 
 [`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
 
-##### cb
+###### cb
 
 `ICallback`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
 
-Callback receiving the completed state transition record
+Optional callback receiving the completed state transition record
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Example
 
 ```typescript
-// Resume a paused queue
-stateManager.resume(
-  'orders@production',
-  {
-    reason: EQueueStateTransitionReason.RECOVERY,
-    description: 'Database maintenance completed',
-    metadata: {
-      downtime: '45s',
-      maintenanceWindow: '2024-01-15T02:00:00Z',
-    },
-  },
-  (err, transition) => {
-    if (err) {
-      if (err.code === 'QUEUE_NOT_FOUND') {
-        console.log('Queue does not exist');
-      }
-      return;
-    }
-
+// Callback pattern - simple resume
+stateManager.resume('orders', null, (err, transition) => {
+  if (err) {
+    console.error('Failed to resume:', err);
+  } else {
     console.log('Queue resumed at:', new Date(transition.timestamp));
-  },
-);
+  }
+});
 
-// Resume with default options
-stateManager.resume('email-worker@production', null, callback);
+// Promise pattern - resume with detailed reason
+try {
+  const transition = await stateManager.resume(
+    { name: 'email-worker', ns: 'production' },
+    {
+      reason: EStateTransitionReason.MANUAL,
+      description: 'Database maintenance completed',
+      metadata: { downtime: '45s' },
+    },
+  );
+  console.log('Queue resumed at:', new Date(transition.timestamp));
+} catch (err) {
+  console.error('Failed to resume:', err);
+}
 ```
-
-#### Emits
-
-queue.stateChanged - Emitted after successful state transition
 
 ---
 
 ### stop()
+
+#### Call Signature
+
+> **stop**(`queue`, `options`): `Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+Completely stops a queue from processing messages
+
+When stopped, the queue will not accept new messages nor process existing ones.
+This is a more severe state than PAUSED and is typically used for:
+
+- Emergency situations (critical errors, security incidents)
+- Queue deletion preparation
+- Complete system shutdown
+
+Valid transitions to STOPPED:
+
+- From ACTIVE (emergency stop)
+- From PAUSED (stop from paused state)
+
+##### Parameters
+
+###### queue
+
+Queue identifier (string or IQueueParams)
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+###### options
+
+Configuration options for the stop operation
+
+[`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
+
+##### Returns
+
+`Promise`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
+
+- Returns a Promise if no callback is provided
+
+##### Example
+
+```typescript
+// Callback pattern - emergency stop
+stateManager.stop('payment-processor', null, (err, transition) => {
+  if (err) {
+    console.error('Failed to stop:', err);
+  } else {
+    console.log('Queue stopped at:', new Date(transition.timestamp));
+  }
+});
+
+// Promise pattern - scheduled maintenance stop
+try {
+  const transition = await stateManager.stop(
+    { name: 'analytics', ns: 'production' },
+    {
+      reason: EStateTransitionReason.SCHEDULED,
+      description: 'Weekly maintenance window',
+    },
+  );
+  console.log('Queue stopped at:', new Date(transition.timestamp));
+} catch (err) {
+  console.error('Failed to stop:', err);
+}
+```
+
+#### Call Signature
 
 > **stop**(`queue`, `options`, `cb`): `void`
 
@@ -378,73 +675,56 @@ Valid transitions to STOPPED:
 
 - From ACTIVE (emergency stop)
 - From PAUSED (stop from paused state)
-- From LOCKED (internal use only)
 
-#### Parameters
+##### Parameters
 
-##### queue
+###### queue
 
 Queue identifier (string or IQueueParams)
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
-##### options
+###### options
 
 Configuration options for the stop operation
 
 [`TQueueStateTransitionUserOptions`](../type-aliases/TQueueStateTransitionUserOptions.md) | `null`
 
-##### cb
+###### cb
 
 `ICallback`\<[`IQueueStateTransition`](../interfaces/IQueueStateTransition.md)\>
 
-Callback receiving the completed state transition record
+Optional callback receiving the completed state transition record
 
-#### Returns
+##### Returns
 
 `void`
 
-#### Example
+- Returns a Promise if no callback is provided
+
+##### Example
 
 ```typescript
-// Emergency stop due to system error
-stateManager.stop(
-  'payment-processor@production',
-  {
-    reason: EQueueStateTransitionReason.EMERGENCY,
-    description: 'Payment gateway security breach detected',
-    metadata: {
-      incidentId: 'SEC-2024-456',
-      severity: 'critical',
-      timestamp: Date.now(),
+// Callback pattern - emergency stop
+stateManager.stop('payment-processor', null, (err, transition) => {
+  if (err) {
+    console.error('Failed to stop:', err);
+  } else {
+    console.log('Queue stopped at:', new Date(transition.timestamp));
+  }
+});
+
+// Promise pattern - scheduled maintenance stop
+try {
+  const transition = await stateManager.stop(
+    { name: 'analytics', ns: 'production' },
+    {
+      reason: EStateTransitionReason.SCHEDULED,
+      description: 'Weekly maintenance window',
     },
-  },
-  (err, transition) => {
-    if (err) {
-      console.error('Failed to stop queue:', err);
-      return;
-    }
-
-    // Alert on-call team
-    alertTeam({
-      type: 'queue-emergency-stop',
-      queue: 'payment-processor@production',
-      time: new Date(transition.timestamp),
-    });
-  },
-);
-
-// Scheduled maintenance stop
-stateManager.stop(
-  'analytics@production',
-  {
-    reason: EQueueStateTransitionReason.SCHEDULED,
-    description: 'Weekly maintenance window',
-  },
-  callback,
-);
+  );
+  console.log('Queue stopped at:', new Date(transition.timestamp));
+} catch (err) {
+  console.error('Failed to stop:', err);
+}
 ```
-
-#### Emits
-
-queue.stateChanged - Emitted after successful state transition

@@ -31,20 +31,16 @@ test('Combined test: Delete acknowledged messages by IDs which include a non-exi
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
 
-  const res1 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const res1 = await acknowledgedMessages.getMessages(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(2);
   const items = res1.items.map((i) => i.id).sort((a, b) => (a > b ? 1 : -1));
   expect(items).toEqual(ids);
 
-  const count = await acknowledgedMessages.countMessagesAsync(defaultQueue);
+  const count = await acknowledgedMessages.countMessages(defaultQueue);
   expect(count).toBe(2);
 
   const message = await getMessageManager();
-  const reply = await message.deleteMessagesByIdsAsync([msg1]);
+  const reply = await message.deleteMessagesByIds([msg1]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({
     processed: 1,
@@ -53,10 +49,10 @@ test('Combined test: Delete acknowledged messages by IDs which include a non-exi
     inProcess: 0,
   });
 
-  const count1 = await acknowledgedMessages.countMessagesAsync(defaultQueue);
+  const count1 = await acknowledgedMessages.countMessages(defaultQueue);
   expect(count1).toBe(1);
 
-  const reply2 = await message.deleteMessagesByIdsAsync([msg1, msg2]);
+  const reply2 = await message.deleteMessagesByIds([msg1, msg2]);
   expect(reply2.status).toBe('PARTIAL_SUCCESS');
   expect(reply2.stats).toEqual({
     processed: 2,
@@ -65,6 +61,6 @@ test('Combined test: Delete acknowledged messages by IDs which include a non-exi
     inProcess: 0,
   });
 
-  const count2 = await acknowledgedMessages.countMessagesAsync(defaultQueue);
+  const count2 = await acknowledgedMessages.countMessages(defaultQueue);
   expect(count2).toBe(0);
 });

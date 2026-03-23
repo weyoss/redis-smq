@@ -41,7 +41,7 @@ export async function produceAndAcknowledgeMessage(
   autoShutdown = false,
 ) {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer({
     queue,
@@ -50,14 +50,14 @@ export async function produceAndAcknowledgeMessage(
 
   const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const [messageId] = await producer.produceAsync(message);
+  const [messageId] = await producer.produce(message);
 
   consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer);
 
   if (autoShutdown) {
-    await producer.shutdownAsync();
-    await consumer.shutdownAsync();
+    await producer.shutdown();
+    await consumer.shutdown();
   }
 
   return { producer, consumer, queue, messageId };
@@ -68,7 +68,7 @@ export async function produceAndDeadLetterMessage(
   autoShutdown = false,
 ) {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const consumer = getConsumer({
     queue,
@@ -79,14 +79,14 @@ export async function produceAndDeadLetterMessage(
 
   const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const [messageId] = await producer.produceAsync(message);
+  const [messageId] = await producer.produce(message);
 
   consumer.run(() => void 0);
   await untilMessageDeadLettered(consumer);
 
   if (autoShutdown) {
-    await producer.shutdownAsync();
-    await consumer.shutdownAsync();
+    await producer.shutdown();
+    await consumer.shutdown();
   }
 
   return { producer, consumer, messageId, queue };
@@ -94,11 +94,11 @@ export async function produceAndDeadLetterMessage(
 
 export async function produceMessage(queue: IQueueParams = getDefaultQueue()) {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const [messageId] = await producer.produceAsync(message);
+  const [messageId] = await producer.produce(message);
   return { producer, messageId, queue };
 }
 
@@ -106,21 +106,21 @@ export async function produceMessageWithPriority(
   queue: IQueueParams = getDefaultQueue(),
 ) {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const message = new ProducibleMessage();
   message.setPriority(EMessagePriority.LOW).setQueue(queue);
-  const [messageId] = await producer.produceAsync(message);
+  const [messageId] = await producer.produce(message);
   return { messageId, producer, queue };
 }
 
 export async function scheduleMessage(queue: IQueueParams = getDefaultQueue()) {
   const producer = getProducer();
-  await producer.runAsync();
+  await producer.run();
 
   const message = new ProducibleMessage();
   message.setScheduledDelay(10000).setQueue(queue);
-  const [messageId] = await producer.produceAsync(message);
+  const [messageId] = await producer.produce(message);
   return { messageId, producer, queue };
 }
 
@@ -135,11 +135,7 @@ export async function createQueue(
         ? EQueueType.PRIORITY_QUEUE
         : EQueueType.LIFO_QUEUE
       : mixed;
-  await queueInstance.saveAsync(
-    queue,
-    type,
-    EQueueDeliveryModel.POINT_TO_POINT,
-  );
+  await queueInstance.save(queue, type, EQueueDeliveryModel.POINT_TO_POINT);
 }
 
 export async function crashAConsumerConsumingAMessage() {

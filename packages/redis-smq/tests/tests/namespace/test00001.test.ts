@@ -19,24 +19,24 @@ import { NamespaceNotFoundError } from '../../../src/errors/index.js';
 
 test('NamespaceManager', async () => {
   const queue = bluebird.promisifyAll(new QueueManager());
-  await queue.saveAsync(
+  await queue.save(
     'myqueue',
     EQueueType.FIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
   const namespace = bluebird.promisifyAll(new NamespaceManager());
-  const nsList = await namespace.getNamespacesAsync();
+  const nsList = await namespace.getNamespaces();
   expect(nsList).toEqual(['testing']);
 
-  const nsQueues = await namespace.getNamespaceQueuesAsync('testing');
+  const nsQueues = await namespace.getNamespaceQueues('testing');
   expect(nsQueues).toEqual([{ ns: 'testing', name: 'myqueue' }]);
 
-  await namespace.deleteAsync('testing');
-  const nsList1 = await namespace.getNamespacesAsync();
+  await namespace.delete('testing');
+  const nsList1 = await namespace.getNamespaces();
   expect(nsList1).toEqual([]);
 
-  await expect(namespace.getNamespaceQueuesAsync('testing')).rejects.toThrow(
+  await expect(namespace.getNamespaceQueues('testing')).rejects.toThrow(
     NamespaceNotFoundError,
   );
 });
