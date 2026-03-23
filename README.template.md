@@ -26,6 +26,7 @@ A high-performance Redis message queue for Node.js — simple to use, built for 
 - 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI + Swagger
 - 📊 [Web UI](packages/redis-smq-web-ui/README.md) for live management
 - 🎯 [Process-wide API](packages/redis-smq/docs/simplified-redis-smq-api.md) — initialize once, factory methods, single shutdown
+- 🔄 [Dual callback & promise support](packages/redis-smq/docs/dual-callback-and-promise-support.md)
 - 📦 [ESM + CJS](packages/redis-smq/docs/esm-cjs-modules.md) module support
 - 📖 [TypeScript-first](packages/redis-smq/docs/api/README.md) with rich docs
 
@@ -134,6 +135,47 @@ consumer.run((err) => {
   });
 });
 ```
+
+## 🧩 Using Promises
+
+```typescript
+import { RedisSMQ } from 'redis-smq';
+
+try {
+  // Initialize RedisSMQ
+  await RedisSMQ.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 }
+  });
+
+  // Create and start a producer
+  const producer = RedisSMQ.createProducer();
+  await producer.run();
+
+  // Send a message
+  const message = new ProducibleMessage()
+    .setQueue('my-queue')
+    .setBody({ hello: 'world' });
+  
+  const messageIds = await producer.produce(message);
+  console.log('Message published:', messageIds);
+
+  // Create and start a consumer
+  const consumer = RedisSMQ.createConsumer();
+  await consumer.run();
+
+  // Consume messages
+  await consumer.consume('my-queue', (message, done) => {
+    console.log('Received:', message.getBody());
+    done();
+  });
+  
+} catch (err) {
+  console.error('Error:', err);
+}
+```
+
+See [Dual Callback & Promise Support](packages/redis-smq/docs/dual-callback-and-promise-support.md).
 
 ## 📦 Packages
 

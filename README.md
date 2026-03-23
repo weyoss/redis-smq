@@ -26,7 +26,7 @@ A high-performance Redis message queue for Node.js — simple to use, built for 
 - 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI + Swagger
 - 📊 [Web UI](packages/redis-smq-web-ui/README.md) for live management
 - 🎯 [Process-wide API](packages/redis-smq/docs/simplified-redis-smq-api.md) — initialize once, factory methods, single shutdown
-- 🔄 [Dual callback & promise support](packages/redis-smq/docs/dual-callback-and-promise-support.md) — Pure callback internals with zero overhead, plus optional Promise API for async/await
+- 🔄 [Dual callback & promise support](packages/redis-smq/docs/dual-callback-and-promise-support.md)
 - 📦 [ESM + CJS](packages/redis-smq/docs/esm-cjs-modules.md) module support
 - 📖 [TypeScript-first](packages/redis-smq/docs/api/README.md) with rich docs
 
