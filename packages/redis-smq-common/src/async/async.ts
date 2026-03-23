@@ -19,6 +19,7 @@ import { withCallbackList } from './with-callback-list.js';
 import { withCallback } from './with-callback.js';
 import { withRetry } from './with-retry.js';
 import { withTimeout } from './with-timeout.js';
+import { withOptionalCallback } from './with-optional-callback.js';
 
 /**
  * A utility providing generic callback handling functions
@@ -39,4 +40,5 @@ export const async = {
   withCallbackList,
   withRetry,
   withTimeout,
+  withOptionalCallback,
 };

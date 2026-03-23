@@ -15,13 +15,19 @@ export default class MyRunnableWorker extends Runnable<Record<string, never>> {
   protected logger = getDummyLogger();
   protected interval: NodeJS.Timeout | null = null;
 
-  override run(cb: ICallback): void {
+  override run(): Promise<void>;
+  override run(cb: ICallback): void;
+  override run(cb?: ICallback): Promise<void> | void {
     this.interval = setInterval(() => void 0, 1000);
-    cb(null);
+    if (cb) cb(null);
+    else return Promise.resolve();
   }
 
-  override shutdown(cb: ICallback<void>) {
+  override shutdown(): Promise<void>;
+  override shutdown(cb: ICallback): void;
+  override shutdown(cb?: ICallback): Promise<void> | void {
     if (this.interval) clearInterval(this.interval);
-    cb(null);
+    if (cb) cb(null);
+    else return Promise.resolve();
   }
 }

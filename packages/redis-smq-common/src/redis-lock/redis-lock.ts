@@ -23,6 +23,7 @@ import { Runnable } from '../runnable/index.js';
 import { Timer } from '../timer/index.js';
 import { Backoff } from '../backoff/backoff.js';
 import { ExponentialBackoff } from '../backoff/index.js';
+import { withOptionalCallback } from '../async/with-optional-callback.js';
 
 const dir = env.getCurrentDir();
 
@@ -343,31 +344,33 @@ export class RedisLock extends Runnable<TLockerEvent> {
   /**
    * Overrides the `run` method from the `Runnable` class to handle the lock acquisition process.
    *
-   * @param cb - A callback function that will be invoked with an error (if any) upon successful execution.
-   *
    * @returns {void}
    */
-  override run(cb: ICallback): void {
-    this.logger.debug(`Attempting to run RedisLock for key: ${this.lockKey}`);
+  override run(): Promise<void>;
+  override run(cb: ICallback): void;
+  override run(cb?: ICallback): Promise<void> | void {
+    withOptionalCallback(cb, (callback) => {
+      this.logger.debug(`Attempting to run RedisLock for key: ${this.lockKey}`);
 
-    super.run((err) => {
-      if (err instanceof LockNotAcquiredError) {
+      super.run((err) => {
+        if (err instanceof LockNotAcquiredError) {
+          this.logger.debug(
+            `Lock already held by another instance for key: ${this.lockKey}`,
+          );
+          return callback(err);
+        }
+
+        if (err) {
+          this.logger.error(`Error running RedisLock: ${err.message}`, err);
+          return callback(err);
+        }
+
         this.logger.debug(
-          `Lock already held by another instance for key: ${this.lockKey}`,
+          `RedisLock running successfully for key: ${this.lockKey}`,
         );
-        return cb(err);
-      }
 
-      if (err) {
-        this.logger.error(`Error running RedisLock: ${err.message}`, err);
-        return cb(err);
-      }
-
-      this.logger.debug(
-        `RedisLock running successfully for key: ${this.lockKey}`,
-      );
-
-      cb(null);
+        callback(null);
+      });
     });
   }
 

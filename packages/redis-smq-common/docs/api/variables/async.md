@@ -243,7 +243,7 @@ map(
       return cb(null, {
         id: userData.id,
         name: userData.name,
-        isActive: userData.status === 'active'
+        isActive: userData.status === 'active',
       });
     });
   },
@@ -255,7 +255,7 @@ map(
     }
     console.log(`Successfully processed ${users.length} users`);
     // users is an array of user objects
-  }
+  },
 );
 ```
 
@@ -272,7 +272,7 @@ when all operations complete or when any operation fails.
 
 ##### AsyncOperationList
 
-`AsyncOperationList` *extends* [`TAsyncOperationList`](../type-aliases/TAsyncOperationList.md)
+`AsyncOperationList` _extends_ [`TAsyncOperationList`](../type-aliases/TAsyncOperationList.md)
 
 #### Parameters
 
@@ -297,10 +297,7 @@ The callback to invoke with results
 ```javascript
 // Example 1: Basic usage with different return types
 parallel(
-  [
-    (cb) => fetchUserData(userId, cb),
-    (cb) => fetchUserPosts(userId, cb)
-  ],
+  [(cb) => fetchUserData(userId, cb), (cb) => fetchUserPosts(userId, cb)],
   (err, results) => {
     if (err) {
       console.error('An error occurred:', err);
@@ -311,7 +308,7 @@ parallel(
     // userData is of type UserData
     // userPosts is of type Post[]
     console.log(`User ${userData.name} has ${userPosts.length} posts`);
-  }
+  },
 );
 ```
 
@@ -321,7 +318,7 @@ parallel(
   [
     (cb) => readFile('config.json', cb),
     (cb) => connectToDatabase(cb),
-    (cb) => validateLicense(cb)
+    (cb) => validateLicense(cb),
   ],
   (err, [configData, dbConnection, licenseStatus]) => {
     if (err) {
@@ -331,7 +328,7 @@ parallel(
 
     // All operations completed successfully
     startApplication(configData, dbConnection, licenseStatus);
-  }
+  },
 );
 ```
 
@@ -349,7 +346,7 @@ The callback is invoked with an array containing the results of all operations.
 
 ##### AsyncOperationList
 
-`AsyncOperationList` *extends* [`TAsyncOperationList`](../type-aliases/TAsyncOperationList.md)
+`AsyncOperationList` _extends_ [`TAsyncOperationList`](../type-aliases/TAsyncOperationList.md)
 
 #### Parameters
 
@@ -377,7 +374,7 @@ series(
   [
     (cb) => fetchUserProfile(userId, cb),
     (cb) => fetchUserPermissions(userId, cb),
-    (cb) => fetchUserPreferences(userId, cb)
+    (cb) => fetchUserPreferences(userId, cb),
   ],
   (err, results) => {
     if (err) {
@@ -388,7 +385,7 @@ series(
     const [profile, permissions, preferences] = results;
     console.log(`User ${profile.name} has ${permissions.length} permissions`);
     applyUserSettings(profile, permissions, preferences);
-  }
+  },
 );
 ```
 
@@ -951,6 +948,7 @@ A callback to run after all functions complete or an error occurs
 A generic helper function for handling asynchronous operations with callbacks
 
 This function provides a standardized way to:
+
 1. Execute an asynchronous setup operation
 2. Check for errors in the setup
 3. Check for empty/null results
@@ -1028,7 +1026,7 @@ withCallback<RedisClient, UserData>(
       return;
     }
     console.log('User data:', userData);
-  }
+  },
 );
 ```
 
@@ -1045,7 +1043,7 @@ are prepared by different setup functions.
 
 ##### S
 
-`S` *extends* `unknown`[]
+`S` _extends_ `unknown`[]
 
 ##### T
 
@@ -1118,7 +1116,7 @@ withCallbackList(
         if (err) return cb(err);
         cb(null, client);
       });
-    }
+    },
   ],
 
   // Main operation using all resources
@@ -1140,9 +1138,33 @@ withCallbackList(
 
     // Application successfully started
     console.log(`Application is running with PID ${process.pid}`);
-  }
+  },
 );
 ```
+
+### withOptionalCallback()
+
+> **withOptionalCallback**: \<`T`\>(`cb`, `fn`) => `void` \| `Promise`\<`T`\>
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`T`\> | `undefined`
+
+##### fn
+
+(`callback`) => `void`
+
+#### Returns
+
+`void` \| `Promise`\<`T`\>
 
 ### withRetry()
 

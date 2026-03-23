@@ -103,25 +103,162 @@ A callback function that will be invoked with an error (if any) upon successful 
 
 ### ensureIsOperational()
 
+#### Call Signature
+
+> **ensureIsOperational**(): `Promise`\<`void`\>
+
+Ensures the Runnable instance is operational (either starting up or fully running).
+
+This method checks the current state and takes appropriate action:
+
+- If the instance is running (`isRunning()`), the callback is called immediately.
+- If the instance is going up (`isGoingUp()`), the callback is queued to be called when startup completes.
+- If the instance is down (`isDown()`), it initiates startup and calls the callback when ready.
+- If the instance is going down (`isGoingDown()`), an error is returned as operation cannot be ensured during shutdown.
+
+This is useful for methods that need the component to be ready before performing operations,
+automatically starting it if it's not already running.
+
+**Use Cases:**
+
+- Ensuring a service is ready before processing requests
+- Lazy initialization of components
+- Recovery scenarios where the component might have been stopped
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided, otherwise returns void.
+
+##### Throws
+
+When called while the instance is shutting down.
+
+##### Throws
+
+Any error that occurs during startup if the instance was down.
+
+##### Example
+
+```typescript
+// Using callback pattern
+class MessageProcessor extends Runnable {
+  processMessage(message: string, cb: ICallback) {
+    this.ensureIsOperational((err) => {
+      if (err) return cb(err);
+      // Process message now that we're operational
+      this.handleMessage(message, cb);
+    });
+  }
+}
+
+// Using promise pattern
+class MessageProcessor extends Runnable {
+  async processMessage(message: string): Promise<void> {
+    await this.ensureIsOperational();
+    // Process message now that we're operational
+    await this.handleMessage(message);
+  }
+}
+
+// Usage
+const processor = new MessageProcessor();
+
+// This will automatically start the processor if needed
+await processor.processMessage('Hello');
+
+// Subsequent calls will use the already running instance
+await processor.processMessage('World');
+```
+
+##### Inherited from
+
+[`Runnable`](Runnable.md).[`ensureIsOperational`](Runnable.md#ensureisoperational)
+
+#### Call Signature
+
 > **ensureIsOperational**(`cb`): `void`
 
 Ensures the Runnable instance is operational (either starting up or fully running).
-If it's not operational, starts it.
-Calls the callback when the instance is operational.
 
-#### Parameters
+This method checks the current state and takes appropriate action:
 
-##### cb
+- If the instance is running (`isRunning()`), the callback is called immediately.
+- If the instance is going up (`isGoingUp()`), the callback is queued to be called when startup completes.
+- If the instance is down (`isDown()`), it initiates startup and calls the callback when ready.
+- If the instance is going down (`isGoingDown()`), an error is returned as operation cannot be ensured during shutdown.
+
+This is useful for methods that need the component to be ready before performing operations,
+automatically starting it if it's not already running.
+
+**Use Cases:**
+
+- Ensuring a service is ready before processing requests
+- Lazy initialization of components
+- Recovery scenarios where the component might have been stopped
+
+##### Parameters
+
+###### cb
 
 [`ICallback`](../interfaces/ICallback.md)
 
-Callback function to be called when the instance is operational.
+Optional callback function to be called when the instance is operational.
 
-#### Returns
+- If no error occurs, the callback is called with `null` (or no arguments).
+- If the instance is shutting down, an `AbortError` is passed.
+- If startup fails, the error is passed.
+- If not provided, the method returns a Promise that resolves when operational or rejects with any error.
+
+##### Returns
 
 `void`
 
-#### Inherited from
+- Returns a Promise if no callback is provided, otherwise returns void.
+
+##### Throws
+
+When called while the instance is shutting down.
+
+##### Throws
+
+Any error that occurs during startup if the instance was down.
+
+##### Example
+
+```typescript
+// Using callback pattern
+class MessageProcessor extends Runnable {
+  processMessage(message: string, cb: ICallback) {
+    this.ensureIsOperational((err) => {
+      if (err) return cb(err);
+      // Process message now that we're operational
+      this.handleMessage(message, cb);
+    });
+  }
+}
+
+// Using promise pattern
+class MessageProcessor extends Runnable {
+  async processMessage(message: string): Promise<void> {
+    await this.ensureIsOperational();
+    // Process message now that we're operational
+    await this.handleMessage(message);
+  }
+}
+
+// Usage
+const processor = new MessageProcessor();
+
+// This will automatically start the processor if needed
+await processor.processMessage('Hello');
+
+// Subsequent calls will use the already running instance
+await processor.processMessage('World');
+```
+
+##### Inherited from
 
 [`Runnable`](Runnable.md).[`ensureIsOperational`](Runnable.md#ensureisoperational)
 
@@ -460,23 +597,37 @@ A callback function that will be invoked with an error (if any) or `undefined` u
 
 ### run()
 
+#### Call Signature
+
+> **run**(): `Promise`\<`void`\>
+
+Overrides the `run` method from the `Runnable` class to handle the lock acquisition process.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+##### Overrides
+
+[`Runnable`](Runnable.md).[`run`](Runnable.md#run)
+
+#### Call Signature
+
 > **run**(`cb`): `void`
 
 Overrides the `run` method from the `Runnable` class to handle the lock acquisition process.
 
-#### Parameters
+##### Parameters
 
-##### cb
+###### cb
 
 [`ICallback`](../interfaces/ICallback.md)
 
-A callback function that will be invoked with an error (if any) upon successful execution.
-
-#### Returns
+##### Returns
 
 `void`
 
-#### Overrides
+##### Overrides
 
 [`Runnable`](Runnable.md).[`run`](Runnable.md#run)
 
@@ -484,31 +635,162 @@ A callback function that will be invoked with an error (if any) upon successful 
 
 ### shutdown()
 
+#### Call Signature
+
+> **shutdown**(): `Promise`\<`void`\>
+
+Performs a graceful shutdown of the Runnable instance.
+
+This method initiates a clean shutdown process by executing all tasks defined in the `goingDown()` hook.
+The shutdown sequence is executed in series, and each task's completion is awaited before proceeding.
+
+**State Transitions:**
+
+- **If the instance is starting up (`isGoingUp()`)**:
+  - Startup is aborted (rolled back)
+  - All pending startup callbacks receive an `AbortError`
+  - Shutdown tasks are executed immediately
+- **If the instance is fully running (`isUp()`)**:
+  - The instance transitions to going down state
+  - Shutdown tasks are executed
+  - Once complete, the instance transitions to down state
+- **If already down or going down**:
+  - No action is taken, but callbacks are queued to be called when shutdown completes
+- **If not operational**:
+  - Success is returned immediately (already down)
+
+**Error Handling:**
+
+- If any task in the shutdown sequence fails, the error is logged but shutdown continues
+- The instance always transitions to down state regardless of task errors
+- All queued callbacks are eventually called
+
+**Idempotency:**
+
+- Calling `shutdown()` multiple times is safe
+- Subsequent calls will queue their callbacks to be called when the shutdown process completes
+
+##### Returns
+
+`Promise`\<`void`\>
+
+- Returns a Promise if no callback is provided, otherwise returns void.
+
+##### Example
+
+```typescript
+// Using callback pattern
+const runnable = new MyRunnable();
+await runnable.run();
+
+runnable.shutdown((err) => {
+  if (err) {
+    console.error('Error during shutdown:', err);
+  } else {
+    console.log('Shutdown complete');
+  }
+});
+
+// Using promise pattern
+await runnable.run();
+await runnable.shutdown();
+console.log('Shutdown complete');
+
+// Shutdown during startup
+runnable.run(); // Starts async startup
+await runnable.shutdown(); // Aborts startup and shuts down
+
+// Multiple shutdown calls are safe
+runnable.shutdown(() => console.log('First'));
+runnable.shutdown(() => console.log('Second')); // Called after shutdown
+```
+
+##### Inherited from
+
+[`Runnable`](Runnable.md).[`shutdown`](Runnable.md#shutdown)
+
+#### Call Signature
+
 > **shutdown**(`cb`): `void`
 
 Performs a graceful shutdown of the Runnable instance.
 
-The shutdown process involves executing the `goingDown` tasks, which are responsible for cleaning up resources.
-The shutdown behavior depends on the current state of the Runnable instance:
+This method initiates a clean shutdown process by executing all tasks defined in the `goingDown()` hook.
+The shutdown sequence is executed in series, and each task's completion is awaited before proceeding.
 
-- If the Runnable is running (`isRunning()`) and going up (`isGoingUp()`), the shutdown process will rollback the going up state.
-- If the Runnable is running (`isRunning()`) and up (`isUp()`), the shutdown process will mark the Runnable as going down.
-- After executing the `goingDown` tasks, the Runnable will call the `down` method to finalize the shutdown process.
+**State Transitions:**
 
-#### Parameters
+- **If the instance is starting up (`isGoingUp()`)**:
+  - Startup is aborted (rolled back)
+  - All pending startup callbacks receive an `AbortError`
+  - Shutdown tasks are executed immediately
+- **If the instance is fully running (`isUp()`)**:
+  - The instance transitions to going down state
+  - Shutdown tasks are executed
+  - Once complete, the instance transitions to down state
+- **If already down or going down**:
+  - No action is taken, but callbacks are queued to be called when shutdown completes
+- **If not operational**:
+  - Success is returned immediately (already down)
 
-##### cb
+**Error Handling:**
+
+- If any task in the shutdown sequence fails, the error is logged but shutdown continues
+- The instance always transitions to down state regardless of task errors
+- All queued callbacks are eventually called
+
+**Idempotency:**
+
+- Calling `shutdown()` multiple times is safe
+- Subsequent calls will queue their callbacks to be called when the shutdown process completes
+
+##### Parameters
+
+###### cb
 
 [`ICallback`](../interfaces/ICallback.md)
 
-A callback function that will be called after the shutdown process is completed.
-If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
-If the shutdown process is successful, the callback will be called with no arguments.
+Optional callback function to be called when the shutdown process completes.
 
-#### Returns
+- If no error occurs, the callback is called with `null` (or no arguments).
+- Any errors during shutdown are passed to the callback as the first argument.
+- If not provided, the method returns a Promise that resolves when shutdown completes or rejects with any error.
+
+##### Returns
 
 `void`
 
-#### Inherited from
+- Returns a Promise if no callback is provided, otherwise returns void.
+
+##### Example
+
+```typescript
+// Using callback pattern
+const runnable = new MyRunnable();
+await runnable.run();
+
+runnable.shutdown((err) => {
+  if (err) {
+    console.error('Error during shutdown:', err);
+  } else {
+    console.log('Shutdown complete');
+  }
+});
+
+// Using promise pattern
+await runnable.run();
+await runnable.shutdown();
+console.log('Shutdown complete');
+
+// Shutdown during startup
+runnable.run(); // Starts async startup
+await runnable.shutdown(); // Aborts startup and shuts down
+
+// Multiple shutdown calls are safe
+runnable.shutdown(() => console.log('First'));
+runnable.shutdown(() => console.log('Second')); // Called after shutdown
+```
+
+##### Inherited from
 
 [`Runnable`](Runnable.md).[`shutdown`](Runnable.md#shutdown)
