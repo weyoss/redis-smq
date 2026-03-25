@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.6...v10.0.0-next.0) (2026-03-25)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** make 'total messages' header clickable ([2538b9d](https://github.com/weyoss/redis-smq/commit/2538b9dd1fb372c25f7e4c7dbdf6d3c9c6dadf23))
+- **redis-smq-web-ui:** replace useInfiniteQuery with useQuery for better performance ([2c29fa4](https://github.com/weyoss/redis-smq/commit/2c29fa453a9bf9ee51e68395fe417e74c9530cf2))
+- **redis-smq-web-ui:** update EMessagePropertyStatus to fix wrong message statuses ([5a19dc5](https://github.com/weyoss/redis-smq/commit/5a19dc53f54d43dbcc28522ec260aad93f57e388))
+
+### 🚀 Chore
+
+- use underscore for script filename convention ([4df1236](https://github.com/weyoss/redis-smq/commit/4df1236b3a78767f84f9d23591e7dc4871b28d71))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** delete unused QueueStatsCard.vue component ([6b10f19](https://github.com/weyoss/redis-smq/commit/6b10f190f43af8df81b4bef2af0c58a2b2054287))
+- **redis-smq-web-ui:** improve UI components for clarity and maintainability ([45b53d1](https://github.com/weyoss/redis-smq/commit/45b53d1aaf641e151fbcc6ca718e9b60509f8704))
+
 ## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
 
 ### ✨ Features

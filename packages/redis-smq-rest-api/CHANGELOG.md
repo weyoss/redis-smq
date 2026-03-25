@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.6...v10.0.0-next.0) (2026-03-25)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-rest-api:** update OpenAPI specs to v3.1, refactor project structure
+- **redis-smq-rest-api:** redesign API to best follow REST conventions
+
+### 🚀 Chore
+
+- upgrade eslint to v10 ([b235266](https://github.com/weyoss/redis-smq/commit/b235266865b77117d9d7ef0e0328a72940901557))
+- use underscore for script filename convention ([4df1236](https://github.com/weyoss/redis-smq/commit/4df1236b3a78767f84f9d23591e7dc4871b28d71))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** redesign API to best follow REST conventions ([97aed96](https://github.com/weyoss/redis-smq/commit/97aed963189766cb939eee55338848e0b60f31d2))
+- **redis-smq-rest-api:** update OpenAPI specs to v3.1, refactor project structure ([6c84a8e](https://github.com/weyoss/redis-smq/commit/6c84a8e086b9e1e566a6d9c1dc30e40d7c7299de))
+
 ## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
 
 ### ✨ Features

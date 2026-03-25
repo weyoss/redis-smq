@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.6...v10.0.0-next.0) (2026-03-25)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** update IRedisClient.md reference ([d232393](https://github.com/weyoss/redis-smq/commit/d232393eb6a635cd94d68901b201bdc5449fbd63))
+
+### 🚀 Chore
+
+- **redis-smq-common:** update tar to v7.5.12 to address security issues ([eb32415](https://github.com/weyoss/redis-smq/commit/eb32415810c0ba7ca7abccecabe03675800068d0))
+- use underscore for script filename convention ([4df1236](https://github.com/weyoss/redis-smq/commit/4df1236b3a78767f84f9d23591e7dc4871b28d71))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add 'zpoplpush' command ([09d706e](https://github.com/weyoss/redis-smq/commit/09d706e9f26cbeebb8f35da02df25cc1028c885c))
+- **redis-smq-common:** add withOptionalCallback to async utils ([4d32dfe](https://github.com/weyoss/redis-smq/commit/4d32dfee72febbc248759e45e47493746f8d0361))
+
 ## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
 
 **Note:** Version bump only for package redis-smq-common

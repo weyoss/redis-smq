@@ -3,6 +3,64 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.6...v10.0.0-next.0) (2026-03-25)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq:** make redis key structure more intuitive and consistent
+- **redis-smq:** move purge job logic to PurgeQueueJobManager
+- **redis-smq:** remove deprecated boolean constructor option for Consumer
+- **redis-smq-rest-api:** update OpenAPI specs to v3.1, refactor project structure
+- **redis-smq:** use short error class names for clarity
+- **redis-smq:** rename methods for clarity and add new bindings methods
+- **redis-smq:** store published messages using LISTs for efficient pagination
+- **redis-smq-rest-api:** redesign API to best follow REST conventions
+
+### ✨ Features
+
+- **redis-smq:** add dual callback and promise support to public API ([7fd23c7](https://github.com/weyoss/redis-smq/commit/7fd23c7b111846df8056d9a2830cdfb7332f2c9b))
+- **redis-smq:** enable retrieval of queue consumption status by consumer ([a7e1582](https://github.com/weyoss/redis-smq/commit/a7e1582b2ea301f9835f21b6f4537eea1cb728e9))
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** update IRedisClient.md reference ([d232393](https://github.com/weyoss/redis-smq/commit/d232393eb6a635cd94d68901b201bdc5449fbd63))
+- **redis-smq-web-ui:** make 'total messages' header clickable ([2538b9d](https://github.com/weyoss/redis-smq/commit/2538b9dd1fb372c25f7e4c7dbdf6d3c9c6dadf23))
+- **redis-smq-web-ui:** replace useInfiniteQuery with useQuery for better performance ([2c29fa4](https://github.com/weyoss/redis-smq/commit/2c29fa453a9bf9ee51e68395fe417e74c9530cf2))
+- **redis-smq-web-ui:** update EMessagePropertyStatus to fix wrong message statuses ([5a19dc5](https://github.com/weyoss/redis-smq/commit/5a19dc53f54d43dbcc28522ec260aad93f57e388))
+- **redis-smq:** expect InvalidExchangeRoutingKeyError for invalid routing keys ([8fa9a44](https://github.com/weyoss/redis-smq/commit/8fa9a44f52f9e40ab358ebfde5719702723975ac))
+
+### 🚀 Chore
+
+- **redis-smq-common:** update tar to v7.5.12 to address security issues ([eb32415](https://github.com/weyoss/redis-smq/commit/eb32415810c0ba7ca7abccecabe03675800068d0))
+- upgrade eslint to v10 ([b235266](https://github.com/weyoss/redis-smq/commit/b235266865b77117d9d7ef0e0328a72940901557))
+- use underscore for script filename convention ([4df1236](https://github.com/weyoss/redis-smq/commit/4df1236b3a78767f84f9d23591e7dc4871b28d71))
+
+### 📝 Documentation
+
+- add promise support examples ([f145c46](https://github.com/weyoss/redis-smq/commit/f145c46facce1c6e75965fa5adcd3193d71a7eeb))
+- **redis-smq:** clean up dual-callback-and-promise-support.md ([0381c58](https://github.com/weyoss/redis-smq/commit/0381c5847f9fa767048521f67e6ff90e692f3178))
+- **redis-smq:** fix incorrect error class names in JSDocs ([1bc3a74](https://github.com/weyoss/redis-smq/commit/1bc3a749c22c28d156c0bbdd2e92cb65f2cb06a1))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add 'zpoplpush' command ([09d706e](https://github.com/weyoss/redis-smq/commit/09d706e9f26cbeebb8f35da02df25cc1028c885c))
+- **redis-smq-common:** add withOptionalCallback to async utils ([4d32dfe](https://github.com/weyoss/redis-smq/commit/4d32dfee72febbc248759e45e47493746f8d0361))
+- **redis-smq-rest-api:** redesign API to best follow REST conventions ([97aed96](https://github.com/weyoss/redis-smq/commit/97aed963189766cb939eee55338848e0b60f31d2))
+- **redis-smq-rest-api:** update OpenAPI specs to v3.1, refactor project structure ([6c84a8e](https://github.com/weyoss/redis-smq/commit/6c84a8e086b9e1e566a6d9c1dc30e40d7c7299de))
+- **redis-smq-web-ui:** delete unused QueueStatsCard.vue component ([6b10f19](https://github.com/weyoss/redis-smq/commit/6b10f190f43af8df81b4bef2af0c58a2b2054287))
+- **redis-smq-web-ui:** improve UI components for clarity and maintainability ([45b53d1](https://github.com/weyoss/redis-smq/commit/45b53d1aaf641e151fbcc6ca718e9b60509f8704))
+- **redis-smq:** make redis key structure more intuitive and consistent ([c988778](https://github.com/weyoss/redis-smq/commit/c988778866f73fb358aa90401c0df2734e1da66d))
+- **redis-smq:** move purge job logic to PurgeQueueJobManager ([2ce3211](https://github.com/weyoss/redis-smq/commit/2ce32112c914f39cbbc6912d5f3dd1448c4c012b))
+- **redis-smq:** remove deprecated boolean constructor option for Consumer ([ea99061](https://github.com/weyoss/redis-smq/commit/ea990610413ab8dbac26e3efbb1e9aab27cf1621))
+- **redis-smq:** rename methods for clarity and add new bindings methods ([1865fcb](https://github.com/weyoss/redis-smq/commit/1865fcb694420eed73e2e90236ccc904e6cc4baa))
+- **redis-smq:** store published messages using LISTs for efficient pagination ([4d7cc4d](https://github.com/weyoss/redis-smq/commit/4d7cc4dfc6c30f2274fd2a741246b2a6fbe084d2))
+- **redis-smq:** use short error class names for clarity ([725bb0b](https://github.com/weyoss/redis-smq/commit/725bb0bc7cff72bb92a9117c8fa35f3f3f3349ac))
+- **redis-smq:** use ZPOPLPUSH instead of ZPOPRPUSH when dequeuing priority queue messages ([a3d8bf5](https://github.com/weyoss/redis-smq/commit/a3d8bf54d848a3a9188188b7e83e39f15fdcd8b1))
+
+### ✅ Tests
+
+- **redis-smq-web-server:** make sure to initialize RedisSMQ before each test ([2688459](https://github.com/weyoss/redis-smq/commit/2688459498093a42ee354d7658ae3f0ce970b1fa))
+
 ## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
 
 ### ✨ Features
