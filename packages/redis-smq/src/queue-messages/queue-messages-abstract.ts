@@ -167,8 +167,6 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {InvalidPageError} When page number is invalid.
-   * @throws {InvalidPageSizeError} When page size is invalid.
    *
    * @example
    * ```typescript
@@ -250,8 +248,6 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {InvalidPageError} When page number is invalid.
-   * @throws {InvalidPageSizeError} When page size is invalid.
    *
    * @example
    * ```typescript
@@ -356,7 +352,6 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {QueuePurgeInProgressError} When a purge operation is already in progress.
    *
    * @example
    * ```typescript
@@ -451,8 +446,8 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {JobNotFoundError} When the specified job ID doesn't exist.
-   * @throws {JobNotCancellableError} When the job cannot be cancelled (already completed or failed).
+   * @throws {BackgroundJobNotFoundError} When the specified job ID doesn't exist.
+   * @throws {BackgroundJobNotCancellableError} When the job cannot be cancelled (already completed or failed).
    *
    * @example
    * ```typescript
@@ -533,7 +528,7 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {JobNotFoundError} When the specified job ID doesn't exist.
+   * @throws {BackgroundJobNotFoundError} When the specified job ID doesn't exist.
    *
    * @example
    * ```typescript
