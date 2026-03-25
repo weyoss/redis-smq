@@ -16,7 +16,6 @@ import {
   BackgroundJobNotFailableError,
   BackgroundJobNotFoundError,
   BackgroundJobNotStartableError,
-  BackgroundJobTargetLockedError,
   UnexpectedScriptReplyError,
 } from '../../../errors/index.js';
 import {
@@ -56,7 +55,10 @@ const luaScriptMap = {
   ),
 };
 
-export abstract class BackgroundJobManagerAbstract<Target> {
+export abstract class BackgroundJobManagerAbstract<
+  Payload,
+  Meta extends Record<string, unknown> = never,
+> {
   protected readonly config: IBackgroundJobConfig;
   protected readonly redisClient: IRedisClient;
   protected readonly logger: ILogger;
@@ -71,10 +73,33 @@ export abstract class BackgroundJobManagerAbstract<Target> {
     this.config = config;
   }
 
+  protected applyPartialUpdate(
+    job: IBackgroundJob<Payload, Meta>,
+    partial: Partial<IBackgroundJob<Payload, Meta>>,
+  ): IBackgroundJob<Payload, Meta> {
+    const { meta: partialMeta, ...partialFields } = partial;
+
+    // Merge primitive fields
+    const result: IBackgroundJob<Payload, Meta> = {
+      ...job,
+      ...partialFields,
+    };
+
+    // Merge meta object if provided
+    if (partialMeta) {
+      result.meta = {
+        ...job.meta,
+        ...partialMeta,
+      };
+    }
+
+    return result;
+  }
+
   // Update job
   protected update(
     jobId: string,
-    updates: Partial<IBackgroundJob<Target>>,
+    updates: Partial<IBackgroundJob<Payload, Meta>>,
     cb: ICallback<void>,
   ): void {
     this.get(jobId, (err, backgroundJob) => {
@@ -82,11 +107,10 @@ export abstract class BackgroundJobManagerAbstract<Target> {
       if (!backgroundJob)
         return cb(new BackgroundJobNotFoundError({ metadata: { jobId } }));
 
-      const updatedJob: IBackgroundJob<Target> = {
-        ...backgroundJob,
+      const updatedJob = this.applyPartialUpdate(backgroundJob, {
         ...updates,
         updatedAt: Date.now(),
-      };
+      });
 
       this.redisClient.hset(
         this.config.keyBackgroundJobs,
@@ -96,9 +120,6 @@ export abstract class BackgroundJobManagerAbstract<Target> {
       );
     });
   }
-
-  // Helper: Get target lock key
-  protected abstract getTargetLockKey(target: Target): string;
 
   // Release job from processing list (when done)
   protected removeFromProcessing(jobId: string, cb: ICallback<number>): void {
@@ -127,49 +148,39 @@ export abstract class BackgroundJobManagerAbstract<Target> {
 
   // Create a new job
   create(
-    target: Target,
-    options: Partial<IBackgroundJob<Target>> = {},
-    cb: ICallback<IBackgroundJob<Target>>,
+    payload: Payload,
+    options: Partial<IBackgroundJob<Payload, Meta>> = {},
+    cb: ICallback<IBackgroundJob<Payload, Meta>>,
   ): void {
     const jobId = options.id ?? randomUUID();
     const now = Date.now();
 
-    const backgroundJob: IBackgroundJob<Target> = {
+    const backgroundJob: IBackgroundJob<Payload, Meta> = {
       batchSize,
       delay,
       ...options,
       id: jobId,
-      target,
+      payload,
       status: EBackgroundJobStatus.PENDING,
       createdAt: now,
       updatedAt: now,
     };
 
-    const targetLockKey = this.getTargetLockKey(target);
-
     this.redisClient.runScript(
       ELuaScript.CREATE_JOB,
-      [
-        this.config.keyBackgroundJobs,
-        this.config.keyBackgroundJobsPending,
-        targetLockKey,
-      ],
+      [this.config.keyBackgroundJobs, this.config.keyBackgroundJobsPending],
       [jobId, JSON.stringify(backgroundJob), jobId],
       (err, reply) => {
         if (err) return cb(err);
 
         switch (reply) {
-          case 0:
-            return cb(
-              new BackgroundJobTargetLockedError({ metadata: { target } }),
-            );
           case -1:
             return cb(
               new BackgroundJobAlreadyExistsError({ metadata: { jobId } }),
             );
           case 1:
             this.logger.debug(
-              `Created job ${jobId} for target "${JSON.stringify(target)}"`,
+              `Created job ${jobId} for target "${JSON.stringify(payload)}"`,
             );
             return cb(null, backgroundJob);
           default:
@@ -180,88 +191,12 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Get job by ID
-  get(jobId: string, cb: ICallback<IBackgroundJob<Target>>): void {
+  get(jobId: string, cb: ICallback<IBackgroundJob<Payload>>): void {
     this.redisClient.hget(this.config.keyBackgroundJobs, jobId, (err, data) => {
       if (err) return cb(err);
       if (!data)
         return cb(new BackgroundJobNotFoundError({ metadata: { jobId } }));
       cb(null, JSON.parse(data));
-    });
-  }
-
-  // Check if target is locked (being processed)
-  isTargetLocked(target: Target, cb: ICallback<boolean>): void {
-    const targetLockKey = this.getTargetLockKey(target);
-
-    async.waterfall(
-      [
-        // Get job ID from target lock
-        (next: ICallback<string | null>) => {
-          this.redisClient.get(targetLockKey, next);
-        },
-
-        // Check job status if exists
-        (jobId: string | null, next: ICallback<boolean>) => {
-          if (!jobId) return next(null, false);
-
-          this.get(jobId, (err, backgroundJob) => {
-            if (err) return next(err);
-
-            if (!backgroundJob) {
-              // Clean up stale lock
-              this.redisClient.del(targetLockKey, () => {
-                next(null, false);
-              });
-              return;
-            }
-
-            next(
-              null,
-              [
-                EBackgroundJobStatus.PENDING,
-                EBackgroundJobStatus.PROCESSING,
-              ].includes(backgroundJob.status),
-            );
-          });
-        },
-      ],
-      cb,
-    );
-  }
-
-  updateProgress(jobId: string, totalPurged: number, totalItems: number) {
-    // Update progress every 10%
-    if (
-      totalItems > 0 &&
-      totalPurged % Math.max(1, Math.floor(totalPurged / 10)) === 0
-    ) {
-      this.update(jobId, { purged: totalPurged }, (updateErr) => {
-        if (updateErr) {
-          this.logger.error(
-            `Failed to update progress for job ${jobId}:`,
-            updateErr,
-          );
-        } else {
-          this.logger.debug(
-            `Job ${jobId}: Purged ${totalPurged} messages so far`,
-          );
-        }
-      });
-    }
-  }
-
-  // Get active job for a target
-  getActiveJob(
-    target: Target,
-    cb: ICallback<IBackgroundJob<Target> | null>,
-  ): void {
-    const targetLockKey = this.getTargetLockKey(target);
-
-    this.redisClient.get(targetLockKey, (err, jobId) => {
-      if (err) return cb(err);
-      if (!jobId) return cb(null, null);
-
-      this.get(jobId, cb);
     });
   }
 
@@ -277,11 +212,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   }
 
   // Cancel a job
-  cancel(jobId: string, cb: ICallback<IBackgroundJob<Target>>): void {
+  cancel(jobId: string, cb: ICallback<IBackgroundJob<Payload>>): void {
     async.waterfall(
       [
         // Get job to get target and current status
-        (next: ICallback<IBackgroundJob<Target>>) => {
+        (next: ICallback<IBackgroundJob<Payload>>) => {
           this.get(jobId, (err, backgroundJob) => {
             if (err) return next(err);
             if (!backgroundJob)
@@ -294,12 +229,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
 
         // Execute cancel script
         (
-          backgroundJob: IBackgroundJob<Target>,
-          next: ICallback<IBackgroundJob<Target>>,
+          backgroundJob: IBackgroundJob<Payload>,
+          next: ICallback<IBackgroundJob<Payload>>,
         ) => {
           const { keyBackgroundJobWorkerId } =
             redisKeys.getBackgroundJobKeys(jobId);
-          const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
             status: EBackgroundJobStatus.CANCELED,
@@ -312,7 +246,6 @@ export abstract class BackgroundJobManagerAbstract<Target> {
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsPending,
               this.config.keyBackgroundJobsProcessing,
-              targetLockKey,
               keyBackgroundJobWorkerId,
             ],
             [
@@ -369,7 +302,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   start(
     jobId: string,
     workerId: string,
-    cb: ICallback<IBackgroundJob<Target>>,
+    cb: ICallback<IBackgroundJob<Payload>>,
   ): void {
     this.get(jobId, (err, backgroundJob) => {
       if (err) return cb(err);
@@ -459,13 +392,13 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   // Mark job as completed
   complete(
     jobId: string,
-    result: { purged: number },
-    cb: ICallback<IBackgroundJob<Target>>,
+    options: Partial<IBackgroundJob<Payload, Meta>> = {},
+    cb: ICallback<IBackgroundJob<Payload, Meta>>,
   ): void {
     async.waterfall(
       [
         // Get job to get target and current status
-        (next: ICallback<IBackgroundJob<Target>>) => {
+        (next: ICallback<IBackgroundJob<Payload, Meta>>) => {
           this.get(jobId, (err, backgroundJob) => {
             if (err) return next(err);
             if (!backgroundJob)
@@ -478,32 +411,28 @@ export abstract class BackgroundJobManagerAbstract<Target> {
 
         // Execute completion script
         (
-          backgroundJob: IBackgroundJob<Target>,
-          next: ICallback<IBackgroundJob<Target>>,
+          backgroundJob: IBackgroundJob<Payload, Meta>,
+          next: ICallback<IBackgroundJob<Payload, Meta>>,
         ) => {
           const { keyBackgroundJobWorkerId } =
             redisKeys.getBackgroundJobKeys(jobId);
-          const targetLockKey = this.getTargetLockKey(backgroundJob.target);
-          const updatedJob = {
-            ...backgroundJob,
+          const updatedJob = this.applyPartialUpdate(backgroundJob, {
+            ...options,
             status: EBackgroundJobStatus.COMPLETED,
             completedAt: Date.now(),
             updatedAt: Date.now(),
-            purged: result.purged,
-          };
+          });
 
           this.redisClient.runScript(
             ELuaScript.COMPLETE_JOB,
             [
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsProcessing,
-              targetLockKey,
               keyBackgroundJobWorkerId,
             ],
             [
               jobId,
               JSON.stringify(updatedJob),
-              EBackgroundJobStatus.PENDING.toString(),
               EBackgroundJobStatus.PROCESSING.toString(),
               EBackgroundJobStatus.COMPLETED.toString(),
               EBackgroundJobStatus.FAILED.toString(),
@@ -552,12 +481,12 @@ export abstract class BackgroundJobManagerAbstract<Target> {
   fail(
     jobId: string,
     error: string,
-    cb: ICallback<IBackgroundJob<Target>>,
+    cb: ICallback<IBackgroundJob<Payload>>,
   ): void {
     async.waterfall(
       [
         // Get job to get target and current status
-        (next: ICallback<IBackgroundJob<Target>>) => {
+        (next: ICallback<IBackgroundJob<Payload>>) => {
           this.get(jobId, (err, backgroundJob) => {
             if (err) return next(err);
             if (!backgroundJob)
@@ -570,12 +499,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
 
         // Execute fail script
         (
-          backgroundJob: IBackgroundJob<Target>,
-          next: ICallback<IBackgroundJob<Target>>,
+          backgroundJob: IBackgroundJob<Payload>,
+          next: ICallback<IBackgroundJob<Payload>>,
         ) => {
           const { keyBackgroundJobWorkerId } =
             redisKeys.getBackgroundJobKeys(jobId);
-          const targetLockKey = this.getTargetLockKey(backgroundJob.target);
           const updatedJob = {
             ...backgroundJob,
             status: EBackgroundJobStatus.FAILED,
@@ -588,13 +516,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
             [
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsProcessing,
-              targetLockKey,
               keyBackgroundJobWorkerId,
             ],
             [
               jobId,
               JSON.stringify(updatedJob),
-              EBackgroundJobStatus.PENDING.toString(),
               EBackgroundJobStatus.PROCESSING.toString(),
               EBackgroundJobStatus.COMPLETED.toString(),
               EBackgroundJobStatus.FAILED.toString(),
@@ -654,7 +580,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
       target?: string;
       limit?: number;
     },
-    cb: ICallback<IBackgroundJob<Target>[]>,
+    cb: ICallback<IBackgroundJob<Payload>[]>,
   ): void {
     const limit = filter?.limit || 50;
 
@@ -665,7 +591,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
 
       // Get jobs in parallel (limited by limit)
       const jobsToGet = jobIds.slice(0, limit * 2); // Get extra for filtering
-      const jobs: IBackgroundJob<Target>[] = [];
+      const jobs: IBackgroundJob<Payload>[] = [];
       let processed = 0;
 
       const processNext = () => {
@@ -687,7 +613,7 @@ export abstract class BackgroundJobManagerAbstract<Target> {
             if (filter?.status && backgroundJob.status !== filter.status) {
               return processNext();
             }
-            if (filter?.target && backgroundJob.target !== filter.target) {
+            if (filter?.target && backgroundJob.payload !== filter.target) {
               return processNext();
             }
 
@@ -783,7 +709,6 @@ export abstract class BackgroundJobManagerAbstract<Target> {
 
                     const { keyBackgroundJobWorkerId } =
                       redisKeys.getBackgroundJobKeys(jobId);
-                    const targetLockKey = this.getTargetLockKey(job.target);
                     const recoveryMessage = 'Recovered from worker crash';
 
                     const updatedJob = {
@@ -799,13 +724,11 @@ export abstract class BackgroundJobManagerAbstract<Target> {
                         this.config.keyBackgroundJobs,
                         this.config.keyBackgroundJobsPending,
                         this.config.keyBackgroundJobsProcessing,
-                        targetLockKey,
                         keyBackgroundJobWorkerId,
                       ],
                       [
                         jobId,
                         JSON.stringify(updatedJob),
-                        EBackgroundJobStatus.PENDING.toString(),
                         EBackgroundJobStatus.PROCESSING.toString(),
                         EBackgroundJobStatus.COMPLETED.toString(),
                         EBackgroundJobStatus.FAILED.toString(),

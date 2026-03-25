@@ -10,19 +10,26 @@
 import { BackgroundJobManagerAbstract } from '../../../abstract/background-job/background-job-manager-abstract.js';
 import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../redis/redis-keys/redis-keys.js';
-import { TPurgeQueueJobTarget } from './types/index.js';
+import {
+  TPurgeQueueJob,
+  TPurgeQueueJobMeta,
+  TPurgeQueueJobPayload,
+} from './types/index.js';
 import {
   EQueueStateLockOwner,
   ESystemStateTransitionReason,
 } from '../../../../queue-state-manager/index.js';
 import { IQueueParams } from '../../../../queue-manager/index.js';
-import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
+import { EBackgroundJobStatus } from '../../../index.js';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobNotFoundError } from '../../../../errors/index.js';
 import { _lockQueuelock } from '../../../../queue-state-manager/_/_lock-queue.js';
 import { _unlockQueue } from '../../../../queue-state-manager/_/_unlock-queue.js';
 
-export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQueueJobTarget> {
+export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<
+  TPurgeQueueJobPayload,
+  TPurgeQueueJobMeta
+> {
   constructor(redisClient: IRedisClient, logger: ILogger) {
     const keys = redisKeys.getMainKeys();
     super(
@@ -36,21 +43,13 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
     );
   }
 
-  override getTargetLockKey(target: TPurgeQueueJobTarget): string {
-    const { keyPurgeQueueTargetLock } = redisKeys.getPurgeQueueTargetKeys(
-      target.queue.queueParams,
-      target.queue.groupId,
-    );
-    return keyPurgeQueueTargetLock;
-  }
-
   /**
    * Create a purge job - automatically handles locking
    */
   override create(
-    target: TPurgeQueueJobTarget,
-    options: Partial<IBackgroundJob<TPurgeQueueJobTarget>> = {},
-    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+    payload: TPurgeQueueJobPayload,
+    options: Partial<TPurgeQueueJob> = {},
+    cb: ICallback<TPurgeQueueJob>,
   ): void {
     const jobId = options.id || randomUUID();
 
@@ -58,16 +57,16 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
       [
         // Step 1: Lock the queue with the job ID
         (next: ICallback) => {
-          this.lockQueue(target.queue.queueParams, jobId, next);
+          this.lockQueue(payload.queue.queueParams, jobId, next);
         },
 
         // Step 2: Create the job
-        (_, next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
-          super.create(target, { ...options, id: jobId }, (err, job) => {
+        (_, next: ICallback<TPurgeQueueJob>) => {
+          super.create(payload, { ...options, id: jobId }, (err, job) => {
             if (err) {
               // If job creation fails, unlock the queue
               _unlockQueue(
-                target.queue.queueParams,
+                payload.queue.queueParams,
                 EQueueStateLockOwner.PURGE_JOB,
                 jobId,
                 {
@@ -92,23 +91,19 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
    */
   override complete(
     jobId: string,
-    result: { purged: number },
-    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+    options: Partial<TPurgeQueueJob>,
+    cb: ICallback<TPurgeQueueJob>,
   ): void {
     async.waterfall(
       [
         // Step 1: Complete the job (base class)
-        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
-          super.complete(jobId, result, next);
-        },
+        (next: ICallback<TPurgeQueueJob>) =>
+          super.complete(jobId, options, next),
 
         // Step 2: Unlock the queue
-        (
-          job: IBackgroundJob<TPurgeQueueJobTarget>,
-          next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
-        ) => {
+        (job: TPurgeQueueJob, next: ICallback<TPurgeQueueJob>) => {
           _unlockQueue(
-            job.target.queue.queueParams,
+            job.payload.queue.queueParams,
             EQueueStateLockOwner.PURGE_JOB,
             jobId,
             {
@@ -138,21 +133,17 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
   override fail(
     jobId: string,
     error: string,
-    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+    cb: ICallback<TPurgeQueueJob>,
   ): void {
     async.waterfall(
       [
         // Step 1: Fail the job
-        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) =>
-          super.fail(jobId, error, next),
+        (next: ICallback<TPurgeQueueJob>) => super.fail(jobId, error, next),
 
         // Step 2: Unlock the queue
-        (
-          job: IBackgroundJob<TPurgeQueueJobTarget>,
-          next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
-        ) => {
+        (job: TPurgeQueueJob, next: ICallback<TPurgeQueueJob>) => {
           _unlockQueue(
-            job.target.queue.queueParams,
+            job.payload.queue.queueParams,
             EQueueStateLockOwner.PURGE_JOB,
             jobId,
             {
@@ -179,23 +170,16 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
   /**
    * Cancel purge job - automatically handles unlocking
    */
-  override cancel(
-    jobId: string,
-    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
-  ): void {
+  override cancel(jobId: string, cb: ICallback<TPurgeQueueJob>): void {
     async.waterfall(
       [
         // Step 1: Cancel the job (base class)
-        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) =>
-          super.cancel(jobId, next),
+        (next: ICallback<TPurgeQueueJob>) => super.cancel(jobId, next),
 
         // Step 2: Unlock the queue
-        (
-          job: IBackgroundJob<TPurgeQueueJobTarget>,
-          next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
-        ) => {
+        (job: TPurgeQueueJob, next: ICallback<TPurgeQueueJob>) => {
           _unlockQueue(
-            job.target.queue.queueParams,
+            job.payload.queue.queueParams,
             EQueueStateLockOwner.PURGE_JOB,
             jobId,
             {
@@ -243,12 +227,8 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
   hasTerminationStatus(jobId: string, cb: ICallback<boolean>): void {
     async.waterfall(
       [
-        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) =>
-          this.get(jobId, next),
-        (
-          job: IBackgroundJob<TPurgeQueueJobTarget>,
-          next: ICallback<boolean>,
-        ) => {
+        (next: ICallback<TPurgeQueueJob>) => this.get(jobId, next),
+        (job: TPurgeQueueJob, next: ICallback<boolean>) => {
           // Job statuses that should unlock the queue upon completion
           const r =
             job.status === EBackgroundJobStatus.COMPLETED ||
@@ -266,5 +246,26 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<TPurgeQue
         cb(err, result);
       },
     );
+  }
+
+  updateProgress(jobId: string, totalPurged: number, totalItems: number) {
+    // Update progress every 10%
+    if (
+      totalItems > 0 &&
+      totalPurged % Math.max(1, Math.floor(totalPurged / 10)) === 0
+    ) {
+      this.update(jobId, { meta: { purged: totalPurged } }, (updateErr) => {
+        if (updateErr) {
+          this.logger.error(
+            `Failed to update progress for job ${jobId}:`,
+            updateErr,
+          );
+        } else {
+          this.logger.debug(
+            `Job ${jobId}: Purged ${totalPurged} messages so far`,
+          );
+        }
+      });
+    }
   }
 }

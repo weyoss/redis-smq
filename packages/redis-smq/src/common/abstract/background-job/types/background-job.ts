@@ -15,9 +15,12 @@ export enum EBackgroundJobStatus {
   'CANCELED',
 }
 
-export interface IBackgroundJob<Target> {
+export interface IBackgroundJob<
+  Payload,
+  Meta extends Record<string, unknown> = never,
+> {
   id: string;
-  target: Target; // What the job operates on (queue name, file path, URL, etc.)
+  payload: Payload;
   status: EBackgroundJobStatus;
   createdAt: number;
   updatedAt?: number;
@@ -27,8 +30,8 @@ export interface IBackgroundJob<Target> {
   // Job-specific fields (for queue purge jobs)
   batchSize?: number;
   delay?: number;
-  purged?: number;
   error?: string;
+  meta?: Meta;
 }
 
 export interface IBackgroundJobConfig {

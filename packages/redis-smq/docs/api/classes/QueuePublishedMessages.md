@@ -1017,7 +1017,7 @@ await fs.writeFile('messages.json', JSON.stringify(messages, null, 2));
 
 #### Call Signature
 
-> **getPurgeJob**(`queue`, `jobId`): `Promise`\<[`IBackgroundJob`](../interfaces/IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
+> **getPurgeJob**(`queue`, `jobId`): `Promise`\<[`TPurgeQueueJob`](../type-aliases/TPurgeQueueJob.md)\>
 
 Retrieves comprehensive details about a specific purge job.
 
@@ -1049,7 +1049,7 @@ The ID of the purge job to retrieve
 
 ##### Returns
 
-`Promise`\<[`IBackgroundJob`](../interfaces/IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
+`Promise`\<[`TPurgeQueueJob`](../type-aliases/TPurgeQueueJob.md)\>
 
 - Returns a Promise if no callback is provided,
   otherwise returns void.
@@ -1151,7 +1151,7 @@ The ID of the purge job to retrieve
 
 ###### cb
 
-`ICallback`\<[`IBackgroundJob`](../interfaces/IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
+`ICallback`\<[`TPurgeQueueJob`](../type-aliases/TPurgeQueueJob.md)\>
 
 Optional callback function invoked with the job details. - On success: `cb(null, job)` where job is the full job object. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the job.
 

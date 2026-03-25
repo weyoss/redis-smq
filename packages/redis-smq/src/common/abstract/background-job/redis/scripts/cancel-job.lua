@@ -10,8 +10,7 @@
 -- KEYS[1]: backgroundJobs key (hash)
 -- KEYS[2]: backgroundJobsPending key (list)
 -- KEYS[3]: backgroundJobsProcessing key (list)
--- KEYS[4]: targetLockKey (string)
--- KEYS[5]: jobWorkerKey (string)
+-- KEYS[4]: jobWorkerKey (string)
 --
 -- ARGV[1]: jobId
 -- ARGV[2]: updatedJobData (JSON stringified with CANCELLED status)
@@ -33,8 +32,7 @@
 local backgroundJobsKey = KEYS[1]
 local backgroundJobsPendingKey = KEYS[2]
 local backgroundJobsProcessingKey = KEYS[3]
-local targetLockKey = KEYS[4]
-local jobWorkerKey = KEYS[5]
+local jobWorkerKey = KEYS[4]
 
 local jobId = ARGV[1]
 local updatedJobData = ARGV[2]
@@ -62,7 +60,6 @@ if statusStr == canceledStatus then
     -- Job already cancelled, ensure it's removed from all lists
     redis.call('LREM', backgroundJobsPendingKey, 0, jobId)
     redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)
-    redis.call('DEL', targetLockKey)
     redis.call('DEL', jobWorkerKey)
     return 2  -- Already cancelled
 
@@ -91,7 +88,6 @@ end
 redis.call('HSET', backgroundJobsKey, jobId, updatedJobData)  -- Update status to CANCELLED
 redis.call('LREM', backgroundJobsPendingKey, 0, jobId)        -- Remove from pending (hides it)
 redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)     -- Remove from processing (hides it)
-redis.call('DEL', targetLockKey)                             -- Release target lock
 redis.call('DEL', jobWorkerKey)                              -- Remove worker-job link
 
 return 1  -- Successfully cancelled and hidden

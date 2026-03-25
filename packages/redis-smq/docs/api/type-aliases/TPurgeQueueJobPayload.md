@@ -1,8 +1,8 @@
-[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TPurgeQueueJobTarget
+[RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / TPurgeQueueJobPayload
 
-# Type Alias: TPurgeQueueJobTarget
+# Type Alias: TPurgeQueueJobPayload
 
-> **TPurgeQueueJobTarget** = `object`
+> **TPurgeQueueJobPayload** = `object`
 
 ## Properties
 

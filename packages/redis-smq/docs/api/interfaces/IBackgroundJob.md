@@ -1,12 +1,16 @@
 [RedisSMQ](../../../README.md) / [Documentation](../../README.md) / [API Reference](../README.md) / IBackgroundJob
 
-# Interface: IBackgroundJob\<Target\>
+# Interface: IBackgroundJob\<Payload, Meta\>
 
 ## Type Parameters
 
-### Target
+### Payload
 
-`Target`
+`Payload`
+
+### Meta
+
+`Meta` _extends_ `Record`\<`string`, `unknown`\> = `never`
 
 ## Properties
 
@@ -46,9 +50,15 @@
 
 ---
 
-### purged?
+### meta?
 
-> `optional` **purged**: `number`
+> `optional` **meta**: `Meta`
+
+---
+
+### payload
+
+> **payload**: `Payload`
 
 ---
 
@@ -61,12 +71,6 @@
 ### status
 
 > **status**: [`EBackgroundJobStatus`](../enumerations/EBackgroundJobStatus.md)
-
----
-
-### target
-
-> **target**: `Target`
 
 ---
 

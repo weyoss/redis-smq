@@ -3,20 +3,18 @@
 -- Weyoss <weyoss@outlook.com>
 -- https://github.com/weyoss
 --
--- Atomically marks a background job as FAILED and releases target lock
+-- Atomically marks a background job as FAILED
 --
 -- KEYS[1]: backgroundJobs key (hash)
 -- KEYS[2]: backgroundJobsProcessing key (list)
--- KEYS[3]: targetLockKey (string)
--- KEYS[4]: jobWorkerKey (string) - maps jobId -> workerId
+-- KEYS[3]: jobWorkerKey (string) - maps jobId -> workerId
 --
 -- ARGV[1]: jobId
 -- ARGV[2]: updatedJobData (JSON stringified with FAILED status and error)
--- ARGV[3]: pendingStatus (EBackgroundJobStatus.PENDING value)
--- ARGV[4]: processingStatus (EBackgroundJobStatus.PROCESSING value)
--- ARGV[5]: completedStatus (EBackgroundJobStatus.COMPLETED value)
--- ARGV[6]: failedStatus (EBackgroundJobStatus.FAILED value)
--- ARGV[7]: canceledStatus (EBackgroundJobStatus.CANCELED value)
+-- ARGV[3]: processingStatus (EBackgroundJobStatus.PROCESSING value)
+-- ARGV[4]: completedStatus (EBackgroundJobStatus.COMPLETED value)
+-- ARGV[5]: failedStatus (EBackgroundJobStatus.FAILED value)
+-- ARGV[6]: canceledStatus (EBackgroundJobStatus.CANCELED value)
 --
 -- Returns:
 --  1: Success (job marked as failed)
@@ -29,16 +27,14 @@
 -- Assign all KEYS and ARGVs to local variables
 local backgroundJobsKey = KEYS[1]
 local backgroundJobsProcessingKey = KEYS[2]
-local targetLockKey = KEYS[3]
-local jobWorkerKey = KEYS[4]
+local jobWorkerKey = KEYS[3]
 
 local jobId = ARGV[1]
 local updatedJobData = ARGV[2]
-local pendingStatus = ARGV[3]
-local processingStatus = ARGV[4]
-local completedStatus = ARGV[5]
-local failedStatus = ARGV[6]
-local canceledStatus = ARGV[7]
+local processingStatus = ARGV[3]
+local completedStatus = ARGV[4]
+local failedStatus = ARGV[5]
+local canceledStatus = ARGV[6]
 
 -- Get current job data from Redis
 local currentJobData = redis.call('HGET', backgroundJobsKey, jobId)
@@ -81,7 +77,6 @@ end
 -- Mark job as failed
 redis.call('HSET', backgroundJobsKey, jobId, updatedJobData)  -- Update status to FAILED
 redis.call('LREM', backgroundJobsProcessingKey, 0, jobId)     -- Remove from processing list
-redis.call('DEL', targetLockKey)                             -- Release target lock
 redis.call('DEL', jobWorkerKey)                              -- Remove worker-job link
 
 return 1  -- Successfully marked as failed

@@ -17,11 +17,11 @@ import {
   IBrowserPage,
   IMessageBrowser,
 } from './message-browser/types/index.js';
-import { EBackgroundJobStatus, IBackgroundJob } from '../common/index.js';
+import { EBackgroundJobStatus } from '../common/index.js';
 import { Configuration } from '../config/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageTransferable } from '../message/index.js';
-import { TPurgeQueueJobTarget } from '../common/background-jobs/jobs/purge-queue/types/index.js';
+import { TPurgeQueueJob } from '../common/background-jobs/jobs/purge-queue/types/index.js';
 import { EQueueMessageType } from './types/index.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import { MessageBrowserFactory } from './message-browser-factory.js';
@@ -528,7 +528,7 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *             - On success: `cb(null, job)` where job is the full job object.
    *             - On error: `cb(error)` with one of the errors listed below.
    *             - If not provided, the method returns a Promise that resolves with the job.
-   * @returns {Promise<IBackgroundJob<TPurgeQueueJobTarget>> | void} - Returns a Promise if no callback is provided,
+   * @returns {Promise<IBackgroundJob<TPurgeQueueJobPayload>> | void} - Returns a Promise if no callback is provided,
    *          otherwise returns void.
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
@@ -582,17 +582,17 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
   public getPurgeJob(
     queue: TQueueExtendedParams,
     jobId: string,
-  ): Promise<IBackgroundJob<TPurgeQueueJobTarget>>;
+  ): Promise<TPurgeQueueJob>;
   public getPurgeJob(
     queue: TQueueExtendedParams,
     jobId: string,
-    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+    cb: ICallback<TPurgeQueueJob>,
   ): void;
   public getPurgeJob(
     queue: TQueueExtendedParams,
     jobId: string,
-    cb?: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
-  ): Promise<IBackgroundJob<TPurgeQueueJobTarget>> | void {
+    cb?: ICallback<TPurgeQueueJob>,
+  ): Promise<TPurgeQueueJob> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.withMessageBrowser(
         queue,
@@ -630,7 +630,7 @@ export abstract class QueueMessagesAbstract implements IMessageBrowser {
    *
    * @throws {InvalidQueueParametersError} When the queue parameters are invalid.
    * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {JobNotFoundError} When the specified job ID doesn't exist.
+   * @throws {BackgroundJobNotFoundError} When the specified job ID doesn't exist.
    *
    * @example
    * ```typescript

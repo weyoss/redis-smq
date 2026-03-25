@@ -14,7 +14,7 @@ import { IBrowserPage, IMessageBrowser } from '../../../index.js';
 import { _deleteMessage } from '../../../../message-manager/_/_delete-message.js';
 import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
 import { BackgroundJobCanceledError } from '../../../../errors/index.js';
-import { TPurgeQueueJobTarget } from './types/index.js';
+import { TPurgeQueueJobPayload } from './types/index.js';
 import { MessageBrowserFactory } from '../../../../queue-messages/message-browser-factory.js';
 
 export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
@@ -58,7 +58,7 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
     async.waterfall(
       [
         // Update job status to processing
-        (next: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>) => {
+        (next: ICallback<IBackgroundJob<TPurgeQueueJobPayload>>) => {
           jobManager.start(jobId, this.id, next);
         },
 
@@ -68,8 +68,8 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
         },
 
         // Mark job as completed
-        (purgedCount: number, next: ICallback<void>) => {
-          jobManager.complete(jobId, { purged: purgedCount }, (err) =>
+        (totalPurged: number, next: ICallback<void>) => {
+          jobManager.complete(jobId, { meta: { purged: totalPurged } }, (err) =>
             next(err),
           );
         },
@@ -107,10 +107,10 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
   }
 
   protected purgeMessages(
-    job: IBackgroundJob<TPurgeQueueJobTarget>,
+    job: IBackgroundJob<TPurgeQueueJobPayload>,
     cb: ICallback<number>,
   ): void {
-    const parsedParams = job.target.queue;
+    const parsedParams = job.payload.queue;
     const delay = job.delay || 5000;
     const batchSize = job.batchSize || 1000;
 
@@ -153,8 +153,8 @@ export class PurgeQueueJob extends BackgroundJobWorkerAbstract {
 
           (_, next: ICallback<IMessageBrowser>) =>
             MessageBrowserFactory.createBrowserForQueue(
-              job.target.queue.queueParams,
-              job.target.messageType,
+              job.payload.queue.queueParams,
+              job.payload.messageType,
               this.logger,
               next,
             ),

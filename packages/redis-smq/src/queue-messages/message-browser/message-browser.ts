@@ -26,13 +26,16 @@ import { MessageManager } from '../../message-manager/index.js';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { InvalidPurgeQueueJobIdError } from '../../errors/index.js';
 import { IBrowserStorage } from './browser-storage/browser-storage-abstract.js';
-import { EBackgroundJobStatus, IBackgroundJob } from '../../common/index.js';
+import { EBackgroundJobStatus } from '../../common/index.js';
 import { PurgeQueueJobManager } from '../../common/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
-import { TPurgeQueueJobTarget } from '../../redis-smq/index.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { _getMessageIds } from './_/_get-message-ids.js';
 import { EQueueMessageType } from '../types/index.js';
+import {
+  TPurgeQueueJob,
+  TPurgeQueueJobPayload,
+} from '../../common/background-jobs/jobs/purge-queue/types/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
@@ -118,7 +121,7 @@ export class MessageBrowser implements IMessageBrowser {
     cb: ICallback<string>,
   ): void {
     this.withPurgeQueueJobManager((purgeQueueJobManager, done) => {
-      const target: TPurgeQueueJobTarget = {
+      const target: TPurgeQueueJobPayload = {
         queue: parsedParams,
         messageType: this.messageType,
       };
@@ -141,14 +144,14 @@ export class MessageBrowser implements IMessageBrowser {
    * Checks if a purge job belongs to the specified queue
    */
   private isJobForQueue(
-    job: IBackgroundJob<TPurgeQueueJobTarget>,
+    job: TPurgeQueueJob,
     parsedParams: IQueueParsedParams,
   ): boolean {
     return (
-      job.target.queue.queueParams.name === parsedParams.queueParams.name &&
-      job.target.queue.queueParams.ns === parsedParams.queueParams.ns &&
-      job.target.queue.groupId === parsedParams.groupId &&
-      job.target.messageType === this.messageType
+      job.payload.queue.queueParams.name === parsedParams.queueParams.name &&
+      job.payload.queue.queueParams.ns === parsedParams.queueParams.ns &&
+      job.payload.queue.groupId === parsedParams.groupId &&
+      job.payload.messageType === this.messageType
     );
   }
 
@@ -222,16 +225,6 @@ export class MessageBrowser implements IMessageBrowser {
     }, cb);
   }
 
-  /**
-   * Computes the total number of pages based on the provided page size and total items.
-   */
-  protected getTotalPages(pageSize: number, totalItems: number): number {
-    if (pageSize <= 0 || totalItems === 0) {
-      return 1;
-    }
-    return Math.ceil(totalItems / pageSize);
-  }
-
   public purge(queue: TQueueExtendedParams, cb: ICallback<string>): void {
     this.logger.info(
       `Purging queue messages for queue ${JSON.stringify(queue)}`,
@@ -258,7 +251,7 @@ export class MessageBrowser implements IMessageBrowser {
   public getPurgeJob(
     queue: TQueueExtendedParams,
     jobId: string,
-    cb: ICallback<IBackgroundJob<TPurgeQueueJobTarget>>,
+    cb: ICallback<TPurgeQueueJob>,
   ): void {
     this.withValidatedQueue(
       queue,
@@ -320,29 +313,23 @@ export class MessageBrowser implements IMessageBrowser {
       queue,
       (parsedParams, done) => {
         this.withPurgeQueueJobManager((purgeQueueJobManager, innerDone) => {
-          purgeQueueJobManager.getActiveJob(
-            {
-              queue: parsedParams,
-              messageType: this.messageType,
-            },
-            (err, activeJob) => {
-              if (err) {
-                innerDone(err);
-                return;
-              }
+          purgeQueueJobManager.get(jobId, (err, job) => {
+            if (err) {
+              innerDone(err);
+              return;
+            }
 
-              if (!activeJob || activeJob.id !== jobId) {
-                innerDone(
-                  new InvalidPurgeQueueJobIdError({
-                    metadata: { jobId },
-                  }),
-                );
-                return;
-              }
+            if (!job || !this.isJobForQueue(job, parsedParams)) {
+              innerDone(
+                new InvalidPurgeQueueJobIdError({
+                  metadata: { jobId },
+                }),
+              );
+              return;
+            }
 
-              purgeQueueJobManager.cancel(jobId, (err) => innerDone(err));
-            },
-          );
+            purgeQueueJobManager.cancel(jobId, (err) => innerDone(err));
+          });
         }, done);
       },
       cb,

@@ -126,7 +126,7 @@
 
 ##### cb
 
-`ICallback`\<[`IBackgroundJob`](IBackgroundJob.md)\<[`TPurgeQueueJobTarget`](../type-aliases/TPurgeQueueJobTarget.md)\>\>
+`ICallback`\<[`TPurgeQueueJob`](../type-aliases/TPurgeQueueJob.md)\>
 
 #### Returns
 
