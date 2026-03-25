@@ -106,7 +106,7 @@ export function _deleteQueue(
         keyQueueMessages,
         keyQueuePublished,
         keyQueueConsumerGroups,
-        keyQueueWorkerClusterLock,
+        keyQueueWorkersLock,
         keyQueueExchangeBindings,
       } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
 
@@ -138,7 +138,7 @@ export function _deleteQueue(
         keyQueueMessages,
         keyQueuePublished,
         keyQueueConsumerGroups,
-        keyQueueWorkerClusterLock,
+        keyQueueWorkersLock,
         keyQueueExchangeBindings,
         ...consumerGroupKeys,
         ...processingQueues,

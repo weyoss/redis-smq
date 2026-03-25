@@ -209,7 +209,7 @@ export class NamespaceManager {
   ): Promise<IQueueParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting queues for namespace', { namespace });
-      const ns = redisKeys.validateRedisKey(namespace);
+      const ns = redisKeys.validateKey(namespace);
       if (ns instanceof Error) {
         this.logger.error('Invalid namespace', { namespace });
         return callback(new InvalidNamespaceError());
@@ -343,7 +343,7 @@ export class NamespaceManager {
   delete(namespace: string, cb?: ICallback<void>): Promise<void> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Deleting namespace', { namespace });
-      const ns = redisKeys.validateRedisKey(namespace);
+      const ns = redisKeys.validateKey(namespace);
       if (ns instanceof Error) {
         this.logger.error('Invalid namespace', { namespace });
         return callback(new InvalidNamespaceError());

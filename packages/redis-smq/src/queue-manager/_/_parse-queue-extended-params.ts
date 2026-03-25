@@ -49,7 +49,7 @@ export function _parseQueueExtendedParams(
   if (queueParams instanceof Error) return queueParams;
   let groupId: string | RedisSMQError | null = null;
   if (args.groupId) {
-    groupId = redisKeys.validateRedisKey(args.groupId);
+    groupId = redisKeys.validateKey(args.groupId);
     if (groupId instanceof Error) return new InvalidQueueParametersError();
   }
   return {

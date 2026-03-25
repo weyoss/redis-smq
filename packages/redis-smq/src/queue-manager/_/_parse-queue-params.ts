@@ -17,7 +17,7 @@ export function _parseQueueParams(
 ): IQueueParams | InvalidQueueParametersError {
   const queueParams: { name: string; ns?: string } =
     typeof queue === 'string' ? { name: queue } : queue;
-  const name = redisKeys.validateRedisKey(queueParams.name);
+  const name = redisKeys.validateKey(queueParams.name);
   if (name instanceof Error) return new InvalidQueueParametersError();
   const ns = queueParams.ns
     ? redisKeys.validateNamespace(queueParams.ns)

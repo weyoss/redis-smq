@@ -127,7 +127,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       return cb(redisClient);
     }
 
-    const { keyQueueWorkerClusterLock } = redisKeys.getQueueKeys(
+    const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
       this.queue.queueParams.ns,
       this.queue.queueParams.name,
       this.queue.groupId,
@@ -135,7 +135,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.queueWorkerCluster = new WorkerCluster(
       redisClient,
       this.logger,
-      keyQueueWorkerClusterLock,
+      keyQueueWorkersLock,
     );
     this.queueWorkerCluster.on('workerCluster.error', (err) =>
       this.handleError(err),

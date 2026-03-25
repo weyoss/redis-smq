@@ -10,180 +10,197 @@
 import { IQueueParams } from '../../../index.js';
 import { InvalidRedisKeyError } from '../../../errors/index.js';
 
-/**
- * Redis key configuration constants
- */
-const REDIS_KEY_CONFIG = {
-  /** Key segments separator */
-  SEGMENT_SEPARATOR: ':',
+// Configuration
+const VERSION = 10;
+const PREFIX = `redis-smq:${VERSION}`;
+const GLOBAL = 'global';
+const KEY_SEPARATOR = ':';
 
-  /**
-   * Major version of the Redis data structure.
-   *
-   * This value MUST be updated upon introducing breaking changes to the Redis data structure.
-   *
-   * The versioning scheme is based on the major version of the application. For instance,
-   * for an application version like v9.x.x, this value should be 9.
-   */
-  VERSION: 9,
+// Key Hierarchy Structure
+//
+// Level 1: Entity (domain)
+// Level 2: Scope (namespace/global)
+// Level 3: Resource (queue/exchange name)
+// Level 4: Sub-resource (consumer group, routing key)
+// Level 5: Type (data structure type)
+//
+// Examples:
+//   redis-smq:10:queue:production:orders:props
+//   redis-smq:10:queue:production:orders:group1:pending
+//   redis-smq:10:namespace:production:queues
+//   redis-smq:10:exchange:production:orders:routing-keys
+//   redis-smq:10:global:queues
+//   redis-smq:10:consumer:abc123:queues
 
-  /** Global namespace identifier */
-  GLOBAL_NAMESPACE: 'global',
+// Level 1: Entities
+const Entity = {
+  QUEUE: 'queue',
+  NAMESPACE: 'namespace',
+  EXCHANGE: 'exchange',
+  MESSAGE: 'message',
+  CONSUMER: 'consumer',
+  JOB: 'job',
+  WORKER: 'worker',
+  GLOBAL: 'global',
+} as const;
+
+// Level 5: Types (last segment)
+const Type = {
+  PENDING: 'pending',
+  PRIORITY: 'priority',
+  DEAD_LETTER: 'dead-letter',
+  PROCESSING: 'processing',
+  ACKNOWLEDGED: 'ack',
+  SCHEDULED: 'scheduled',
+  DELAYED: 'delayed',
+  REQUEUED: 'requeued',
+  PROPERTIES: 'props',
+  CONSUMERS: 'consumers',
+  CONSUMER_GROUPS: 'consumer-groups',
+  STATE_HISTORY: 'state-history',
+  BINDINGS: 'bindings',
+  PROCESSING_QUEUES: 'proc-queues',
+  WORKER_LOCK: 'worker-lock',
+  RATE_LIMIT: 'rate',
+  QUEUES: 'queues',
+  EXCHANGES: 'exchanges',
+  NAMESPACES: 'namespaces',
+  ROUTING_KEYS: 'routing-keys',
+  ROUTING_PATTERNS: 'routing-patterns',
+  CONFIG: 'config',
+  JOBS: 'jobs',
+  JOB_WORKER: 'worker',
+  HEARTBEAT: 'heartbeat',
 } as const;
 
 /**
- * Redis key prefix with version
+ * Build a key following the hierarchy: entity > scope > resource > sub > type
  */
-const KEY_PREFIX = `redis-smq-${REDIS_KEY_CONFIG.VERSION}`;
-
-/**
- * Enum for Redis key types
- */
-enum ERedisKey {
-  // Queue related keys
-  QUEUE_PENDING = 1,
-  QUEUE_PRIORITY_PENDING,
-  QUEUE_DL,
-  QUEUE_PROCESSING,
-  QUEUE_ACKNOWLEDGED,
-  QUEUE_SCHEDULED,
-  QUEUE_DELAYED,
-  QUEUE_REQUEUED,
-  QUEUE_CONSUMERS,
-  QUEUE_PROCESSING_QUEUES,
-  QUEUE_WORKERS_LOCK,
-  QUEUE_RATE_LIMIT_COUNTER,
-  QUEUE_PROPERTIES,
-  QUEUE_MESSAGES,
-  QUEUE_PUBLISHED,
-  QUEUE_CONSUMER_GROUPS,
-  QUEUE_EXCHANGE_BINDINGS,
-
-  // Message keys
-  MESSAGE,
-
-  // Consumer keys
-  CONSUMER_QUEUES,
-  CONSUMER_HEARTBEAT,
-
-  // Namespace keys
-  NS_QUEUES,
-  NS_EXCHANGES,
-
-  //
-  EXCHANGE,
-  EXCHANGE_DIRECT_ROUTING_KEYS,
-  EXCHANGE_DIRECT_ROUTING_KEY_QUEUES,
-  EXCHANGE_TOPIC_BINDING_PATTERNS,
-  EXCHANGE_TOPIC_BINDING_PATTERN_QUEUES,
-  EXCHANGE_FANOUT_QUEUES,
-
-  // Global keys
-  QUEUES,
-  NAMESPACES,
-  EXCHANGES,
-  CONFIGURATION,
-  GLOBAL_WORKER_CLUSTER, // todo remove unused key
-  PURGE_QUEUE_BACKGROUND_JOBS,
-  PURGE_QUEUE_BACKGROUND_JOBS_PENDING,
-  PURGE_QUEUE_BACKGROUND_JOBS_PROCESSING,
-
-  // Purge queue background jobs
-  PURGE_QUEUE_TARGET_LOCK,
-
-  //
-  QUEUE_STATE_HISTORY,
-
-  //
-  BACKGROUND_JOB_WORKER_HEARTBEAT,
-  BACKGROUND_JOB_WORKER_ID,
+function buildKey(entity: string, ...segments: string[]): string {
+  return [PREFIX, entity, ...segments].join(KEY_SEPARATOR);
 }
 
-/**
- * Type for key mapping objects
- */
-type TRedisKeyMap = Record<string, ERedisKey>;
-
-/**
- * Creates namespaced Redis keys from a key mapping
- *
- * @param keys - Object mapping key names to ERedisKey values
- * @param namespace - Namespace for the keys
- * @param rest - Additional key segments
- * @returns Record with the same keys but values as formatted Redis key strings
- */
-function makeNamespacedKeys<T extends TRedisKeyMap>(
-  keys: T,
-  namespace: string,
-  ...rest: (string | number)[]
-): Record<Extract<keyof T, string>, string> {
-  const result: Record<string, string> = {};
-
-  for (const keyName in keys) {
-    result[keyName] = [KEY_PREFIX, namespace, keys[keyName], ...rest].join(
-      REDIS_KEY_CONFIG.SEGMENT_SEPARATOR,
-    );
-  }
-
-  return result;
-}
-
-/**
- * Redis keys utility functions
- */
 export const redisKeys = {
-  /**
-   * Get keys for a specific namespace
-   *
-   * @param ns - Namespace
-   * @returns Namespace-specific keys
-   */
-  getNamespaceKeys(ns: string) {
-    const keys = {
-      keyNamespaceQueues: ERedisKey.NS_QUEUES,
-      keyNamespaceExchanges: ERedisKey.NS_EXCHANGES,
-    };
+  // ==========================================================================
+  // Queue Keys - hierarchy: queue > namespace > queue > [group] > type
+  // ==========================================================================
+
+  getQueueKeys(
+    ns: string,
+    queueName: string,
+    consumerGroupId: string | null = null,
+  ) {
+    // Path: queue > namespace > queueName
+    const basePath = [ns, queueName];
+
+    // Path with group: queue > namespace > queueName > groupId
+    const groupPath = consumerGroupId
+      ? [ns, queueName, consumerGroupId]
+      : basePath;
+
     return {
-      ...makeNamespacedKeys(keys, ns),
+      // Message queues
+      keyQueuePending: buildKey(Entity.QUEUE, ...groupPath, Type.PENDING),
+      keyQueuePriorityPending: buildKey(
+        Entity.QUEUE,
+        ...groupPath,
+        Type.PRIORITY,
+      ),
+      keyQueueDL: buildKey(Entity.QUEUE, ...basePath, Type.DEAD_LETTER),
+      keyQueueProcessing: buildKey(Entity.QUEUE, ...basePath, Type.PROCESSING),
+      keyQueueAcknowledged: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.ACKNOWLEDGED,
+      ),
+      keyQueueScheduled: buildKey(Entity.QUEUE, ...basePath, Type.SCHEDULED),
+      keyQueueDelayed: buildKey(Entity.QUEUE, ...basePath, Type.DELAYED),
+      keyQueueRequeued: buildKey(Entity.QUEUE, ...basePath, Type.REQUEUED),
+
+      // Metadata
+      keyQueueProperties: buildKey(Entity.QUEUE, ...basePath, Type.PROPERTIES),
+      keyQueueConsumers: buildKey(Entity.QUEUE, ...basePath, Type.CONSUMERS),
+      keyQueueConsumerGroups: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.CONSUMER_GROUPS,
+      ),
+      keyQueueStateHistory: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.STATE_HISTORY,
+      ),
+      keyQueueExchangeBindings: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.BINDINGS,
+      ),
+      keyQueueProcessingQueues: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.PROCESSING_QUEUES,
+      ),
+
+      // Control
+      keyQueueWorkersLock: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.WORKER_LOCK,
+      ),
+      keyQueueRateLimitCounter: buildKey(
+        Entity.QUEUE,
+        ...basePath,
+        Type.RATE_LIMIT,
+      ),
+
+      // Legacy
+      keyQueueMessages: buildKey(Entity.QUEUE, ...basePath, 'messages'),
+      keyQueuePublished: buildKey(Entity.QUEUE, ...basePath, 'published'),
     };
   },
 
-  getExchangeKeys(ns: string, exchangeName: string) {
-    const keys = {
-      keyExchange: ERedisKey.EXCHANGE,
-    };
+  getQueueConsumerKeys(queue: IQueueParams, instanceId: string) {
     return {
-      ...makeNamespacedKeys(keys, ns, exchangeName),
+      keyQueueProcessing: buildKey(
+        Entity.QUEUE,
+        queue.ns,
+        queue.name,
+        instanceId,
+        Type.PROCESSING,
+      ),
+    };
+  },
+
+  // ==========================================================================
+  // Namespace Keys - hierarchy: namespace > ns > type
+  // ==========================================================================
+
+  getNamespaceKeys(ns: string) {
+    return {
+      keyNamespaceQueues: buildKey(Entity.NAMESPACE, ns, Type.QUEUES),
+      keyNamespaceExchanges: buildKey(Entity.NAMESPACE, ns, Type.EXCHANGES),
+    };
+  },
+
+  // ==========================================================================
+  // Exchange Keys - hierarchy: exchange > ns > name > [routing] > type
+  // ==========================================================================
+
+  getExchangeKeys(ns: string, exchangeName: string) {
+    return {
+      keyExchange: buildKey(Entity.EXCHANGE, ns, exchangeName, Type.PROPERTIES),
     };
   },
 
   getExchangeDirectKeys(ns: string, exchangeName: string) {
-    const keys = {
-      keyExchangeRoutingKeys: ERedisKey.EXCHANGE_DIRECT_ROUTING_KEYS,
-    };
     return {
-      ...this.getExchangeKeys(ns, exchangeName),
-      ...makeNamespacedKeys(keys, ns, exchangeName),
-    };
-  },
-
-  getExchangeTopicKeys(ns: string, exchangeName: string) {
-    const keys = {
-      keyExchangeBindingPatterns: ERedisKey.EXCHANGE_TOPIC_BINDING_PATTERNS,
-    };
-    return {
-      ...this.getExchangeKeys(ns, exchangeName),
-      ...makeNamespacedKeys(keys, ns, exchangeName),
-    };
-  },
-
-  getExchangeFanoutKeys(ns: string, exchangeName: string) {
-    const keys = {
-      keyFanoutQueues: ERedisKey.EXCHANGE_FANOUT_QUEUES,
-    };
-    return {
-      ...this.getExchangeKeys(ns, exchangeName),
-      ...makeNamespacedKeys(keys, ns, exchangeName),
+      keyExchange: buildKey(Entity.EXCHANGE, ns, exchangeName, Type.PROPERTIES),
+      keyExchangeRoutingKeys: buildKey(
+        Entity.EXCHANGE,
+        ns,
+        exchangeName,
+        Type.ROUTING_KEYS,
+      ),
     };
   },
 
@@ -192,232 +209,156 @@ export const redisKeys = {
     exchangeName: string,
     routingKey: string,
   ) {
-    const keys = {
-      keyRoutingKeyQueues: ERedisKey.EXCHANGE_DIRECT_ROUTING_KEY_QUEUES,
-    };
     return {
-      ...makeNamespacedKeys(keys, ns, exchangeName, routingKey),
+      keyRoutingKeyQueues: buildKey(
+        Entity.EXCHANGE,
+        ns,
+        exchangeName,
+        routingKey,
+        Type.QUEUES,
+      ),
+    };
+  },
+
+  getExchangeTopicKeys(ns: string, exchangeName: string) {
+    return {
+      keyExchange: buildKey(Entity.EXCHANGE, ns, exchangeName, Type.PROPERTIES),
+      keyExchangeBindingPatterns: buildKey(
+        Entity.EXCHANGE,
+        ns,
+        exchangeName,
+        Type.ROUTING_PATTERNS,
+      ),
     };
   },
 
   getExchangeTopicBindingPatternKeys(
     ns: string,
     exchangeName: string,
-    bindingPattern: string,
+    pattern: string,
   ) {
-    const keys = {
-      keyBindingPatternQueues: ERedisKey.EXCHANGE_TOPIC_BINDING_PATTERN_QUEUES,
-    };
     return {
-      ...makeNamespacedKeys(keys, ns, exchangeName, bindingPattern),
-    };
-  },
-
-  /**
-   * Get keys for a specific queue
-   *
-   * @param ns - Queue namespace
-   * @param queueName - Queue name
-   * @param consumerGroupId - Optional consumer group ID
-   * @returns Queue-specific keys
-   */
-  getQueueKeys(ns: string, queueName: string, consumerGroupId: string | null) {
-    const queueKeys = {
-      keyQueueDL: ERedisKey.QUEUE_DL, // LIST
-      keyQueueProcessingQueues: ERedisKey.QUEUE_PROCESSING_QUEUES, // HASH
-      keyQueueAcknowledged: ERedisKey.QUEUE_ACKNOWLEDGED, // LIST
-      keyQueueScheduled: ERedisKey.QUEUE_SCHEDULED, // SORTED SET
-      keyQueueRequeued: ERedisKey.QUEUE_REQUEUED, // LIST
-      keyQueueDelayed: ERedisKey.QUEUE_DELAYED, // SORTED SET
-      keyQueueConsumers: ERedisKey.QUEUE_CONSUMERS, // HASH
-      keyQueueRateLimitCounter: ERedisKey.QUEUE_RATE_LIMIT_COUNTER, // STRING
-      keyQueueProperties: ERedisKey.QUEUE_PROPERTIES, // HASH
-      keyQueueMessages: ERedisKey.QUEUE_MESSAGES, // NOT USED
-      keyQueuePublished: ERedisKey.QUEUE_PUBLISHED, // LIST
-      keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS, // SET
-      keyQueueWorkerClusterLock: ERedisKey.QUEUE_WORKERS_LOCK, // STRING
-      keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS, // SET
-      keyQueueStateHistory: ERedisKey.QUEUE_STATE_HISTORY, // LIST
-    };
-
-    const pendingKeys = {
-      keyQueuePending: ERedisKey.QUEUE_PENDING, // LIST
-      keyQueuePriorityPending: ERedisKey.QUEUE_PRIORITY_PENDING, // SORTED SET
-    };
-
-    const payload = [queueName];
-    const pendingPayload = [
-      ...payload,
-      ...(consumerGroupId ? [consumerGroupId] : []),
-    ];
-
-    return {
-      ...makeNamespacedKeys(queueKeys, ns, ...payload),
-      ...makeNamespacedKeys(pendingKeys, ns, ...pendingPayload),
-    };
-  },
-
-  /**
-   * Get keys for a specific message
-   *
-   * @param messageId - Message ID
-   * @returns Message-specific keys
-   */
-  getMessageKeys(messageId: string) {
-    const messageKeys = {
-      keyMessage: ERedisKey.MESSAGE,
-    };
-    return {
-      ...makeNamespacedKeys(
-        messageKeys,
-        REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
-        messageId,
+      keyBindingPatternQueues: buildKey(
+        Entity.EXCHANGE,
+        ns,
+        exchangeName,
+        pattern,
+        Type.QUEUES,
       ),
     };
   },
 
-  /**
-   * Get keys for a consumer instance
-   *
-   * @param instanceId - Consumer instance ID
-   * @returns Consumer-specific keys
-   */
-  getConsumerKeys(instanceId: string) {
-    const consumerKeys = {
-      keyConsumerQueues: ERedisKey.CONSUMER_QUEUES,
-      keyConsumerHeartbeat: ERedisKey.CONSUMER_HEARTBEAT,
-    };
+  getExchangeFanoutKeys(ns: string, exchangeName: string) {
     return {
-      ...makeNamespacedKeys(
-        consumerKeys,
-        REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
-        instanceId,
-      ),
+      keyExchange: buildKey(Entity.EXCHANGE, ns, exchangeName, Type.PROPERTIES),
+      keyFanoutQueues: buildKey(Entity.EXCHANGE, ns, exchangeName, Type.QUEUES),
     };
   },
 
-  /**
-   * Get keys for a queue consumer
-   *
-   * @param queueParams - Queue parameters
-   * @param instanceId - Consumer instance ID
-   * @returns Queue consumer-specific keys
-   */
-  getQueueConsumerKeys(queueParams: IQueueParams, instanceId: string) {
-    const keys = {
-      keyQueueProcessing: ERedisKey.QUEUE_PROCESSING,
-    };
-    return {
-      ...makeNamespacedKeys(keys, queueParams.ns, queueParams.name, instanceId),
-    };
-  },
+  // ==========================================================================
+  // Global Keys - hierarchy: global > type
+  // ==========================================================================
 
-  /**
-   * Get main global keys
-   *
-   * @returns Global keys
-   */
   getMainKeys() {
-    const mainKeys = {
-      keyQueues: ERedisKey.QUEUES,
-      keyExchanges: ERedisKey.EXCHANGES,
-      keyNamespaces: ERedisKey.NAMESPACES,
-      keyConfiguration: ERedisKey.CONFIGURATION,
-      keyPurgeQueueBackgroundJobs: ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS,
-      keyPurgeQueueBackgroundJobsPending:
-        ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS_PENDING,
-      keyPurgeQueueBackgroundJobsProcessing:
-        ERedisKey.PURGE_QUEUE_BACKGROUND_JOBS_PROCESSING,
-    };
-    return makeNamespacedKeys(mainKeys, REDIS_KEY_CONFIG.GLOBAL_NAMESPACE);
-  },
-
-  getPurgeQueueTargetKeys(queueParams: IQueueParams, groupId: string | null) {
-    const keys = {
-      keyPurgeQueueTargetLock: ERedisKey.PURGE_QUEUE_TARGET_LOCK,
-    };
     return {
-      ...makeNamespacedKeys(
-        keys,
-        queueParams.ns,
-        queueParams.name,
-        ...(groupId ? [groupId] : []),
+      // Registry
+      keyQueues: buildKey(Entity.GLOBAL, Type.QUEUES),
+      keyExchanges: buildKey(Entity.GLOBAL, Type.EXCHANGES),
+      keyNamespaces: buildKey(Entity.GLOBAL, Type.NAMESPACES),
+      keyConfiguration: buildKey(Entity.GLOBAL, Type.CONFIG),
+
+      // Purge jobs
+      keyPurgeQueueBackgroundJobs: buildKey(Entity.GLOBAL, 'purge', Type.JOBS),
+      keyPurgeQueueBackgroundJobsPending: buildKey(
+        Entity.GLOBAL,
+        'purge',
+        Type.PENDING,
+      ),
+      keyPurgeQueueBackgroundJobsProcessing: buildKey(
+        Entity.GLOBAL,
+        'purge',
+        Type.PROCESSING,
+      ),
+
+      // Create jobs
+      keyCreateQueueBackgroundJobs: buildKey(
+        Entity.GLOBAL,
+        'create',
+        Type.JOBS,
+      ),
+      keyCreateQueueBackgroundJobsPending: buildKey(
+        Entity.GLOBAL,
+        'create',
+        Type.PENDING,
+      ),
+      keyCreateQueueBackgroundJobsProcessing: buildKey(
+        Entity.GLOBAL,
+        'create',
+        Type.PROCESSING,
       ),
     };
   },
+
+  // ==========================================================================
+  // Message Keys - hierarchy: message > id
+  // ==========================================================================
+
+  getMessageKeys(messageId: string) {
+    return {
+      keyMessage: buildKey(Entity.MESSAGE, messageId),
+    };
+  },
+
+  // ==========================================================================
+  // Consumer Keys - hierarchy: consumer > id > type
+  // ==========================================================================
+
+  getConsumerKeys(instanceId: string) {
+    return {
+      keyConsumerQueues: buildKey(Entity.CONSUMER, instanceId, Type.QUEUES),
+      keyConsumerHeartbeat: buildKey(
+        Entity.CONSUMER,
+        instanceId,
+        Type.HEARTBEAT,
+      ),
+    };
+  },
+
+  // ==========================================================================
+  // Job Keys - hierarchy: job > id > type
+  // ==========================================================================
 
   getBackgroundJobKeys(jobId: string) {
-    const keys = {
-      keyBackgroundJobWorkerId: ERedisKey.BACKGROUND_JOB_WORKER_ID,
-    };
     return {
-      ...makeNamespacedKeys(keys, jobId),
+      keyBackgroundJobWorkerId: buildKey(Entity.JOB, jobId, Type.JOB_WORKER),
     };
   },
 
   getBackgroundJobWorkerKeys(workerId: string) {
-    const keys = {
-      keyBackgroundJobWorkerHeartbeat:
-        ERedisKey.BACKGROUND_JOB_WORKER_HEARTBEAT,
-    };
     return {
-      ...makeNamespacedKeys(keys, workerId),
+      keyBackgroundJobWorkerHeartbeat: buildKey(
+        Entity.WORKER,
+        workerId,
+        Type.HEARTBEAT,
+      ),
     };
   },
 
-  /**
-   * Validate a namespace string
-   *
-   * @param ns - Namespace to validate
-   * @returns Validated namespace or error
-   */
+  // ==========================================================================
+  // Validation
+  // ==========================================================================
+
   validateNamespace(ns: string): string | InvalidRedisKeyError {
-    const validated = this.validateRedisKey(ns);
-
-    if (validated instanceof InvalidRedisKeyError) {
-      return validated;
-    }
-
-    if (validated === REDIS_KEY_CONFIG.GLOBAL_NAMESPACE) {
-      return new InvalidRedisKeyError();
-    }
-
-    return validated;
+    const result = this.validateKey(ns);
+    if (result instanceof InvalidRedisKeyError) return result;
+    if (result === GLOBAL) return new InvalidRedisKeyError();
+    return result;
   },
 
-  /**
-   * Validate a Redis key string
-   *
-   * @param key - Key to validate
-   * @returns Validated key or error
-   */
-  validateRedisKey(
-    key: string | null | undefined,
-  ): string | InvalidRedisKeyError {
-    if (!key || !key.length) {
-      return new InvalidRedisKeyError();
-    }
-
-    const lowerCase = key.toLowerCase();
-    // Regex matches valid key patterns, then we check if anything remains
-    const filtered = lowerCase.replace(
-      /(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/g,
-      '',
-    );
-
-    if (filtered.length) {
-      return new InvalidRedisKeyError();
-    }
-
-    return lowerCase;
-  },
-
-  /**
-   * Get the key segment separator
-   *
-   * @returns Key segment separator
-   */
-  getKeySegmentSeparator() {
-    return REDIS_KEY_CONFIG.SEGMENT_SEPARATOR;
+  validateKey(key: string | null | undefined): string | InvalidRedisKeyError {
+    if (!key?.length) return new InvalidRedisKeyError();
+    const valid = /^[a-z][a-z0-9\-_.]*$/.test(key.toLowerCase());
+    if (!valid) return new InvalidRedisKeyError();
+    return key.toLowerCase();
   },
 };

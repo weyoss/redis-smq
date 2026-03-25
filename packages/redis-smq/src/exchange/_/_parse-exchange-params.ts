@@ -39,9 +39,9 @@ export function _getExchangeParams(
     typeof exchange === 'string'
       ? { name: exchange, ns: Configuration.getConfig().namespace }
       : exchange;
-  const ns = redisKeys.validateRedisKey(exchangeParams.ns);
+  const ns = redisKeys.validateKey(exchangeParams.ns);
   if (ns instanceof Error) return new InvalidExchangeParametersError();
-  const name = redisKeys.validateRedisKey(exchangeParams.name);
+  const name = redisKeys.validateKey(exchangeParams.name);
   if (name instanceof InvalidRedisKeyError)
     return new InvalidExchangeParametersError();
   return {

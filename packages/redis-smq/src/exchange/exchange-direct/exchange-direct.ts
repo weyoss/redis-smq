@@ -190,7 +190,7 @@ export class ExchangeDirect {
       );
       if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-      const validatedRoutingKey = redisKeys.validateRedisKey(routingKey);
+      const validatedRoutingKey = redisKeys.validateKey(routingKey);
       if (validatedRoutingKey instanceof Error)
         return callback(new InvalidDirectExchangeParametersError());
 
@@ -263,7 +263,7 @@ export class ExchangeDirect {
         return callback(exchangeParams);
       }
 
-      const validatedRoutingKey = redisKeys.validateRedisKey(routingKey);
+      const validatedRoutingKey = redisKeys.validateKey(routingKey);
       if (validatedRoutingKey instanceof Error) {
         this.logger.error(`matchQueues: invalid routing key "${routingKey}"`);
         return callback(
@@ -435,7 +435,7 @@ export class ExchangeDirect {
         return callback(new NamespaceMismatchError());
       }
 
-      const validatedRoutingKey = redisKeys.validateRedisKey(routingKey);
+      const validatedRoutingKey = redisKeys.validateKey(routingKey);
       if (validatedRoutingKey instanceof Error) {
         this.logger.error(`bindQueue: invalid routing key "${routingKey}"`);
         return callback(new InvalidDirectExchangeParametersError());
@@ -652,7 +652,7 @@ export class ExchangeDirect {
         return callback(new NamespaceMismatchError());
       }
 
-      const validatedRoutingKey = redisKeys.validateRedisKey(routingKey);
+      const validatedRoutingKey = redisKeys.validateKey(routingKey);
       if (validatedRoutingKey instanceof Error) {
         this.logger.error(`unbindQueue: invalid routing key "${routingKey}"`);
         return callback(new InvalidDirectExchangeParametersError());

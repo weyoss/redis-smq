@@ -33,7 +33,7 @@ export function _saveConsumerGroup(
   groupId: string,
   cb: ICallback<number>,
 ): void {
-  const gid = redisKeys.validateRedisKey(groupId);
+  const gid = redisKeys.validateKey(groupId);
   if (gid instanceof Error) cb(new InvalidConsumerGroupIdError());
   else {
     async.series(

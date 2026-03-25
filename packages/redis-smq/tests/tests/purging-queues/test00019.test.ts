@@ -16,11 +16,10 @@ import bluebird from 'bluebird';
 import { getProducer } from '../../common/producer.js';
 import {
   EBackgroundJobStatus,
-  IBackgroundJob,
   ProducibleMessage,
+  TPurgeQueueJob,
 } from '../../../src/index.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { TPurgeQueueJobTarget } from '../../../src/index.js';
 
 test('PurgeQueueWorker', async () => {
   const totalMessages = 3007;
@@ -42,7 +41,7 @@ test('PurgeQueueWorker', async () => {
   expect(m1).toBe(totalMessages);
 
   //
-  const jobs: IBackgroundJob<TPurgeQueueJobTarget>[] = [];
+  const jobs: TPurgeQueueJob[] = [];
   const jobId = await queueMessages.purge(defaultQueue);
 
   while (true) {
@@ -62,10 +61,10 @@ test('PurgeQueueWorker', async () => {
   expect(
     jobs.find((i) => i.status === EBackgroundJobStatus.COMPLETED),
   ).toBeDefined();
-  expect(jobs.find((i) => i.purged === 1000)).toBeDefined();
-  expect(jobs.find((i) => i.purged === 2000)).toBeDefined();
-  expect(jobs.find((i) => i.purged === 3000)).toBeDefined();
-  expect(jobs.find((i) => i.purged === 3007)).toBeDefined();
+  expect(jobs.find((i) => i.meta?.purged === 1000)).toBeDefined();
+  expect(jobs.find((i) => i.meta?.purged === 2000)).toBeDefined();
+  expect(jobs.find((i) => i.meta?.purged === 3000)).toBeDefined();
+  expect(jobs.find((i) => i.meta?.purged === 3007)).toBeDefined();
 
   const m2 = await queueMessages.countMessages(defaultQueue);
   expect(m2).toBe(0);

@@ -191,7 +191,7 @@ export class Exchange {
     cb?: ICallback<IExchangeParsedParams[]>,
   ): Promise<IExchangeParsedParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      const namespace = redisKeys.validateRedisKey(ns);
+      const namespace = redisKeys.validateKey(ns);
       if (namespace instanceof InvalidRedisKeyError) {
         this.logger.error('getNamespaceExchanges: invalid namespace');
         return callback(new InvalidNamespaceError());

@@ -15,10 +15,7 @@ test('redisKeys', async () => {
   expect(redisKeys.validateNamespace('global')).toBeInstanceOf(
     InvalidRedisKeyError,
   );
-  expect(redisKeys.validateRedisKey('')).toBeInstanceOf(InvalidRedisKeyError);
-  expect(redisKeys.validateRedisKey(null)).toBeInstanceOf(InvalidRedisKeyError);
-  expect(redisKeys.validateRedisKey(undefined)).toBeInstanceOf(
-    InvalidRedisKeyError,
-  );
-  expect(redisKeys.getKeySegmentSeparator()).toBe(':');
+  expect(redisKeys.validateKey('')).toBeInstanceOf(InvalidRedisKeyError);
+  expect(redisKeys.validateKey(null)).toBeInstanceOf(InvalidRedisKeyError);
+  expect(redisKeys.validateKey(undefined)).toBeInstanceOf(InvalidRedisKeyError);
 });
