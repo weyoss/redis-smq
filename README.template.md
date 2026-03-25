@@ -139,7 +139,7 @@ consumer.run((err) => {
 ## 🧩 Using Promises
 
 ```typescript
-import { RedisSMQ } from 'redis-smq';
+import { RedisSMQ, EQueueType, EQueueDeliveryModel } from 'redis-smq';
 
 try {
   // Initialize RedisSMQ
@@ -147,6 +147,14 @@ try {
     client: ERedisConfigClient.IOREDIS,
     options: { host: 'localhost', port: 6379 }
   });
+  
+  // Create a Queue
+  const queueManager = RedisSMQ.createQueueManager();
+  await queueManager.save(
+    'my_queue',
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   // Create and start a producer
   const producer = RedisSMQ.createProducer();
@@ -169,7 +177,6 @@ try {
     console.log('Received:', message.getBody());
     done();
   });
-  
 } catch (err) {
   console.error('Error:', err);
 }
