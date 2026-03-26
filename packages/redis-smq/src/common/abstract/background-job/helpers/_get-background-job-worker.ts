@@ -13,9 +13,9 @@ import { withSharedPoolConnection } from '../../../redis/redis-connection-pool/w
 import { BackgroundJobWorkerNotFoundError } from '../../../../errors/index.js';
 
 export function _getBackgroundJobWorker(jobId: string, cb: ICallback<string>) {
-  const { keyBackgroundJobWorkerId } = redisKeys.getBackgroundJobKeys(jobId);
+  const { keyJobWorker } = redisKeys.getJobKeys(jobId);
   withSharedPoolConnection((client, cb) => {
-    client.get(keyBackgroundJobWorkerId, (err, workerId) => {
+    client.get(keyJobWorker, (err, workerId) => {
       if (err) return cb(err);
       if (!workerId)
         return cb(

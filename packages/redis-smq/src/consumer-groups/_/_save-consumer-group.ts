@@ -26,6 +26,7 @@ import {
 import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
+import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,
@@ -33,7 +34,7 @@ export function _saveConsumerGroup(
   groupId: string,
   cb: ICallback<number>,
 ): void {
-  const gid = redisKeys.validateKey(groupId);
+  const gid = validateRedisKey(groupId);
   if (gid instanceof Error) cb(new InvalidConsumerGroupIdError());
   else {
     async.series(

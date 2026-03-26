@@ -21,13 +21,8 @@ export function _isBackgroundJobWorkerAlive(
       [
         (cb: ICallback<string>) => _getBackgroundJobWorker(jobId, cb),
         (workerId, cb) => {
-          const { keyBackgroundJobWorkerHeartbeat } =
-            redisKeys.getBackgroundJobWorkerKeys(workerId);
-          Heartbeat.isComponentAlive(
-            client,
-            keyBackgroundJobWorkerHeartbeat,
-            cb,
-          );
+          const { keyWorkerHeartbeat } = redisKeys.getWorkerKeys(workerId);
+          Heartbeat.isComponentAlive(client, keyWorkerHeartbeat, cb);
         },
       ],
       cb,

@@ -8,14 +8,11 @@
  */
 
 import { expect, test } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
 import { InvalidRedisKeyError } from '../../../src/errors/index.js';
+import { validateRedisKey } from '../../../src/common/redis/redis-keys/validator.js';
 
-test('redisKeys', async () => {
-  expect(redisKeys.validateNamespace('global')).toBeInstanceOf(
-    InvalidRedisKeyError,
-  );
-  expect(redisKeys.validateKey('')).toBeInstanceOf(InvalidRedisKeyError);
-  expect(redisKeys.validateKey(null)).toBeInstanceOf(InvalidRedisKeyError);
-  expect(redisKeys.validateKey(undefined)).toBeInstanceOf(InvalidRedisKeyError);
+test('validateRedisKey', async () => {
+  expect(validateRedisKey('')).toBeInstanceOf(InvalidRedisKeyError);
+  expect(validateRedisKey(null)).toBeInstanceOf(InvalidRedisKeyError);
+  expect(validateRedisKey(undefined)).toBeInstanceOf(InvalidRedisKeyError);
 });

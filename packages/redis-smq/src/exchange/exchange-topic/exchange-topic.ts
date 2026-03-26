@@ -384,8 +384,14 @@ export class ExchangeTopic {
 
       const { keyQueueProperties, keyQueueExchangeBindings } =
         redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-      const { keyExchange, keyExchangeBindingPatterns } =
-        redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchange } = redisKeys.getExchangeKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
+      const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
       const { keyBindingPatternQueues } =
         redisKeys.getExchangeTopicBindingPatternKeys(
           exchangeParams.ns,
@@ -597,8 +603,14 @@ export class ExchangeTopic {
         queueParams.name,
         null,
       );
-      const { keyExchange, keyExchangeBindingPatterns } =
-        redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchange } = redisKeys.getExchangeKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
+      const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
       const { keyBindingPatternQueues } =
         redisKeys.getExchangeTopicBindingPatternKeys(
           exchangeParams.ns,
@@ -859,8 +871,14 @@ export class ExchangeTopic {
       const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
         exchangeParams.ns,
       );
-      const { keyExchange, keyExchangeBindingPatterns } =
-        redisKeys.getExchangeTopicKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchange } = redisKeys.getExchangeKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
+      const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
 
       const exchangeStr = JSON.stringify(exchangeParams);
 

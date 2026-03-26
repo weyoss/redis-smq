@@ -24,6 +24,7 @@ import {
 } from '../errors/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _getNamespaceQueues } from './_/_get-namespace-queues.js';
+import { validateRedisKey } from '../common/redis/redis-keys/validator.js';
 
 /**
  * NamespaceManager class for managing message queue namespaces in Redis.
@@ -209,7 +210,7 @@ export class NamespaceManager {
   ): Promise<IQueueParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting queues for namespace', { namespace });
-      const ns = redisKeys.validateKey(namespace);
+      const ns = validateRedisKey(namespace);
       if (ns instanceof Error) {
         this.logger.error('Invalid namespace', { namespace });
         return callback(new InvalidNamespaceError());
@@ -343,7 +344,7 @@ export class NamespaceManager {
   delete(namespace: string, cb?: ICallback<void>): Promise<void> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Deleting namespace', { namespace });
-      const ns = redisKeys.validateKey(namespace);
+      const ns = validateRedisKey(namespace);
       if (ns instanceof Error) {
         this.logger.error('Invalid namespace', { namespace });
         return callback(new InvalidNamespaceError());

@@ -26,13 +26,12 @@ it('QueueStorageSortedSet: should return empty array for an empty list', async (
   const queueMessagesStorageSortedSet = promisifyAll(
     new BrowserStorageSortedSet(),
   );
-  const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = redisKeys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,
   );
-  const items = await queueMessagesStorageSortedSet.fetchAllItemsAsync(
-    keyQueuePriorityPending,
-  );
+  const items =
+    await queueMessagesStorageSortedSet.fetchAllItemsAsync(keyQueuePriority);
   expect(items.length).toBe(0);
 });

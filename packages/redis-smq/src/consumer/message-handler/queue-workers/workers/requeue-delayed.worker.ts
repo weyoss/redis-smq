@@ -86,7 +86,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
       const {
         keyQueueProperties,
         keyQueueDelayed,
-        keyQueueDL,
+        keyQueueDeadLetter,
         keyQueueConsumerGroups,
       } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams.ns,
@@ -98,7 +98,7 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
       const keys: string[] = [
         keyQueueProperties,
         keyQueueDelayed,
-        keyQueueDL,
+        keyQueueDeadLetter,
         keyQueueConsumerGroups,
       ];
       const argv: (string | number)[] = [
@@ -128,13 +128,12 @@ export class RequeueDelayedWorker extends QueueWorkerAbstract {
         const consumerGroupId = msg.getConsumerGroupId();
         const { keyMessage } = redisKeys.getMessageKeys(messageId);
         const destinationQueue = msg.getDestinationQueue();
-        const { keyQueuePending, keyQueuePriorityPending } =
-          redisKeys.getQueueKeys(
-            destinationQueue.ns,
-            destinationQueue.name,
-            msg.getConsumerGroupId(),
-          );
-        keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
+        const { keyQueuePending, keyQueuePriority } = redisKeys.getQueueKeys(
+          destinationQueue.ns,
+          destinationQueue.name,
+          msg.getConsumerGroupId(),
+        );
+        keys.push(keyMessage, keyQueuePending, keyQueuePriority);
         argv.push(
           messageId,
           msg.producibleMessage.getPriority() ?? '',

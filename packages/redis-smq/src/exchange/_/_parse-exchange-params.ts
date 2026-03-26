@@ -8,7 +8,6 @@
  */
 
 import { Configuration } from '../../config/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   InvalidExchangeParametersError,
   InvalidRedisKeyError,
@@ -18,6 +17,7 @@ import {
   IExchangeParams,
   IExchangeParsedParams,
 } from '../types/index.js';
+import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
 
 export function _parseExchangeParams(
   exchange: string | IExchangeParams,
@@ -39,9 +39,9 @@ export function _getExchangeParams(
     typeof exchange === 'string'
       ? { name: exchange, ns: Configuration.getConfig().namespace }
       : exchange;
-  const ns = redisKeys.validateKey(exchangeParams.ns);
+  const ns = validateRedisKey(exchangeParams.ns);
   if (ns instanceof Error) return new InvalidExchangeParametersError();
-  const name = redisKeys.validateKey(exchangeParams.name);
+  const name = validateRedisKey(exchangeParams.name);
   if (name instanceof InvalidRedisKeyError)
     return new InvalidExchangeParametersError();
   return {

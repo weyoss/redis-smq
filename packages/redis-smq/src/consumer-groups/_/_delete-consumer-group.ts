@@ -35,7 +35,7 @@ export function _deleteConsumerGroup(
   const {
     keyQueueConsumerGroups,
     keyQueuePending,
-    keyQueuePriorityPending,
+    keyQueuePriority,
     keyQueueProperties,
   } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
 
@@ -56,7 +56,7 @@ export function _deleteConsumerGroup(
     [
       keyQueueConsumerGroups,
       keyQueuePending,
-      keyQueuePriorityPending,
+      keyQueuePriority,
       keyQueueProperties,
     ],
     argv,

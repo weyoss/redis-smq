@@ -79,7 +79,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     const {
       keyQueueProcessingQueues,
       keyQueuePending,
-      keyQueuePriorityPending,
+      keyQueuePriority,
       keyQueueConsumers,
       keyQueueProperties,
     } = redisKeys.getQueueKeys(
@@ -89,7 +89,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     );
 
     this.keyQueueProperties = keyQueueProperties;
-    this.keyQueuePriorityPending = keyQueuePriorityPending;
+    this.keyQueuePriorityPending = keyQueuePriority;
     this.keyQueuePending = keyQueuePending;
     this.keyQueueProcessing = keyQueueProcessing;
     this.keyQueues = keyQueues;

@@ -139,7 +139,7 @@ export class QueueRateLimit {
         queue,
         EQueueOperation.CLEAR_RATE_LIMIT,
         (client, cb) => {
-          const { keyQueueProperties, keyQueueRateLimitCounter } =
+          const { keyQueueProperties, keyQueueRateLimit } =
             redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
 
           const argv: (string | number)[] = [
@@ -152,7 +152,7 @@ export class QueueRateLimit {
 
           client.runScript(
             ERedisScriptName.CLEAR_QUEUE_RATE_LIMIT,
-            [keyQueueProperties, keyQueueRateLimitCounter],
+            [keyQueueProperties, keyQueueRateLimit],
             argv,
             (err, reply) => {
               if (err) {

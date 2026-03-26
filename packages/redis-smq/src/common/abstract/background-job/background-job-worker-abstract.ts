@@ -47,10 +47,9 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
       );
 
     try {
-      const { keyBackgroundJobWorkerHeartbeat } =
-        redisKeys.getBackgroundJobWorkerKeys(this.id);
+      const { keyWorkerHeartbeat } = redisKeys.getWorkerKeys(this.id);
       this.heartbeat = HeartbeatFactory(this.redisClient, this.logger, {
-        heartbeatKey: keyBackgroundJobWorkerHeartbeat,
+        heartbeatKey: keyWorkerHeartbeat,
         componentId: this.id,
         componentType: this.constructor.name,
       });

@@ -94,16 +94,15 @@ export function _deleteQueue(
       const {
         keyQueueProperties,
         keyQueuePending,
-        keyQueueDL,
+        keyQueueDeadLetter,
         keyQueueProcessingQueues,
-        keyQueuePriorityPending,
+        keyQueuePriority,
         keyQueueAcknowledged,
         keyQueueConsumers,
-        keyQueueRateLimitCounter,
+        keyQueueRateLimit,
         keyQueueScheduled,
         keyQueueDelayed,
         keyQueueRequeued,
-        keyQueueMessages,
         keyQueuePublished,
         keyQueueConsumerGroups,
         keyQueueWorkersLock,
@@ -117,25 +116,27 @@ export function _deleteQueue(
 
       // Keys for consumer group queues
       const consumerGroupKeys = consumerGroups.flatMap((groupId) => {
-        const { keyQueuePriorityPending, keyQueuePending } =
-          redisKeys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
-        return [keyQueuePending, keyQueuePriorityPending];
+        const { keyQueuePriority, keyQueuePending } = redisKeys.getQueueKeys(
+          queueParams.ns,
+          queueParams.name,
+          groupId,
+        );
+        return [keyQueuePending, keyQueuePriority];
       });
 
       // A set is used to ensure all keys are unique before passing them to the script.
       const keysToDelete = new Set([
         keyQueueProperties,
         keyQueuePending,
-        keyQueueDL,
+        keyQueueDeadLetter,
         keyQueueProcessingQueues,
-        keyQueuePriorityPending,
+        keyQueuePriority,
         keyQueueAcknowledged,
         keyQueueConsumers,
-        keyQueueRateLimitCounter,
+        keyQueueRateLimit,
         keyQueueScheduled,
         keyQueueDelayed,
         keyQueueRequeued,
-        keyQueueMessages,
         keyQueuePublished,
         keyQueueConsumerGroups,
         keyQueueWorkersLock,

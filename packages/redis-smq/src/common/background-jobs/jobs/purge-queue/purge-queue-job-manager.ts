@@ -35,9 +35,9 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<
     super(
       redisClient,
       {
-        keyBackgroundJobs: keys.keyPurgeQueueBackgroundJobs,
-        keyBackgroundJobsPending: keys.keyPurgeQueueBackgroundJobsPending,
-        keyBackgroundJobsProcessing: keys.keyPurgeQueueBackgroundJobsProcessing,
+        keyBackgroundJobs: keys.keyPurgeJobs,
+        keyBackgroundJobsPending: keys.keyPurgeJobsPending,
+        keyBackgroundJobsProcessing: keys.keyPurgeJobsProcessing,
       },
       logger,
     );

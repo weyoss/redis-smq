@@ -8,7 +8,6 @@
  */
 
 import { InvalidQueueParametersError } from '../../errors/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
   IQueueParams,
   IQueueParsedParams,
@@ -16,6 +15,7 @@ import {
 } from '../types/index.js';
 import { _parseQueueParams } from './_parse-queue-params.js';
 import { RedisSMQError } from 'redis-smq-common';
+import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
 
 function isQueueParams(args: unknown): args is IQueueParams {
   return (
@@ -49,7 +49,7 @@ export function _parseQueueExtendedParams(
   if (queueParams instanceof Error) return queueParams;
   let groupId: string | RedisSMQError | null = null;
   if (args.groupId) {
-    groupId = redisKeys.validateKey(args.groupId);
+    groupId = validateRedisKey(args.groupId);
     if (groupId instanceof Error) return new InvalidQueueParametersError();
   }
   return {

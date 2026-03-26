@@ -37,12 +37,16 @@ export function _executeUnacknowledgementScript(
   cb: ICallback<TUnacknowledgementResult>,
 ): void {
   withSharedPoolConnection((client, done) => {
-    const { keyQueueRequeued, keyQueueDL, keyQueueProperties } =
+    const { keyQueueRequeued, keyQueueDeadLetter, keyQueueProperties } =
       redisKeys.getQueueKeys(queue.ns, queue.name, null);
     const { enabled, expire, queueSize } =
       Configuration.getConfig().messageAudit.deadLetteredMessages;
 
-    const staticKeys = [keyQueueRequeued, keyQueueDL, keyQueueProperties];
+    const staticKeys = [
+      keyQueueRequeued,
+      keyQueueDeadLetter,
+      keyQueueProperties,
+    ];
     const staticArgs = [
       EUnacknowledgementAction.DELAY,
       EUnacknowledgementAction.REQUEUE,

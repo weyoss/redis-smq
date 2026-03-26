@@ -91,10 +91,10 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
       const {
         keyQueueProperties,
         keyQueuePending,
-        keyQueuePriorityPending,
+        keyQueuePriority,
         keyQueueScheduled,
         keyQueuePublished,
-        keyQueueDL,
+        keyQueueDeadLetter,
         keyQueueConsumerGroups,
       } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams.ns,
@@ -107,9 +107,9 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         keyQueueProperties,
         keyQueuePending,
         keyQueuePublished,
-        keyQueuePriorityPending,
+        keyQueuePriority,
         keyQueueScheduled,
-        keyQueueDL,
+        keyQueueDeadLetter,
         keyQueueConsumerGroups,
       ];
       const argv: (string | number)[] = [

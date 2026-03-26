@@ -98,7 +98,7 @@ export function _requeueMessage(
         const {
           keyQueueProperties,
           keyQueuePending,
-          keyQueuePriorityPending,
+          keyQueuePriority,
           keyQueuePublished,
           keyQueueScheduled,
           keyQueueConsumerGroups,
@@ -112,7 +112,7 @@ export function _requeueMessage(
         const keys: string[] = [
           // Static keys (1-6)
           keyQueueProperties,
-          keyQueuePriorityPending,
+          keyQueuePriority,
           keyQueuePending,
           keyQueuePublished,
           keyQueueScheduled,

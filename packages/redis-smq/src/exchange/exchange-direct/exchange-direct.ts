@@ -42,6 +42,7 @@ import { _getRoutingKeyBoundQueues } from './_/_get-routing-key-bound-queues.js'
 import { _getRoutingKeys } from './_/_get-routing-keys.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
+import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
 
 /**
  * Direct Exchange implementation for RedisSMQ.
@@ -190,7 +191,7 @@ export class ExchangeDirect {
       );
       if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-      const validatedRoutingKey = redisKeys.validateKey(routingKey);
+      const validatedRoutingKey = validateRedisKey(routingKey);
       if (validatedRoutingKey instanceof Error)
         return callback(new InvalidDirectExchangeParametersError());
 
@@ -263,7 +264,7 @@ export class ExchangeDirect {
         return callback(exchangeParams);
       }
 
-      const validatedRoutingKey = redisKeys.validateKey(routingKey);
+      const validatedRoutingKey = validateRedisKey(routingKey);
       if (validatedRoutingKey instanceof Error) {
         this.logger.error(`matchQueues: invalid routing key "${routingKey}"`);
         return callback(
@@ -435,7 +436,7 @@ export class ExchangeDirect {
         return callback(new NamespaceMismatchError());
       }
 
-      const validatedRoutingKey = redisKeys.validateKey(routingKey);
+      const validatedRoutingKey = validateRedisKey(routingKey);
       if (validatedRoutingKey instanceof Error) {
         this.logger.error(`bindQueue: invalid routing key "${routingKey}"`);
         return callback(new InvalidDirectExchangeParametersError());
@@ -443,8 +444,14 @@ export class ExchangeDirect {
 
       const { keyQueueProperties, keyQueueExchangeBindings } =
         redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-      const { keyExchange, keyExchangeRoutingKeys } =
-        redisKeys.getExchangeDirectKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchange } = redisKeys.getExchangeKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
+      const { keyExchangeRoutingKeys } = redisKeys.getExchangeDirectKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
       const { keyRoutingKeyQueues } = redisKeys.getExchangeDirectRoutingKeyKeys(
         exchangeParams.ns,
         exchangeParams.name,
@@ -652,7 +659,7 @@ export class ExchangeDirect {
         return callback(new NamespaceMismatchError());
       }
 
-      const validatedRoutingKey = redisKeys.validateKey(routingKey);
+      const validatedRoutingKey = validateRedisKey(routingKey);
       if (validatedRoutingKey instanceof Error) {
         this.logger.error(`unbindQueue: invalid routing key "${routingKey}"`);
         return callback(new InvalidDirectExchangeParametersError());
@@ -663,8 +670,14 @@ export class ExchangeDirect {
         queueParams.name,
         null,
       );
-      const { keyExchange, keyExchangeRoutingKeys } =
-        redisKeys.getExchangeDirectKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchange } = redisKeys.getExchangeKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
+      const { keyExchangeRoutingKeys } = redisKeys.getExchangeDirectKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
       const { keyRoutingKeyQueues } = redisKeys.getExchangeDirectRoutingKeyKeys(
         exchangeParams.ns,
         exchangeParams.name,
@@ -872,8 +885,15 @@ export class ExchangeDirect {
         exchangeParams.ns,
       );
 
-      const { keyExchange, keyExchangeRoutingKeys } =
-        redisKeys.getExchangeDirectKeys(exchangeParams.ns, exchangeParams.name);
+      const { keyExchange } = redisKeys.getExchangeKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
+
+      const { keyExchangeRoutingKeys } = redisKeys.getExchangeDirectKeys(
+        exchangeParams.ns,
+        exchangeParams.name,
+      );
 
       const exchangeStr = JSON.stringify(exchangeParams);
 

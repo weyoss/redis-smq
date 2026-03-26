@@ -28,14 +28,13 @@ it('QueueStorageSortedSet: should return 0 for an empty list', async () => {
     new BrowserStorageSortedSet(),
   );
 
-  const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = redisKeys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,
   );
-  const count = await queueMessagesStorageSortedSet.countAsync(
-    keyQueuePriorityPending,
-  );
+  const count =
+    await queueMessagesStorageSortedSet.countAsync(keyQueuePriority);
   expect(count).toBe(0);
 });
 
@@ -46,13 +45,12 @@ it('should return the correct count after adding items', async () => {
     new BrowserStorageSortedSet(),
   );
   await produceMessageWithPriority(defaultQueue);
-  const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = redisKeys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,
   );
-  const count = await queueMessagesStorageSortedSet.countAsync(
-    keyQueuePriorityPending,
-  );
+  const count =
+    await queueMessagesStorageSortedSet.countAsync(keyQueuePriority);
   expect(count).toBe(1);
 });

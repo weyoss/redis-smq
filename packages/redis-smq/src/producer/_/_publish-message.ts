@@ -178,7 +178,7 @@ export function _publishMessage(
     ERedisScriptName.PUBLISH_MESSAGE,
     [
       keys.keyQueueProperties,
-      keys.keyQueuePriorityPending,
+      keys.keyQueuePriority,
       keys.keyQueuePending,
       keys.keyQueueScheduled,
       keys.keyQueuePublished,

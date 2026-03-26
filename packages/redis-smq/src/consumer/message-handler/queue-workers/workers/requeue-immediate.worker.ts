@@ -69,7 +69,7 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
       keyQueueProperties,
       keyQueueDelayed,
       keyQueueRequeued,
-      keyQueueDL,
+      keyQueueDeadLetter,
       keyQueueConsumerGroups,
     } = redisKeys.getQueueKeys(
       this.queueParsedParams.queueParams.ns,
@@ -82,7 +82,7 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
       keyQueueProperties,
       keyQueueRequeued,
       keyQueueDelayed,
-      keyQueueDL,
+      keyQueueDeadLetter,
       keyQueueConsumerGroups,
     ];
 
@@ -118,14 +118,13 @@ export class RequeueImmediateWorker extends QueueWorkerAbstract {
       const retryDelay = msg.producibleMessage.getRetryDelay();
       const delayedTimestamp = retryDelay ? timestamp + retryDelay : 0;
       const destinationQueue = msg.getDestinationQueue();
-      const { keyQueuePending, keyQueuePriorityPending } =
-        redisKeys.getQueueKeys(
-          destinationQueue.ns,
-          destinationQueue.name,
-          consumerGroupId,
-        );
+      const { keyQueuePending, keyQueuePriority } = redisKeys.getQueueKeys(
+        destinationQueue.ns,
+        destinationQueue.name,
+        consumerGroupId,
+      );
       const { keyMessage } = redisKeys.getMessageKeys(messageId);
-      keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
+      keys.push(keyMessage, keyQueuePending, keyQueuePriority);
       argv.push(
         messageId,
         priority ?? '',

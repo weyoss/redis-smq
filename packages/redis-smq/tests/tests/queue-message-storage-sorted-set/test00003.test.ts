@@ -45,13 +45,12 @@ it('QueueStorageSortedSet: should fetch all items for a large list (chunking tes
     ids.push(id);
   }
 
-  const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = redisKeys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,
   );
-  const items = await queueMessagesStorageSortedSet.fetchAllItemsAsync(
-    keyQueuePriorityPending,
-  );
+  const items =
+    await queueMessagesStorageSortedSet.fetchAllItemsAsync(keyQueuePriority);
   expect(items.sort()).toEqual(ids.sort());
 });

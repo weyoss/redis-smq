@@ -232,8 +232,7 @@ export abstract class BackgroundJobManagerAbstract<
           backgroundJob: IBackgroundJob<Payload>,
           next: ICallback<IBackgroundJob<Payload>>,
         ) => {
-          const { keyBackgroundJobWorkerId } =
-            redisKeys.getBackgroundJobKeys(jobId);
+          const { keyJobWorker } = redisKeys.getJobKeys(jobId);
           const updatedJob = {
             ...backgroundJob,
             status: EBackgroundJobStatus.CANCELED,
@@ -246,7 +245,7 @@ export abstract class BackgroundJobManagerAbstract<
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsPending,
               this.config.keyBackgroundJobsProcessing,
-              keyBackgroundJobWorkerId,
+              keyJobWorker,
             ],
             [
               jobId,
@@ -309,8 +308,7 @@ export abstract class BackgroundJobManagerAbstract<
       if (!backgroundJob)
         return cb(new BackgroundJobNotFoundError({ metadata: { jobId } }));
 
-      const { keyBackgroundJobWorkerId } =
-        redisKeys.getBackgroundJobKeys(jobId);
+      const { keyJobWorker } = redisKeys.getJobKeys(jobId);
 
       const updatedJob = {
         ...backgroundJob,
@@ -324,7 +322,7 @@ export abstract class BackgroundJobManagerAbstract<
         [
           this.config.keyBackgroundJobs,
           this.config.keyBackgroundJobsProcessing,
-          keyBackgroundJobWorkerId,
+          keyJobWorker,
         ],
         [
           jobId,
@@ -414,8 +412,7 @@ export abstract class BackgroundJobManagerAbstract<
           backgroundJob: IBackgroundJob<Payload, Meta>,
           next: ICallback<IBackgroundJob<Payload, Meta>>,
         ) => {
-          const { keyBackgroundJobWorkerId } =
-            redisKeys.getBackgroundJobKeys(jobId);
+          const { keyJobWorker } = redisKeys.getJobKeys(jobId);
           const updatedJob = this.applyPartialUpdate(backgroundJob, {
             ...options,
             status: EBackgroundJobStatus.COMPLETED,
@@ -428,7 +425,7 @@ export abstract class BackgroundJobManagerAbstract<
             [
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsProcessing,
-              keyBackgroundJobWorkerId,
+              keyJobWorker,
             ],
             [
               jobId,
@@ -502,8 +499,7 @@ export abstract class BackgroundJobManagerAbstract<
           backgroundJob: IBackgroundJob<Payload>,
           next: ICallback<IBackgroundJob<Payload>>,
         ) => {
-          const { keyBackgroundJobWorkerId } =
-            redisKeys.getBackgroundJobKeys(jobId);
+          const { keyJobWorker } = redisKeys.getJobKeys(jobId);
           const updatedJob = {
             ...backgroundJob,
             status: EBackgroundJobStatus.FAILED,
@@ -516,7 +512,7 @@ export abstract class BackgroundJobManagerAbstract<
             [
               this.config.keyBackgroundJobs,
               this.config.keyBackgroundJobsProcessing,
-              keyBackgroundJobWorkerId,
+              keyJobWorker,
             ],
             [
               jobId,
@@ -707,8 +703,7 @@ export abstract class BackgroundJobManagerAbstract<
                       return;
                     }
 
-                    const { keyBackgroundJobWorkerId } =
-                      redisKeys.getBackgroundJobKeys(jobId);
+                    const { keyJobWorker } = redisKeys.getJobKeys(jobId);
                     const recoveryMessage = 'Recovered from worker crash';
 
                     const updatedJob = {
@@ -724,7 +719,7 @@ export abstract class BackgroundJobManagerAbstract<
                         this.config.keyBackgroundJobs,
                         this.config.keyBackgroundJobsPending,
                         this.config.keyBackgroundJobsProcessing,
-                        keyBackgroundJobWorkerId,
+                        keyJobWorker,
                       ],
                       [
                         jobId,

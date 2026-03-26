@@ -23,6 +23,7 @@ import { Configuration } from '../config/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
+import { validateRedisKey } from '../common/redis/redis-keys/validator.js';
 
 /**
  * Exchange management operations.
@@ -191,7 +192,7 @@ export class Exchange {
     cb?: ICallback<IExchangeParsedParams[]>,
   ): Promise<IExchangeParsedParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      const namespace = redisKeys.validateKey(ns);
+      const namespace = validateRedisKey(ns);
       if (namespace instanceof InvalidRedisKeyError) {
         this.logger.error('getNamespaceExchanges: invalid namespace');
         return callback(new InvalidNamespaceError());

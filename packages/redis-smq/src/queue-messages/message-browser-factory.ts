@@ -22,7 +22,7 @@ export class MessageBrowserFactory {
           messageManager,
           new BrowserStorageSortedSet(logger),
           messageType,
-          'keyQueuePriorityPending',
+          'keyQueuePriority',
           true,
           logger,
         );
@@ -90,7 +90,7 @@ export class MessageBrowserFactory {
           messageManager,
           new BrowserStorageList(logger),
           messageType,
-          'keyQueueDL',
+          'keyQueueDeadLetter',
           false,
           logger,
         );

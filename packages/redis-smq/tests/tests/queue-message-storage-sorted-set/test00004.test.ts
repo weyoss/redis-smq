@@ -52,7 +52,7 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
   ids = ids.sort();
 
   const pageSize = 30;
-  const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = redisKeys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,
@@ -61,7 +61,7 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
     const offsetStart = i * pageSize;
     const offsetEnd = offsetStart + pageSize - 1;
     const p = await queueMessagesStorageSortedSet.fetchItemsAsync(
-      keyQueuePriorityPending,
+      keyQueuePriority,
       {
         offsetStart,
         offsetEnd,
@@ -74,7 +74,7 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
 
   // Test out of bounds
   const outOfBounds = await queueMessagesStorageSortedSet.fetchItemsAsync(
-    keyQueuePriorityPending,
+    keyQueuePriority,
     {
       offsetStart: 17 * pageSize,
       offsetEnd: 17 * pageSize - 1,
