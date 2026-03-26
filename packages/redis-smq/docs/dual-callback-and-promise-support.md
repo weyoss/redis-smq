@@ -4,256 +4,48 @@
 
 ## Core Philosophy
 
-RedisSMQ is built with a **pure callback-based implementation** at its core, prioritizing performance and efficient
-resource utilization. The library leverages Node.js's native asynchronous patterns without introducing additional
-abstraction layers that could impact performance.
+RedisSMQ is built on a **pure callback-based core**, designed to prioritize performance and efficient resource utilization. The library leverages Node.js native asynchronous patterns without introducing unnecessary abstraction layers that could impact throughput.
 
-However, RedisSMQ provides a **dual API** that supports both traditional Node.js callbacks **and** modern
-Promises/async-await patterns, giving you the best of both worlds.
+To offer flexibility without compromise, RedisSMQ provides a **dual API** that supports both:
+
+- **Traditional Node.js callbacks** — for performance-critical paths
+- **Modern Promises and `async/await`** — for cleaner, more maintainable code
+
+You get the best of both worlds.
 
 ## Performance-First Architecture
 
 ### Pure Callback Foundation
 
-RedisSMQ's internals are implemented using pure callbacks to:
+All internal RedisSMQ operations are implemented using pure callbacks to:
 
-- **Minimize overhead** — native Node.js performance
-- **Optimize memory usage** — fewer allocations than promise chains
-- **Enable fine-grained control** — direct event-loop/execution access
-- **Maximize throughput** — efficient for high-volume processing
+- **Minimize overhead** — stay close to native Node.js performance
+- **Optimize memory usage** — avoid the additional allocations of promise chains
+- **Enable fine-grained control** — provide direct access to the event loop and execution flow
+- **Maximize throughput** — essential for high-volume message processing
 
 ### Dual API Layer
 
-The public API provides both patterns through a simple wrapper that:
+The public API wraps this foundation to deliver both callback and promise interfaces. This design:
 
-- **Preserves performance** - When using callbacks, zero overhead
-- **Adds promise support** - For modern async/await usage
-- **Maintains consistency** - Same behavior regardless of the chosen pattern
-- **Enables gradual migration** - Mix and match patterns as needed
+- **Preserves performance** — when using callbacks, there is zero additional overhead
+- **Adds promise support** — enables modern `async/await` workflows without refactoring
+- **Maintains consistency** — identical behavior regardless of the pattern you choose
+- **Supports gradual migration** — mix and match patterns within the same codebase
 
 ## API Pattern
 
-Every asynchronous method follows this pattern:
+Every asynchronous method follows a consistent signature:
 
 ```text
 method(params, callback?) => Promise<T> | void
 ```
 
-- **With callback**: Zero overhead, direct execution with callback
-- **Without callback**: Returns a Promise
-
-## Performance Characteristics
-
-### Callback Mode
-
-```typescript
-// Direct execution - maximum performance
-producer.produce(message, (err, ids) => {
-  if (err) {
-    // Handle error
-  } else {
-    // Process result
-  }
-});
-```
-
-### Promise Mode
-
-```typescript
-// Lightweight wrapper - convenient async/await
-const ids = await producer.produce(message);
-```
-
-## Usage Examples
-
-### Callback Pattern
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { async } from 'redis-smq-common';
-
-const producer = RedisSMQ.createProducer();
-
-// Pure callback flow
-async.series(
-  [
-    (cb) => RedisSMQ.initialize(redisConfig, cb),
-    (cb) => producer.run(cb),
-    (cb) => {
-      let i = 0;
-      const produce = () => {
-        if (i < 1000) {
-          i++;
-          const message = new ProducibleMessage()
-            .setQueue('high-throughput-queue')
-            .setBody({ id: i, data: 'payload' });
-
-          producer.produce(message, (err) => {
-            if (err) {
-              console.error('Failed to produce:', err);
-              return cb(err);
-            }
-            produce();
-          });
-        } else {
-          cb(null);
-        }
-      };
-      produce();
-    },
-  ],
-  (err) => {
-    if (err) console.log(err);
-  },
-);
-```
-
-### Promise Pattern
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-
-// Promise-based flow
-try {
-  await RedisSMQ.initialize(redisConfig);
-
-  const producer = RedisSMQ.createProducer();
-  await producer.run();
-
-  // Clean async/await syntax for business logic
-  for (let i = 0; i < 1000; i++) {
-    const message = new ProducibleMessage()
-      .setQueue('high-throughput-queue')
-      .setBody({ id: i, data: 'payload' });
-
-    await producer.produce(message);
-  }
-} catch (err) {
-  console.error('Error:', err);
-}
-```
-
-## Method Categories with Dual Support
-
-### Configuration & Lifecycle
-
-```typescript
-// Callback - maximum performance
-RedisSMQ.initialize(redisConfig, (err) => {
-  /* ... */
-});
-RedisSMQ.shutdown((err) => {
-  /* ... */
-});
-
-// Promise - convenient async/await
-await RedisSMQ.initialize(redisConfig);
-await RedisSMQ.shutdown();
-```
-
-### Producer Operations
-
-```typescript
-const producer = RedisSMQ.createProducer();
-
-// Callback
-producer.run((err) => {
-  /* ... */
-});
-producer.produce(message, (err, ids) => {
-  /* ... */
-});
-
-// Promise
-await producer.run();
-const ids = await producer.produce(message);
-```
-
-### Consumer Operations
-
-```typescript
-const consumer = RedisSMQ.createConsumer();
-
-// Callback
-consumer.run((err) => {
-  /* ... */
-});
-consumer.consume(queue, handler, (err) => {
-  /* ... */
-});
-
-// Promise
-await consumer.run();
-await consumer.consume(queue, handler);
-```
-
-### Queue Management
-
-```typescript
-const queueManager = new QueueManager();
-
-// Callback
-queueManager.getQueues((err, queues) => {
-  /* ... */
-});
-queueManager.save(queue, type, model, (err, result) => {
-  /* ... */
-});
-
-// Promise
-const queues = await queueManager.getQueues();
-const result = await queueManager.save(queue, type, model);
-```
-
-## Performance Considerations
-
-### When to Use Callbacks
-
-- **High-throughput producers** - Processing thousands of messages per second
-- **Real-time consumers** - Low-latency message processing
-- **Batch operations** - Processing large volumes of messages
-- **Resource-constrained environments** - Minimizing memory allocations
-
-```typescript
-// High-throughput batch processing with callbacks
-const messages = generateMessages(10000);
-let processed = 0;
-
-messages.forEach((msg) => {
-  producer.produce(msg, (err) => {
-    processed++;
-    if (processed === messages.length) {
-      console.log('All messages processed');
-    }
-  });
-});
-```
-
-### When to Use Promises
-
-- **Configuration and setup** - One-time initialization code
-- **Management operations** - Administrative tasks and monitoring
-- **Business logic** - Complex workflows with sequential steps
-- **Error handling** - Clean try/catch patterns
-
-```typescript
-// Business workflow with promises
-async function processOrder(order) {
-  try {
-    // Sequential steps with clean async/await
-    await validateOrder(order);
-    const queue = await createOrderQueue(order);
-    const message = createOrderMessage(order);
-    const messageId = await producer.produce(message);
-    await updateOrderStatus(order.id, 'processed', messageId);
-  } catch (err) {
-    await handleOrderError(order, err);
-  }
-}
-```
+- **With a callback** — the method executes with zero overhead and invokes the callback upon completion
+- **Without a callback** — the method returns a `Promise<T>`, allowing use of `async/await` or promise chaining
 
 ---
 
-Related:
+**Related**:
 
-- [Callback vs Promise vs Async/Await](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821)
+- [Callback vs Promise vs Async/Await](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821) — a deeper look at asynchronous pattern benchmarks
