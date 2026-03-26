@@ -173,9 +173,9 @@ try {
   await consumer.run();
 
   // Consume messages
-  await consumer.consume('my-queue', (message, done) => {
+  await consumer.consume('my-queue', async (message) => {
     console.log('Received:', message.getBody());
-    done();
+    // Successful acknowledgement 
   });
 } catch (err) {
   console.error('Error:', err);

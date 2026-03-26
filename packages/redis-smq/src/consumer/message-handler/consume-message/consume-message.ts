@@ -36,12 +36,31 @@ import {
 } from '../../../errors/index.js';
 import { MessageUnacknowledger } from './message-unacknowledger.js';
 import { eventPublisher } from './event-publisher.js';
-import { TConsumerMessageHandler } from '../types/index.js';
+import {
+  TConsumerMessageHandler,
+  TConsumerMessageHandlerCallback,
+  TConsumerMessageHandlerFn,
+  TConsumerMessageHandlerPromise,
+} from '../types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
 import { MessageAcknowledger } from './message-acknowledger.js';
 import { IConsumerParsedOptions } from '../../types/index.js';
+
+// Type guard to check if handler is callback-based
+const isCallbackHandler = (
+  handler: TConsumerMessageHandlerFn,
+): handler is TConsumerMessageHandlerCallback => {
+  return handler.length === 2; // Functions with 2 parameters (msg, cb)
+};
+
+// Type guard to check if handler is Promise-based
+const isPromiseHandler = (
+  handler: TConsumerMessageHandlerFn,
+): handler is TConsumerMessageHandlerPromise => {
+  return handler.length === 1; // Functions with 1 parameter (msg)
+};
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected readonly consumerId: string;
@@ -331,22 +350,61 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         }
         cb(err);
       });
-    } else {
-      try {
-        handler(msg, (err) => {
-          if (err) {
-            this.logger.error(
-              `Function handler failed for ${messageId}: ${err.message}`,
-            );
-          }
-          cb(err);
-        });
-      } catch (err) {
-        this.logger.error(
-          `Exception in function handler for ${messageId}: ${err}`,
-        );
-        cb(err instanceof Error ? err : new Error(String(err)));
+      return;
+    }
+
+    let isCompleted = false;
+
+    const complete = (err?: Error | null) => {
+      if (isCompleted) return;
+      isCompleted = true;
+
+      if (err) {
+        this.logger.error(`Handler failed for ${messageId}: ${err.message}`);
+        cb(err);
+      } else {
+        this.logger.debug(`Handler succeeded for ${messageId}`);
+        cb(null);
       }
+    };
+
+    try {
+      // Determine handler type by arity (number of parameters)
+      if (isPromiseHandler(handler)) {
+        // Promise-based handler (1 parameter)
+        const result = handler(msg);
+
+        if (result && typeof result.then === 'function') {
+          result
+            .then(() => complete())
+            .catch((err) => {
+              const error =
+                err instanceof Error
+                  ? err
+                  : new Error(String(err ?? 'Promise rejected'));
+              complete(error);
+            });
+        } else {
+          // Handler claimed to be Promise-based but didn't return a Promise
+          this.logger.warn(`Handler for ${messageId} didn't return a Promise`);
+          complete();
+        }
+      } else if (isCallbackHandler(handler)) {
+        // Callback-based handler (2 parameters)
+        handler(msg, (err?: Error | null) => {
+          complete(err ?? undefined);
+        });
+      } else {
+        // Unknown function signature
+        this.logger.error(`Handler for ${messageId} has invalid signature`);
+        complete(new Error('Invalid handler signature'));
+      }
+    } catch (err) {
+      const error =
+        err instanceof Error
+          ? err
+          : new Error(String(err || 'Handler threw error'));
+      complete(error);
     }
   }
 

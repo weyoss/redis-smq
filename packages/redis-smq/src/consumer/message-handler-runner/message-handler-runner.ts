@@ -119,7 +119,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected reconcileHandlers = (): void => {
     if (!this.isOperational()) return;
 
-    this.logger.debug('Running handler reconciliation...');
+    //this.logger.debug('Running handler reconciliation...');
     const runningQueues = new Set(
       this.messageHandlerInstances.map((i) =>
         this.getQueueIdentifier(i.getQueue()),
@@ -174,7 +174,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
         this.scheduleReconciliation();
       });
     } else {
-      this.logger.debug('No zombie handlers found.');
+      // this.logger.debug('No zombie handlers found.');
       this.scheduleReconciliation();
     }
   };

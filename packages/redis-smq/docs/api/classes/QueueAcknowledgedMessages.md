@@ -419,14 +419,6 @@ When the queue parameters are invalid.
 
 When the specified queue doesn't exist.
 
-##### Throws
-
-When page number is invalid.
-
-##### Throws
-
-When page size is invalid.
-
 ##### Example
 
 ```typescript
@@ -524,14 +516,6 @@ When the queue parameters are invalid.
 
 When the specified queue doesn't exist.
 
-##### Throws
-
-When page number is invalid.
-
-##### Throws
-
-When page size is invalid.
-
 ##### Example
 
 ```typescript
@@ -625,14 +609,6 @@ When the queue parameters are invalid.
 ##### Throws
 
 When the specified queue doesn't exist.
-
-##### Throws
-
-When page number is invalid.
-
-##### Throws
-
-When page size is invalid.
 
 ##### Example
 
@@ -746,14 +722,6 @@ When the queue parameters are invalid.
 ##### Throws
 
 When the specified queue doesn't exist.
-
-##### Throws
-
-When page number is invalid.
-
-##### Throws
-
-When page size is invalid.
 
 ##### Example
 
@@ -1313,10 +1281,6 @@ When the queue parameters are invalid.
 
 When the specified queue doesn't exist.
 
-##### Throws
-
-When a purge operation is already in progress.
-
 ##### Example
 
 ```typescript
@@ -1433,10 +1397,6 @@ When the queue parameters are invalid.
 ##### Throws
 
 When the specified queue doesn't exist.
-
-##### Throws
-
-When a purge operation is already in progress.
 
 ##### Example
 
