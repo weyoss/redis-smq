@@ -56,7 +56,16 @@ export const errors = {
     400,
     'InvalidFanoutExchangeParametersError',
   ],
+  InvalidMessageAuditHistorySizeError: [
+    400,
+    'InvalidMessageAuditHistorySizeError',
+  ],
   InvalidMessageAuditQueueSizeError: [400, 'InvalidMessageAuditQueueSizeError'],
+  InvalidMessageHandlerSignatureError: [
+    400,
+    'InvalidMessageHandlerSignatureError',
+  ],
+  InvalidMessageHandlerTypeError: [400, 'InvalidMessageHandlerTypeError'],
   InvalidNamespaceError: [400, 'InvalidNamespaceError'],
   InvalidPurgeQueueJobIdError: [400, 'InvalidPurgeQueueJobIdError'],
   InvalidQueueLockIdError: [400, 'InvalidQueueLockIdError'],
@@ -115,6 +124,10 @@ export const errors = {
   RequeueMessageScriptError: [500, 'RequeueMessageScriptError'],
   RoutingKeyRequiredError: [400, 'RoutingKeyRequiredError'],
   ScriptResultMismatchError: [500, 'ScriptResultMismatchError'],
+  UnacknowledgmentHistoryDisabledError: [
+    500,
+    'UnacknowledgmentHistoryDisabledError',
+  ],
   UnexpectedScriptReplyError: [500, 'UnexpectedScriptReplyError'],
 } as const;
 
