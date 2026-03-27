@@ -91,3 +91,5 @@ export * from './background-job-worker-not-found.error.js';
 export * from './queue-paused.error.js';
 export * from './processing-queue-not-empty.error.js';
 export * from './invalid-exchange-routing-key.error.js';
+export * from './invalid-message-handler-signature.error.js';
+export * from './invalid-message-handler-type.error.js';

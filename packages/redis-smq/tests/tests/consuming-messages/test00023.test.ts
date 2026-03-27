@@ -8,7 +8,7 @@
  */
 
 import { expect, test, vitest } from 'vitest';
-import { ProducibleMessage } from '../../../src/index.js';
+import { IMessageParams, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageDeadLettered } from '../../common/events.js';
 import {
@@ -18,13 +18,15 @@ import {
 import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
+import { ICallback } from 'redis-smq-common';
 
 test('MessageList produced from scheduled message are processed like normal message upon consume failures (retry, delay, requeue, etc)', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 
   const consumer = getConsumer({
-    messageHandler: vitest.fn(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messageHandler: vitest.fn((msg: IMessageParams, cb: ICallback<void>) => {
       throw new Error();
     }),
   });

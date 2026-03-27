@@ -36,6 +36,7 @@ export enum EMessageUnacknowledgementCause {
   QUEUE_STATE_CHANGED,
   QUEUE_NOT_FOUND,
   UNEXPECTED_ERROR,
+  INVALID_HANDLER_SIGNATURE,
 }
 
 export type TUnacknowledgementResolution =

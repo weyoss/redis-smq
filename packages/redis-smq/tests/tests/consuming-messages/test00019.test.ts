@@ -27,7 +27,8 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   await producer.run();
 
   const consumer = getConsumer({
-    messageHandler: () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messageHandler: (msn, cb) => {
       throw new Error();
     },
   });

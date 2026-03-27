@@ -11,6 +11,7 @@ import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import {
   EMessagePropertyStatus,
+  IMessageTransferable,
   MessageManager,
   ProducibleMessage,
 } from '../../../src/index.js';
@@ -27,13 +28,15 @@ import { getQueuePendingMessages } from '../../common/queue-pending-messages.js'
 import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
 import { config } from '../../common/config.js';
 import { randomUUID } from 'node:crypto';
+import { ICallback } from 'redis-smq-common';
 
 test('An unacked message with retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queueDelayed. RequeueDelayedWorker should move the message from queueDelayed to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 
   const consumer = getConsumer({
-    messageHandler: vitest.fn(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messageHandler: vitest.fn((msg: IMessageTransferable, cb: ICallback) => {
       setTimeout(() => consumer.shutdown(() => void 0), 5000);
     }),
   });

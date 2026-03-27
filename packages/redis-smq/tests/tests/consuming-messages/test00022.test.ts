@@ -8,7 +8,7 @@
  */
 
 import { expect, test, vitest } from 'vitest';
-import { ProducibleMessage } from '../../../src/index.js';
+import { IMessageTransferable, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
 import {
@@ -17,13 +17,15 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
+import { ICallback } from 'redis-smq-common';
 
 test('Shutdown a consumer when consuming a message with retryThreshold = 0: expect the message to be dead-lettered', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 
   const consumer = getConsumer({
-    messageHandler: vitest.fn(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messageHandler: vitest.fn((msg: IMessageTransferable, cb: ICallback) => {
       setTimeout(() => consumer.shutdown(() => void 0), 5000);
     }),
   });

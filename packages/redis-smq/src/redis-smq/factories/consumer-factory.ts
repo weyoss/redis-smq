@@ -113,13 +113,13 @@ export class ConsumerFactory extends FactoryAbstract {
    * }
    * ```
    */
-  static startConsumer(consumerOptions: IConsumerOptions): Promise<Consumer>;
+  static startConsumer(consumerOptions?: IConsumerOptions): Promise<Consumer>;
   static startConsumer(
     consumerOptions: IConsumerOptions,
     cb: ICallback<void>,
   ): Consumer;
   static startConsumer(
-    consumerOptions: IConsumerOptions,
+    consumerOptions?: IConsumerOptions,
     cb?: ICallback<void>,
   ): Promise<Consumer> | Consumer {
     const consumer = new Consumer(consumerOptions);

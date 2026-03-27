@@ -9,7 +9,7 @@
 
 import { test, vitest } from 'vitest';
 import { ICallback } from 'redis-smq-common';
-import { ProducibleMessage } from '../../../src/index.js';
+import { IMessageParams, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   untilMessageAcknowledged,
@@ -30,7 +30,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
 
   let consumeCount = 0;
   const consumer = getConsumer({
-    messageHandler: vitest.fn((msg: unknown, cb: ICallback<void>) => {
+    messageHandler: vitest.fn((msg: IMessageParams, cb: ICallback<void>) => {
       if (consumeCount === 0) setTimeout(() => cb(), 5000);
       else if (consumeCount === 1) cb();
       else throw new Error('Unexpected call');

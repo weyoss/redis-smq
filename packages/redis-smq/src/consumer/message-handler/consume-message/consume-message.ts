@@ -31,6 +31,8 @@ import {
   TUnacknowledgementResult,
 } from './types/index.js';
 import {
+  InvalidMessageHandlerSignatureError,
+  InvalidMessageHandlerTypeError,
   MessageHandlerFileError,
   MessageHandlerFilenameExtensionError,
 } from '../../../errors/index.js';
@@ -298,10 +300,13 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
 
         if (err) {
           this.logger.error(`Error consuming ${messageId}: ${err.message}`);
-          const reason =
-            err instanceof AsyncCallbackTimeoutError
-              ? EMessageUnacknowledgementCause.TIMEOUT
-              : EMessageUnacknowledgementCause.UNACKNOWLEDGED;
+          let reason = EMessageUnacknowledgementCause.UNACKNOWLEDGED;
+          if (err instanceof AsyncCallbackTimeoutError) {
+            reason = EMessageUnacknowledgementCause.TIMEOUT;
+          }
+          if (err instanceof InvalidMessageHandlerSignatureError) {
+            reason = EMessageUnacknowledgementCause.INVALID_HANDLER_SIGNATURE;
+          }
           this.unacknowledgeMessage(message, reason);
           return;
         }
@@ -397,7 +402,13 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       } else {
         // Unknown function signature
         this.logger.error(`Handler for ${messageId} has invalid signature`);
-        complete(new Error('Invalid handler signature'));
+        complete(
+          new InvalidMessageHandlerSignatureError({
+            metadata: {
+              queue: this.queue,
+            },
+          }),
+        );
       }
     } catch (err) {
       const error =
@@ -419,25 +430,47 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   }
 
   private validateHandler = (cb: ICallback<void>): void => {
-    if (typeof this.messageHandler !== 'string') {
-      this.logger.debug('Function-based handler, no validation needed');
+    const messageHandler: unknown = this.messageHandler;
+
+    if (typeof messageHandler === 'function') {
+      if (![1, 2].includes(this.messageHandler.length)) {
+        this.logger.debug('Function-based handler has invalid signature');
+        return cb(
+          new InvalidMessageHandlerSignatureError({
+            metadata: {
+              queue: this.queue,
+            },
+          }),
+        );
+      }
       return cb();
     }
 
-    const ext = path.extname(this.messageHandler);
-    if (!['.js', '.cjs'].includes(ext)) {
-      this.logger.error(`Invalid extension: ${ext}`);
-      return cb(new MessageHandlerFilenameExtensionError());
+    if (typeof messageHandler === 'string') {
+      const ext = path.extname(messageHandler);
+      if (!['.js', '.cjs'].includes(ext)) {
+        this.logger.error(`Invalid extension: ${ext}`);
+        return cb(new MessageHandlerFilenameExtensionError());
+      }
+
+      return stat(messageHandler, (err) => {
+        if (err) {
+          this.logger.error(`Handler file not found: ${messageHandler}`);
+          return cb(new MessageHandlerFileError());
+        }
+        this.logger.debug(`Handler validated: ${messageHandler}`);
+        cb();
+      });
     }
 
-    stat(this.messageHandler, (err) => {
-      if (err) {
-        this.logger.error(`Handler file not found: ${this.messageHandler}`);
-        return cb(new MessageHandlerFileError());
-      }
-      this.logger.debug(`Handler validated: ${this.messageHandler}`);
-      cb();
-    });
+    this.logger.debug('Invalid message handler type');
+    return cb(
+      new InvalidMessageHandlerTypeError({
+        metadata: {
+          queue: this.queue,
+        },
+      }),
+    );
   };
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {

@@ -9,7 +9,7 @@
 
 import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
-import { ProducibleMessage } from '../../../src/index.js';
+import { IMessageParams, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
+import { ICallback } from 'redis-smq-common';
 
 test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {
   const eventBus = await getEventBus();
@@ -27,7 +28,8 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
   await producer.run();
 
   const consumer = getConsumer({
-    messageHandler: vitest.fn(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messageHandler: vitest.fn((msg: IMessageParams, cb: ICallback<void>) => {
       throw new Error('Explicit error');
     }),
   });

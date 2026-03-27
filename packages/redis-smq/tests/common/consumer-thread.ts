@@ -9,6 +9,7 @@
 
 import {
   Consumer,
+  IMessageTransferable,
   IRedisSMQParsedConfig,
   Producer,
   ProducibleMessage,
@@ -16,6 +17,7 @@ import {
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
 import { IConsumerParsedOptions } from '../../src/index.js';
+import { ICallback } from 'redis-smq-common';
 
 process.on('message', function (payload: unknown) {
   const {
@@ -45,7 +47,8 @@ process.on('message', function (payload: unknown) {
     const consumer = new Consumer(consumerOptions);
     consumer.consume(
       defaultQueue,
-      () => void 0, // not acknowledging
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      (msg: IMessageTransferable, cb: ICallback) => void 0, // not acknowledging
       (err) => {
         if (err) throw err;
       },
