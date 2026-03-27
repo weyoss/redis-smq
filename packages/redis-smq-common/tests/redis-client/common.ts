@@ -21,8 +21,15 @@ export async function standardCommands(config: IRedisConfig) {
   const rPing = await client.pingAsync();
   expect(rPing).toBe('PONG');
 
+  const ex = await client.existsAsync('key1');
+  expect(ex).toBe(false);
+
   // set, get, del
   await client.setAsync('key1', 'value', {});
+
+  const ex1 = await client.existsAsync('key1');
+  expect(ex1).toBe(true);
+
   const rGet = await client.getAsync('key1');
   expect(rGet).toBe('value');
   const rDel = await client.delAsync('key1');

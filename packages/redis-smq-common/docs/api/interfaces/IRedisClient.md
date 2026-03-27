@@ -170,6 +170,26 @@
 
 ---
 
+### exists()
+
+> **exists**(`key`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`boolean`\>
+
+#### Returns
+
+`void`
+
+---
+
 ### expire()
 
 > **expire**(`key`, `seconds`, `cb`): `void`

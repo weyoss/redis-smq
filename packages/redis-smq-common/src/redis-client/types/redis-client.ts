@@ -65,6 +65,7 @@ export interface IRedisClient extends EventEmitter<TRedisClientEvent> {
   publish(channel: string, message: string, cb: ICallback<number>): void;
 
   // Key/String Operations
+  exists(key: string, cb: ICallback<boolean>): void;
   get(key: string, cb: ICallback<string | null>): void;
   set(
     key: string,

@@ -38,6 +38,13 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.ping(cb);
   }
 
+  exists(key: string, cb: ICallback<boolean>) {
+    this.client.exists(key, (err, reply) => {
+      if (err) return cb(err);
+      cb(null, Boolean(reply));
+    });
+  }
+
   mget(keys: string[], cb: ICallback<(string | null)[]>): void {
     this.client.mget(...keys, cb);
   }

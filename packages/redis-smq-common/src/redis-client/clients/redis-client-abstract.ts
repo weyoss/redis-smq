@@ -88,6 +88,8 @@ export abstract class RedisClientAbstract
     } else validate(cb);
   }
 
+  abstract exists(key: string, cb: ICallback<boolean>): void;
+
   abstract ping(cb: ICallback<string>): void;
 
   abstract mget(keys: string[], cb: ICallback<(string | null)[]>): void;

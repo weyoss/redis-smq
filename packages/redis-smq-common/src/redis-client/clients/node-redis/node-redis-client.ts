@@ -30,6 +30,13 @@ export class NodeRedisClient extends RedisClientAbstract {
     this.client.connect();
   }
 
+  exists(key: string, cb: ICallback<boolean>) {
+    this.client
+      .exists(key)
+      .then((reply) => cb(null, Boolean(reply)))
+      .catch(cb);
+  }
+
   set(
     key: string,
     value: string,
