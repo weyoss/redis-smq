@@ -26,6 +26,12 @@ import {
 } from '../message/index.js';
 import { IMessageManagerDeleteResponse } from './types/index.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { TMessageUnacknowledgementHistory } from '../consumer/index.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import {
+  MessageNotFoundError,
+  UnacknowledgmentHistoryDisabledError,
+} from '../errors/index.js';
 
 /**
  * The MessageManager class provides methods for interacting with Redis-SMQ messages.
@@ -588,6 +594,96 @@ export class MessageManager {
           );
           cb(null, newMessageId);
         });
+      }, callback);
+    });
+  }
+
+  /**
+   * Retrieves the unacknowledgement history for a message.
+   *
+   * This method returns the complete history of unacknowledgement events for a message,
+   * including the cause of each failure, the action taken, and timestamps.
+   *
+   * @param messageId - The ID of the message to retrieve history for
+   * @returns {Promise<IMessageUnacknowledgementRecord[]> | void} - Returns a Promise if no callback is provided,
+   *          otherwise returns void.
+   *
+   * @throws {MessageNotFoundError} When the message with the given ID doesn't exist.
+   *
+   * @example
+   * ```typescript
+   * const messageManager = new MessageManager();
+   *
+   * // Get all history records
+   * const history = await messageManager.getMessageUnacknowledgementHistory('msg-123');
+   * ```
+   */
+  getMessageUnacknowledgementHistory(
+    messageId: string,
+  ): Promise<TMessageUnacknowledgementHistory>;
+  getMessageUnacknowledgementHistory(
+    messageId: string,
+    cb: ICallback<TMessageUnacknowledgementHistory>,
+  ): void;
+  getMessageUnacknowledgementHistory(
+    messageId: string,
+    cb?: ICallback<TMessageUnacknowledgementHistory>,
+  ): Promise<TMessageUnacknowledgementHistory> | void {
+    return async.withOptionalCallback(cb, (callback) => {
+      this.logger.debug('Getting message unacknowledgement history', messageId);
+
+      if (
+        !Configuration.getConfig().messageAudit.unacknowledgementHistory.enabled
+      ) {
+        this.logger.debug('Message unacknowledgement history is disabled');
+        return callback(new UnacknowledgmentHistoryDisabledError());
+      }
+
+      const { keyMessage, keyMessageUnacknowledgementHistory } =
+        redisKeys.getMessageKeys(messageId);
+      withSharedPoolConnection((client, done) => {
+        async.waterfall(
+          [
+            (cb) => {
+              client.exists(keyMessage, (err, exists) => {
+                if (err) {
+                  this.logger.error('Failed to check message existence', {
+                    messageId,
+                    error: err.message,
+                  });
+                  return cb(err);
+                }
+                if (!exists) return cb(new MessageNotFoundError());
+                cb();
+              });
+            },
+            (_, cb) => {
+              client.lrange(
+                keyMessageUnacknowledgementHistory,
+                0,
+                -1,
+                (err, records) => {
+                  if (err) {
+                    this.logger.error('Failed to get message history', {
+                      messageId,
+                      error: err.message,
+                    });
+                    return cb(err);
+                  }
+
+                  const history: TMessageUnacknowledgementHistory =
+                    records?.map((record) => JSON.parse(record)) || [];
+                  this.logger.debug('Successfully retrieved message history', {
+                    messageId,
+                    recordCount: history.length,
+                  });
+                  cb(null, history);
+                },
+              );
+            },
+          ],
+          done,
+        );
       }, callback);
     });
   }

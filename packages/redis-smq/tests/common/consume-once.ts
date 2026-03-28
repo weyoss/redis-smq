@@ -31,7 +31,7 @@ export async function consumeOnce(
 
     consumer.consume(
       queue,
-      (msg, cb: () => void) => {
+      (msg, cb) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);

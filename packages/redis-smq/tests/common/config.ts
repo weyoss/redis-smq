@@ -33,6 +33,7 @@ export const config = parseConfig({
   messageAudit: {
     acknowledgedMessages: true,
     deadLetteredMessages: true,
+    unacknowledgementHistory: true,
   },
   eventBus: {
     enabled: true,

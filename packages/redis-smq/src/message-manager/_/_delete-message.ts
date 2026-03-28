@@ -31,6 +31,7 @@ import {
   MessageNotFoundError,
   UnexpectedScriptReplyError,
   QueueLockedError,
+  QueueNotFoundError,
 } from '../../errors/index.js';
 import { IMessageManagerDeleteResponse } from '../types/index.js';
 
@@ -162,9 +163,16 @@ export function _deleteMessage(
                 lockId ?? '', // lock ID
               ];
 
-              const dynamicKeys = batchMessages.map(
-                (msg) => redisKeys.getMessageKeys(msg.getId()).keyMessage,
-              );
+              const dynamicKeys: string[] = [];
+              for (const msg of batchMessages) {
+                const { keyMessage, keyMessageUnacknowledgementHistory } =
+                  redisKeys.getMessageKeys(msg.getId());
+                dynamicKeys.push(
+                  keyMessage,
+                  keyMessageUnacknowledgementHistory,
+                );
+              }
+
               const dynamicArgs = batchMessages.map((msg) => msg.getId());
 
               const keys = [...staticKeys, ...dynamicKeys];
@@ -184,6 +192,27 @@ export function _deleteMessage(
                         message: `Cannot delete messages from queue ${queue.name}: Queue is locked`,
                         metadata: {
                           queue: queue,
+                        },
+                      }),
+                    );
+                  }
+
+                  if (reply === 'INVALID_LOCK') {
+                    return done(
+                      new QueueLockedError({
+                        message: `Cannot delete messages from queue ${queue.name}: Invalid lock ID provided`,
+                        metadata: {
+                          queue: queue,
+                        },
+                      }),
+                    );
+                  }
+
+                  if (reply === 'QUEUE_NOT_FOUND') {
+                    return done(
+                      new QueueNotFoundError({
+                        metadata: {
+                          queue,
                         },
                       }),
                     );
@@ -226,10 +255,16 @@ export function _deleteMessage(
         },
         (err) => {
           if (err) return cb(err);
-          deleteResponse.status =
-            (stats.processed === stats.success && 'OK') ||
-            (stats.success && 'PARTIAL_SUCCESS') ||
-            'MESSAGE_NOT_DELETED';
+
+          // Determine status based on deletion results
+          if (stats.processed === stats.success && stats.processed > 0) {
+            deleteResponse.status = 'OK';
+          } else if (stats.success > 0) {
+            deleteResponse.status = 'PARTIAL_SUCCESS';
+          } else {
+            deleteResponse.status = 'MESSAGE_NOT_DELETED';
+          }
+
           cb(null, deleteResponse);
         },
       );

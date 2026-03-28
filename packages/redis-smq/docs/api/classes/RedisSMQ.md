@@ -1015,11 +1015,11 @@ try {
 
 ### startConsumer()
 
-> `static` **startConsumer**: \{(`consumerOptions`): `Promise`\<[`Consumer`](Consumer.md)\>; (`consumerOptions`, `cb`): [`Consumer`](Consumer.md); \}
+> `static` **startConsumer**: \{(`consumerOptions?`): `Promise`\<[`Consumer`](Consumer.md)\>; (`consumerOptions`, `cb`): [`Consumer`](Consumer.md); \}
 
 #### Call Signature
 
-> (`consumerOptions`): `Promise`\<[`Consumer`](Consumer.md)\>
+> (`consumerOptions?`): `Promise`\<[`Consumer`](Consumer.md)\>
 
 Creates and automatically starts a consumer with custom configuration.
 
@@ -1028,7 +1028,7 @@ The consumer is automatically tracked for lifecycle management.
 
 ##### Parameters
 
-###### consumerOptions
+###### consumerOptions?
 
 [`IConsumerOptions`](../interfaces/IConsumerOptions.md)
 

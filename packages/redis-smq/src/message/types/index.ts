@@ -7,6 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export * from './config.js';
 export * from './message-state.js';
 export * from './message.js';

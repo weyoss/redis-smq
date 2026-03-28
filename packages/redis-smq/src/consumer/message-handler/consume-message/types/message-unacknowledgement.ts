@@ -10,7 +10,7 @@
 import { MessageEnvelope } from '../../../../message/message-envelope.js';
 import { ICallback } from 'redis-smq-common';
 
-export enum EUnacknowledgementAction {
+export enum EMessageUnacknowledgementAction {
   DEAD_LETTER,
   REQUEUE,
   DELAY,
@@ -42,11 +42,13 @@ export enum EMessageUnacknowledgementCause {
 export type TUnacknowledgementResolution =
   | {
       cause: EMessageUnacknowledgementCause;
-      action: EUnacknowledgementAction.REQUEUE | EUnacknowledgementAction.DELAY;
+      action:
+        | EMessageUnacknowledgementAction.REQUEUE
+        | EMessageUnacknowledgementAction.DELAY;
     }
   | {
       cause: EMessageUnacknowledgementCause;
-      action: EUnacknowledgementAction.DEAD_LETTER;
+      action: EMessageUnacknowledgementAction.DEAD_LETTER;
       deadLetterCause: EMessageDeadLetterCause;
     };
 

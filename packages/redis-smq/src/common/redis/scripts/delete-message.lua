@@ -7,13 +7,13 @@
 -- in the root directory of this source tree.
 --
 -- Description:
--- Deletes one or more messages from a queue.
+-- Deletes one or more messages from a queue, including their unacknowledgement history.
 -- This script is optimized for batch operations and ensures all queue counters are correctly updated.
 -- Respects queue operational state - requires valid lock ID when queue is LOCKED.
 --
 -- KEYS:
 --   Static Keys (1-9): All queue-related keys.
---   Dynamic Keys (10...): A list of message keys (keyMessage) to be deleted.
+--   Dynamic Keys (10...): A list of message keys (keyMessage) and history keys (keyMessageHistory) to be deleted.
 --
 -- ARGV:
 --   Static ARGV (1-24): All constants and queue property names.
@@ -54,17 +54,22 @@ local EMessageStatusScheduled = ARGV[16]
 local EMessageStatusDeadLettered = ARGV[17]
 local EMessageStatusDelayed = ARGV[18]
 local EMessageStatusRequeued = ARGV[19]
--- Operational state constants (new)
+-- Operational state constants
 local EQueuePropertyOperationalState = ARGV[20]
 local EQueueOperationalStateLocked = ARGV[21]
 local EQueuePropertyLockId = ARGV[22]
 local operationLockId = ARGV[23]
 
--- Constants
+-- Loop constants
 local INITIAL_KEY_OFFSET = 9
 local INITIAL_ARGV_OFFSET = 23
-local PARAMS_PER_MESSAGE = 1
-local KEYS_PER_MESSAGE = 1
+local KEYS_PER_MESSAGE = 2  -- keyMessage and keyMessageHistory
+local PARAMS_PER_MESSAGE = 1  -- messageId only
+
+-- Check if queue exists
+if redis.call("EXISTS", keyQueueProperties) == 0 then
+    return 'QUEUE_NOT_FOUND'
+end
 
 -- Check operational state for LOCKED queue
 local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)
@@ -83,8 +88,31 @@ if currentState == EQueueOperationalStateLocked then
     end
 end
 
--- Validation
-if ((#KEYS - INITIAL_KEY_OFFSET) * PARAMS_PER_MESSAGE) ~= ((#ARGV - INITIAL_ARGV_OFFSET) * KEYS_PER_MESSAGE) then
+-- Validation: Ensure the number of dynamic keys and args are proportional.
+local dynamicKeysCount = #KEYS - INITIAL_KEY_OFFSET
+local dynamicArgsCount = #ARGV - INITIAL_ARGV_OFFSET
+
+-- If there are no dynamic keys or args, nothing to process
+if dynamicKeysCount == 0 and dynamicArgsCount == 0 then
+    return {0, 0, 0, 0}
+end
+
+-- Check that dynamic keys count is a multiple of KEYS_PER_MESSAGE
+if dynamicKeysCount % KEYS_PER_MESSAGE ~= 0 then
+    return 'INVALID_ARGS_ERROR'
+end
+
+-- Check that dynamic args count is a multiple of PARAMS_PER_MESSAGE
+if dynamicArgsCount % PARAMS_PER_MESSAGE ~= 0 then
+    return 'INVALID_ARGS_ERROR'
+end
+
+-- Calculate expected number of messages from keys and args
+local expectedMessagesFromKeys = dynamicKeysCount / KEYS_PER_MESSAGE
+local expectedMessagesFromArgs = dynamicArgsCount / PARAMS_PER_MESSAGE
+
+-- Ensure both counts match
+if expectedMessagesFromKeys ~= expectedMessagesFromArgs then
     return 'INVALID_ARGS_ERROR'
 end
 
@@ -97,13 +125,14 @@ local inProcessCount = 0
 -- Fetch queue type once before the loop for efficiency
 local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
 
-for i = 1, (#ARGV - INITIAL_ARGV_OFFSET) do
-    local keyIndex = INITIAL_KEY_OFFSET + i
-    local argvIndex = INITIAL_ARGV_OFFSET + i
-
+-- Process each message
+local keyIndex = INITIAL_KEY_OFFSET + 1
+for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     local messageKey = KEYS[keyIndex]
+    local messageHistoryKey = KEYS[keyIndex + 1]
     local messageId = ARGV[argvIndex]
 
+    keyIndex = keyIndex + KEYS_PER_MESSAGE
     processedCount = processedCount + 1
 
     -- Check if message exists and get its status
@@ -141,8 +170,8 @@ for i = 1, (#ARGV - INITIAL_ARGV_OFFSET) do
             counterToDecrement = EQueuePropertyPendingMessagesCount
         end
 
-        -- Delete the message hash
-        redis.call("DEL", messageKey)
+        -- Delete the message hash and its history
+        redis.call("DEL", messageKey, messageHistoryKey)
 
         -- Remove the message ID from the queue's global message set
         redis.call("LREM", keyQueuePublished, 1, messageId)

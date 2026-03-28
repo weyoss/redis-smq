@@ -93,3 +93,5 @@ export * from './processing-queue-not-empty.error.js';
 export * from './invalid-exchange-routing-key.error.js';
 export * from './invalid-message-handler-signature.error.js';
 export * from './invalid-message-handler-type.error.js';
+export * from './unacknowledgment-history-disabled.error.js';
+export * from './invalid-message-audit-history-size.error.js';

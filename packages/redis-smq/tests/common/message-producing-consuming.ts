@@ -72,7 +72,8 @@ export async function produceAndDeadLetterMessage(
 
   const consumer = getConsumer({
     queue,
-    messageHandler: () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    messageHandler: (msg, cb) => {
       throw new Error('Explicit error');
     },
   });

@@ -18,11 +18,11 @@ import {
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { _getMessages } from '../../../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { IQueueParams } from '../../../queue-manager/index.js';
+import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementCause,
-  EUnacknowledgementAction,
+  EMessageUnacknowledgementAction,
   TUnacknowledgementBatch,
   TUnacknowledgementResolution,
   TUnacknowledgementResult,
@@ -43,7 +43,7 @@ export type TMessageUnacknowledgerEvent = {
  */
 export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent> {
   private readonly consumerId: string;
-  private readonly queue: IQueueParams;
+  private readonly queue: IQueueParsedParams;
   private readonly queueRef: string;
   private readonly useBatchUnacks: boolean;
   private readonly batchSize: number;
@@ -54,14 +54,14 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
 
   constructor(
     consumerId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     logger: ILogger,
     consumerOptions: IConsumerParsedOptions,
   ) {
     super();
     this.consumerId = consumerId;
     this.queue = queue;
-    this.queueRef = `${queue.name}@${queue.ns}`;
+    this.queueRef = `${queue.queueParams.name}@${queue.queueParams.ns}/${queue.groupId}`;
     this.logger = logger.createLogger(`${this.constructor.name.toLowerCase()}`);
 
     const { enabled, batchTimeoutMs, batchSize } = consumerOptions.batchUnacks;
@@ -88,7 +88,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     if (cause === EMessageUnacknowledgementCause.TTL_EXPIRED) {
       return {
         cause,
-        action: EUnacknowledgementAction.DEAD_LETTER,
+        action: EMessageUnacknowledgementAction.DEAD_LETTER,
         deadLetterCause: EMessageDeadLetterCause.TTL_EXPIRED,
       };
     }
@@ -97,7 +97,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     if (message.isPeriodic()) {
       return {
         cause,
-        action: EUnacknowledgementAction.DEAD_LETTER,
+        action: EMessageUnacknowledgementAction.DEAD_LETTER,
         deadLetterCause: EMessageDeadLetterCause.PERIODIC_MESSAGE,
       };
     }
@@ -106,7 +106,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     if (message.hasRetryThresholdExceeded()) {
       return {
         cause,
-        action: EUnacknowledgementAction.DEAD_LETTER,
+        action: EMessageUnacknowledgementAction.DEAD_LETTER,
         deadLetterCause: EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
       };
     }
@@ -114,8 +114,8 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     // Determine if message should be delayed or requeued immediately
     const delay = message.producibleMessage.getRetryDelay();
     return delay
-      ? { cause, action: EUnacknowledgementAction.DELAY }
-      : { cause, action: EUnacknowledgementAction.REQUEUE };
+      ? { cause, action: EMessageUnacknowledgementAction.DELAY }
+      : { cause, action: EMessageUnacknowledgementAction.REQUEUE };
   }
 
   private buildPendingMessages(
@@ -152,31 +152,23 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     this.batch.callbacks = [];
 
     this.logger.debug(
-      `Processing batch of ${messages.length} messages for queue ${this.queue.ns}:${this.queue.name}`,
+      `Processing batch of ${messages.length} messages for queue ${this.queueRef}`,
     );
 
-    withSharedPoolConnection(
-      (client, done) => {
-        _executeUnacknowledgementScript(
-          this.queue,
-          messages,
-          this.consumerId,
-          this.logger,
-          (err, result) => {
-            if (err) {
-              callbacks.forEach((cb) => cb(err));
-              return done(err);
-            }
-            if (result) {
-              this.emit('messageUnacknowledger.messagesUnacknowledged', result);
-              callbacks.forEach((cb) => cb(null, result));
-            }
-            done();
-          },
-        );
-      },
-      (err) => {
-        if (err) this.handleError(err);
+    _executeUnacknowledgementScript(
+      this.queue,
+      messages,
+      this.consumerId,
+      this.logger,
+      (err, result) => {
+        if (err) {
+          callbacks.forEach((cb) => cb(err));
+          return this.handleError(err);
+        }
+        if (result) {
+          this.emit('messageUnacknowledger.messagesUnacknowledged', result);
+          callbacks.forEach((cb) => cb(null, result));
+        }
       },
     );
   }
@@ -186,7 +178,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     cb: ICallback<MessageEnvelope[]>,
   ): void {
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-      this.queue,
+      this.queue.queueParams,
       this.consumerId,
     );
 
@@ -345,9 +337,8 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
       );
     }
 
-    const queueRef = `${this.queue.ns}:${this.queue.name}`;
     this.logger.info(
-      `Unacknowledging all messages in processing queue ${queueRef}`,
+      `Unacknowledging all messages in processing queue ${this.queueRef}`,
     );
 
     async.waterfall(
@@ -363,7 +354,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
         ) => {
           const messageCount = messages?.length || 0;
           this.logger.debug(
-            `Found ${messageCount} messages in processing queue ${queueRef}`,
+            `Found ${messageCount} messages in processing queue ${this.queueRef}`,
           );
 
           const pending = this.buildPendingMessages(messages || [], cause);
@@ -379,13 +370,13 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
       (err, result) => {
         if (err) {
           this.logger.error(
-            `Failed to unacknowledge queue ${queueRef}: ${err.message}`,
+            `Failed to unacknowledge queue ${this.queueRef}: ${err.message}`,
           );
         }
         if (result) {
           const unackedCount = Object.keys(result).length;
           this.logger.info(
-            `Unacknowledged ${unackedCount} messages from processing queue ${queueRef}`,
+            `Unacknowledged ${unackedCount} messages from processing queue ${this.queueRef}`,
           );
           this.emit('messageUnacknowledger.messagesUnacknowledged', result);
         }

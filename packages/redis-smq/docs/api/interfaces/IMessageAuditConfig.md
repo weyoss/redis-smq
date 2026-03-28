@@ -2,33 +2,44 @@
 
 # Interface: IMessageAuditConfig
 
-Message audit configuration for different message types.
+Root configuration interface for message audit system.
 
-Message audit allows tracking of processed messages by storing their IDs
-in dedicated Redis storage structures. This enables efficient querying
-of acknowledged and dead-lettered messages per queue.
+This interface controls all audit-related features of the message queue system,
+including tracking of acknowledged messages, dead-lettered messages, and
+failure history. It provides flexible configuration options that can be
+enabled/disabled and customized per audit category.
 
-By default, both queueSize and expire are set to 0 (unlimited), which means
-audit storage will grow indefinitely. Consider setting limits in production
-environments to manage Redis memory usage.
+Each audit category can be configured in three ways:
+
+- `false` - Disable auditing for this category
+- `true` - Enable auditing with default settings
+- `Partial<IConfig>` - Enable auditing with custom settings
 
 ## Example
 
 ```typescript
-// Enable audit for dead-lettered messages with unlimited storage
+// Minimal configuration - enable all with defaults
 const config: IMessageAuditConfig = {
+  acknowledgedMessages: true,
   deadLetteredMessages: true,
+  unacknowledgementHistory: true,
 };
 
-// Enable audit with custom limits to control storage growth
+// Custom configuration with size limits and expiration
 const config: IMessageAuditConfig = {
   acknowledgedMessages: {
-    queueSize: 5000, // limit to 5,000 message IDs per queue
-    expire: 12 * 60 * 60, // retain for 12 hours
+    enabled: true,
+    queueSize: 10000,
+    expire: 2592000, // 30 days
   },
   deadLetteredMessages: {
-    queueSize: 10000, // limit to 10,000 message IDs per queue
-    expire: 7 * 24 * 60 * 60, // retain for 7 days
+    enabled: true,
+    queueSize: 5000,
+    expire: 604800, // 7 days
+  },
+  unacknowledgementHistory: {
+    enabled: true,
+    maxSize: 50,
   },
 };
 ```
@@ -37,30 +48,78 @@ const config: IMessageAuditConfig = {
 
 ### acknowledgedMessages?
 
-> `optional` **acknowledgedMessages**: `boolean` \| [`IMessageAuditConfigOptions`](IMessageAuditConfigOptions.md)
+> `optional` **acknowledgedMessages**: `boolean` \| `Partial`\<[`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)\>
 
 Audit configuration for acknowledged messages.
 
 When enabled, creates dedicated storage to track IDs of successfully
-processed messages. This allows using QueueAcknowledgedMessages class
-to browse and analyze acknowledged messages per queue.
+processed messages. This allows using the `QueueAcknowledgedMessages` class
+to browse, query, and analyze acknowledged messages per queue.
 
-- `true`: Enable with default settings (unlimited storage and retention)
-- `false` or `undefined`: Disable audit
-- `IMessageAuditConfigOptions`: Enable with custom settings
+This is useful for:
+
+- Monitoring successful message processing rates
+- Auditing completed work
+- Debugging message flow through the system
+
+#### Default
+
+```ts
+false (audit disabled)
+```
+
+#### See
+
+QueueAcknowledgedMessages
 
 ---
 
 ### deadLetteredMessages?
 
-> `optional` **deadLetteredMessages**: `boolean` \| [`IMessageAuditConfigOptions`](IMessageAuditConfigOptions.md)
+> `optional` **deadLetteredMessages**: `boolean` \| `Partial`\<[`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)\>
 
 Audit configuration for dead-lettered messages.
 
 When enabled, creates dedicated storage to track IDs of messages that
-failed processing and exceeded retry limits. This allows using
-QueueDeadLetteredMessages class to browse and analyze failed messages per queue.
+failed processing and exceeded their retry limits. This allows using
+the `QueueDeadLetteredMessages` class to browse, query, and analyze
+failed messages per queue.
 
-- `true`: Enable with default settings (unlimited storage and retention)
-- `false` or `undefined`: Disable audit
-- `IMessageAuditConfigOptions`: Enable with custom settings
+Dead-lettered messages represent processing failures that require
+manual intervention or separate handling. This audit trail helps:
+
+- Identify problematic messages or handlers
+- Monitor failure rates and patterns
+- Implement dead-letter queue processing workflows
+
+#### Default
+
+```ts
+false (audit disabled)
+```
+
+#### See
+
+QueueDeadLetteredMessages
+
+---
+
+### unacknowledgementHistory?
+
+> `optional` **unacknowledgementHistory**: `boolean` \| `Partial`\<[`IMessageAuditHistoryConfig`](IMessageAuditHistoryConfig.md)\>
+
+Audit configuration for unacknowledgement message history.
+
+When enabled, tracks detailed history of message processing failures,
+including each unacknowledgement event with failure causes and resolution
+actions. This provides comprehensive debugging information and helps
+identify systemic issues in message processing.
+
+Unlike acknowledged and dead-lettered audits which track only message IDs,
+this feature stores rich metadata about each failure event.
+
+#### Default
+
+```ts
+false (history tracking disabled)
+```

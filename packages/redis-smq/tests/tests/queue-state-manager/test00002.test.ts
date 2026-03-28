@@ -353,7 +353,7 @@ describe('QueueStateManager: stop()/resume()/getStateHistory()/getState()', () =
     await consumer.run();
 
     const consumeSpy = vi.fn((msg, done) => done());
-    consumer.consume(defaultQueue, consumeSpy, () => {});
+    consumer.consume(defaultQueue, consumeSpy, () => void 0);
 
     // Produce a message
     const { producer } = await produceMessage(defaultQueue);

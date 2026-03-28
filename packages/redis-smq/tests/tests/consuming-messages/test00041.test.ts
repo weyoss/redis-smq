@@ -24,8 +24,8 @@ test('Message handler promise: throw error', async () => {
   await producer.run();
 
   const consumer = getConsumer({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     messageHandler: async (msg1: IMessageTransferable) => {
-      console.log('Message payload', msg1.body);
       throw new Error();
     },
   });

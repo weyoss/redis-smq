@@ -2,30 +2,38 @@
 
 # Interface: IMessageAuditParsedConfig
 
-Parsed and normalized message audit configuration.
+**`Internal`**
 
-This interface represents the internal configuration after parsing user input,
-applying defaults, and normalizing all values. Both acknowledged and dead-lettered
-message configurations are always present with explicit enabled/disabled state.
+Parsed and normalized configuration interface.
+
+This interface represents the final configuration after processing and
+merging defaults. It contains fully resolved configuration objects for
+each audit category, with all optional fields populated with their
+default values.
+
+This is an internal interface used by the system after configuration
+validation and normalization.
 
 ## Properties
 
 ### acknowledgedMessages
 
-> **acknowledgedMessages**: [`IMessageAuditParsedConfigOptions`](IMessageAuditParsedConfigOptions.md)
+> **acknowledgedMessages**: [`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)
 
-Parsed configuration for acknowledged message audit.
-
-Contains the normalized settings including whether audit is enabled
-and the effective queueSize and expire values (0 = unlimited).
+Normalized configuration for acknowledged messages audit
 
 ---
 
 ### deadLetteredMessages
 
-> **deadLetteredMessages**: [`IMessageAuditParsedConfigOptions`](IMessageAuditParsedConfigOptions.md)
+> **deadLetteredMessages**: [`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)
 
-Parsed configuration for dead-lettered message audit.
+Normalized configuration for dead-lettered messages audit
 
-Contains the normalized settings including whether audit is enabled
-and the effective queueSize and expire values (0 = unlimited).
+---
+
+### unacknowledgementHistory
+
+> **unacknowledgementHistory**: [`IMessageAuditHistoryConfig`](IMessageAuditHistoryConfig.md)
+
+Normalized configuration for unacknowledgement history

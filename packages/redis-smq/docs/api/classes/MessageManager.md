@@ -801,6 +801,90 @@ async function isMessageProcessed(messageId: string): Promise<boolean> {
 
 ---
 
+### getMessageUnacknowledgementHistory()
+
+#### Call Signature
+
+> **getMessageUnacknowledgementHistory**(`messageId`): `Promise`\<[`TMessageUnacknowledgementHistory`](../type-aliases/TMessageUnacknowledgementHistory.md)\>
+
+Retrieves the unacknowledgement history for a message.
+
+This method returns the complete history of unacknowledgement events for a message,
+including the cause of each failure, the action taken, and timestamps.
+
+##### Parameters
+
+###### messageId
+
+`string`
+
+The ID of the message to retrieve history for
+
+##### Returns
+
+`Promise`\<[`TMessageUnacknowledgementHistory`](../type-aliases/TMessageUnacknowledgementHistory.md)\>
+
+- Returns a Promise if no callback is provided,
+  otherwise returns void.
+
+##### Throws
+
+When the message with the given ID doesn't exist.
+
+##### Example
+
+```typescript
+const messageManager = new MessageManager();
+
+// Get all history records
+const history =
+  await messageManager.getMessageUnacknowledgementHistory('msg-123');
+```
+
+#### Call Signature
+
+> **getMessageUnacknowledgementHistory**(`messageId`, `cb`): `void`
+
+Retrieves the unacknowledgement history for a message.
+
+This method returns the complete history of unacknowledgement events for a message,
+including the cause of each failure, the action taken, and timestamps.
+
+##### Parameters
+
+###### messageId
+
+`string`
+
+The ID of the message to retrieve history for
+
+###### cb
+
+`ICallback`\<[`TMessageUnacknowledgementHistory`](../type-aliases/TMessageUnacknowledgementHistory.md)\>
+
+##### Returns
+
+`void`
+
+- Returns a Promise if no callback is provided,
+  otherwise returns void.
+
+##### Throws
+
+When the message with the given ID doesn't exist.
+
+##### Example
+
+```typescript
+const messageManager = new MessageManager();
+
+// Get all history records
+const history =
+  await messageManager.getMessageUnacknowledgementHistory('msg-123');
+```
+
+---
+
 ### requeueMessageById()
 
 #### Call Signature

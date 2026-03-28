@@ -28,7 +28,7 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
   ): MessageUnacknowledger {
     const unacknowledger = new MessageUnacknowledger(
       consumerId,
-      this.queueParsedParams.queueParams,
+      this.queueParsedParams,
       this.logger,
       Consumer.getDefaultOptions(),
     );

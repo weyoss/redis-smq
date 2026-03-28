@@ -9,13 +9,19 @@ audit to keep records.
 
 ![Message audit overview](message-audit.png)
 
+RedisSMQ provides three types of message audit:
+
+1. **Acknowledged Messages** - Successfully processed messages
+2. **Dead-Lettered Messages** - Messages that failed processing and exceeded retry limits
+3. **Unacknowledgement History** - Complete failure timeline for each message
+
 ## Quick Start
 
 Enable audit in your configuration:
 
 ```javascript
 const config = {
-  messageAudit: true, // Track both acknowledged and dead-lettered messages
+  messageAudit: true, // Track all audit types
 };
 
 RedisSMQ.initializeWithConfig(config, (err) => {
@@ -30,6 +36,7 @@ const config = {
   messageAudit: {
     acknowledgedMessages: true, // Track successful messages
     deadLetteredMessages: true, // Track failed messages
+    unacknowledgementHistory: true, // Track failure timeline per message
   },
 };
 ```
@@ -41,6 +48,7 @@ const config = {
 | Can't see processed message history | Can browse acknowledged/dead-lettered messages |
 | Hard to debug failures              | Track which messages failed and why            |
 | No processing metrics               | Monitor success/failure rates per queue        |
+| Limited failure context             | Complete timeline of each failure event        |
 
 ## Configuration Options
 
@@ -48,7 +56,7 @@ const config = {
 
 ```javascript
 const config = {
-  messageAudit: true, // Track everything
+  messageAudit: true, // Track everything (acknowledged, dead-lettered, history)
 };
 ```
 
@@ -59,6 +67,7 @@ const config = {
   messageAudit: {
     acknowledgedMessages: true, // Track successes only
     deadLetteredMessages: true, // Track failures only
+    unacknowledgementHistory: true, // Track failure timeline
   },
 };
 ```
@@ -75,6 +84,10 @@ const config = {
     deadLetteredMessages: {
       queueSize: 10000, // Keep last 10,000 failed messages
       expire: 604800, // Delete after 7 days
+    },
+    unacknowledgementHistory: {
+      enabled: true,
+      maxSize: 100, // Keep last 100 failure events per message
     },
   },
 };
@@ -106,6 +119,46 @@ deadLettered.getMessages('my-queue', 1, 50, (err, page) => {
 });
 ```
 
+### View Unacknowledgement History
+
+```javascript
+const messageManager = RedisSMQ.getMessageManager();
+const history =
+  await messageManager.getMessageUnacknowledgementHistory(messageId);
+
+// Example output
+[
+  {
+    messageId: '188143f1-accb-4587-87cb-90cbae280762',
+    cause: 2, // EMessageUnacknowledgementCause
+    action: 0, // EMessageUnacknowledgementAction
+    timestamp: 1774633655377,
+    retryCount: 3,
+    queue: { queueParams: [Object], groupId: null },
+    consumerId: 'd928b4cc-6165-4857-9322-f92108771a1c',
+    deadLetterCause: 1, // EMessageDeadLetterCause
+  },
+  {
+    messageId: '188143f1-accb-4587-87cb-90cbae280762',
+    cause: 2,
+    action: 2,
+    timestamp: 1774633646355,
+    retryCount: 2,
+    queue: { queueParams: [Object], groupId: null },
+    consumerId: 'd928b4cc-6165-4857-9322-f92108771a1c',
+  },
+  {
+    messageId: '188143f1-accb-4587-87cb-90cbae280762',
+    cause: 2,
+    action: 2,
+    timestamp: 1774633643065,
+    retryCount: 1,
+    queue: { queueParams: [Object], groupId: null },
+    consumerId: 'd928b4cc-6165-4857-9322-f92108771a1c',
+  },
+];
+```
+
 ### Always Available (No Audit Needed)
 
 ```javascript
@@ -122,28 +175,22 @@ const pending = RedisSMQ.createQueuePendingMessages();
 const scheduled = RedisSMQ.createQueueScheduledMessages();
 ```
 
-## When to Enable Audit
+## Understanding Unacknowledgement History
 
-### ✅ Enable When:
+Each time a message fails to be acknowledged, RedisSMQ records:
 
-- Debugging message processing issues
-- Monitoring queue health and error rates
-- Compliance requires processing history
-- Analyzing message flow patterns
+- **Cause**: Why it failed (timeout, consume error, TTL expired, etc.)
+- **Action**: What happened next (requeue, delay, dead-letter)
+- **Timestamp**: When the failure occurred
+- **Consumer**: Which consumer attempted processing
+- **Dead Letter Cause**: If moved to DLQ, why (retry threshold, TTL expired, periodic message)
 
-### ⚠️ Consider Storage Impact:
+This timeline helps you:
 
-- Each tracked message uses Redis memory
-- High-volume queues need careful limits
-- Set appropriate `queueSize` and `expire` values
-
-## Best Practices
-
-1. **Start with dead-letter audit only** if unsure
-2. **Set reasonable limits** based on your volume
-3. **Monitor Redis memory** when enabling audit
-4. **Use for debugging** more than permanent storage
-5. **Combine with monitoring** for complete visibility
+- Debug why messages fail repeatedly
+- Identify patterns in failures
+- Understand exactly when messages entered dead-letter
+- Audit consumer behavior
 
 ## Troubleshooting
 
@@ -155,13 +202,29 @@ const scheduled = RedisSMQ.createQueueScheduledMessages();
 
 **Solution**:
 
-- Reduce `queueSize` values
-- Lower `expire` times
+- Reduce `queueSize` for acknowledged/dead-lettered messages
+- Lower `maxSize` for unacknowledgement history
 - Disable audit for high-volume queues
+- Consider shorter `expire` times
+
+### Unacknowledgement history not showing
+
+**Solution**:
+
+- Enable `messageAudit.unacknowledgementHistory = true` in config
+- Verify messages are actually failing (check logs)
 
 ### Need to retain history longer
 
-**Solution**: Increase `expire` value or remove expiration entirely.
+**Solution**:
+
+- For acknowledged/dead-lettered: Increase `expire` value
+- For unacknowledgement history: Increase `maxSize` value
+
+## API Reference
+
+- See [IMessageAuditConfig](api/interfaces/IMessageAuditConfig.md)
+- See [MessageManager](api/classes/MessageManager.md)
 
 ---
 

@@ -41,7 +41,9 @@ test('Consume message from different queues using a single consumer instance: ca
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consume('test0', () => void 0);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  await consumer.consume('test0', (msg, cb) => void 0);
 
   eventBus.once('consumer.dequeueMessage.messageReceived', () => {
     setTimeout(() => {

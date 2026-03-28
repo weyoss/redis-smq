@@ -26,7 +26,7 @@ import { IMessageTransferable } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
-  EUnacknowledgementAction,
+  EMessageUnacknowledgementAction,
   EMessageUnacknowledgementCause,
   TUnacknowledgementResult,
 } from './types/index.js';
@@ -149,7 +149,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected initializeMessageUnacknowledger(): MessageUnacknowledger {
     const messageUnacknowledger = new MessageUnacknowledger(
       this.consumerId,
-      this.queue.queueParams,
+      this.queue,
       this.logger,
       this.consumerOptions,
     );
@@ -245,7 +245,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         details.cause,
       );
 
-      if (details.action === EUnacknowledgementAction.DEAD_LETTER) {
+      if (details.action === EMessageUnacknowledgementAction.DEAD_LETTER) {
         this.logger.info(`Message ${messageId} moved to dead letter queue`);
         this.emit(
           'consumer.consumeMessage.messageDeadLettered',
@@ -255,7 +255,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           this.consumerId,
           details.deadLetterCause,
         );
-      } else if (details.action === EUnacknowledgementAction.DELAY) {
+      } else if (details.action === EMessageUnacknowledgementAction.DELAY) {
         this.logger.info(`Message ${messageId} delayed for retry`);
         this.emit(
           'consumer.consumeMessage.messageDelayed',

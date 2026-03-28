@@ -10,22 +10,15 @@
 import { defaultConfig } from './default-config.js';
 import {
   ConfigurationMessageAuditExpireError,
+  InvalidMessageAuditHistorySizeError,
   InvalidMessageAuditQueueSizeError,
 } from '../errors/index.js';
 import {
   IMessageAuditConfig,
-  IMessageAuditConfigOptions,
   IMessageAuditParsedConfig,
-  IMessageAuditParsedConfigOptions,
-} from '../message/index.js';
-
-/**
- * @fileoverview Message configuration parsing utilities for RedisSMQ.
- *
- * This module provides functions to parse and validate message audit configuration,
- * including acknowledged and dead-lettered message audit settings. It handles
- * configuration validation, default value assignment, and error reporting.
- */
+  IMessageAuditMessagesConfig,
+  IMessageAuditHistoryConfig,
+} from '../message-manager/index.js';
 
 function validateNumericValue(value: unknown): number | false {
   const numericValue = Number(value);
@@ -33,43 +26,31 @@ function validateNumericValue(value: unknown): number | false {
   return numericValue;
 }
 
-function getMessageStorageConfig(
-  config: boolean | IMessageAuditConfig | undefined,
-  key: keyof IMessageAuditConfig,
-): boolean | IMessageAuditConfigOptions {
-  // Handle undefined store configuration
+function parseMessageAuditMessagesConfig(
+  config: boolean | Partial<IMessageAuditMessagesConfig> | undefined,
+  defaultConfigOptions: IMessageAuditMessagesConfig,
+): IMessageAuditMessagesConfig {
+  // Handle undefined
   if (typeof config === 'undefined') {
-    return false;
+    return { ...defaultConfigOptions, enabled: false };
   }
 
-  // Handle boolean store configuration (applies to all storage types)
+  // Handle boolean
   if (typeof config === 'boolean') {
-    return config;
-  }
-
-  // Handle IMessagesStorageConfig object
-  // The store is an object with acknowledged/deadLettered properties
-  return config[key] ?? false;
-}
-
-function getMessageAuditParams(
-  config: boolean | IMessageAuditConfig,
-  key: keyof IMessageAuditConfig,
-): IMessageAuditParsedConfigOptions {
-  const params = getMessageStorageConfig(config, key);
-  const defaultParams = defaultConfig.messageAudit[key];
-  if (typeof params === 'boolean') {
     return {
-      ...defaultParams,
-      enabled: params,
+      ...defaultConfigOptions,
+      enabled: config,
     };
   }
+
   const queueSize = validateNumericValue(
-    params.queueSize ?? defaultParams.queueSize,
+    config.queueSize ?? defaultConfigOptions.queueSize,
   );
   if (queueSize === false) throw new InvalidMessageAuditQueueSizeError();
 
-  const expire = validateNumericValue(params.expire ?? defaultParams.expire);
+  const expire = validateNumericValue(
+    config.expire ?? defaultConfigOptions.expire,
+  );
   if (expire === false) throw new ConfigurationMessageAuditExpireError();
 
   return {
@@ -79,78 +60,65 @@ function getMessageAuditParams(
   };
 }
 
-/**
- * Parses and validates message audit configuration.
- *
- * This function processes the complete message audit configuration,
- * handling both acknowledged and dead-lettered message audit settings.
- * It validates all parameters and returns a fully parsed configuration object.
- *
- * @param config - The messages configuration object containing storage settings
- * @returns Parsed and validated storage configuration for all message types
- *
- * @throws InvalidMessageAuditQueueSizeError When any queueSize is invalid
- * @throws ConfigurationMessageAuditExpireError When any expire value is invalid
- *
- * @example
- * ```typescript
- * // Simple boolean configuration (applies to all storage types)
- * const config1 = { acknowledgedMessages: true, deadLetteredMessages: true };
- * const parsed1 = parseMessageStorageConfig(config1);
- * // Returns: {
- * //   acknowledged: { enabled: true, queueSize: 0, expire: 0 },
- * //   deadLettered: { enabled: true, queueSize: 0, expire: 0 }
- * // }
- *
- * // Boolean false configuration (disables all storage)
- * const config1b = { acknowledgedMessages: false, deadLetteredMessages: false };
- * const parsed1b = parseMessageStorageConfig(config1b);
- * // Returns: {
- * //   acknowledged: { enabled: false, queueSize: 0, expire: 0 },
- * //   deadLettered: { enabled: false, queueSize: 0, expire: 0 }
- * // }
- *
- * // Detailed object configuration with specific settings per type
- * const config2 = {
- *   acknowledgedMessages: { queueSize: 1000, expire: 3600 },
- *   deadLetteredMessages: { queueSize: 500, expire: 7200 }
- * };
- * const parsed2 = parseMessageStorageConfig(config2);
- * // Returns: {
- * //   acknowledgedMessages: { enabled: true, queueSize: 1000, expire: 3600 },
- * //   deadLetteredMessages: { enabled: true, queueSize: 500, expire: 7200 }
- * // }
- *
- * // Mixed configuration with different types
- * const config3 = {
- *     acknowledgedMessages: { queueSize: 100 }, // expire defaults to 0
- *     deadLetteredMessages: false // explicitly disabled
- * };
- * const parsed3 = parseMessageStorageConfig(config3);
- * // Returns: {
- * //   acknowledgedMessages: { enabled: true, queueSize: 100, expire: 0 },
- * //   deadLetteredMessages: { enabled: false, queueSize: 0, expire: 0 }
- * // }
- *
- * // Partial object configuration (missing keys default to false)
- * const config4 = {
- *   store: {
- *     acknowledgedMessages: true // only acknowledged specified
- *     // deadLetteredMessages is undefined, defaults to false
- *   }
- * };
- * const parsed4 = parseMessageStorageConfig(config4);
- * // Returns: {
- * //   acknowledgedMessages: { enabled: true, queueSize: 0, expire: 0 },
- * //   deadLetteredMessages: { enabled: false, queueSize: 0, expire: 0 }
- * // }
- * ```
- */
+function parseUnacknowledgementHistoryConfig(
+  config: boolean | Partial<IMessageAuditHistoryConfig> | undefined,
+  defaultConfigOptions: IMessageAuditHistoryConfig,
+): IMessageAuditHistoryConfig {
+  // Handle undefined
+  if (typeof config === 'undefined') {
+    return { ...defaultConfigOptions };
+  }
+
+  // Handle boolean
+  if (typeof config === 'boolean') {
+    return {
+      ...defaultConfigOptions,
+      enabled: config,
+    };
+  }
+
+  const cfg: IMessageAuditHistoryConfig = {
+    ...defaultConfigOptions,
+    ...config,
+  };
+
+  if (validateNumericValue(cfg.maxSize) === false) {
+    throw new InvalidMessageAuditHistorySizeError();
+  }
+
+  return cfg;
+}
+
 export function parseMessageAuditConfig(
   config: boolean | IMessageAuditConfig = {},
 ): IMessageAuditParsedConfig {
+  // Extract configuration values
+  let userConfig: IMessageAuditConfig;
+  if (typeof config === 'boolean') {
+    // If config is a boolean, apply it to all audit types
+    userConfig = {
+      acknowledgedMessages: config,
+      deadLetteredMessages: config,
+      unacknowledgementHistory: config,
+    };
+  } else {
+    userConfig = config;
+  }
+
+  const defaultMessageAudit = defaultConfig.messageAudit;
+
   return {
-    acknowledgedMessages: getMessageAuditParams(config, 'acknowledgedMessages'),
-    deadLetteredMessages: getMessageAuditParams(config, 'deadLetteredMessages'),
+    acknowledgedMessages: parseMessageAuditMessagesConfig(
+      userConfig.acknowledgedMessages,
+      defaultMessageAudit.acknowledgedMessages,
+    ),
+    deadLetteredMessages: parseMessageAuditMessagesConfig(
+      userConfig.deadLetteredMessages,
+      defaultMessageAudit.deadLetteredMessages,
+    ),
+    unacknowledgementHistory: parseUnacknowledgementHistoryConfig(
+      userConfig.unacknowledgementHistory,
+      defaultMessageAudit.unacknowledgementHistory,
+    ),
   };
 }

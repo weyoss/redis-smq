@@ -23,6 +23,10 @@ export const defaultConfig: IRedisSMQDefaultConfig = {
       queueSize: 0,
       expire: 0,
     },
+    unacknowledgementHistory: {
+      enabled: false,
+      maxSize: 100,
+    },
   },
   redis: {
     client: ERedisConfigClient.IOREDIS,

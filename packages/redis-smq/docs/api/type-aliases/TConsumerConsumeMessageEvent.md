@@ -82,7 +82,7 @@
 
 ##### deadLetterCause
 
-`EMessageDeadLetterCause`
+[`EMessageDeadLetterCause`](../enumerations/EMessageDeadLetterCause.md)
 
 #### Returns
 
@@ -170,7 +170,7 @@
 
 ##### unacknowledgmentCause
 
-`EMessageUnacknowledgementCause`
+[`EMessageUnacknowledgementCause`](../enumerations/EMessageUnacknowledgementCause.md)
 
 #### Returns
 

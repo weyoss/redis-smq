@@ -8,3 +8,4 @@
  */
 
 export * from './message-unacknowledgement.js';
+export * from './message-unacknowledgement-history.js';

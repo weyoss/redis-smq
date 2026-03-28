@@ -46,6 +46,12 @@ export const main = {
   getMessageKeys(messageId: string) {
     return {
       keyMessage: key(...mainPath, 'msg', messageId),
+      keyMessageUnacknowledgementHistory: key(
+        ...mainPath,
+        'msg',
+        messageId,
+        'uh',
+      ),
     };
   },
 };
