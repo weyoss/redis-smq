@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.0...v10.0.0-next.1) (2026-03-28)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq:** improve redis keys hierarchy
+
+### ✨ Features
+
+- **redis-smq:** add message failure history tracking ([0fc4ef0](https://github.com/weyoss/redis-smq/commit/0fc4ef08b8ea08a38edc2b84c4821fe7c9b48b4b))
+- **redis-smq:** support async/await message handlers ([761733a](https://github.com/weyoss/redis-smq/commit/761733ab686a7483a243b1d521ca990dddf03704))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** validate message handler function signature ([1076ccf](https://github.com/weyoss/redis-smq/commit/1076ccf9cae3f38c8ccf9eacb19dd06f6d0d02c3))
+
+### 📝 Documentation
+
+- **redis-smq:** improve promise usage section to include queue creation ([bf70646](https://github.com/weyoss/redis-smq/commit/bf70646281bae00c1a86210755f53d414148220e))
+- **redis-smq:** update dual callback & promise support docs ([be4c29d](https://github.com/weyoss/redis-smq/commit/be4c29d46849f9e2bbb327e95feb911fcd1a85a4))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add exists() method to IRedisClient ([b39e64a](https://github.com/weyoss/redis-smq/commit/b39e64a23057cc7cccc4054ab1f3002825000999))
+- **redis-smq-rest-api:** update error map ([c9daed8](https://github.com/weyoss/redis-smq/commit/c9daed80a3ccedfcc1ee901ca1d5d9629c0162b4))
+- **redis-smq:** improve redis keys hierarchy ([0c8101b](https://github.com/weyoss/redis-smq/commit/0c8101bac77b681cbdf8da3c5a39e848c0866aba))
+
 ## [10.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.6...v10.0.0-next.0) (2026-03-25)
 
 ### ⚠ BREAKING CHANGES
