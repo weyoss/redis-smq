@@ -17,6 +17,7 @@
     "declaration": true,
     "declarationMap": true,
     "alwaysStrict": true,
+    "resolveJsonModule": true,
 
     "lib": ["esnext"],
     "target": "esnext",

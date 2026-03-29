@@ -51,7 +51,6 @@ update_readme() {
   local owner_repo
   owner_repo="$(normalize_owner_repo "$origin_url")"
 
-  # --- Definitive Branch Detection ---
   # This uses `git symbolic-ref` which is the most reliable and direct way
   # to get the current branch name, especially during complex git operations.
   local branch
@@ -146,4 +145,5 @@ for template in packages/*/README.template.md; do
     update_readme "$template"
   fi
 done
+
 echo "[update-readme-files] Update complete."

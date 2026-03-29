@@ -32,6 +32,7 @@
     "lint-staged": "16.4.0",
     "npm-run-all": "4.1.5",
     "prettier": "3.8.1",
+    "redis-smq-ci": "workspace:*",
     "supertest": "7.2.2",
     "type-coverage": "2.29.7",
     "typescript": "5.8.3",
@@ -45,20 +46,21 @@
     "build:cw": "scripts/build.sh workspaces",
     "build:ca": "scripts/build.sh all",
     "test:all": "scripts/test.sh",
-    "prepare": "husky",
-    "release": "scripts/release.sh",
+    "prepare": ".husky",
     "release:patch": "scripts/release.sh patch",
     "release:minor": "scripts/release.sh minor",
     "release:major": "scripts/release.sh major",
     "release:prepatch": "scripts/release.sh prepatch",
     "release:preminor": "scripts/release.sh preminor",
     "release:premajor": "scripts/release.sh premajor",
+    "release:prerelease": "scripts/release.sh prerelease",
     "document:all": "scripts/document.sh",
     "lint": "scripts/lint.sh",
     "lint:all": "scripts/lint.sh --all",
     "redis:start": "scripts/redis.sh start",
     "redis:download": "scripts/redis.sh download",
-    "redis:build": "scripts/redis.sh build"
+    "redis:build": "scripts/redis.sh build",
+    "consolidate-changelog": "scripts/consolidate_changelog.sh"
   },
   "lint-staged": {
     "*": "scripts/lint.sh"

@@ -88,6 +88,9 @@ importers:
       prettier:
         specifier: 3.8.1
         version: 3.8.1
+      redis-smq-ci:
+        specifier: workspace:*
+        version: link:packages/redis-smq-ci
       supertest:
         specifier: 7.2.2
         version: 7.2.2
@@ -146,6 +149,12 @@ importers:
       bluebird:
         specifier: 3.7.2
         version: 3.7.2
+
+  packages/redis-smq-ci:
+    dependencies:
+      commander:
+        specifier: 14.0.2
+        version: 14.0.2
 
   packages/redis-smq-common:
     dependencies:
@@ -303,7 +312,7 @@ importers:
     dependencies:
       '@vee-validate/zod':
         specifier: 4.15.1
-        version: 4.15.1(vue@3.5.24(typescript@5.8.3))(zod@3.25.76)
+        version: 4.15.1(vue@3.5.24(typescript@5.9.3))(zod@3.25.76)
       bootstrap:
         specifier: 5.3.8
         version: 5.3.8(@popperjs/core@2.11.8)
@@ -315,16 +324,16 @@ importers:
         version: 4.1.0
       pinia:
         specifier: 3.0.4
-        version: 3.0.4(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3))
+        version: 3.0.4(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3))
       vee-validate:
         specifier: 4.15.1
-        version: 4.15.1(vue@3.5.24(typescript@5.8.3))
+        version: 4.15.1(vue@3.5.24(typescript@5.9.3))
       vue:
         specifier: 3.5.24
-        version: 3.5.24(typescript@5.8.3)
+        version: 3.5.24(typescript@5.9.3)
       vue-router:
         specifier: 4.6.3
-        version: 4.6.3(vue@3.5.24(typescript@5.8.3))
+        version: 4.6.3(vue@3.5.24(typescript@5.9.3))
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -334,7 +343,7 @@ importers:
         version: 1.56.1
       '@tanstack/vue-query':
         specifier: 5.90.7
-        version: 5.90.7(vue@3.5.24(typescript@5.8.3))
+        version: 5.90.7(vue@3.5.24(typescript@5.9.3))
       '@tsconfig/node20':
         specifier: 20.1.6
         version: 20.1.6
@@ -343,13 +352,13 @@ importers:
         version: 27.0.0
       '@vitejs/plugin-vue':
         specifier: 6.0.1
-        version: 6.0.1(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.8.3))
+        version: 6.0.1(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.9.3))
       '@vue/test-utils':
         specifier: 2.4.6
         version: 2.4.6
       '@vue/tsconfig':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3))
+        version: 0.7.0(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3))
       axios:
         specifier: 1.13.5
         version: 1.13.5
@@ -364,7 +373,7 @@ importers:
         version: 27.1.0
       orval:
         specifier: 8.0.3
-        version: 8.0.3(typescript@5.8.3)
+        version: 8.0.3(typescript@5.9.3)
       redis-smq:
         specifier: workspace:^
         version: link:../redis-smq
@@ -379,16 +388,16 @@ importers:
         version: 7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3)
       vite-plugin-dts:
         specifier: 4.5.4
-        version: 4.5.4(@types/node@20.19.20)(rollup@4.60.0)(typescript@5.8.3)(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))
+        version: 4.5.4(@types/node@20.19.20)(rollup@4.60.0)(typescript@5.9.3)(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))
       vite-plugin-node-polyfills:
         specifier: 0.24.0
         version: 0.24.0(rollup@4.60.0)(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))
       vite-plugin-vue-devtools:
         specifier: 8.0.3
-        version: 8.0.3(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.8.3))
+        version: 8.0.3(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.9.3))
       vue-tsc:
         specifier: 3.1.3
-        version: 3.1.3(typescript@5.8.3)
+        version: 3.1.3(typescript@5.9.3)
 
 packages:
   '@acemir/cssom@0.9.31':
@@ -12206,21 +12215,21 @@ snapshots:
 
   '@one-ini/wasm@0.1.1': {}
 
-  '@orval/angular@8.0.3(typescript@5.8.3)':
+  '@orval/angular@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/axios@8.0.3(typescript@5.8.3)':
+  '@orval/axios@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/core@8.0.3(typescript@5.8.3)':
+  '@orval/core@8.0.3(typescript@5.9.3)':
     dependencies:
       '@scalar/openapi-types': 0.5.3
       acorn: 8.16.0
@@ -12232,73 +12241,73 @@ snapshots:
       fs-extra: 11.3.4
       globby: 16.1.0
       remeda: 2.33.6
-      typedoc: 0.28.18(typescript@5.8.3)
+      typedoc: 0.28.18(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/fetch@8.0.3(typescript@5.8.3)':
+  '@orval/fetch@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
       '@scalar/openapi-types': 0.5.3
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/hono@8.0.3(typescript@5.8.3)':
+  '@orval/hono@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
-      '@orval/zod': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
+      '@orval/zod': 8.0.3(typescript@5.9.3)
       fs-extra: 11.3.4
       remeda: 2.33.6
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/mcp@8.0.3(typescript@5.8.3)':
+  '@orval/mcp@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
-      '@orval/fetch': 8.0.3(typescript@5.8.3)
-      '@orval/zod': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
+      '@orval/fetch': 8.0.3(typescript@5.9.3)
+      '@orval/zod': 8.0.3(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/mock@8.0.3(typescript@5.8.3)':
+  '@orval/mock@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/query@8.0.3(typescript@5.8.3)':
+  '@orval/query@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
-      '@orval/fetch': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
+      '@orval/fetch': 8.0.3(typescript@5.9.3)
       chalk: 5.6.2
       remeda: 2.33.6
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/solid-start@8.0.3(typescript@5.8.3)':
+  '@orval/solid-start@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/swr@8.0.3(typescript@5.8.3)':
+  '@orval/swr@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
-      '@orval/fetch': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
+      '@orval/fetch': 8.0.3(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/zod@8.0.3(typescript@5.8.3)':
+  '@orval/zod@8.0.3(typescript@5.9.3)':
     dependencies:
-      '@orval/core': 8.0.3(typescript@5.8.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
       remeda: 2.33.6
     transitivePeerDependencies:
       - supports-color
@@ -12567,13 +12576,13 @@ snapshots:
 
   '@tanstack/query-core@5.90.7': {}
 
-  '@tanstack/vue-query@5.90.7(vue@3.5.24(typescript@5.8.3))':
+  '@tanstack/vue-query@5.90.7(vue@3.5.24(typescript@5.9.3))':
     dependencies:
       '@tanstack/match-sorter-utils': 8.19.4
       '@tanstack/query-core': 5.90.7
       '@vue/devtools-api': 6.6.4
-      vue: 3.5.24(typescript@5.8.3)
-      vue-demi: 0.14.10(vue@3.5.24(typescript@5.8.3))
+      vue: 3.5.24(typescript@5.9.3)
+      vue-demi: 0.14.10(vue@3.5.24(typescript@5.9.3))
 
   '@tsconfig/node20@20.1.6': {}
 
@@ -12856,19 +12865,19 @@ snapshots:
       '@typescript-eslint/types': 8.57.1
       eslint-visitor-keys: 5.0.1
 
-  '@vee-validate/zod@4.15.1(vue@3.5.24(typescript@5.8.3))(zod@3.25.76)':
+  '@vee-validate/zod@4.15.1(vue@3.5.24(typescript@5.9.3))(zod@3.25.76)':
     dependencies:
       type-fest: 4.41.0
-      vee-validate: 4.15.1(vue@3.5.24(typescript@5.8.3))
+      vee-validate: 4.15.1(vue@3.5.24(typescript@5.9.3))
       zod: 3.25.76
     transitivePeerDependencies:
       - vue
 
-  '@vitejs/plugin-vue@6.0.1(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.8.3))':
+  '@vitejs/plugin-vue@6.0.1(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.9.3))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-beta.29
       vite: 7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3)
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
 
   '@vitest/coverage-istanbul@3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@20.19.20)(jiti@2.6.1)(jsdom@27.1.0)(yaml@2.8.3))':
     dependencies:
@@ -13071,11 +13080,11 @@ snapshots:
     dependencies:
       '@vue/devtools-kit': 7.7.9
 
-  '@vue/devtools-core@8.1.1(vue@3.5.24(typescript@5.8.3))':
+  '@vue/devtools-core@8.1.1(vue@3.5.24(typescript@5.9.3))':
     dependencies:
       '@vue/devtools-kit': 8.1.1
       '@vue/devtools-shared': 8.1.1
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
 
   '@vue/devtools-kit@7.7.9':
     dependencies:
@@ -13100,7 +13109,7 @@ snapshots:
 
   '@vue/devtools-shared@8.1.1': {}
 
-  '@vue/language-core@2.2.0(typescript@5.8.3)':
+  '@vue/language-core@2.2.0(typescript@5.9.3)':
     dependencies:
       '@volar/language-core': 2.4.28
       '@vue/compiler-dom': 3.5.31
@@ -13111,9 +13120,9 @@ snapshots:
       muggle-string: 0.4.1
       path-browserify: 1.0.1
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
-  '@vue/language-core@3.1.3(typescript@5.8.3)':
+  '@vue/language-core@3.1.3(typescript@5.9.3)':
     dependencies:
       '@volar/language-core': 2.4.23
       '@vue/compiler-dom': 3.5.31
@@ -13123,7 +13132,7 @@ snapshots:
       path-browserify: 1.0.1
       picomatch: 4.0.4
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   '@vue/reactivity@3.5.24':
     dependencies:
@@ -13141,11 +13150,11 @@ snapshots:
       '@vue/shared': 3.5.24
       csstype: 3.2.3
 
-  '@vue/server-renderer@3.5.24(vue@3.5.24(typescript@5.8.3))':
+  '@vue/server-renderer@3.5.24(vue@3.5.24(typescript@5.9.3))':
     dependencies:
       '@vue/compiler-ssr': 3.5.24
       '@vue/shared': 3.5.24
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
 
   '@vue/shared@3.5.24': {}
 
@@ -13156,10 +13165,10 @@ snapshots:
       js-beautify: 1.15.4
       vue-component-type-helpers: 2.2.12
 
-  '@vue/tsconfig@0.7.0(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3))':
+  '@vue/tsconfig@0.7.0(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3))':
     optionalDependencies:
-      typescript: 5.8.3
-      vue: 3.5.24(typescript@5.8.3)
+      typescript: 5.9.3
+      vue: 3.5.24(typescript@5.9.3)
 
   '@yarnpkg/lockfile@1.1.0': {}
 
@@ -16233,20 +16242,20 @@ snapshots:
       strip-ansi: 6.0.1
       wcwidth: 1.0.1
 
-  orval@8.0.3(typescript@5.8.3):
+  orval@8.0.3(typescript@5.9.3):
     dependencies:
       '@commander-js/extra-typings': 14.0.0(commander@14.0.2)
-      '@orval/angular': 8.0.3(typescript@5.8.3)
-      '@orval/axios': 8.0.3(typescript@5.8.3)
-      '@orval/core': 8.0.3(typescript@5.8.3)
-      '@orval/fetch': 8.0.3(typescript@5.8.3)
-      '@orval/hono': 8.0.3(typescript@5.8.3)
-      '@orval/mcp': 8.0.3(typescript@5.8.3)
-      '@orval/mock': 8.0.3(typescript@5.8.3)
-      '@orval/query': 8.0.3(typescript@5.8.3)
-      '@orval/solid-start': 8.0.3(typescript@5.8.3)
-      '@orval/swr': 8.0.3(typescript@5.8.3)
-      '@orval/zod': 8.0.3(typescript@5.8.3)
+      '@orval/angular': 8.0.3(typescript@5.9.3)
+      '@orval/axios': 8.0.3(typescript@5.9.3)
+      '@orval/core': 8.0.3(typescript@5.9.3)
+      '@orval/fetch': 8.0.3(typescript@5.9.3)
+      '@orval/hono': 8.0.3(typescript@5.9.3)
+      '@orval/mcp': 8.0.3(typescript@5.9.3)
+      '@orval/mock': 8.0.3(typescript@5.9.3)
+      '@orval/query': 8.0.3(typescript@5.9.3)
+      '@orval/solid-start': 8.0.3(typescript@5.9.3)
+      '@orval/swr': 8.0.3(typescript@5.9.3)
+      '@orval/zod': 8.0.3(typescript@5.9.3)
       '@scalar/json-magic': 0.8.10
       '@scalar/openapi-parser': 0.23.13
       '@scalar/openapi-types': 0.5.3
@@ -16261,10 +16270,10 @@ snapshots:
       js-yaml: 4.1.1
       remeda: 2.33.6
       string-argv: 0.3.2
-      tsconfck: 3.1.6(typescript@5.8.3)
-      typedoc: 0.28.18(typescript@5.8.3)
-      typedoc-plugin-coverage: 4.0.2(typedoc@0.28.18(typescript@5.8.3))
-      typedoc-plugin-markdown: 4.11.0(typedoc@0.28.18(typescript@5.8.3))
+      tsconfck: 3.1.6(typescript@5.9.3)
+      typedoc: 0.28.18(typescript@5.9.3)
+      typedoc-plugin-coverage: 4.0.2(typedoc@0.28.18(typescript@5.9.3))
+      typedoc-plugin-markdown: 4.11.0(typedoc@0.28.18(typescript@5.9.3))
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -16510,12 +16519,12 @@ snapshots:
 
   pify@5.0.0: {}
 
-  pinia@3.0.4(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3)):
+  pinia@3.0.4(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3)):
     dependencies:
       '@vue/devtools-api': 7.7.9
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   pkg-dir@4.2.0:
     dependencies:
@@ -17368,9 +17377,9 @@ snapshots:
       tslib: 2.8.1
       typescript: 5.9.3
 
-  tsconfck@3.1.6(typescript@5.8.3):
+  tsconfck@3.1.6(typescript@5.9.3):
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   tsconfig-paths@4.2.0:
     dependencies:
@@ -17476,21 +17485,21 @@ snapshots:
 
   typedarray@0.0.6: {}
 
-  typedoc-plugin-coverage@4.0.2(typedoc@0.28.18(typescript@5.8.3)):
+  typedoc-plugin-coverage@4.0.2(typedoc@0.28.18(typescript@5.9.3)):
     dependencies:
-      typedoc: 0.28.18(typescript@5.8.3)
+      typedoc: 0.28.18(typescript@5.9.3)
 
-  typedoc-plugin-markdown@4.11.0(typedoc@0.28.18(typescript@5.8.3)):
+  typedoc-plugin-markdown@4.11.0(typedoc@0.28.18(typescript@5.9.3)):
     dependencies:
-      typedoc: 0.28.18(typescript@5.8.3)
+      typedoc: 0.28.18(typescript@5.9.3)
 
-  typedoc@0.28.18(typescript@5.8.3):
+  typedoc@0.28.18(typescript@5.9.3):
     dependencies:
       '@gerrit0/mini-shiki': 3.23.0
       lunr: 2.3.9
       markdown-it: 14.1.1
       minimatch: 10.2.4
-      typescript: 5.8.3
+      typescript: 5.9.3
       yaml: 2.8.3
 
   typescript-eslint@8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.8.3):
@@ -17591,11 +17600,11 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vee-validate@4.15.1(vue@3.5.24(typescript@5.8.3)):
+  vee-validate@4.15.1(vue@3.5.24(typescript@5.9.3)):
     dependencies:
       '@vue/devtools-api': 7.7.9
       type-fest: 4.41.0
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
 
   vite-dev-rpc@1.1.0(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3)):
     dependencies:
@@ -17628,18 +17637,18 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-dts@4.5.4(@types/node@20.19.20)(rollup@4.60.0)(typescript@5.8.3)(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3)):
+  vite-plugin-dts@4.5.4(@types/node@20.19.20)(rollup@4.60.0)(typescript@5.9.3)(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3)):
     dependencies:
       '@microsoft/api-extractor': 7.57.7(@types/node@20.19.20)
       '@rollup/pluginutils': 5.3.0(rollup@4.60.0)
       '@volar/typescript': 2.4.28
-      '@vue/language-core': 2.2.0(typescript@5.8.3)
+      '@vue/language-core': 2.2.0(typescript@5.9.3)
       compare-versions: 6.1.1
       debug: 4.4.3
       kolorist: 1.8.0
       local-pkg: 1.1.2
       magic-string: 0.30.21
-      typescript: 5.8.3
+      typescript: 5.9.3
     optionalDependencies:
       vite: 7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3)
     transitivePeerDependencies:
@@ -17670,9 +17679,9 @@ snapshots:
     transitivePeerDependencies:
       - rollup
 
-  vite-plugin-vue-devtools@8.0.3(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.8.3)):
+  vite-plugin-vue-devtools@8.0.3(vite@7.2.2(@types/node@20.19.20)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.24(typescript@5.9.3)):
     dependencies:
-      '@vue/devtools-core': 8.1.1(vue@3.5.24(typescript@5.8.3))
+      '@vue/devtools-core': 8.1.1(vue@3.5.24(typescript@5.9.3))
       '@vue/devtools-kit': 8.1.1
       '@vue/devtools-shared': 8.1.1
       sirv: 3.0.2
@@ -17776,9 +17785,9 @@ snapshots:
 
   vue-component-type-helpers@2.2.12: {}
 
-  vue-demi@0.14.10(vue@3.5.24(typescript@5.8.3)):
+  vue-demi@0.14.10(vue@3.5.24(typescript@5.9.3)):
     dependencies:
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
 
   vue-eslint-parser@10.4.0(eslint@10.1.0(jiti@2.6.1)):
     dependencies:
@@ -17792,26 +17801,26 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vue-router@4.6.3(vue@3.5.24(typescript@5.8.3)):
+  vue-router@4.6.3(vue@3.5.24(typescript@5.9.3)):
     dependencies:
       '@vue/devtools-api': 6.6.4
-      vue: 3.5.24(typescript@5.8.3)
+      vue: 3.5.24(typescript@5.9.3)
 
-  vue-tsc@3.1.3(typescript@5.8.3):
+  vue-tsc@3.1.3(typescript@5.9.3):
     dependencies:
       '@volar/typescript': 2.4.23
-      '@vue/language-core': 3.1.3(typescript@5.8.3)
-      typescript: 5.8.3
+      '@vue/language-core': 3.1.3(typescript@5.9.3)
+      typescript: 5.9.3
 
-  vue@3.5.24(typescript@5.8.3):
+  vue@3.5.24(typescript@5.9.3):
     dependencies:
       '@vue/compiler-dom': 3.5.24
       '@vue/compiler-sfc': 3.5.24
       '@vue/runtime-dom': 3.5.24
-      '@vue/server-renderer': 3.5.24(vue@3.5.24(typescript@5.8.3))
+      '@vue/server-renderer': 3.5.24(vue@3.5.24(typescript@5.9.3))
       '@vue/shared': 3.5.24
     optionalDependencies:
-      typescript: 5.8.3
+      typescript: 5.9.3
 
   w3c-xmlserializer@5.0.0:
     dependencies:
