@@ -1,0 +1,75 @@
+{
+  "name": "redis-smq-ci",
+  "private": true,
+  "version": "10.0.0-next.1",
+  "description": "CLI tools for RedisSMQ",
+  "author": "Weyoss <weyoss@outlook.com>",
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "message queue",
+    "message-queue",
+    "job queue",
+    "job-queue",
+    "task queue",
+    "task-queue",
+    "rabbitmq",
+    "kafka",
+    "background jobs",
+    "background-jobs",
+    "delayed jobs",
+    "delayed-jobs",
+    "scheduled jobs",
+    "scheduled-jobs",
+    "dead letter",
+    "dead-letter",
+    "priority queue",
+    "priority-queue",
+    "worker"
+  ],
+  "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "type": "module",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types/index.d.ts"
+      ]
+    }
+  },
+  "peerDependencies": {},
+  "dependencies": {
+    "commander": "14.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "scripts/build.sh"
+  },
+  "bin": {
+    "redis-smq-ci": "./dist/esm/bin/cli.js"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
