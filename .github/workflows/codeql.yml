@@ -34,8 +34,12 @@ jobs:
         run: |
           npm install pnpm@10 -g
 
-      - name: Install dependencies and build packages
-        run: pnpm build:ca
+      - name: Install dependencies
+        run: pnpm install
+        continue-on-error: false
+
+      - name: Build workspaces
+        run: pnpm build
         continue-on-error: false
 
       - name: Initialize CodeQL

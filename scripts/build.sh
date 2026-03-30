@@ -47,9 +47,6 @@ build_project() {
       ;;
   esac
 
-  echo "Cleaning up all workspaces dist..."
-  pnpm -r exec rm -rf dist
-
   echo "Executing the build process across all workspaces..."
   pnpm -r build
 }

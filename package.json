@@ -42,10 +42,10 @@
     "vue-eslint-parser": "10.4.0"
   },
   "scripts": {
-    "build:cn": "scripts/build.sh none",
-    "build:cw": "scripts/build.sh workspaces",
-    "build:ca": "scripts/build.sh all",
-    "test:all": "scripts/test.sh",
+    "build": "scripts/build.sh none",
+    "build:clean": "scripts/build.sh all",
+    "build:clean:workspaces": "scripts/build.sh workspaces",
+    "test": "scripts/test.sh",
     "prepare": ".husky",
     "release:patch": "scripts/release.sh patch",
     "release:minor": "scripts/release.sh minor",
@@ -54,13 +54,13 @@
     "release:preminor": "scripts/release.sh preminor",
     "release:premajor": "scripts/release.sh premajor",
     "release:prerelease": "scripts/release.sh prerelease",
-    "document:all": "scripts/document.sh",
+    "docs": "scripts/document.sh",
     "lint": "scripts/lint.sh",
     "lint:all": "scripts/lint.sh --all",
     "redis:start": "scripts/redis.sh start",
     "redis:download": "scripts/redis.sh download",
     "redis:build": "scripts/redis.sh build",
-    "consolidate-changelog": "scripts/consolidate_changelog.sh"
+    "changelog": "scripts/consolidate_changelog.sh"
   },
   "lint-staged": {
     "*": "scripts/lint.sh"

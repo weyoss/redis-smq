@@ -9,4 +9,4 @@
 # in the root directory of this source tree.
 #
 
-pnpm exec redis-smq-ci consolidate-changelog --force --output-dir release-notes --verbose
+pnpm exec redis-smq-ci consolidate-changelog CHANGELOG.md --force --verbose --no-metadata --output-dir release-notes
