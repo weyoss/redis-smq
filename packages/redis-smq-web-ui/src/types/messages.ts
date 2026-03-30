@@ -53,3 +53,32 @@ export interface IMessageTypeConfig {
   requiresConfig: boolean;
   configEnabledProperty?: string;
 }
+
+export enum EMessageUnacknowledgementAction {
+  DEAD_LETTER,
+  REQUEUE,
+  DELAY,
+}
+
+export enum EMessageDeadLetterCause {
+  TTL_EXPIRED,
+  RETRY_THRESHOLD_EXCEEDED,
+  PERIODIC_MESSAGE,
+}
+
+export enum EMessageUnacknowledgementCause {
+  TIMEOUT,
+  CONSUME_ERROR,
+  UNACKNOWLEDGED,
+  OFFLINE_CONSUMER,
+  SHUTTING_DOWN,
+  TTL_EXPIRED,
+  QUEUE_STOPPED,
+  QUEUE_INVALID_STATE,
+  QUEUE_LOCKED,
+  MESSAGE_NOT_FOUND,
+  QUEUE_STATE_CHANGED,
+  QUEUE_NOT_FOUND,
+  UNEXPECTED_ERROR,
+  INVALID_HANDLER_SIGNATURE,
+}

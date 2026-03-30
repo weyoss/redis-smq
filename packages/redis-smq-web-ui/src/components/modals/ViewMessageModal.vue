@@ -10,12 +10,18 @@
 <script setup lang="ts">
 import { EExchangeType, EMessagePropertyStatus } from '@/types';
 import { computed, ref } from 'vue';
-import { formatDistanceToNow } from 'date-fns';
 import { formatDate } from '@/lib/format.ts';
 import DeleteMessageModal from '@/components/modals/DeleteMessageModal.vue';
 import RequeueMessageModal from '@/components/modals/RequeueMessageModal.vue';
 import BaseModal from './BaseModal.vue';
+import { useGetApiMessagesIdUnackHistory } from '@/api/generated/messages/messages';
 import type { IMessageTransferable } from '@/api/model';
+import { getErrorMessage } from '@/lib/error';
+import {
+  EMessageUnacknowledgementCause,
+  EMessageDeadLetterCause,
+  EMessageUnacknowledgementAction,
+} from '@/types';
 
 interface Props {
   message: IMessageTransferable | null;
@@ -31,66 +37,118 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isDeleting: false,
-  isRequeuing: false,
-  enableRequeue: false, // Default to false
+  enableRequeue: false,
 });
 
 const emit = defineEmits<Emits>();
 
 const activeTab = ref<
-  'overview' | 'body' | 'state' | 'scheduling' | 'timeline'
+  'overview' | 'body' | 'state' | 'scheduling' | 'timeline' | 'unack-history'
 >('overview');
 const showDeleteModal = ref(false);
 const showRequeueModal = ref(false);
 
+// Fetch unack history when message is available
+const {
+  data: unackHistoryData,
+  isLoading: isLoadingUnackHistory,
+  error: unackHistoryError,
+  refetch: refetchUnackHistory,
+} = useGetApiMessagesIdUnackHistory(
+  computed(() => props.message?.id || ''),
+  {
+    query: {
+      enabled: computed(
+        () => !!props.message?.id && activeTab.value === 'unack-history',
+      ),
+      staleTime: 1000 * 30,
+      refetchOnWindowFocus: false,
+    },
+  },
+);
+
+const unackHistory = computed(() => unackHistoryData.value?.data || []);
+const unackHistoryErrorMsg = computed(() =>
+  getErrorMessage(unackHistoryError.value),
+);
+
+function getUnackActionText(action: number): string {
+  switch (action) {
+    case EMessageUnacknowledgementAction.DEAD_LETTER:
+      return 'Dead-lettered';
+    case EMessageUnacknowledgementAction.REQUEUE:
+      return 'Requeued';
+    case EMessageUnacknowledgementAction.DELAY:
+      return 'Delayed';
+    default:
+      return `Unknown (${action})`;
+  }
+}
+
+function getUnackCauseText(cause: number): string {
+  const causeMap: Record<number, string> = {
+    [EMessageUnacknowledgementCause.TIMEOUT]: 'Consumer timeout',
+    [EMessageUnacknowledgementCause.CONSUME_ERROR]: 'Consumer error',
+    [EMessageUnacknowledgementCause.UNACKNOWLEDGED]:
+      'Unacknowledged by consumer',
+    [EMessageUnacknowledgementCause.OFFLINE_CONSUMER]: 'Consumer offline',
+    [EMessageUnacknowledgementCause.SHUTTING_DOWN]: 'System shutting down',
+    [EMessageUnacknowledgementCause.TTL_EXPIRED]: 'Message TTL expired',
+    [EMessageUnacknowledgementCause.QUEUE_STOPPED]: 'Queue stopped',
+    [EMessageUnacknowledgementCause.QUEUE_INVALID_STATE]:
+      'Queue in invalid state',
+    [EMessageUnacknowledgementCause.QUEUE_LOCKED]: 'Queue locked',
+    [EMessageUnacknowledgementCause.MESSAGE_NOT_FOUND]: 'Message not found',
+    [EMessageUnacknowledgementCause.QUEUE_STATE_CHANGED]: 'Queue state changed',
+    [EMessageUnacknowledgementCause.QUEUE_NOT_FOUND]: 'Queue not found',
+    [EMessageUnacknowledgementCause.UNEXPECTED_ERROR]: 'Unexpected error',
+    [EMessageUnacknowledgementCause.INVALID_HANDLER_SIGNATURE]:
+      'Invalid handler signature',
+  };
+  return causeMap[cause] || `Unknown cause (${cause})`;
+}
+
+function getDeadLetterCauseText(cause: number): string {
+  const causeMap: Record<number, string> = {
+    [EMessageDeadLetterCause.TTL_EXPIRED]: 'TTL expired',
+    [EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED]:
+      'Retry threshold exceeded',
+    [EMessageDeadLetterCause.PERIODIC_MESSAGE]: 'Periodic message',
+  };
+  return causeMap[cause] || `Unknown cause (${cause})`;
+}
+
 // Computed properties for formatted data
 const formattedCreatedAt = computed(() => {
-  if (!props.message?.createdAt) return 'N/A';
-  const date = new Date(props.message.createdAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.createdAt);
 });
 
 const formattedPublishedAt = computed(() => {
-  if (!props.message?.messageState.publishedAt) return 'Not published';
-  const date = new Date(props.message.messageState.publishedAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.publishedAt);
 });
 
 const formattedScheduledAt = computed(() => {
-  if (!props.message?.messageState.scheduledAt) return 'Not scheduled';
-  const date = new Date(props.message.messageState.scheduledAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.scheduledAt);
 });
 
 const formattedLastRetriedAt = computed(() => {
-  if (!props.message?.messageState.lastRetriedAttemptAt) return 'Never';
-  const date = new Date(props.message.messageState.lastRetriedAttemptAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.lastRetriedAttemptAt);
 });
 
 const formattedProcessingStartedAt = computed(() => {
-  if (!props.message?.messageState.processingStartedAt) return 'N/A';
-  const date = new Date(props.message.messageState.processingStartedAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.processingStartedAt);
 });
 
 const formattedAcknowledgedAt = computed(() => {
-  if (!props.message?.messageState.acknowledgedAt) return 'N/A';
-  const date = new Date(props.message.messageState.acknowledgedAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.acknowledgedAt);
 });
 
 const formattedDeadLetteredAt = computed(() => {
-  if (!props.message?.messageState.deadLetteredAt) return 'N/A';
-  const date = new Date(props.message.messageState.deadLetteredAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.deadLetteredAt);
 });
 
 const formattedLastRequeuedAt = computed(() => {
-  if (!props.message?.messageState.lastRequeuedAt) return 'Never';
-  const date = new Date(props.message.messageState.lastRequeuedAt);
-  return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
+  return formatDate(props.message?.messageState.lastRequeuedAt);
 });
 
 const statusBadgeClass = computed(() => {
@@ -253,15 +311,13 @@ const timelineEvents = computed(() => {
 });
 
 function handleClose(): void {
-  if (isActionInProgress.value) return; // Prevent closing during actions
+  if (isActionInProgress.value) return;
   emit('close');
   emit('update:show', false);
 }
 
 function copyToClipboard(text: string): void {
-  navigator.clipboard.writeText(text).then(() => {
-    // Optional: add a toast here
-  });
+  navigator.clipboard.writeText(text);
 }
 
 function handleDeleteSuccess(): void {
@@ -291,16 +347,16 @@ function handleRequeueSuccess(): void {
     <template #body>
       <div class="vm-body">
         <!-- Status Bar -->
-        <div class="status-bar">
-          <div class="status-info">
+        <div class="status-bar p-3 border rounded-2 bg-light">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
             <span :class="statusBadgeClass">{{ statusText }}</span>
             <span class="text-muted ms-3">
               <i class="bi bi-clock me-1"></i>
               {{ formattedCreatedAt }}
             </span>
           </div>
-          <div v-if="message" class="queue-info">
-            <span class="badge bg-light text-dark">
+          <div v-if="message" class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark border">
               <i class="bi bi-collection me-1"></i>
               {{ message.destinationQueue.name }}@{{
                 message.destinationQueue.ns
@@ -310,7 +366,7 @@ function handleRequeueSuccess(): void {
         </div>
 
         <!-- Tabs -->
-        <div class="modal-tabs">
+        <div class="modal-tabs mb-3">
           <button
             class="tab-button"
             :class="{ active: activeTab === 'overview' }"
@@ -356,6 +412,15 @@ function handleRequeueSuccess(): void {
             <i class="bi bi-clock-history me-2"></i>
             Timeline
           </button>
+          <button
+            class="tab-button"
+            :class="{ active: activeTab === 'unack-history' }"
+            :disabled="isActionInProgress"
+            @click="activeTab = 'unack-history'"
+          >
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Unack History
+          </button>
         </div>
 
         <!-- Tab Content -->
@@ -364,7 +429,10 @@ function handleRequeueSuccess(): void {
           <div v-if="activeTab === 'overview'" class="tab-content">
             <div class="info-grid">
               <div class="info-section">
-                <h6 class="section-title">Basic Information</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-info-circle me-2"></i>
+                  Basic Information
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Status:</span>
@@ -388,7 +456,10 @@ function handleRequeueSuccess(): void {
               </div>
 
               <div class="info-section">
-                <h6 class="section-title">Retry Configuration</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-arrow-repeat me-2"></i>
+                  Retry Configuration
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Retry Threshold:</span>
@@ -422,7 +493,10 @@ function handleRequeueSuccess(): void {
               </div>
 
               <div v-if="message?.exchange" class="info-section">
-                <h6 class="section-title">Exchange Information</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-diagram-3 me-2"></i>
+                  Exchange Information
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Exchange Params:</span>
@@ -442,7 +516,10 @@ function handleRequeueSuccess(): void {
               </div>
 
               <div v-if="message?.queue" class="info-section">
-                <h6 class="section-title">Queue Information</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-box me-2"></i>
+                  Queue Information
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Queue Params:</span>
@@ -461,7 +538,10 @@ function handleRequeueSuccess(): void {
               <div
                 class="d-flex justify-content-between align-items-center mb-3"
               >
-                <h6 class="section-title mb-0">Message Body</h6>
+                <h6 class="section-title mb-0">
+                  <i class="bi bi-file-text me-2"></i>
+                  Message Body
+                </h6>
                 <button
                   class="btn btn-sm btn-outline-primary"
                   :disabled="isActionInProgress"
@@ -479,7 +559,10 @@ function handleRequeueSuccess(): void {
           <div v-if="activeTab === 'state'" class="tab-content">
             <div class="info-grid">
               <div class="info-section">
-                <h6 class="section-title">Message State</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-gear me-2"></i>
+                  Message State
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">UUID:</span>
@@ -514,7 +597,10 @@ function handleRequeueSuccess(): void {
               </div>
 
               <div class="info-section">
-                <h6 class="section-title">Timing Information</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-clock me-2"></i>
+                  Timing Information
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Processing Started At:</span>
@@ -559,7 +645,10 @@ function handleRequeueSuccess(): void {
           <div v-if="activeTab === 'scheduling'" class="tab-content">
             <div class="info-grid">
               <div class="info-section">
-                <h6 class="section-title">Schedule Configuration</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-calendar me-2"></i>
+                  Schedule Configuration
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Scheduled At:</span>
@@ -600,7 +689,10 @@ function handleRequeueSuccess(): void {
               </div>
 
               <div class="info-section">
-                <h6 class="section-title">Repeat Configuration</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-arrow-repeat me-2"></i>
+                  Repeat Configuration
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Repeat Period:</span>
@@ -643,7 +735,10 @@ function handleRequeueSuccess(): void {
                 v-if="message?.messageState.scheduledMessageParentId"
                 class="info-section"
               >
-                <h6 class="section-title">Scheduled Message Reference</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-link me-2"></i>
+                  Scheduled Message Reference
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Scheduled Message Parent ID:</span>
@@ -671,7 +766,10 @@ function handleRequeueSuccess(): void {
                 v-if="message?.messageState.requeuedMessageParentId"
                 class="info-section"
               >
-                <h6 class="section-title">Requeued Message Reference</h6>
+                <h6 class="section-title">
+                  <i class="bi bi-link me-2"></i>
+                  Requeued Message Reference
+                </h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Requeued Message Parent ID:</span>
@@ -698,7 +796,7 @@ function handleRequeueSuccess(): void {
           </div>
 
           <!-- Timeline Tab -->
-          <div v-if="activeTab === 'timeline'" class="timeline-section">
+          <div v-if="activeTab === 'timeline'" class="tab-content">
             <ul class="timeline">
               <li
                 v-for="event in timelineEvents"
@@ -717,13 +815,128 @@ function handleRequeueSuccess(): void {
               </li>
             </ul>
           </div>
+
+          <!-- Unack History Tab -->
+          <div v-if="activeTab === 'unack-history'" class="tab-content">
+            <!-- Loading State -->
+            <div v-if="isLoadingUnackHistory" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading unack history...</span>
+              </div>
+              <p class="mt-2 text-muted">
+                Loading unacknowledgement history...
+              </p>
+            </div>
+
+            <!-- Error State -->
+            <div v-else-if="unackHistoryErrorMsg" class="text-center py-4">
+              <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+              <p class="mt-2 text-danger">{{ unackHistoryErrorMsg.message }}</p>
+              <button
+                class="btn btn-sm btn-outline-primary mt-2"
+                @click="() => refetchUnackHistory()"
+              >
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Retry
+              </button>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else-if="!unackHistory?.length" class="text-center py-4">
+              <i class="bi bi-inbox fs-1 text-muted"></i>
+              <p class="mt-2 text-muted">
+                No unacknowledgement history found for this message.
+              </p>
+            </div>
+
+            <!-- Unack History List -->
+            <div
+              v-else
+              class="d-flex flex-column gap-3"
+              style="max-height: 500px; overflow-y: auto"
+            >
+              <div
+                v-for="(entry, index) in unackHistory"
+                :key="index"
+                class="border rounded-3 p-3 bg-light"
+              >
+                <div
+                  class="d-flex align-items-center gap-3 pb-2 mb-2 border-bottom"
+                >
+                  <span class="fw-bold text-secondary">#{{ index + 1 }}</span>
+                  <span
+                    class="badge"
+                    :class="{
+                      'bg-warning text-dark': entry.action === 2,
+                      'bg-info': entry.action === 1,
+                      'bg-danger': entry.action === 0,
+                    }"
+                  >
+                    {{ getUnackActionText(entry.action) }}
+                  </span>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                  <div class="d-flex align-items-start gap-2">
+                    <span
+                      class="fw-semibold text-secondary"
+                      style="min-width: 110px"
+                      >Consumer ID:</span
+                    >
+                    <span
+                      class="font-monospace small bg-white px-2 py-1 rounded border"
+                      >{{ entry.consumerId }}</span
+                    >
+                  </div>
+                  <div class="d-flex align-items-start gap-2">
+                    <span
+                      class="fw-semibold text-secondary"
+                      style="min-width: 110px"
+                      >Retry Count:</span
+                    >
+                    <span>{{ entry.retryCount }}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-2">
+                    <span
+                      class="fw-semibold text-secondary"
+                      style="min-width: 110px"
+                      >Timestamp:</span
+                    >
+                    <span>{{ formatDate(entry.timestamp) }}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-2">
+                    <span
+                      class="fw-semibold text-secondary"
+                      style="min-width: 110px"
+                      >Cause:</span
+                    >
+                    <span>{{ getUnackCauseText(entry.cause) }}</span>
+                  </div>
+                  <div
+                    v-if="entry.deadLetterCause !== undefined"
+                    class="d-flex align-items-start gap-2"
+                  >
+                    <span
+                      class="fw-semibold text-secondary"
+                      style="min-width: 110px"
+                      >Dead Letter Cause:</span
+                    >
+                    <span>{{
+                      getDeadLetterCauseText(entry.deadLetterCause)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </template>
 
     <template #footer>
-      <div class="footer-actions">
-        <!-- Requeue Button (only for dead-lettered messages when requeue is enabled) -->
+      <div
+        class="d-flex align-items-center justify-content-end gap-2 flex-wrap"
+      >
+        <!-- Requeue Button (only when requeue is enabled) -->
         <button
           v-if="enableRequeue"
           type="button"
@@ -731,14 +944,8 @@ function handleRequeueSuccess(): void {
           :disabled="isActionInProgress"
           @click="showRequeueModal = true"
         >
-          <template v-if="showRequeueModal">
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            Requeuing...
-          </template>
-          <template v-else>
-            <i class="bi bi-arrow-clockwise me-2"></i>
-            Requeue Message
-          </template>
+          <i class="bi bi-arrow-clockwise me-2"></i>
+          Requeue Message
         </button>
 
         <!-- Delete Button -->
@@ -783,17 +990,16 @@ function handleRequeueSuccess(): void {
 </template>
 
 <style scoped>
-/* Wrapper inside BaseModal body: ensure safe overflow and spacing harmony with BaseModal */
+/* Wrapper inside BaseModal body */
 .vm-body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  overflow-x: hidden; /* guard against horizontal scroll on mobile */
+  overflow-x: hidden;
 }
 
 /* Status Bar */
 .status-bar {
-  padding: 0.75rem 1rem;
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
@@ -801,24 +1007,15 @@ function handleRequeueSuccess(): void {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
 }
 
-.status-info,
-.queue-info {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* Navigation Tabs */
+/* Navigation Tabs - Custom component */
 .modal-tabs {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   width: 100%;
   overflow: hidden;
 }
@@ -832,12 +1029,8 @@ function handleRequeueSuccess(): void {
   font-weight: 500;
   color: #6c757d;
   border-bottom: 3px solid transparent;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  align-items: center;
 }
 
 .tab-button:hover:not(:disabled) {
@@ -851,11 +1044,7 @@ function handleRequeueSuccess(): void {
   background: #ffffff;
 }
 
-/* Panels */
-.tab-panels {
-  display: block;
-}
-
+/* Tab Content Animation */
 .tab-content {
   animation: fadeIn 0.2s ease;
 }
@@ -871,27 +1060,12 @@ function handleRequeueSuccess(): void {
   }
 }
 
-/* Information Layout */
-.info-grid {
-  display: grid;
-  gap: 1rem;
-}
-
+/* Info Section */
 .info-section {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 1rem;
   border: 1px solid #e9ecef;
-}
-
-.section-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #495057;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .info-items {
@@ -926,14 +1100,7 @@ function handleRequeueSuccess(): void {
   word-break: break-word;
 }
 
-/* Message Body Display */
-.body-section {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid #e9ecef;
-}
-
+/* Message Body */
 .message-body {
   background: #ffffff;
   border: 1px solid #e9ecef;
@@ -955,11 +1122,7 @@ function handleRequeueSuccess(): void {
   font-size: inherit;
 }
 
-/* Timeline styles */
-.timeline-section {
-  padding: 0.5rem 0;
-}
-
+/* Timeline Styles */
 .timeline {
   list-style: none;
   padding: 0;
@@ -1035,158 +1198,17 @@ function handleRequeueSuccess(): void {
   margin: 0;
 }
 
-/* Footer expect BaseModal to align content horizontally by default */
-.footer-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap; /* allow wrapping instead of overflow */
-  gap: 0.75rem; /* primary spacing between buttons */
-}
-
-/* Button Styles (inherited elsewhere; keep local hover transforms reduced for mobile) */
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 500;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.btn-secondary {
-  background: #6c757d;
-  border-color: #6c757d;
-  color: #ffffff;
-}
-.btn-secondary:hover:not(:disabled) {
-  background: #5c636a;
-  border-color: #565e64;
-  transform: translateY(-1px);
-}
-.btn-danger {
-  background: #dc3545;
-  border-color: #dc3545;
-  color: #ffffff;
-}
-.btn-danger:hover:not(:disabled) {
-  background: #c82333;
-  border-color: #bd2130;
-  transform: translateY(-1px);
-}
-.btn-warning {
-  background: #ffc107;
-  border-color: #ffc107;
-  color: #212529;
-}
-.btn-warning:hover:not(:disabled) {
-  background: #e0a800;
-  border-color: #d39e00;
-  transform: translateY(-1px);
-}
-.btn-outline-secondary {
-  background: transparent;
-  border-color: #6c757d;
-  color: #6c757d;
-}
-.btn-outline-secondary:hover:not(:disabled) {
-  background: #6c757d;
-  color: #ffffff;
-}
-.btn-outline-primary {
-  background: transparent;
-  border-color: #0d6efd;
-  color: #0d6efd;
-}
-.btn-outline-primary:hover:not(:disabled) {
-  background: #0d6efd;
-  color: #ffffff;
-}
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8125rem;
-}
-
-/* Utilities */
-.spinner-border {
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  vertical-align: -0.125em;
-  border: 0.125em solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spinner-border 0.75s linear infinite;
-}
-.spinner-border-sm {
-  width: 0.875rem;
-  height: 0.875rem;
-  border-width: 0.125em;
-}
-@keyframes spinner-border {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.badge {
-  display: inline-block;
-  padding: 0.25em 0.4em;
-  font-size: 0.75em;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-  border-radius: 0.25rem;
-}
-.bg-secondary {
-  background-color: #6c757d !important;
-  color: #ffffff;
-}
-.bg-success {
-  background-color: #198754 !important;
-  color: #ffffff;
-}
-.bg-danger {
-  background-color: #dc3545 !important;
-  color: #ffffff;
-}
-.bg-light {
-  background-color: #f8f9fa !important;
-  color: #212529;
-}
-.text-dark {
-  color: #212529 !important;
-}
-.text-muted {
-  color: #6c757d !important;
-}
-
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
-  .status-bar {
-    padding: 0.75rem;
-    gap: 0.5rem;
-  }
-
   .modal-tabs {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    overflow-x: auto;
   }
 
   .tab-button {
     padding: 0.75rem 0.75rem;
     font-size: 0.82rem;
-  }
-
-  .info-section {
-    padding: 0.875rem;
+    white-space: nowrap;
   }
 
   .info-item {
@@ -1198,86 +1220,63 @@ function handleRequeueSuccess(): void {
   .info-value {
     text-align: left;
   }
-
-  .footer-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .footer-actions .btn {
-    flex: 1 1 auto;
-  }
 }
 
 @media (max-width: 576px) {
-  .body-section {
-    padding: 0.75rem;
-  }
-
   .message-body {
-    max-height: 45vh; /* more room on small screens */
+    max-height: 45vh;
   }
 
-  .footer-actions {
-    flex-direction: column;
+  .timeline::before {
+    left: 16px;
   }
 
-  .footer-actions .btn {
-    width: 100%;
-    justify-content: center;
+  .timeline-marker {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .timeline-content {
+    margin-left: 1rem;
   }
 }
 
-/* Accessibility, High Contrast and Dark Mode parity with BaseModal */
-@media (prefers-reduced-motion: reduce) {
-  .tab-content,
-  .btn,
-  .tab-button {
-    transition: none;
-    animation: none;
-  }
-  .spinner-border {
-    animation: none;
-  }
-}
-
-@media (prefers-contrast: more) {
-  .info-item {
-    border-bottom-width: 2px;
-  }
-  .badge {
-    border: 1px solid currentColor;
-  }
-}
-
+/* Dark mode */
 @media (prefers-color-scheme: dark) {
   .status-bar,
-  .modal-tabs {
+  .modal-tabs,
+  .info-section {
     background: #2d2d2d;
     border-color: #404040;
   }
-  .info-section,
-  .body-section {
-    background: #2d2d2d;
-    border-color: #404040;
-  }
+
   .message-body {
     background: #1a1a1a;
     border-color: #404040;
     color: #ffffff;
   }
+
   .tab-button.active {
     background: #1a1a1a;
   }
-  .text-muted {
-    color: #a0a0a0 !important;
+
+  .timeline-marker {
+    background: #2d2d2d;
+    border-color: #404040;
   }
-  .info-label {
-    color: #a0a0a0;
+
+  .timeline::before {
+    background: #404040;
   }
-  .info-value {
-    color: #ffffff;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .tab-content,
+  .tab-button {
+    transition: none;
+    animation: none;
   }
 }
 </style>
