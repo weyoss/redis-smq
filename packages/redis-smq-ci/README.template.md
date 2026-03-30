@@ -1,7 +1,5 @@
 # RedisSMQ CI
 
-__NPM_BADGE__
-
 __IS_NEXT_NOTE__
 
 CLI tools for RedisSMQ - Utilities for continuous integration and release management.
