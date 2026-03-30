@@ -7,46 +7,47 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { MessageManager, Producer, ProducibleMessage } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
 
 export class MessagesService {
   protected messageManager;
   protected producer;
 
   constructor(messageManager: MessageManager, producer: Producer) {
-    this.messageManager = promisifyAll(messageManager);
-    this.producer = promisifyAll(producer);
+    this.messageManager = messageManager;
+    this.producer = producer;
   }
 
   async getMessagesByIds(messageIds: string[]) {
-    return this.messageManager.getMessagesByIdsAsync(messageIds);
+    return this.messageManager.getMessagesByIds(messageIds);
   }
 
   async getMessageById(messageId: string) {
-    return this.messageManager.getMessageByIdAsync(messageId);
+    return this.messageManager.getMessageById(messageId);
   }
 
   async requeueMessageById(messageId: string) {
-    return this.messageManager.requeueMessageByIdAsync(messageId);
+    return this.messageManager.requeueMessageById(messageId);
   }
 
   async deleteMessageById(messageId: string) {
-    return this.messageManager.deleteMessageByIdAsync(messageId);
+    return this.messageManager.deleteMessageById(messageId);
   }
 
   async deleteMessagesByIds(messageIds: string[]) {
-    return this.messageManager.deleteMessagesByIdsAsync(messageIds);
+    return this.messageManager.deleteMessagesByIds(messageIds);
   }
 
   async getMessageStatus(messageId: string) {
-    return this.messageManager.getMessageStatusAsync(messageId);
+    return this.messageManager.getMessageStatus(messageId);
+  }
+
+  async getMessageUnacknowledgementHistory(messageId: string) {
+    return this.messageManager.getMessageUnacknowledgementHistory(messageId);
   }
 
   async publishMessage(message: ProducibleMessage) {
-    await this.producer.runAsync();
-    return this.producer.produceAsync(message);
+    await this.producer.run();
+    return this.producer.produce(message);
   }
 }

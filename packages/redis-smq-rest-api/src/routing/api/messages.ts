@@ -19,6 +19,7 @@ import { getMessagesByIdsController } from '../../controllers/message/getMessage
 import { getMessageStatusController } from '../../controllers/message/getMessageStatusController.js';
 import { publishMessageController } from '../../controllers/message/publishMessageController.js';
 import { requeueMessageByIdController } from '../../controllers/message/requeueMessageByIdController.js';
+import { getMessageUnacknowledgementHistoryController } from '../../controllers/message/getMessageUnacknowledgementHistoryController.js';
 
 export const messages: TRouterResourceMap = {
   path: 'messages',
@@ -72,6 +73,16 @@ export const messages: TRouterResourceMap = {
           resource: [
             {
               handler: getMessageStatusController,
+              method: ERequestMethod.GET,
+              payload: [ERequestPayload.PATH],
+            },
+          ],
+        },
+        {
+          path: 'unack-history',
+          resource: [
+            {
+              handler: getMessageUnacknowledgementHistoryController,
               method: ERequestMethod.GET,
               payload: [ERequestPayload.PATH],
             },
