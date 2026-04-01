@@ -8,7 +8,7 @@
  */
 
 import { async, createLogger, ICallback, ILogger } from 'redis-smq-common';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';

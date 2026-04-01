@@ -17,8 +17,8 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { IHeartbeatPayload, TConsumerEvent } from '../common/index.js';
-import { Configuration } from '../config/index.js';
+import { IHeartbeatPayload } from '../common/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import {
   IQueueParsedParams,
@@ -40,6 +40,7 @@ import {
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
+import { TConsumerEvent } from '../event-bus/types/index.js';
 
 /**
  * Consumer class responsible for receiving and processing messages from message queues.

@@ -14,7 +14,7 @@ import {
   ICallback,
 } from 'redis-smq-common';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _deleteQueue } from '../queue-manager/_/_delete-queue.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import {

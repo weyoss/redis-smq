@@ -16,7 +16,7 @@ import {
   Runnable,
   WorkerCluster,
 } from 'redis-smq-common';
-import { Configuration } from '../../config/index.js';
+import { Configuration } from '../../config-manager/configuration.js';
 import { RedisConnectionPool } from '../redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/types/connection-pool.js';
 import path from 'path';

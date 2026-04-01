@@ -19,7 +19,7 @@ consumer.run((err) => {
 
 ## Extends
 
-- `Runnable`\<[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\>
+- `Runnable`\<`TConsumerEvent`\>
 
 ## Constructors
 
@@ -482,7 +482,7 @@ await consumer.consume(
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` _extends_ keyof `TConsumerEvent`
 
 #### Parameters
 
@@ -492,7 +492,7 @@ await consumer.consume(
 
 ##### args
 
-...`Parameters`\<[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]\>
+...`Parameters`\<`TConsumerEvent`\[`E`\]\>
 
 #### Returns
 
@@ -728,7 +728,7 @@ console.log(queuesWithStatus);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` _extends_ keyof `TConsumerEvent`
 
 #### Parameters
 
@@ -738,7 +738,7 @@ console.log(queuesWithStatus);
 
 ##### listener
 
-[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]
+`TConsumerEvent`\[`E`\]
 
 #### Returns
 
@@ -758,7 +758,7 @@ console.log(queuesWithStatus);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` _extends_ keyof `TConsumerEvent`
 
 #### Parameters
 
@@ -768,7 +768,7 @@ console.log(queuesWithStatus);
 
 ##### listener
 
-[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]
+`TConsumerEvent`\[`E`\]
 
 #### Returns
 
@@ -788,7 +788,7 @@ console.log(queuesWithStatus);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` _extends_ keyof `TConsumerEvent`
 
 #### Parameters
 
@@ -814,7 +814,7 @@ console.log(queuesWithStatus);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` _extends_ keyof `TConsumerEvent`
 
 #### Parameters
 
@@ -824,7 +824,7 @@ console.log(queuesWithStatus);
 
 ##### listener
 
-[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]
+`TConsumerEvent`\[`E`\]
 
 #### Returns
 

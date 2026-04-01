@@ -18,7 +18,7 @@ import {
   IMessageBrowser,
 } from './message-browser/types/index.js';
 import { EBackgroundJobStatus } from '../common/index.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { TPurgeQueueJob } from '../common/background-jobs/jobs/purge-queue/types/index.js';

@@ -27,7 +27,7 @@ process.on('message', function (payload: unknown) {
     config: IRedisSMQParsedConfig;
     consumerOptions: IConsumerParsedOptions;
   } = JSON.parse(String(payload));
-  RedisSMQ.initializeWithConfig(config, (err) => {
+  RedisSMQ.initialize(config.redis, (err) => {
     if (err) throw err;
     const defaultQueue = getDefaultQueue();
     const producer = new Producer();

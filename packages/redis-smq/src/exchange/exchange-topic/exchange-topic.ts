@@ -25,7 +25,7 @@ import {
   EExchangeType,
   IExchangeParams,
 } from '../index.js';
-import { Configuration } from '../../config/index.js';
+import { Configuration } from '../../config-manager/configuration.js';
 import { _getRoutingPatterns } from './_/_get-routing-patterns.js';
 import { _getRoutingPatternBoundQueues } from './_/_get-routing-pattern-bound-queues.js';
 import { _parseExchangeParams } from '../_/_parse-exchange-params.js';

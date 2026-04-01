@@ -11,7 +11,6 @@ import { fork } from 'child_process';
 import path from 'path';
 import { env, ICallback } from 'redis-smq-common';
 import {
-  Configuration,
   Consumer,
   EMessagePriority,
   EQueueDeliveryModel,
@@ -28,6 +27,7 @@ import {
 } from './events.js';
 import { getProducer } from './producer.js';
 import { getQueueManager } from './queue-manager.js';
+import { Configuration } from '../../src/config-manager/configuration.js';
 
 export function getDefaultQueue() {
   return {

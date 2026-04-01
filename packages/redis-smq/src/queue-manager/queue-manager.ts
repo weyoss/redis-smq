@@ -10,7 +10,7 @@
 import { async, createLogger, ICallback } from 'redis-smq-common';
 import { ERedisScriptName } from '../common/redis/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueConsumerIds } from './_/_get-queue-consumer-ids.js';
 import { _getQueueConsumers } from './_/_get-queue-consumers.js';

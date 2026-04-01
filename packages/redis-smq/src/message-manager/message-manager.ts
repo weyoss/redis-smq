@@ -13,7 +13,7 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _deleteMessage } from './_/_delete-message.js';
 import { _getMessageState } from './_/_get-message-state.js';
 import { _getMessageStatus } from './_/_get-message-status.js';

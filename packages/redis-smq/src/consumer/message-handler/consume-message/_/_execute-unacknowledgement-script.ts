@@ -28,7 +28,7 @@ import {
   QueueStoppedError,
   UnexpectedScriptReplyError,
 } from '../../../../errors/index.js';
-import { Configuration } from '../../../../config/index.js';
+import { Configuration } from '../../../../config-manager/configuration.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,

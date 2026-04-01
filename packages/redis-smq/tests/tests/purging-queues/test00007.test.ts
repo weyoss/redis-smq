@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { env } from 'redis-smq-common';
-import { Configuration, QueueManager } from '../../../src/index.js';
+import { QueueManager } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
@@ -20,6 +20,7 @@ import { resolve } from 'path';
 import esmock from 'esmock';
 import bluebird from 'bluebird';
 import { RedisConnectionPool } from '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
+import { Configuration } from '../../../src/config-manager/configuration.js';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   const defaultQueue = getDefaultQueue();
@@ -45,7 +46,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   );
   const path3 = resolve(
     env.getCurrentDir(),
-    '../../../src/config/configuration.js',
+    '../../../src/config-manager/configuration.js',
   );
   const path4 = resolve(
     env.getCurrentDir(),

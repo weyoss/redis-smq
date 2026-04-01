@@ -13,7 +13,7 @@ import {
   InvalidMessageAuditHistorySizeError,
   InvalidMessageAuditQueueSizeError,
 } from '../../../src/errors/index.js';
-import { parseMessageAuditConfig } from '../../../src/config/parse-message-audit-config.js';
+import { parseMessageAuditConfig } from '../../../src/config-manager/parse-message-audit-config.js';
 
 test('Configuration: message audit', async () => {
   expect(() => {

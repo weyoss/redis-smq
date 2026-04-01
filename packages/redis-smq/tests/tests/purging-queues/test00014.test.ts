@@ -9,7 +9,6 @@
 
 import bluebird from 'bluebird';
 import { expect, test } from 'vitest';
-import { Configuration } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -18,10 +17,11 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { AcknowledgmentAuditDisabledError } from '../../../src/errors/index.js';
+import { ConfigManager } from '../../../src/index.js';
 
 test('Combined test: Disable message audit, produce and acknowledge a message, and purge queue', async () => {
-  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfig({
+  const configManager = new ConfigManager();
+  await configManager.updateConfig({
     messageAudit: false,
   });
 

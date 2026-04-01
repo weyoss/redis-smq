@@ -15,9 +15,9 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
+import { TConsumerDequeueMessageEvent } from '../../../event-bus/types/index.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
-import { IRedisSMQParsedConfig } from '../../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../../config-manager/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
 import {

@@ -15,7 +15,7 @@ import {
 } from 'redis-smq-common';
 import { ERedisScriptName } from '../common/redis/scripts.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
 import {
   EQueueOperationalState,

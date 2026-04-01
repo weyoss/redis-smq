@@ -12,12 +12,20 @@ import {
   IQueueParams,
   IQueueParsedParams,
   IQueueProperties,
+  IRedisSMQParsedConfig,
 } from '../../index.js';
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementCause,
-} from '../../consumer/message-handler/consume-message/types/index.js';
+} from '../../consumer/index.js';
 import { IQueueStateTransition } from '../../queue-state-manager/index.js';
+
+export type TConfigurationEvent = {
+  'configuration.updated': (
+    config: IRedisSMQParsedConfig,
+    version: number,
+  ) => void;
+};
 
 export type TConsumerHeartbeatEvent = {
   'consumerHeartbeat.heartbeat': (
@@ -138,6 +146,7 @@ export type TEventBusEvent = {
 };
 
 export type TRedisSMQEvent = TEventBusEvent &
+  TConfigurationEvent &
   TConsumerEvent &
   TConsumerHeartbeatEvent &
   TConsumerMessageHandlerRunnerEvent &

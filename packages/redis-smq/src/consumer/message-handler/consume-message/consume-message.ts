@@ -19,9 +19,9 @@ import {
   IRedisClient,
   Runnable,
 } from 'redis-smq-common';
-import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
+import { TConsumerConsumeMessageEvent } from '../../../event-bus/types/index.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
-import { IRedisSMQParsedConfig } from '../../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../../config-manager/index.js';
 import { IMessageTransferable } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';

@@ -30,7 +30,7 @@
 
 ## Classes
 
-- [Configuration](classes/Configuration.md)
+- [ConfigManager](classes/ConfigManager.md)
 - [Consumer](classes/Consumer.md)
 - [ConsumerGroups](classes/ConsumerGroups.md)
 - [EventBus](classes/EventBus.md)
@@ -93,17 +93,10 @@
 ## Type Aliases
 
 - [EQueueStateTransitionReason](type-aliases/EQueueStateTransitionReason.md)
-- [TConsumerConsumeMessageEvent](type-aliases/TConsumerConsumeMessageEvent.md)
-- [TConsumerDequeueMessageEvent](type-aliases/TConsumerDequeueMessageEvent.md)
-- [TConsumerEvent](type-aliases/TConsumerEvent.md)
-- [TConsumerHeartbeatEvent](type-aliases/TConsumerHeartbeatEvent.md)
 - [TConsumerMessageHandler](type-aliases/TConsumerMessageHandler.md)
 - [TConsumerMessageHandlerCallback](type-aliases/TConsumerMessageHandlerCallback.md)
-- [TConsumerMessageHandlerEvent](type-aliases/TConsumerMessageHandlerEvent.md)
 - [TConsumerMessageHandlerFn](type-aliases/TConsumerMessageHandlerFn.md)
 - [TConsumerMessageHandlerPromise](type-aliases/TConsumerMessageHandlerPromise.md)
-- [TConsumerMessageHandlerRunnerEvent](type-aliases/TConsumerMessageHandlerRunnerEvent.md)
-- [TEventBusEvent](type-aliases/TEventBusEvent.md)
 - [TMessageConsumeOptions](type-aliases/TMessageConsumeOptions.md)
 - [TMessageDeleteRawResponse](type-aliases/TMessageDeleteRawResponse.md)
 - [TMessageDeleteStatus](type-aliases/TMessageDeleteStatus.md)
@@ -112,26 +105,18 @@
 - [TMessageStatePropertyType](type-aliases/TMessageStatePropertyType.md)
 - [TMessageUnacknowledgementHistory](type-aliases/TMessageUnacknowledgementHistory.md)
 - [TOperationBitmask](type-aliases/TOperationBitmask.md)
-- [TProducerEvent](type-aliases/TProducerEvent.md)
 - [TPurgeQueueJob](type-aliases/TPurgeQueueJob.md)
 - [TPurgeQueueJobMeta](type-aliases/TPurgeQueueJobMeta.md)
 - [TPurgeQueueJobPayload](type-aliases/TPurgeQueueJobPayload.md)
 - [TQueueConsumer](type-aliases/TQueueConsumer.md)
-- [TQueueEvent](type-aliases/TQueueEvent.md)
 - [TQueueExtendedParams](type-aliases/TQueueExtendedParams.md)
 - [TQueueStateTransitionOptions](type-aliases/TQueueStateTransitionOptions.md)
 - [TQueueStateTransitionUserOptions](type-aliases/TQueueStateTransitionUserOptions.md)
-- [TRedisSMQEvent](type-aliases/TRedisSMQEvent.md)
 - [TUnacknowledgementBatch](type-aliases/TUnacknowledgementBatch.md)
 - [TUnacknowledgementResolution](type-aliases/TUnacknowledgementResolution.md)
 - [TUnacknowledgementResult](type-aliases/TUnacknowledgementResult.md)
 
 ## Variables
 
-- [defaultConfig](variables/defaultConfig.md)
 - [MessageStatePropertyMap](variables/MessageStatePropertyMap.md)
 - [OperationBitmask](variables/OperationBitmask.md)
-
-## Functions
-
-- [parseConfig](functions/parseConfig.md)

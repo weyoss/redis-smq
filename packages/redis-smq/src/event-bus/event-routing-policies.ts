@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { EEventTarget, TEventRoutingPolicy } from './types/index.js';
+import { EEventTarget, TEventRoutingPolicy } from './types/event-bus.js';
 
 /**
  * Event routing policies
@@ -32,4 +32,5 @@ export const eventRoutingPolicies: TEventRoutingPolicy = {
   'queue.consumerGroupCreated': EEventTarget.BOTH,
   'queue.consumerGroupDeleted': EEventTarget.BOTH,
   'queue.stateChanged': EEventTarget.BOTH,
+  'configuration.updated': EEventTarget.SYSTEM,
 };

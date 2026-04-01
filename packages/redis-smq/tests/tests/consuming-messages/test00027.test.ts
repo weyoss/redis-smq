@@ -8,7 +8,6 @@
  */
 
 import { expect, test } from 'vitest';
-import { Configuration } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
@@ -16,11 +15,11 @@ import {
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
-import bluebird from 'bluebird';
+import { ConfigManager } from '../../../src/index.js';
 
 test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
-  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfig({
+  const configManager = new ConfigManager();
+  await configManager.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
         queueSize: 3,

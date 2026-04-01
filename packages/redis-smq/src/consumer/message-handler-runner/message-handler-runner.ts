@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
-import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
+import { TConsumerMessageHandlerRunnerEvent } from '../../event-bus/types/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';

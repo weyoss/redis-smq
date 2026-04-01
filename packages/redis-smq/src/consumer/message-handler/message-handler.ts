@@ -23,10 +23,10 @@ import {
 import {
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
-} from '../../common/index.js';
+} from '../../event-bus/types/index.js';
 import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { IRedisSMQParsedConfig } from '../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../config-manager/index.js';
 import { _parseMessage } from '../../message-manager/_/_parse-message.js';
 import {
   EMessageProperty,

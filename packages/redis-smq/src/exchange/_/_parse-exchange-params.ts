@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from '../../config/index.js';
+import { Configuration } from '../../config-manager/configuration.js';
 import {
   InvalidExchangeParametersError,
   InvalidRedisKeyError,

@@ -19,7 +19,7 @@ import {
   InvalidNamespaceError,
   InvalidRedisKeyError,
 } from '../errors/index.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';

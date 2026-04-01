@@ -8,8 +8,6 @@
  */
 
 import { expect, test } from 'vitest';
-import bluebird from 'bluebird';
-import { Configuration } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
@@ -23,10 +21,11 @@ import {
   AcknowledgmentAuditDisabledError,
   DeadLetterAuditDisabledError,
 } from '../../../src/errors/index.js';
+import { ConfigManager } from '../../../src/index.js';
 
 test('Message audit: enabled = false', async () => {
-  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfig({
+  const configManager = new ConfigManager();
+  await configManager.updateConfig({
     messageAudit: false,
   });
 

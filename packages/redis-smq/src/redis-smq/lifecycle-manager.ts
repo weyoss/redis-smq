@@ -8,15 +8,17 @@
  */
 
 import { async, ICallback, IRedisConfig, PanicError } from 'redis-smq-common';
-import { Configuration, IRedisSMQConfig } from '../config/index.js';
+import { IRedisSMQConfig } from '../config-manager/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
 import { BackgroundJobCluster } from '../common/background-jobs/background-job-cluster.js';
 import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
 import { EventBus } from '../event-bus/index.js';
-import { parseRedisConfig } from '../config/parse-redis-config.js';
+import { parseRedisConfig } from '../config-manager/parse-redis-config.js';
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
+import { ConfigSync } from '../config-manager/config-sync.js';
 
 export class LifecycleManager {
   // Waiters for shutdown (when multiple calls to shut down happen)
@@ -51,6 +53,7 @@ export class LifecycleManager {
           Configuration.initializeWithConfig(redisSMQConfig, cb);
         },
         (cb) => InternalEventBus.getInstance().run(cb),
+        (cb) => ConfigSync.initialize(cb),
         (cb) => BackgroundJobCluster.run(cb),
         (cb) => {
           const config = Configuration.getConfig();
@@ -324,11 +327,7 @@ export class LifecycleManager {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
-            RedisConnectionPool.shutdown((err) => {
-              if (err) errors.push(err);
-              cb();
-            }),
+          (cb) => ConfigSync.shutdown(cb),
           (cb) =>
             Configuration.shutdown((err) => {
               if (err) errors.push(err);
@@ -346,6 +345,11 @@ export class LifecycleManager {
             }),
           (cb) =>
             EventMultiplexer.shutdown((err) => {
+              if (err) errors.push(err);
+              cb();
+            }),
+          (cb) =>
+            RedisConnectionPool.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),

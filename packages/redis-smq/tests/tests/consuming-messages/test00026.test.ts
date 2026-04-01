@@ -9,7 +9,6 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { Configuration } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
@@ -17,10 +16,11 @@ import {
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { ConfigManager } from '../../../src/index.js';
 
 test('ProducibleMessage storage: acknowledged.expire = 10000', async () => {
-  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
-  await configInstance.updateConfig({
+  const configManager = new ConfigManager();
+  await configManager.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
         expire: 20000,

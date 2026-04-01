@@ -7,4 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export * from './event.js';
+export * from './types/index.js';
+export * from './config-manager.js';

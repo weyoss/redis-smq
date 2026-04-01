@@ -9,7 +9,7 @@
 
 import { MessageEnvelope } from '../../../../message/message-envelope.js';
 import { ICallback } from 'redis-smq-common';
-import { Configuration } from '../../../../config/index.js';
+import { Configuration } from '../../../../config-manager/configuration.js';
 import { ERedisScriptName } from '../../../../common/redis/scripts.js';
 import {
   EQueueOperationalState,

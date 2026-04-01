@@ -12,7 +12,7 @@ import { EQueueMessageType } from './types/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageBrowser } from './message-browser/types/index.js';
 import { ICallback } from 'redis-smq-common';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { DeadLetterAuditDisabledError } from '../errors/index.js';
 
 /**

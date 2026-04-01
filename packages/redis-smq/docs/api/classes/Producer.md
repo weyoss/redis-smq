@@ -27,7 +27,7 @@ await producer.run();
 
 ## Extends
 
-- `Runnable`\<[`TProducerEvent`](../type-aliases/TProducerEvent.md)\>
+- `Runnable`\<`TProducerEvent`\>
 
 ## Constructors
 
@@ -57,7 +57,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof `TProducerEvent`
 
 #### Parameters
 
@@ -67,7 +67,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### args
 
-...`Parameters`\<[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]\>
+...`Parameters`\<`TProducerEvent`\[`E`\]\>
 
 #### Returns
 
@@ -219,7 +219,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof `TProducerEvent`
 
 #### Parameters
 
@@ -229,7 +229,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### listener
 
-[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
+`TProducerEvent`\[`E`\]
 
 #### Returns
 
@@ -249,7 +249,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof `TProducerEvent`
 
 #### Parameters
 
@@ -259,7 +259,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### listener
 
-[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
+`TProducerEvent`\[`E`\]
 
 #### Returns
 
@@ -656,7 +656,7 @@ anotherProducer.ensureIsOperational((err) => {
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof `TProducerEvent`
 
 #### Parameters
 
@@ -682,7 +682,7 @@ anotherProducer.ensureIsOperational((err) => {
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof `TProducerEvent`
 
 #### Parameters
 
@@ -692,7 +692,7 @@ anotherProducer.ensureIsOperational((err) => {
 
 ##### listener
 
-[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
+`TProducerEvent`\[`E`\]
 
 #### Returns
 

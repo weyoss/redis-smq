@@ -19,7 +19,7 @@ export * from './queue-manager/index.js';
 export * from './queue-messages/index.js';
 export * from './queue-rate-limit/index.js';
 export * from './event-bus/index.js';
-export * from './config/index.js';
+export * from './config-manager/index.js';
 export * from './common/index.js';
 export * from './queue-state-manager/index.js';
 export * from './queue-operation-validator/index.js';

@@ -16,10 +16,10 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { TProducerEvent } from '../common/index.js';
+import { TProducerEvent } from '../event-bus/types/index.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import {
   MessageExchangeRequiredError,
   NoMatchingQueuesError,

@@ -9,7 +9,7 @@
 
 import { ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
 import { RedisSMQ } from '../../../redis-smq/index.js';
-import { IRedisSMQParsedConfig } from '../../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../../config-manager/index.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   private timer: Timer | null = null;

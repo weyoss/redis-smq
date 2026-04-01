@@ -14,7 +14,6 @@ import {
   IQueueParams,
   IQueueParsedParams,
   ProducibleMessage,
-  TRedisSMQEvent,
 } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
@@ -24,6 +23,7 @@ import {
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming.js';
+import { TRedisSMQEvent } from '../../../src/event-bus/types/index.js';
 
 test('Event bus: case 1', async () => {
   const defaultQueue = getDefaultQueue();

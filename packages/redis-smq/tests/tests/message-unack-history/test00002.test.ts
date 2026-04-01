@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import {
-  Configuration,
+  ConfigManager,
   MessageManager,
   ProducibleMessage,
 } from '../../../index.js';
@@ -21,7 +21,8 @@ import { getProducer } from '../../common/producer.js';
 import { UnacknowledgmentHistoryDisabledError } from '../../../src/errors/index.js';
 
 test('getMessageUnacknowledgementHistory: audit disabled', async () => {
-  await Configuration.getInstance().updateConfig({
+  const configManager = new ConfigManager();
+  await configManager.updateConfig({
     messageAudit: {
       unacknowledgementHistory: false,
     },

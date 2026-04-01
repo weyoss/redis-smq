@@ -28,7 +28,7 @@ eventBus.publish('queue.stateChanged', { queue: 'orders', state: 'PAUSED' });
 
 ### getInstance()
 
-> `static` **getInstance**(): `EventBusRedis`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
+> `static` **getInstance**(): `EventBusRedis`\<`TRedisSMQEvent`\>
 
 Returns the singleton instance of the event bus.
 
@@ -38,7 +38,7 @@ is cached for subsequent calls.
 
 #### Returns
 
-`EventBusRedis`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
+`EventBusRedis`\<`TRedisSMQEvent`\>
 
 The singleton EventBusRedis instance
 

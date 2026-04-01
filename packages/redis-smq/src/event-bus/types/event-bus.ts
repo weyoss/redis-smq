@@ -7,7 +7,14 @@
  * in the root directory of this source tree.
  */
 
-export * from './types/index.js';
-export * from './configuration.js';
-export * from './parse-config.js';
-export * from './default-config.js';
+import { TRedisSMQEvent } from './event.js';
+
+export enum EEventTarget {
+  SYSTEM,
+  USER,
+  BOTH,
+}
+
+export type TEventRoutingPolicy = Partial<
+  Record<keyof TRedisSMQEvent, EEventTarget>
+>;

@@ -8,7 +8,7 @@
  */
 
 import { ILogger } from 'redis-smq-common';
-import { IRedisSMQParsedConfig } from '../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../config-manager/index.js';
 import { IConsumerParsedOptions } from './consumer.js';
 
 /**

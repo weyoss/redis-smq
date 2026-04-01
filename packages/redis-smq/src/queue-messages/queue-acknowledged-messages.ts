@@ -13,7 +13,7 @@ import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageBrowser } from './message-browser/types/index.js';
 import { ICallback } from 'redis-smq-common';
 import { AcknowledgmentAuditDisabledError } from '../errors/index.js';
-import { Configuration } from '../config/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 
 /**
  * Manages acknowledged messages in a queue.

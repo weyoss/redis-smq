@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from '../config/index.js';
-import { TRedisSMQEvent } from '../common/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { async, EventBusRedis, ICallback } from 'redis-smq-common';
+import { TRedisSMQEvent } from './types/index.js';
 
 /**
  * The EventBus class provides a singleton interface for accessing a

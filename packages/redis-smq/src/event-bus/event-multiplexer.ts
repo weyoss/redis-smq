@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from '../config/index.js';
-import { TRedisSMQEvent } from '../common/index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { EventBus } from './event-bus.js';
 import { InternalEventBus } from './internal-event-bus.js';
-import { EEventTarget } from './types/index.js';
+import { TRedisSMQEvent } from './types/index.js';
 import { eventRoutingPolicies } from './event-routing-policies.js';
 import { ICallback } from 'redis-smq-common';
+import { EEventTarget } from './types/event-bus.js';
 
 /**
  * EventMultiplexer for routing events to public and/or internal buses per a routing policy.

@@ -8,7 +8,7 @@
  */
 
 import { createLogger, ICallback, ILogger } from 'redis-smq-common';
-import { Configuration } from '../../../config/index.js';
+import { Configuration } from '../../../config-manager/configuration.js';
 
 export interface IBrowserStorage {
   count(redisKey: string, cb: ICallback<number>): void;

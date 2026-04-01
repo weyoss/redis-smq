@@ -30,6 +30,7 @@ export enum ERedisScriptName {
   CLEAR_QUEUE_RATE_LIMIT = 'CLEAR_QUEUE_RATE_LIMIT',
   SET_QUEUE_STATE = 'SET_QUEUE_STATE',
   GET_QUEUE_STATE = 'GET_QUEUE_STATE',
+  SAVE_CONFIG = 'SAVE_CONFIG',
 }
 
 const dirname = env.getCurrentDir();
@@ -111,4 +112,5 @@ export const scriptFileMap: Record<ERedisScriptName, string | string[]> = {
     dirname,
     './scripts/get-queue-state.lua',
   ),
+  [ERedisScriptName.SAVE_CONFIG]: resolve(dirname, './scripts/save-config.lua'),
 };
