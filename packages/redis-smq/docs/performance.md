@@ -24,9 +24,7 @@ that add overhead:
 
 Prerequisites:
 
-- Initialize once per process:
-  - `RedisSMQ.initialize(redisConfig, cb)`, or
-  - `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
+- Initialize once per process: `RedisSMQ.initialize(...)`
 - Create components via RedisSMQ factory methods (recommended).
 - When created via RedisSMQ, you typically do not need to shut down components individually. Prefer a single
   `RedisSMQ.shutdown(cb)` at application exit.

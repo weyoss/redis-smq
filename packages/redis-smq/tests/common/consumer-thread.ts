@@ -10,24 +10,23 @@
 import {
   Consumer,
   IMessageTransferable,
-  IRedisSMQParsedConfig,
   Producer,
   ProducibleMessage,
   RedisSMQ,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
 import { IConsumerParsedOptions } from '../../src/index.js';
-import { ICallback } from 'redis-smq-common';
+import { ICallback, IRedisConfig } from 'redis-smq-common';
 
 process.on('message', function (payload: unknown) {
   const {
-    config,
+    redisConfig,
     consumerOptions,
   }: {
-    config: IRedisSMQParsedConfig;
+    redisConfig: IRedisConfig;
     consumerOptions: IConsumerParsedOptions;
   } = JSON.parse(String(payload));
-  RedisSMQ.initialize(config.redis, (err) => {
+  RedisSMQ.initialize(redisConfig, (err) => {
     if (err) throw err;
     const defaultQueue = getDefaultQueue();
     const producer = new Producer();

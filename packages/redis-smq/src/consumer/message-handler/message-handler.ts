@@ -23,7 +23,7 @@ import {
 import {
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
-} from '../../event-bus/types/index.js';
+} from '../../event-bus/index.js';
 import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../config-manager/index.js';
@@ -49,6 +49,7 @@ import { IConsumerContext } from '../types/consumer-context.js';
 import { IQueueWorkerPayload } from './queue-workers/types/queue-worker.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
 import { _unsubscribeConsumer } from './_/_unsubscribe-consumer.js';
+import { RedisConfig } from '../../common/redis/redis-config.js';
 
 const WORKERS_DIR = path.resolve(
   env.getCurrentDir(),
@@ -144,6 +145,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       WORKERS_DIR,
       {
         config: this.config,
+        redisConfig: RedisConfig.getConfig(),
         queueParsedParams: this.queue,
         loggerContext: {
           namespaces: this.logger.getNamespaces(),

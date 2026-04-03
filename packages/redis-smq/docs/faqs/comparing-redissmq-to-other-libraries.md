@@ -13,7 +13,7 @@ of features. Below are its core capabilities, design trade-offs, and an objectiv
 
 - **Simplified process-wide API**
   - Single entry point via the RedisSMQ class.
-  - Initialize once per process (RedisSMQ.initialize or RedisSMQ.initializeWithConfig).
+  - Initialize once per process (RedisSMQ.initialize).
   - Create producers, consumers, exchanges, and managers via factory methods.
   - Prefer a single RedisSMQ.shutdown(cb) at exit; components created via RedisSMQ are tracked and shut down automatically.
 
@@ -37,10 +37,6 @@ of features. Below are its core capabilities, design trade-offs, and an objectiv
 
 - **ESM and CJS support**
   - Use either module system seamlessly. See [ESM & CJS Modules](../esm-cjs-modules.md).
-
-- **Configuration (optional)**
-  - Persist configuration in Redis and share across processes (initializeWithConfig).
-  - Direct use of the Configuration class is optional; the RedisSMQ class handles bootstrapping. See [Configuration](../configuration.md).
 
 ## Design trade-offs and constraints
 

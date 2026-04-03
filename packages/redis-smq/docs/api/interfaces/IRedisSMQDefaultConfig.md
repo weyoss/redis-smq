@@ -8,20 +8,6 @@
 
 ## Properties
 
-### eventBus
-
-> **eventBus**: `Required`\<[`IEventBusConfig`](IEventBusConfig.md)\>
-
-#### See
-
-/packages/redis-smq/docs/event-bus.md
-
-#### Inherited from
-
-[`IRedisSMQParsedConfig`](IRedisSMQParsedConfig.md).[`eventBus`](IRedisSMQParsedConfig.md#eventbus)
-
----
-
 ### logger
 
 > **logger**: `object`
@@ -72,37 +58,3 @@ Defaults:
 #### Inherited from
 
 [`IRedisSMQConfig`](IRedisSMQConfig.md).[`namespace`](IRedisSMQConfig.md#namespace)
-
----
-
-### redis
-
-> **redis**: `object`
-
-#### client
-
-> **client**: `IOREDIS`
-
-#### options
-
-> **options**: `object`
-
-##### options.db
-
-> **db**: `number`
-
-##### options.host
-
-> **host**: `string`
-
-##### options.port
-
-> **port**: `number`
-
-#### See
-
-/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
-
-#### Overrides
-
-[`IRedisSMQConfig`](IRedisSMQConfig.md).[`redis`](IRedisSMQConfig.md#redis)

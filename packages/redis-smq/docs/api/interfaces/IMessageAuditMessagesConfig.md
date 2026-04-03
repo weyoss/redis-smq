@@ -4,12 +4,25 @@
 
 Configuration options for message audit storage.
 
-Message audit creates dedicated storage to track processed message IDs,
+Message audit creates dedicated Redis storage structures to track processed message IDs,
 enabling efficient monitoring of acknowledged and dead-lettered messages per queue.
 
-This storage acts as a ring buffer with configurable size and expiration policies,
-allowing you to control memory usage while maintaining visibility into message
-processing history.
+The storage acts as a ring buffer with configurable size and expiration policies:
+
+- When `queueSize` limit is reached, oldest entries are automatically evicted (FIFO)
+- When `expire` time is reached, entries are removed regardless of size
+- Both limits can be used together for fine-grained retention control
+
+## Example
+
+```typescript
+// Store last 1000 messages or messages from last 7 days (whichever is smaller)
+const config: IMessageAuditMessagesConfig = {
+  enabled: true,
+  queueSize: 1000,
+  expire: 604800, // 7 days in seconds
+};
+```
 
 ## Properties
 
@@ -19,23 +32,17 @@ processing history.
 
 Enables or disables message audit tracking for this message type.
 
-When enabled, the system maintains a dedicated storage structure that tracks
-message IDs as they are processed. This enables querying and monitoring
-capabilities for messages in this category.
+When enabled, the system maintains a Redis sorted set for each queue,
+storing message IDs with their processing timestamps as scores.
+This enables querying and monitoring capabilities for messages in this category.
 
-When disabled, no audit data is stored, reducing memory overhead but losing
-visibility into processed messages.
+When disabled, no audit data is stored, reducing Redis memory overhead
+but losing visibility into processed message history.
 
-#### Example
+#### Default
 
-```typescript
-{
-  // Enable audit tracking
-  enabled: true;
-
-  // Disable audit tracking (default)
-  enabled: false;
-}
+```ts
+false;
 ```
 
 ---
@@ -47,8 +54,7 @@ visibility into processed messages.
 Retention time for message IDs in seconds.
 
 Message IDs older than this duration are automatically purged from audit storage,
-regardless of whether the queue size limit has been reached. This helps manage
-long-term storage and ensures that only recent message history is retained.
+regardless of whether the queue size limit has been reached.
 
 Set to `0` to disable time-based eviction, keeping messages indefinitely.
 
@@ -56,18 +62,6 @@ Set to `0` to disable time-based eviction, keeping messages indefinitely.
 
 ```ts
 0(unlimited);
-```
-
-#### Example
-
-```typescript
-{
-  // Keep messages for 7 days (604,800 seconds)
-  expire: 604800;
-
-  // Keep messages indefinitely
-  expire: 0;
-}
 ```
 
 ---
@@ -78,27 +72,14 @@ Set to `0` to disable time-based eviction, keeping messages indefinitely.
 
 Maximum number of message IDs to store per queue.
 
-This setting controls the maximum capacity of the audit storage for each queue.
-When the limit is reached, the oldest entries are automatically evicted to
-accommodate new ones (FIFO behavior).
+Controls the maximum capacity of the audit storage for each queue.
+When the limit is reached, the oldest entries (by timestamp) are
+automatically evicted to accommodate new ones.
 
 Set to `0` to disable size-based eviction, allowing unlimited storage.
-This is useful when you need to retain complete history without automatic cleanup.
 
 #### Default
 
 ```ts
 0(unlimited);
-```
-
-#### Example
-
-```typescript
-{
-  // Store up to 1000 message IDs per queue
-  queueSize: 1000;
-
-  // Unlimited storage
-  queueSize: 0;
-}
 ```

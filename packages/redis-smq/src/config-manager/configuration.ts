@@ -14,7 +14,7 @@ import {
   PanicError,
   PowerSwitch,
 } from 'redis-smq-common';
-import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
+import { IRedisSMQParsedConfig } from './types/index.js';
 import { ConfigurationNotFoundError } from '../errors/configuration-not-found.error.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { parseConfig } from './parse-config.js';
@@ -22,10 +22,9 @@ import { defaultConfig } from './default-config.js';
 import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import {
   ConfigurationUpdateError,
-  InvalidConfigurationError,
   UnexpectedScriptReplyError,
 } from '../errors/index.js';
-import { TConfigurationEvent } from '../event-bus/types/index.js';
+import { TConfigurationEvent } from '../event-bus/index.js';
 import { ERedisScriptName } from '../common/redis/scripts.js';
 
 enum EConfigurationField {
@@ -47,7 +46,7 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
   private operationQueue: Array<() => void> = [];
   private completionWaiters: Array<ICallback> = [];
 
-  private config: IRedisSMQParsedConfigWithVersion;
+  private readonly config: IRedisSMQParsedConfigWithVersion;
 
   private constructor() {
     super();
@@ -60,25 +59,36 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
   // ==================== Static Public API ====================
 
   static initialize(cb: ICallback): void {
-    this.performInit((instance, done) => {
-      instance.reload((err) => {
-        if (err instanceof ConfigurationNotFoundError) {
-          instance.save(instance.config.data, done);
-        } else {
-          done(err);
-        }
-      });
-    }, cb);
-  }
+    if (!this.validateInitState(cb)) return;
 
-  static initializeWithConfig(config: IRedisSMQConfig, cb: ICallback): void {
-    this.performInit((instance, done) => {
-      try {
-        instance.save(parseConfig(config), done);
-      } catch (err) {
-        done(err instanceof Error ? err : new InvalidConfigurationError());
+    this.state.goingUp();
+    const instance = new Configuration();
+
+    instance.reload((err) => {
+      if (err instanceof ConfigurationNotFoundError) {
+        return instance.save(instance.config.data, (saveErr) => {
+          if (saveErr) {
+            this.state.rollback();
+            this.instance = null;
+            this.handleInitComplete(saveErr, cb);
+          } else {
+            this.instance = instance;
+            this.state.commit();
+            this.handleInitComplete(null, cb);
+          }
+        });
       }
-    }, cb);
+
+      if (err) {
+        this.state.rollback();
+        this.instance = null;
+        return this.handleInitComplete(err, cb);
+      }
+
+      this.instance = instance;
+      this.state.commit();
+      this.handleInitComplete(null, cb);
+    });
   }
 
   static getInstance(): Configuration {
@@ -171,7 +181,9 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
           return done(new ConfigurationNotFoundError());
         }
 
-        this.config.data = JSON.parse(data);
+        // Mutate existing object instead of replacing
+        Object.assign(this.config.data, JSON.parse(data));
+
         this.config.version = Number(version);
         done(null, this.config);
       });
@@ -197,7 +209,8 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
             if (err) return cb(err);
 
             if (typeof reply === 'number') {
-              this.config.data = config;
+              // Mutate existing object instead of replacing
+              Object.assign(this.config.data, config);
               this.config.version = Number(reply);
               this.emit(
                 'configuration.updated',
@@ -244,7 +257,9 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
         );
       }
 
-      this.config.data = config;
+      // Mutate existing object instead of replacing
+      Object.assign(this.config.data, config);
+
       this.config.version = version;
       this.emit('configuration.updated', this.config.data, this.config.version);
       done();
@@ -252,30 +267,6 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
   }
 
   // ==================== Private Helpers ====================
-
-  private static performInit(
-    fn: (instance: Configuration, cb: ICallback) => void,
-    cb: ICallback,
-  ): void {
-    if (!this.validateInitState(cb)) return;
-
-    this.state.goingUp();
-    const instance = new Configuration();
-
-    fn(instance, (err) => {
-      if (err) {
-        this.state.rollback();
-        this.instance = null;
-      } else {
-        this.instance = instance;
-        this.state.commit();
-      }
-
-      const queued = this.initQueue.splice(0);
-      cb(err);
-      queued.forEach((qcb) => qcb(err));
-    });
-  }
 
   private static validateInitState(cb: ICallback): boolean {
     const state = this.state;
@@ -304,6 +295,12 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
     }
 
     return true;
+  }
+
+  private static handleInitComplete(err: Error | null, cb: ICallback): void {
+    const queued = this.initQueue.splice(0);
+    cb(err);
+    queued.forEach((qcb) => qcb(err));
   }
 
   private runExclusive(fn: (done: ICallback) => void, done: ICallback): void {

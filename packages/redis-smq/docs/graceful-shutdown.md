@@ -7,7 +7,7 @@ transactional to preserve consistency and integrity.
 
 With the RedisSMQ class:
 
-- Initialize once per process using RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...).
+- Initialize once per process using `RedisSMQ.initialize(...)`.
 - If you created components via RedisSMQ factory methods (e.g., createProducer, createConsumer, createQueueManager),
   you do not need to shut them down individually. Prefer calling RedisSMQ.shutdown(cb) at the end to close shared
   infrastructure and all tracked components automatically.
@@ -31,7 +31,7 @@ Note
 ```typescript
 import { RedisSMQ } from 'redis-smq';
 
-// Assume RedisSMQ.initialize(...) or initializeWithConfig(...) was called at startup.
+// Assume RedisSMQ.initialize(...) was called at startup.
 const producer = RedisSMQ.createProducer();
 const consumer = RedisSMQ.createConsumer();
 
@@ -94,7 +94,7 @@ For a complete list of available components and their APIs, see the [API Referen
 
 ## Common pitfalls
 
-- Not initialized: Always create components after RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...).
+- Not initialized: Always create components after `RedisSMQ.initialize(...)`.
 - Multiple signals: Ensure your shutdown logic runs once even if multiple signals arrive.
 - Forcing exit: Avoid calling process.exit() immediately; wait for shutdown callbacks to release resources and
   acknowledge messages.

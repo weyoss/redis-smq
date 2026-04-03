@@ -18,7 +18,7 @@ export abstract class QueueWorkerAbstract extends WorkerAbstract {
   protected override logger: ILogger;
 
   constructor(payload: IQueueWorkerPayload) {
-    super(payload.config);
+    super(payload);
     this.logger = createLogger(payload.config.logger, [
       ...payload.loggerContext.namespaces,
       this.constructor.name,

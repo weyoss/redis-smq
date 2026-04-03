@@ -4,16 +4,6 @@
 
 ## Properties
 
-### eventBus?
-
-> `optional` **eventBus**: [`IEventBusConfig`](IEventBusConfig.md)
-
-#### See
-
-/packages/redis-smq/docs/event-bus.md
-
----
-
 ### logger?
 
 > `optional` **logger**: `ILoggerConfig`
@@ -98,13 +88,3 @@ Purpose:
 Defaults:
 
 - If omitted, the default namespace is used (see defaultConfig.namespace).
-
----
-
-### redis?
-
-> `optional` **redis**: `IRedisConfig`
-
-#### See
-
-/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md

@@ -40,7 +40,6 @@ performance.
 
 - **Required: Initialize once per process**
   - `RedisSMQ.initialize(redisConfig, cb)`
-  - or `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)` to persist and share configuration
 - **Create components via RedisSMQ factory methods (recommended)**
   - e.g., `createProducer()`, `createConsumer()`, `createQueueManager()`, `createTopicExchange()`, etc.
 - **Shutdown**
@@ -158,8 +157,8 @@ The scheduler manages due messages and enqueues them for consumption when approp
 
 ## Configuration (optional)
 
-- Persisted configuration (via `initializeWithConfig`) can be shared across processes
-- Use the Configuration class to inspect or update settings at runtime (optional)
+- Persisted configuration can be shared across processes
+- Use the ConfigManager class to inspect or update settings at runtime (optional)
 - Most applications can rely on `RedisSMQ.initialize(...)` and avoid direct configuration management
 
 ## Performance considerations

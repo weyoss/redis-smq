@@ -8,7 +8,7 @@
  */
 
 import { IRedisSMQDefaultConfig } from './types/index.js';
-import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
+import { EConsoleLoggerLevel } from 'redis-smq-common';
 
 export const defaultConfig: IRedisSMQDefaultConfig = {
   namespace: 'default',
@@ -27,17 +27,6 @@ export const defaultConfig: IRedisSMQDefaultConfig = {
       enabled: false,
       maxSize: 100,
     },
-  },
-  redis: {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: '127.0.0.1',
-      port: 6379,
-      db: 0,
-    },
-  },
-  eventBus: {
-    enabled: false,
   },
   logger: {
     enabled: false,

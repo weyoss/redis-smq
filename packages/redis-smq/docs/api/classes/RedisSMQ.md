@@ -19,6 +19,33 @@ Must be initialized with Redis configuration before use.
 
 ## Properties
 
+### createConfigManager()
+
+> `static` **createConfigManager**: () => [`ConfigManager`](ConfigManager.md) = `ConfigManagerFactory.create`
+
+Creates a ConfigManager instance.
+
+#### Returns
+
+[`ConfigManager`](ConfigManager.md)
+
+A new ConfigManager instance
+
+#### Throws
+
+Error if RedisSMQ is not initialized
+
+#### Example
+
+```typescript*
+const configManager = RedisSMQ.createConfigManager();
+configManager.updateConfig(updates, (err) => {
+  // ...
+);
+```
+
+---
+
 ### createConsumer()
 
 > `static` **createConsumer**: (`consumerOptions?`) => [`Consumer`](Consumer.md) = `ConsumerFactory.create`
@@ -530,347 +557,73 @@ RedisSMQ.initialize(
 
 ### initialize()
 
-> `static` **initialize**: \{(`redisConfig`): `Promise`\<`void`\>; (`redisConfig`, `cb`): `void`; \} = `LifecycleManager.initialize`
-
-#### Call Signature
-
-> (`redisConfig`): `Promise`\<`void`\>
-
-Initializes RedisSMQ with Redis connection settings.
-This is the simplest way to get started - just provide Redis connection once.
-
-##### Parameters
-
-###### redisConfig
-
-`IRedisConfig`
-
-Redis connection configuration
-
-##### Returns
-
-`Promise`\<`void`\>
-
-- Returns a Promise if no callback is provided
-
-##### Example
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
-
-// Callback pattern
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: 'localhost',
-      port: 6379,
-      db: 0,
-    },
-  },
-  (err) => {
-    if (err) {
-      console.error('Failed to initialize:', err);
-      return;
-    }
-    console.log('RedisSMQ initialized successfully');
-  },
-);
-
-// Promise pattern
-try {
-  await RedisSMQ.initialize({
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: 'localhost', port: 6379 },
-  });
-  console.log('RedisSMQ initialized successfully');
-} catch (err) {
-  console.error('Failed to initialize:', err);
-}
-```
-
-#### Call Signature
-
-> (`redisConfig`, `cb`): `void`
-
-Initializes RedisSMQ with Redis connection settings.
-This is the simplest way to get started - just provide Redis connection once.
-
-##### Parameters
-
-###### redisConfig
-
-`IRedisConfig`
-
-Redis connection configuration
-
-###### cb
-
-`ICallback`
-
-Optional callback function called when initialization completes
-
-##### Returns
-
-`void`
-
-- Returns a Promise if no callback is provided
-
-##### Example
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
-
-// Callback pattern
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: 'localhost',
-      port: 6379,
-      db: 0,
-    },
-  },
-  (err) => {
-    if (err) {
-      console.error('Failed to initialize:', err);
-      return;
-    }
-    console.log('RedisSMQ initialized successfully');
-  },
-);
-
-// Promise pattern
-try {
-  await RedisSMQ.initialize({
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: 'localhost', port: 6379 },
-  });
-  console.log('RedisSMQ initialized successfully');
-} catch (err) {
-  console.error('Failed to initialize:', err);
-}
-```
-
----
-
-### initializeWithConfig()
-
-> `static` **initializeWithConfig**: \{(`redisSMQConfig`): `Promise`\<`void`\>; (`redisSMQConfig`, `cb`): `void`; \} = `LifecycleManager.initializeWithConfig`
-
-#### Call Signature
-
-> (`redisSMQConfig`): `Promise`\<`void`\>
-
-Initializes RedisSMQ with custom RedisSMQ configuration.
-This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
-The Redis connection configuration is extracted from the provided RedisSMQ configuration.
-
-##### Parameters
-
-###### redisSMQConfig
-
-[`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
-
-Complete RedisSMQ configuration including Redis settings
-
-##### Returns
-
-`Promise`\<`void`\>
-
-- Returns a Promise if no callback is provided
-
-##### Example
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
-
-// Callback pattern
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'my-custom-app',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: 'localhost', port: 6379 },
-    },
-    logger: { enabled: true },
-    eventBus: { enabled: true },
-  },
-  (err) => {
-    if (err) {
-      console.error('Failed to initialize:', err);
-    } else {
-      console.log('Initialized with custom config');
-    }
-  },
-);
-
-// Promise pattern
-try {
-  await RedisSMQ.initializeWithConfig({
-    namespace: 'production',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: 'redis.example.com', port: 6379 },
-    },
-  });
-  console.log('RedisSMQ initialized with custom config');
-} catch (err) {
-  console.error('Failed to initialize:', err);
-}
-```
-
-#### Call Signature
-
-> (`redisSMQConfig`, `cb`): `void`
-
-Initializes RedisSMQ with custom RedisSMQ configuration.
-This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
-The Redis connection configuration is extracted from the provided RedisSMQ configuration.
-
-##### Parameters
-
-###### redisSMQConfig
-
-[`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
-
-Complete RedisSMQ configuration including Redis settings
-
-###### cb
-
-`ICallback`
-
-Optional callback function called when initialization completes
-
-##### Returns
-
-`void`
-
-- Returns a Promise if no callback is provided
-
-##### Example
-
-```typescript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
-
-// Callback pattern
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'my-custom-app',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: 'localhost', port: 6379 },
-    },
-    logger: { enabled: true },
-    eventBus: { enabled: true },
-  },
-  (err) => {
-    if (err) {
-      console.error('Failed to initialize:', err);
-    } else {
-      console.log('Initialized with custom config');
-    }
-  },
-);
-
-// Promise pattern
-try {
-  await RedisSMQ.initializeWithConfig({
-    namespace: 'production',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: 'redis.example.com', port: 6379 },
-    },
-  });
-  console.log('RedisSMQ initialized with custom config');
-} catch (err) {
-  console.error('Failed to initialize:', err);
-}
-```
-
----
-
-### isInitialized()
-
-> `static` **isInitialized**: () => `boolean` = `LifecycleManager.isInitialized`
-
-Checks if RedisSMQ has been initialized.
-
-#### Returns
-
-`boolean`
-
-True if initialized, false otherwise
-
-#### Example
-
-```typescript
-if (RedisSMQ.isInitialized()) {
-  console.log('RedisSMQ is ready to use');
-} else {
-  console.log('RedisSMQ not initialized yet');
-}
-
-// Use in conditional logic
-if (!RedisSMQ.isInitialized()) {
-  await RedisSMQ.initialize({ host: 'localhost', port: 6379 });
-}
-```
-
----
-
-### reset()
-
-> `static` **reset**: \{(): `Promise`\<`void`\>; (`cb`): `void`; \} = `LifecycleManager.reset`
+> `static` **initialize**: \{(): `Promise`\<`void`\>; (`cb`): `void`; (`redisConfig`): `Promise`\<`void`\>; (`redisConfig`, `cb`): `void`; \} = `LifecycleManager.initialize`
 
 #### Call Signature
 
 > (): `Promise`\<`void`\>
 
-Resets RedisSMQ initialization state.
-Useful for testing or reconfiguration.
+Initializes RedisSMQ with optional Redis connection settings.
 
 ##### Returns
 
 `Promise`\<`void`\>
 
-- Returns a Promise if no callback is provided
+A Promise that resolves when initialization completes (if no callback provided),
+or `void` if a callback is provided
+
+##### Throws
+
+Thrown when attempting to initialize while shutting down
 
 ##### Example
 
 ```typescript
-// Callback pattern
-RedisSMQ.reset((err) => {
-  if (err) {
-    console.error('Reset failed:', err);
-  } else {
-    console.log('RedisSMQ reset successfully');
-    // Can now reinitialize with new configuration
-    RedisSMQ.initialize(newConfig);
-  }
+// Callback pattern with Redis configuration
+LifecycleManager.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: 'localhost',
+      port: 6379,
+      db: 0,
+      password: 'secret',
+    },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize:', err);
+      return;
+    }
+    console.log('RedisSMQ initialized successfully');
+  },
+);
+
+// Callback pattern without configuration (uses defaults)
+LifecycleManager.initialize((err) => {
+  if (err) console.error(err);
 });
 
-// Promise pattern
+// Promise pattern with configuration
 try {
-  await RedisSMQ.reset();
-  console.log('RedisSMQ reset successfully');
-  // Reinitialize with new configuration
-  await RedisSMQ.initialize(newConfig);
+  await LifecycleManager.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  });
+  console.log('RedisSMQ initialized successfully');
 } catch (err) {
-  console.error('Reset failed:', err);
+  console.error('Failed to initialize:', err);
 }
+
+// Promise pattern without configuration
+await LifecycleManager.initialize();
 ```
 
 #### Call Signature
 
 > (`cb`): `void`
 
-Resets RedisSMQ initialization state.
-Useful for testing or reconfiguration.
+Initializes RedisSMQ with optional Redis connection settings.
 
 ##### Parameters
 
@@ -878,36 +631,232 @@ Useful for testing or reconfiguration.
 
 `ICallback`
 
-Optional callback function called when reset completes
+Optional callback function invoked when initialization completes.
+The callback receives an error if initialization fails.
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
+A Promise that resolves when initialization completes (if no callback provided),
+or `void` if a callback is provided
+
+##### Throws
+
+Thrown when attempting to initialize while shutting down
 
 ##### Example
 
 ```typescript
-// Callback pattern
-RedisSMQ.reset((err) => {
-  if (err) {
-    console.error('Reset failed:', err);
-  } else {
-    console.log('RedisSMQ reset successfully');
-    // Can now reinitialize with new configuration
-    RedisSMQ.initialize(newConfig);
-  }
+// Callback pattern with Redis configuration
+LifecycleManager.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: 'localhost',
+      port: 6379,
+      db: 0,
+      password: 'secret',
+    },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize:', err);
+      return;
+    }
+    console.log('RedisSMQ initialized successfully');
+  },
+);
+
+// Callback pattern without configuration (uses defaults)
+LifecycleManager.initialize((err) => {
+  if (err) console.error(err);
 });
 
-// Promise pattern
+// Promise pattern with configuration
 try {
-  await RedisSMQ.reset();
-  console.log('RedisSMQ reset successfully');
-  // Reinitialize with new configuration
-  await RedisSMQ.initialize(newConfig);
+  await LifecycleManager.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  });
+  console.log('RedisSMQ initialized successfully');
 } catch (err) {
-  console.error('Reset failed:', err);
+  console.error('Failed to initialize:', err);
+}
+
+// Promise pattern without configuration
+await LifecycleManager.initialize();
+```
+
+#### Call Signature
+
+> (`redisConfig`): `Promise`\<`void`\>
+
+Initializes RedisSMQ with optional Redis connection settings.
+
+##### Parameters
+
+###### redisConfig
+
+`IRedisConfig`
+
+Optional Redis connection configuration.
+If not provided, uses default configuration.
+
+##### Returns
+
+`Promise`\<`void`\>
+
+A Promise that resolves when initialization completes (if no callback provided),
+or `void` if a callback is provided
+
+##### Throws
+
+Thrown when attempting to initialize while shutting down
+
+##### Example
+
+```typescript
+// Callback pattern with Redis configuration
+LifecycleManager.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: 'localhost',
+      port: 6379,
+      db: 0,
+      password: 'secret',
+    },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize:', err);
+      return;
+    }
+    console.log('RedisSMQ initialized successfully');
+  },
+);
+
+// Callback pattern without configuration (uses defaults)
+LifecycleManager.initialize((err) => {
+  if (err) console.error(err);
+});
+
+// Promise pattern with configuration
+try {
+  await LifecycleManager.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  });
+  console.log('RedisSMQ initialized successfully');
+} catch (err) {
+  console.error('Failed to initialize:', err);
+}
+
+// Promise pattern without configuration
+await LifecycleManager.initialize();
+```
+
+#### Call Signature
+
+> (`redisConfig`, `cb`): `void`
+
+Initializes RedisSMQ with optional Redis connection settings.
+
+##### Parameters
+
+###### redisConfig
+
+`IRedisConfig`
+
+Optional Redis connection configuration.
+If not provided, uses default configuration.
+
+###### cb
+
+`ICallback`
+
+Optional callback function invoked when initialization completes.
+The callback receives an error if initialization fails.
+
+##### Returns
+
+`void`
+
+A Promise that resolves when initialization completes (if no callback provided),
+or `void` if a callback is provided
+
+##### Throws
+
+Thrown when attempting to initialize while shutting down
+
+##### Example
+
+```typescript
+// Callback pattern with Redis configuration
+LifecycleManager.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: 'localhost',
+      port: 6379,
+      db: 0,
+      password: 'secret',
+    },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize:', err);
+      return;
+    }
+    console.log('RedisSMQ initialized successfully');
+  },
+);
+
+// Callback pattern without configuration (uses defaults)
+LifecycleManager.initialize((err) => {
+  if (err) console.error(err);
+});
+
+// Promise pattern with configuration
+try {
+  await LifecycleManager.initialize({
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: 'localhost', port: 6379 },
+  });
+  console.log('RedisSMQ initialized successfully');
+} catch (err) {
+  console.error('Failed to initialize:', err);
+}
+
+// Promise pattern without configuration
+await LifecycleManager.initialize();
+```
+
+---
+
+### isRunning()
+
+> `static` **isRunning**: () => `boolean` = `LifecycleManager.isRunning`
+
+Checks whether RedisSMQ is currently running.
+
+A running state means the system has been successfully initialized
+and is ready to handle operations (e.g., producing/consuming messages).
+
+#### Returns
+
+`boolean`
+
+`true` if RedisSMQ is fully initialized and running, otherwise `false`
+
+#### Example
+
+```typescript
+if (LifecycleManager.isRunning()) {
+  console.log('RedisSMQ is ready');
+} else {
+  console.log('RedisSMQ is not initialized');
 }
 ```
 
@@ -921,29 +870,36 @@ try {
 
 > (): `Promise`\<`void`\>
 
-Shuts down RedisSMQ and closes shared resources.
+Gracefully shuts down RedisSMQ and releases all shared resources.
 
-This convenience method:
+**Important:**
 
-- Gracefully shuts down the Redis connection pool
-- Closes the configuration Redis client
-- Resets RedisSMQ initialization state
-
-Note: You should still shutdown any created components (e.g. Producer, Consumer,
-QueueManagers, MessageManager, etc.) prior to calling this method to ensure all
-in-flight operations complete and connections are released back to the pool.
+- You should manually shutdown any created components (Producer, Consumer,
+  QueueManager, MessageManager, etc.) **before** calling this method to ensure
+  all in-flight operations complete and connections are properly released
+- If shutdown is already in progress, additional calls are queued
+- If initialization is in progress, shutdown will fail with an error
+- If the system is already down and no components are registered, shutdown
+  completes immediately
+- Errors during shutdown of individual components are collected but do not
+  prevent other components from shutting down
 
 ##### Returns
 
 `Promise`\<`void`\>
 
-- Returns a Promise if no callback is provided
+A Promise that resolves when shutdown completes (if no callback provided),
+or `void` if a callback is provided
+
+##### Throws
+
+Thrown when attempting to shutdown while initialization is in progress
 
 ##### Example
 
 ```typescript
 // Callback pattern
-RedisSMQ.shutdown((err) => {
+LifecycleManager.shutdown((err) => {
   if (err) {
     console.error('Shutdown failed:', err);
   } else {
@@ -953,28 +909,35 @@ RedisSMQ.shutdown((err) => {
 
 // Promise pattern
 try {
-  await RedisSMQ.shutdown();
+  await LifecycleManager.shutdown();
   console.log('RedisSMQ shut down successfully');
 } catch (err) {
   console.error('Shutdown failed:', err);
 }
+
+// Graceful shutdown with component cleanup
+const producer = await Producer.getInstance();
+await producer.shutdown(); // Shutdown producer first
+await LifecycleManager.shutdown(); // Then shutdown the system
 ```
 
 #### Call Signature
 
 > (`cb`): `void`
 
-Shuts down RedisSMQ and closes shared resources.
+Gracefully shuts down RedisSMQ and releases all shared resources.
 
-This convenience method:
+**Important:**
 
-- Gracefully shuts down the Redis connection pool
-- Closes the configuration Redis client
-- Resets RedisSMQ initialization state
-
-Note: You should still shutdown any created components (e.g. Producer, Consumer,
-QueueManagers, MessageManager, etc.) prior to calling this method to ensure all
-in-flight operations complete and connections are released back to the pool.
+- You should manually shutdown any created components (Producer, Consumer,
+  QueueManager, MessageManager, etc.) **before** calling this method to ensure
+  all in-flight operations complete and connections are properly released
+- If shutdown is already in progress, additional calls are queued
+- If initialization is in progress, shutdown will fail with an error
+- If the system is already down and no components are registered, shutdown
+  completes immediately
+- Errors during shutdown of individual components are collected but do not
+  prevent other components from shutting down
 
 ##### Parameters
 
@@ -982,19 +945,26 @@ in-flight operations complete and connections are released back to the pool.
 
 `ICallback`
 
-Optional callback invoked when shutdown completes
+Optional callback function invoked when shutdown completes.
+The callback receives the first error encountered during shutdown,
+or `null` if shutdown completed successfully.
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
+A Promise that resolves when shutdown completes (if no callback provided),
+or `void` if a callback is provided
+
+##### Throws
+
+Thrown when attempting to shutdown while initialization is in progress
 
 ##### Example
 
 ```typescript
 // Callback pattern
-RedisSMQ.shutdown((err) => {
+LifecycleManager.shutdown((err) => {
   if (err) {
     console.error('Shutdown failed:', err);
   } else {
@@ -1004,11 +974,16 @@ RedisSMQ.shutdown((err) => {
 
 // Promise pattern
 try {
-  await RedisSMQ.shutdown();
+  await LifecycleManager.shutdown();
   console.log('RedisSMQ shut down successfully');
 } catch (err) {
   console.error('Shutdown failed:', err);
 }
+
+// Graceful shutdown with component cleanup
+const producer = await Producer.getInstance();
+await producer.shutdown(); // Shutdown producer first
+await LifecycleManager.shutdown(); // Then shutdown the system
 ```
 
 ---

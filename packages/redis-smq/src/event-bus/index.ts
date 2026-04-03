@@ -8,3 +8,4 @@
  */
 
 export * from './event-bus.js';
+export * from './types/index.js';

@@ -9,17 +9,20 @@
 
 import { ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
 import { RedisSMQ } from '../../../redis-smq/index.js';
-import { IRedisSMQParsedConfig } from '../../../config-manager/index.js';
+import { IWorkerPayload } from './types/worker.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   private timer: Timer | null = null;
   protected initialized = false;
   protected config;
+  protected redisConfig;
 
   protected abstract override readonly logger: ILogger;
 
-  constructor(config: IRedisSMQParsedConfig) {
+  constructor(payload: IWorkerPayload) {
     super();
+    const { redisConfig, config } = payload;
+    this.redisConfig = redisConfig;
     this.config = config;
   }
 
@@ -31,8 +34,8 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
       (cb) => {
-        if (RedisSMQ.isInitialized()) return cb();
-        RedisSMQ.initialize(this.config.redis, cb);
+        if (RedisSMQ.isRunning()) return cb();
+        RedisSMQ.initialize(this.redisConfig, cb);
       },
       (cb) => {
         this.logger.debug('Setting up worker timer');

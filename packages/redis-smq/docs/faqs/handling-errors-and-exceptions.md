@@ -169,19 +169,14 @@ Enable logging during initialization (persisted configuration):
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
 
-RedisSMQ.initializeWithConfig(
+configManager.updateConfig(
   {
-    namespace: 'my_app_dev',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: '127.0.0.1', port: 6379 },
-    },
+    namespace: 'my_app',
     logger: {
       enabled: true,
       options: { logLevel: EConsoleLoggerLevel.INFO },
     },
     messageAudit: false,
-    eventBus: { enabled: false },
   },
   (err) => {
     if (err) console.error('Init with config failed:', err);
@@ -202,59 +197,3 @@ consumer.on('error', (err) => appLogger.error('Consumer error', { err }));
 ## 5) Error events via EventBus (optional)
 
 Other error events can be consumed from the EventBus. This is useful for centralized observability across producers, consumers, queues, and internals.
-
-- Enable EventBus before initialization (recommended when you need to collect events):
-  - With persisted config: set `eventBus: { enabled: true }` in `RedisSMQ.initializeWithConfig(...)`
-- After initialization completes, get the singleton and subscribe to events.
-- The `TRedisSMQEvent` type alias includes all possible EventBus event names. Consult the API reference for the full list.
-
-Example (ESM):
-
-```typescript
-import { RedisSMQ, EventBus } from 'redis-smq';
-import type { TRedisSMQEvent } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
-
-// Initialize with EventBus enabled (persisted configuration)
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'my_app',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: '127.0.0.1', port: 6379 },
-    },
-    logger: { enabled: false },
-    messageAudit: false,
-    eventBus: { enabled: true }, // Enable EventBus
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
-
-    const eventBus = EventBus.getInstance();
-
-    // Subscribe to specific events; TRedisSMQEvent includes all supported names
-    const eventsToWatch: TRedisSMQEvent[] = [
-      // Choose relevant error events from the API reference, for example:
-      // 'consumer.consumeMessage.error',
-      // 'producer.error',
-      // 'queue.error',
-    ];
-
-    eventsToWatch.forEach((name) => {
-      eventBus.on(name, (...args: unknown[]) => {
-        // args schema depends on the event; see API reference for payload shapes
-        console.error('[EventBus]', name, ...args);
-      });
-    });
-
-    // You can also subscribe to non-error events if needed (acks, bindings, etc.)
-  },
-);
-```
-
-Notes:
-
-- Event names and payloads are strongly typed by `TRedisSMQEvent`. See API:
-  - EventBus class: `api/classes/EventBus.md`
-  - All events union: `api/type-aliases/TRedisSMQEvent.md`
-- If EventBus is enabled via configuration and you create components through `RedisSMQ`, a single `RedisSMQ.shutdown(cb)` will stop EventBus and close shared resources for you.

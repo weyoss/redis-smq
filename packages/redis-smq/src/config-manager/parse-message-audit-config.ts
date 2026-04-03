@@ -18,7 +18,7 @@ import {
   IMessageAuditParsedConfig,
   IMessageAuditMessagesConfig,
   IMessageAuditHistoryConfig,
-} from '../message-manager/index.js';
+} from './types/index.js';
 
 function validateNumericValue(value: unknown): number | false {
   const numericValue = Number(value);

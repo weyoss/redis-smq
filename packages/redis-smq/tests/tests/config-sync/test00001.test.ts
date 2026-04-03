@@ -12,7 +12,7 @@ import { Configuration } from '../../../src/config-manager/configuration.js';
 import { fork } from 'child_process';
 import path from 'path';
 import { env } from 'redis-smq-common';
-import { config } from '../../common/config.js';
+import { redisConfig } from '../../common/config.js';
 import { ConfigManager } from '../../../src/index.js';
 
 test('ConfigSync', async () => {
@@ -30,7 +30,7 @@ test('ConfigSync', async () => {
     const thread = fork(
       path.join(env.getCurrentDir(), 'update-config-thread.js'),
     );
-    thread.send(JSON.stringify({ config }));
+    thread.send(JSON.stringify({ redisConfig }));
     thread.on('error', () => void 0);
     thread.on('exit', resolve);
   });

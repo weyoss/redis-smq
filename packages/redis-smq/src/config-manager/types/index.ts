@@ -8,3 +8,4 @@
  */
 
 export * from './config.js';
+export * from './message-audit.js';

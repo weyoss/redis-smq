@@ -11,9 +11,6 @@ merging defaults. It contains fully resolved configuration objects for
 each audit category, with all optional fields populated with their
 default values.
 
-This is an internal interface used by the system after configuration
-validation and normalization.
-
 ## Properties
 
 ### acknowledgedMessages

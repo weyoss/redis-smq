@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from '../config-manager/configuration.js';
 import { EventBus } from './event-bus.js';
 import { InternalEventBus } from './internal-event-bus.js';
 import { TRedisSMQEvent } from './types/index.js';
@@ -24,8 +23,7 @@ export class EventMultiplexer {
   private readonly internalBus;
 
   protected constructor() {
-    const cfg = Configuration.getConfig();
-    this.eventBus = cfg.eventBus.enabled ? EventBus.getInstance() : null;
+    this.eventBus = EventBus.getInstance();
     this.internalBus = InternalEventBus.getInstance();
   }
 
@@ -69,7 +67,7 @@ export class EventMultiplexer {
       this.eventBus &&
       (target === EEventTarget.USER || target === EEventTarget.BOTH)
     ) {
-      this.eventBus.emit(event, ...args);
+      if (this.eventBus.isRunning()) this.eventBus.emit(event, ...args);
     }
     if (target === EEventTarget.SYSTEM || target === EEventTarget.BOTH) {
       this.internalBus.emit(event, ...args);

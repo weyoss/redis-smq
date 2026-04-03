@@ -8,7 +8,6 @@
  */
 
 import { async, ICallback, IRedisConfig, PanicError } from 'redis-smq-common';
-import { IRedisSMQConfig } from '../config-manager/index.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
@@ -16,166 +15,133 @@ import { BackgroundJobCluster } from '../common/background-jobs/background-job-c
 import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
 import { EventBus } from '../event-bus/index.js';
-import { parseRedisConfig } from '../config-manager/parse-redis-config.js';
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
 import { ConfigSync } from '../config-manager/config-sync.js';
+import { RedisConfig } from '../common/redis/redis-config.js';
 
+/**
+ * Manages the lifecycle (initialization and shutdown) of the RedisSMQ system.
+ *
+ * This class provides a singleton-style interface to control the global state
+ * of RedisSMQ, handling resource initialization, connection pooling, event bus
+ * setup, and graceful shutdown of all components.
+ *
+ * The lifecycle state machine includes:
+ * - **DOWN**: Not initialized or fully shut down
+ * - **GOING_UP**: Initialization in progress
+ * - **UP**: Fully initialized and running
+ * - **GOING_DOWN**: Shutdown in progress
+ *
+ * All methods are static to ensure a single, globally accessible lifecycle manager.
+ *
+ * @example
+ * ```typescript
+ * import { LifecycleManager } from './lifecycle-manager.js';
+ * import { ERedisConfigClient } from 'redis-smq-common';
+ *
+ * // Initialize with Promise pattern
+ * try {
+ *   await LifecycleManager.initialize({
+ *     client: ERedisConfigClient.IOREDIS,
+ *     options: { host: 'localhost', port: 6379 }
+ *   });
+ *   console.log('RedisSMQ initialized successfully');
+ * } catch (err) {
+ *   console.error('Initialization failed:', err);
+ * }
+ *
+ * // Shutdown with Promise pattern
+ * try {
+ *   await LifecycleManager.shutdown();
+ *   console.log('RedisSMQ shut down successfully');
+ * } catch (err) {
+ *   console.error('Shutdown failed:', err);
+ * }
+ * ```
+ *
+ * @public
+ */
 export class LifecycleManager {
-  // Waiters for shutdown (when multiple calls to shut down happen)
+  /**
+   * Queue of callbacks waiting for shutdown to complete.
+   * Used when multiple shutdown calls are made concurrently.
+   *
+   * @internal
+   */
   static shutdownWaiters: ICallback[] = [];
 
-  // Waiters for initialization (when multiple calls to initialize happen)
+  /**
+   * Queue of callbacks waiting for initialization to complete.
+   * Used when multiple initialize calls are made concurrently.
+   *
+   * @internal
+   */
   static initWaiters: ICallback[] = [];
 
-  private static bootstrap(redisConfig: IRedisConfig, cb: ICallback): void;
-  private static bootstrap(
-    redisConfig: IRedisConfig,
-    redisSMQConfig: IRedisSMQConfig,
-    cb: ICallback,
-  ): void;
-  private static bootstrap(
-    redisConfig: IRedisConfig,
-    redisSMQConfig: IRedisSMQConfig | ICallback,
-    cb?: ICallback,
-  ): void {
-    const callback = cb ?? redisSMQConfig;
-    if (typeof callback !== 'function') {
-      throw new Error('Invalid arguments: a callback function is required');
-    }
-
-    async.series(
-      [
-        (cb) =>
-          RedisConnectionPool.initialize(redisConfig, {}, (err) => cb(err)),
-        (cb) => {
-          if (typeof redisSMQConfig === 'function')
-            return Configuration.initialize(cb);
-          Configuration.initializeWithConfig(redisSMQConfig, cb);
-        },
-        (cb) => InternalEventBus.getInstance().run(cb),
-        (cb) => ConfigSync.initialize(cb),
-        (cb) => BackgroundJobCluster.run(cb),
-        (cb) => {
-          const config = Configuration.getConfig();
-          if (config.eventBus.enabled) {
-            return EventBus.getInstance().run(cb);
-          }
-          cb();
-        },
-      ],
-      (err) => callback(err),
-    );
-  }
-
-  private static initInternal(
-    resolveConfig: () => {
-      redisConfig: IRedisConfig;
-      redisSMQConfig?: IRedisSMQConfig;
-    },
-    cb: ICallback,
-  ): void {
-    if (StateManager.isUp()) {
-      return cb();
-    }
-
-    if (StateManager.isGoingUp()) {
-      LifecycleManager.initWaiters.push(cb);
-      return;
-    }
-
-    if (StateManager.isGoingDown()) {
-      return cb(new PanicError({ message: 'RedisSMQ is shutting down' }));
-    }
-
-    try {
-      const { redisSMQConfig, redisConfig } = resolveConfig();
-      StateManager.goingUp();
-      if (redisSMQConfig) {
-        LifecycleManager.bootstrap(redisConfig, redisSMQConfig, (err) =>
-          LifecycleManager.finishInitialization(err, cb),
-        );
-      } else {
-        LifecycleManager.bootstrap(redisConfig, (err) =>
-          LifecycleManager.finishInitialization(err, cb),
-        );
-      }
-    } catch (e: unknown) {
-      const err =
-        e instanceof Error
-          ? e
-          : new PanicError({
-              message: String(e),
-            });
-      return cb(err);
-    }
-  }
-
-  private static finishInitialization(
-    err: Error | null | undefined,
-    cb: ICallback,
-  ) {
-    if (err) StateManager.rollback();
-    else StateManager.commit();
-    const waiters = LifecycleManager.initWaiters.splice(0);
-    cb(err);
-    waiters.forEach((w) => w(err));
-  }
-
   /**
-   * Checks if RedisSMQ has been initialized.
+   * Checks whether RedisSMQ is currently running.
    *
-   * @returns True if initialized, false otherwise
+   * A running state means the system has been successfully initialized
+   * and is ready to handle operations (e.g., producing/consuming messages).
+   *
+   * @returns `true` if RedisSMQ is fully initialized and running, otherwise `false`
    *
    * @example
    * ```typescript
-   * if (RedisSMQ.isInitialized()) {
-   *   console.log('RedisSMQ is ready to use');
+   * if (LifecycleManager.isRunning()) {
+   *   console.log('RedisSMQ is ready');
    * } else {
-   *   console.log('RedisSMQ not initialized yet');
-   * }
-   *
-   * // Use in conditional logic
-   * if (!RedisSMQ.isInitialized()) {
-   *   await RedisSMQ.initialize({ host: 'localhost', port: 6379 });
+   *   console.log('RedisSMQ is not initialized');
    * }
    * ```
    */
-  static isInitialized = (): boolean => {
+  static isRunning = (): boolean => {
     return StateManager.isRunning();
   };
 
   /**
-   * Initializes RedisSMQ with Redis connection settings.
-   * This is the simplest way to get started - just provide Redis connection once.
+   * Initializes RedisSMQ with optional Redis connection settings.
    *
-   * @param redisConfig - Redis connection configuration
-   * @param cb - Optional callback function called when initialization completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   * @param redisConfig - Optional Redis connection configuration.
+   *                      If not provided, uses default configuration.
+   * @param cb - Optional callback function invoked when initialization completes.
+   *             The callback receives an error if initialization fails.
+   *
+   * @returns A Promise that resolves when initialization completes (if no callback provided),
+   *          or `void` if a callback is provided
+   *
+   * @throws {PanicError} Thrown when attempting to initialize while shutting down
    *
    * @example
    * ```typescript
-   * import { RedisSMQ } from 'redis-smq';
-   * import { ERedisConfigClient } from 'redis-smq-common';
+   * // Callback pattern with Redis configuration
+   * LifecycleManager.initialize(
+   *   {
+   *     client: ERedisConfigClient.IOREDIS,
+   *     options: {
+   *       host: 'localhost',
+   *       port: 6379,
+   *       db: 0,
+   *       password: 'secret'
+   *     }
+   *   },
+   *   (err) => {
+   *     if (err) {
+   *       console.error('Failed to initialize:', err);
+   *       return;
+   *     }
+   *     console.log('RedisSMQ initialized successfully');
+   *   }
+   * );
    *
-   * // Callback pattern
-   * RedisSMQ.initialize({
-   *   client: ERedisConfigClient.IOREDIS,
-   *   options: {
-   *     host: 'localhost',
-   *     port: 6379,
-   *     db: 0
-   *   }
-   * }, (err) => {
-   *   if (err) {
-   *     console.error('Failed to initialize:', err);
-   *     return;
-   *   }
-   *   console.log('RedisSMQ initialized successfully');
+   * // Callback pattern without configuration (uses defaults)
+   * LifecycleManager.initialize((err) => {
+   *   if (err) console.error(err);
    * });
    *
-   * // Promise pattern
+   * // Promise pattern with configuration
    * try {
-   *   await RedisSMQ.initialize({
+   *   await LifecycleManager.initialize({
    *     client: ERedisConfigClient.IOREDIS,
    *     options: { host: 'localhost', port: 6379 }
    *   });
@@ -183,104 +149,120 @@ export class LifecycleManager {
    * } catch (err) {
    *   console.error('Failed to initialize:', err);
    * }
+   *
+   * // Promise pattern without configuration
+   * await LifecycleManager.initialize();
    * ```
    */
+  static initialize(): Promise<void>;
+  static initialize(cb: ICallback): void;
   static initialize(redisConfig: IRedisConfig): Promise<void>;
   static initialize(redisConfig: IRedisConfig, cb: ICallback): void;
   static initialize(
-    redisConfig: IRedisConfig,
-    cb?: ICallback,
+    ...args: [ICallback | IRedisConfig] | [IRedisConfig, ICallback] | []
   ): Promise<void> | void {
-    return async.withOptionalCallback(cb, (callback) => {
-      LifecycleManager.initInternal(() => ({ redisConfig }), callback);
-    });
-  }
+    let cb: ICallback | undefined = undefined;
+    let redisConfig: IRedisConfig | undefined = undefined;
 
-  /**
-   * Initializes RedisSMQ with custom RedisSMQ configuration.
-   * This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
-   * The Redis connection configuration is extracted from the provided RedisSMQ configuration.
-   *
-   * @param redisSMQConfig - Complete RedisSMQ configuration including Redis settings
-   * @param cb - Optional callback function called when initialization completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @example
-   * ```typescript
-   * import { RedisSMQ } from 'redis-smq';
-   * import { ERedisConfigClient } from 'redis-smq-common';
-   *
-   * // Callback pattern
-   * RedisSMQ.initializeWithConfig({
-   *   namespace: 'my-custom-app',
-   *   redis: {
-   *     client: ERedisConfigClient.IOREDIS,
-   *     options: { host: 'localhost', port: 6379 }
-   *   },
-   *   logger: { enabled: true },
-   *   eventBus: { enabled: true }
-   * }, (err) => {
-   *   if (err) {
-   *     console.error('Failed to initialize:', err);
-   *   } else {
-   *     console.log('Initialized with custom config');
-   *   }
-   * });
-   *
-   * // Promise pattern
-   * try {
-   *   await RedisSMQ.initializeWithConfig({
-   *     namespace: 'production',
-   *     redis: {
-   *       client: ERedisConfigClient.IOREDIS,
-   *       options: { host: 'redis.example.com', port: 6379 }
-   *     }
-   *   });
-   *   console.log('RedisSMQ initialized with custom config');
-   * } catch (err) {
-   *   console.error('Failed to initialize:', err);
-   * }
-   * ```
-   */
-  static initializeWithConfig(redisSMQConfig: IRedisSMQConfig): Promise<void>;
-  static initializeWithConfig(
-    redisSMQConfig: IRedisSMQConfig,
-    cb: ICallback,
-  ): void;
-  static initializeWithConfig(
-    redisSMQConfig: IRedisSMQConfig,
-    cb?: ICallback,
-  ): Promise<void> | void {
+    // Parse overloaded arguments
+    if (args.length === 1) {
+      if (typeof args[0] === 'function') cb = args[0];
+      else redisConfig = args[0];
+    }
+
+    if (args.length === 2) {
+      if (typeof args[0] === 'object') redisConfig = args[0];
+      if (typeof args[1] === 'function') cb = args[1];
+    }
+
     return async.withOptionalCallback(cb, (callback) => {
-      LifecycleManager.initInternal(
-        () => ({
-          redisConfig: parseRedisConfig(redisSMQConfig.redis),
-          redisSMQConfig: redisSMQConfig,
-        }),
-        callback,
+      // Fast path: already running
+      if (StateManager.isUp()) {
+        return callback();
+      }
+
+      // Fast path: initialization in progress, queue this callback
+      if (StateManager.isGoingUp()) {
+        LifecycleManager.initWaiters.push(callback);
+        return;
+      }
+
+      // Error path: shutdown in progress
+      if (StateManager.isGoingDown()) {
+        return callback(
+          new PanicError({ message: 'RedisSMQ is shutting down' }),
+        );
+      }
+
+      // Begin initialization
+      StateManager.goingUp();
+
+      // Store the configuration (only first call matters)
+      RedisConfig.initialize(redisConfig);
+
+      // Initialize all components in sequence
+      async.series(
+        [
+          (cb) => {
+            const config = RedisConfig.getConfig();
+            RedisConnectionPool.initialize(config, {}, (err) => cb(err));
+          },
+          (cb) => {
+            Configuration.initialize(cb);
+          },
+          (cb) => {
+            InternalEventBus.getInstance().run(cb);
+          },
+          (cb) => {
+            ConfigSync.initialize(cb);
+          },
+          (cb) => {
+            BackgroundJobCluster.run(cb);
+          },
+        ],
+        (err) => {
+          // Rollback on error, commit on success
+          if (err) StateManager.rollback();
+          else StateManager.commit();
+
+          // Notify all waiting callbacks
+          const waiters = LifecycleManager.initWaiters.splice(0);
+          waiters.forEach((w) => w(err));
+
+          // Notify the current callback
+          callback(err);
+        },
       );
     });
   }
 
   /**
-   * Shuts down RedisSMQ and closes shared resources.
+   * Gracefully shuts down RedisSMQ and releases all shared resources.
    *
-   * This convenience method:
-   * - Gracefully shuts down the Redis connection pool
-   * - Closes the configuration Redis client
-   * - Resets RedisSMQ initialization state
+   * **Important:**
+   * - You should manually shutdown any created components (Producer, Consumer,
+   *   QueueManager, MessageManager, etc.) **before** calling this method to ensure
+   *   all in-flight operations complete and connections are properly released
+   * - If shutdown is already in progress, additional calls are queued
+   * - If initialization is in progress, shutdown will fail with an error
+   * - If the system is already down and no components are registered, shutdown
+   *   completes immediately
+   * - Errors during shutdown of individual components are collected but do not
+   *   prevent other components from shutting down
    *
-   * Note: You should still shutdown any created components (e.g. Producer, Consumer,
-   * QueueManagers, MessageManager, etc.) prior to calling this method to ensure all
-   * in-flight operations complete and connections are released back to the pool.
+   * @param cb - Optional callback function invoked when shutdown completes.
+   *             The callback receives the first error encountered during shutdown,
+   *             or `null` if shutdown completed successfully.
    *
-   * @param cb - Optional callback invoked when shutdown completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   * @returns A Promise that resolves when shutdown completes (if no callback provided),
+   *          or `void` if a callback is provided
+   *
+   * @throws {PanicError} Thrown when attempting to shutdown while initialization is in progress
    *
    * @example
    * ```typescript
    * // Callback pattern
-   * RedisSMQ.shutdown((err) => {
+   * LifecycleManager.shutdown((err) => {
    *   if (err) {
    *     console.error('Shutdown failed:', err);
    *   } else {
@@ -290,11 +272,16 @@ export class LifecycleManager {
    *
    * // Promise pattern
    * try {
-   *   await RedisSMQ.shutdown();
+   *   await LifecycleManager.shutdown();
    *   console.log('RedisSMQ shut down successfully');
    * } catch (err) {
    *   console.error('Shutdown failed:', err);
    * }
+   *
+   * // Graceful shutdown with component cleanup
+   * const producer = await Producer.getInstance();
+   * await producer.shutdown(); // Shutdown producer first
+   * await LifecycleManager.shutdown(); // Then shutdown the system
    * ```
    */
   static shutdown(): Promise<void>;
@@ -357,6 +344,7 @@ export class LifecycleManager {
         () => {
           StateManager.commit();
           ComponentRegistry.clear();
+          RedisConfig.reset();
 
           const waiters = LifecycleManager.shutdownWaiters.splice(0);
           const firstErr = errors[0] || null;
@@ -364,48 +352,6 @@ export class LifecycleManager {
           waiters.forEach((w) => w(firstErr));
         },
       );
-    });
-  }
-
-  /**
-   * Resets RedisSMQ initialization state.
-   * Useful for testing or reconfiguration.
-   *
-   * @param cb - Optional callback function called when reset completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @example
-   * ```typescript
-   * // Callback pattern
-   * RedisSMQ.reset((err) => {
-   *   if (err) {
-   *     console.error('Reset failed:', err);
-   *   } else {
-   *     console.log('RedisSMQ reset successfully');
-   *     // Can now reinitialize with new configuration
-   *     RedisSMQ.initialize(newConfig);
-   *   }
-   * });
-   *
-   * // Promise pattern
-   * try {
-   *   await RedisSMQ.reset();
-   *   console.log('RedisSMQ reset successfully');
-   *   // Reinitialize with new configuration
-   *   await RedisSMQ.initialize(newConfig);
-   * } catch (err) {
-   *   console.error('Reset failed:', err);
-   * }
-   * ```
-   */
-  static reset(): Promise<void>;
-  static reset(cb: ICallback): void;
-  static reset(cb?: ICallback): Promise<void> | void {
-    return async.withOptionalCallback(cb, (callback) => {
-      if (StateManager.isDown() && ComponentRegistry.size === 0) {
-        return callback();
-      }
-      LifecycleManager.shutdown(callback);
     });
   }
 }

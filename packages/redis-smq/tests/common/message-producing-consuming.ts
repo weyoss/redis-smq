@@ -19,7 +19,7 @@ import {
   IQueueParams,
   ProducibleMessage,
 } from '../../src/index.js';
-import { config } from './config.js';
+import { redisConfig } from './config.js';
 import { getConsumer } from './consumer.js';
 import {
   untilMessageAcknowledged,
@@ -143,7 +143,10 @@ export async function crashAConsumerConsumingAMessage() {
   await new Promise((resolve) => {
     const thread = fork(path.join(env.getCurrentDir(), 'consumer-thread.js'));
     thread.send(
-      JSON.stringify({ config, consumerOptions: Consumer.getDefaultOptions() }),
+      JSON.stringify({
+        redisConfig,
+        consumerOptions: Consumer.getDefaultOptions(),
+      }),
     );
     thread.on('error', () => void 0);
     thread.on('exit', resolve);

@@ -10,5 +10,7 @@
 import { EventBus } from '../../src/index.js';
 
 export async function getEventBus() {
-  return EventBus.getInstance();
+  const i = EventBus.getInstance();
+  await i.run();
+  return i;
 }

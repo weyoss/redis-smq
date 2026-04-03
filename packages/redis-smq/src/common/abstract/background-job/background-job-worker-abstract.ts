@@ -30,7 +30,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
   protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
 
   protected constructor(payload: IWorkerPayload) {
-    super(payload.config);
+    super(payload);
     this.logger = createLogger(payload.config.logger, [
       ...payload.loggerContext.namespaces,
       this.constructor.name,

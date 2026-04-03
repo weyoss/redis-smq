@@ -21,7 +21,7 @@ import {
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { config } from '../../common/config.js';
+import { config, redisConfig } from '../../common/config.js';
 import { randomUUID } from 'node:crypto';
 
 test('ReapConsumersWorker', async () => {
@@ -41,6 +41,7 @@ test('ReapConsumersWorker', async () => {
   const reapConsumerWorker = bluebird.promisifyAll(
     new ReapConsumersWorker({
       config,
+      redisConfig,
       queueParsedParams,
       loggerContext: { namespaces: ['workers-test00003'] },
       consumerId: randomUUID(),
@@ -51,6 +52,7 @@ test('ReapConsumersWorker', async () => {
   const requeueWorker = bluebird.promisifyAll(
     new RequeueImmediateWorker({
       config,
+      redisConfig,
       queueParsedParams,
       loggerContext: { namespaces: [] },
       consumerId: randomUUID(),

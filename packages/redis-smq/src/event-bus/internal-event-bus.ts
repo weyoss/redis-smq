@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from '../config-manager/configuration.js';
 import { EventBusRedis, ICallback } from 'redis-smq-common';
 import { TRedisSMQEvent } from './types/index.js';
+import { RedisConfig } from '../common/redis/redis-config.js';
 
 /**
  * The InternalEventBus class provides a singleton interface for accessing a
@@ -28,9 +28,11 @@ export class InternalEventBus {
    */
   static getInstance() {
     if (!InternalEventBus.instance) {
-      const config = Configuration.getConfig();
+      const cfg = {
+        redis: RedisConfig.getConfig(),
+      };
       InternalEventBus.instance = new EventBusRedis<TRedisSMQEvent>(
-        config,
+        cfg,
         'system',
       );
     }

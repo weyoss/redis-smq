@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { ERedisConfigClient, RedisServer } from 'redis-smq-common';
-import { config } from './config.js';
+import { RedisServer } from 'redis-smq-common';
+import { redisConfig } from './config.js';
 
 let redisServer: RedisServer | null = null;
 
@@ -16,11 +16,8 @@ export async function initializeRedis() {
   if (!redisServer) {
     redisServer = new RedisServer();
     const port = await redisServer.start();
-    config.redis = config.redis ?? {
-      client: ERedisConfigClient.IOREDIS,
-    };
-    config.redis.options = {
-      ...config.redis.options,
+    redisConfig.options = {
+      ...redisConfig.options,
       port,
     };
   }

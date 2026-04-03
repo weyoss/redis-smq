@@ -4,15 +4,10 @@
 
 Root configuration interface for message audit system.
 
-This interface controls all audit-related features of the message queue system,
-including tracking of acknowledged messages, dead-lettered messages, and
-failure history. It provides flexible configuration options that can be
-enabled/disabled and customized per audit category.
-
 Each audit category can be configured in three ways:
 
 - `false` - Disable auditing for this category
-- `true` - Enable auditing with default settings
+- `true` - Enable auditing with default settings (queueSize=0, expire=0, maxSize=100)
 - `Partial<IConfig>` - Enable auditing with custom settings
 
 ## Example
@@ -56,21 +51,11 @@ When enabled, creates dedicated storage to track IDs of successfully
 processed messages. This allows using the `QueueAcknowledgedMessages` class
 to browse, query, and analyze acknowledged messages per queue.
 
-This is useful for:
-
-- Monitoring successful message processing rates
-- Auditing completed work
-- Debugging message flow through the system
-
 #### Default
 
 ```ts
-false (audit disabled)
+false;
 ```
-
-#### See
-
-QueueAcknowledgedMessages
 
 ---
 
@@ -85,22 +70,11 @@ failed processing and exceeded their retry limits. This allows using
 the `QueueDeadLetteredMessages` class to browse, query, and analyze
 failed messages per queue.
 
-Dead-lettered messages represent processing failures that require
-manual intervention or separate handling. This audit trail helps:
-
-- Identify problematic messages or handlers
-- Monitor failure rates and patterns
-- Implement dead-letter queue processing workflows
-
 #### Default
 
 ```ts
-false (audit disabled)
+false;
 ```
-
-#### See
-
-QueueDeadLetteredMessages
 
 ---
 
@@ -112,14 +86,10 @@ Audit configuration for unacknowledgement message history.
 
 When enabled, tracks detailed history of message processing failures,
 including each unacknowledgement event with failure causes and resolution
-actions. This provides comprehensive debugging information and helps
-identify systemic issues in message processing.
-
-Unlike acknowledged and dead-lettered audits which track only message IDs,
-this feature stores rich metadata about each failure event.
+actions. This provides comprehensive debugging information.
 
 #### Default
 
 ```ts
-false (history tracking disabled)
+false;
 ```

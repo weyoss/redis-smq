@@ -9,7 +9,7 @@
 
 import { PublishScheduledWorker } from '../../src/consumer/message-handler/queue-workers/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
-import { config } from './config.js';
+import { config, redisConfig } from './config.js';
 
 const scheduleWorker: Record<string, PublishScheduledWorker> = {};
 
@@ -21,6 +21,7 @@ export async function startScheduleWorker(
   if (!scheduleWorker[key]) {
     scheduleWorker[key] = new PublishScheduledWorker({
       config,
+      redisConfig,
       queueParsedParams: {
         queueParams,
         groupId: null,

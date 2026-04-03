@@ -6,8 +6,10 @@ The EventBus class provides a singleton interface for accessing a
 distributed (Redis-based) event bus.
 
 This allows components to communicate via events regardless of the deployment
-topology. For example, a queue pause event can be broadcast to all consumers,
-whether they are in the same process or distributed across multiple nodes.
+topology.
+
+**Important:** The event bus must be explicitly started via `run()` to begin
+consuming and delivering events. Events published before `run()` are not delivered.
 
 ## Example
 
@@ -15,45 +17,51 @@ whether they are in the same process or distributed across multiple nodes.
 // Get the event bus instance
 const eventBus = EventBus.getInstance();
 
-// Subscribe to events
+// Start the event bus to begin consuming events
+eventBus.run((err) => {
+  if (err) console.error('Failed to start event bus:', err);
+});
+
+// Subscribe to events (can be done before or after run())
 eventBus.on('queue.stateChanged', (event) => {
   console.log('Queue state changed:', event);
 });
 
-// Publish an event
-eventBus.publish('queue.stateChanged', { queue: 'orders', state: 'PAUSED' });
+// Publish an event (only delivered if bus is running)
+eventBus.emit('queue.stateChanged', { queue: 'orders', state: 'PAUSED' });
 ```
 
 ## Methods
 
 ### getInstance()
 
-> `static` **getInstance**(): `EventBusRedis`\<`TRedisSMQEvent`\>
+> `static` **getInstance**(): `EventBusRedis`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
 
 Returns the singleton instance of the event bus.
 
 This method creates the event bus instance if it doesn't exist yet,
-using the configuration from `Configuration.getConfig()`. The instance
-is cached for subsequent calls.
+using the Redis configuration from `RedisConfig.getConfig()`.
+
+**Note:** The instance is created regardless of any configuration settings.
+However, you must call `run()` on the returned instance to start consuming events.
 
 #### Returns
 
-`EventBusRedis`\<`TRedisSMQEvent`\>
+`EventBusRedis`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
 
 The singleton EventBusRedis instance
 
 #### Example
 
 ```typescript
-// Get instance and subscribe to events
+// Get instance and start it
 const eventBus = EventBus.getInstance();
+await eventBus.run();
+
+// Subscribe to events
 eventBus.on('queue.created', (data) => {
   console.log('Queue created:', data);
 });
-
-// Get instance and publish an event
-const eventBus = EventBus.getInstance();
-eventBus.publish('queue.created', { name: 'orders', ns: 'default' });
 ```
 
 ---
@@ -66,7 +74,7 @@ eventBus.publish('queue.created', { name: 'orders', ns: 'default' });
 
 Shuts down the event bus instance and releases its resources.
 
-This method gracefully shuts down the Redis connection used by the event bus
+This method gracefully shuts down the Redis connections used by the event bus
 and clears the singleton instance. After shutdown, a new instance will be
 created on the next call to `getInstance()`.
 
@@ -74,7 +82,8 @@ This is useful for:
 
 - Graceful application shutdown
 - Testing scenarios where you need to reset the event bus state
-- Reconfiguring the event bus with new settings
+
+**Note:** `RedisSMQ.shutdown()` automatically calls this method.
 
 ##### Returns
 
@@ -109,7 +118,7 @@ try {
 
 Shuts down the event bus instance and releases its resources.
 
-This method gracefully shuts down the Redis connection used by the event bus
+This method gracefully shuts down the Redis connections used by the event bus
 and clears the singleton instance. After shutdown, a new instance will be
 created on the next call to `getInstance()`.
 
@@ -117,7 +126,8 @@ This is useful for:
 
 - Graceful application shutdown
 - Testing scenarios where you need to reset the event bus state
-- Reconfiguring the event bus with new settings
+
+**Note:** `RedisSMQ.shutdown()` automatically calls this method.
 
 ##### Parameters
 

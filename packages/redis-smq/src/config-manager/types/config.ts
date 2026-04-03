@@ -7,17 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import {
-  ERedisConfigClient,
-  IConsoleLoggerOptions,
-  ILoggerConfig,
-  IRedisConfig,
-} from 'redis-smq-common';
+import { IConsoleLoggerOptions, ILoggerConfig } from 'redis-smq-common';
 import { IMessageAuditConfig, IMessageAuditParsedConfig } from '../../index.js';
-
-export interface IEventBusConfig {
-  enabled?: boolean;
-}
 
 export interface IRedisSMQConfig {
   /**
@@ -31,11 +22,6 @@ export interface IRedisSMQConfig {
    * - If omitted, the default namespace is used (see defaultConfig.namespace).
    */
   namespace?: string;
-
-  /**
-   * @see /packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
-   */
-  redis?: IRedisConfig;
 
   /**
    * @see /packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
@@ -93,29 +79,15 @@ export interface IRedisSMQConfig {
    * @see {@link IMessageAuditConfig} for configuration interface details
    */
   messageAudit?: boolean | IMessageAuditConfig;
-
-  /**
-   * @see /packages/redis-smq/docs/event-bus.md
-   */
-  eventBus?: IEventBusConfig;
 }
 
 export interface IRedisSMQParsedConfig extends Required<
   Omit<IRedisSMQConfig, 'messageAudit'>
 > {
   messageAudit: IMessageAuditParsedConfig;
-  eventBus: Required<IEventBusConfig>;
 }
 
 export interface IRedisSMQDefaultConfig extends IRedisSMQParsedConfig {
-  redis: {
-    client: ERedisConfigClient.IOREDIS;
-    options: {
-      host: string;
-      port: number;
-      db: number;
-    };
-  };
   logger: {
     enabled: boolean;
     options: Required<IConsoleLoggerOptions>;

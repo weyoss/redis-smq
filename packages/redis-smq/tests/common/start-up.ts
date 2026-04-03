@@ -8,20 +8,28 @@
  */
 
 import bluebird from 'bluebird';
-import { Consumer, ProducibleMessage, RedisSMQ } from '../../src/index.js';
-import { config } from './config.js';
+import {
+  ConfigManager,
+  Consumer,
+  ProducibleMessage,
+  RedisSMQ,
+} from '../../src/index.js';
+import { config, redisConfig } from './config.js';
 import { RedisClient } from '../../src/common/redis/redis-client/redis-client.js';
 import { BackoffConfig } from 'redis-smq-common';
 
 export async function startUp(): Promise<void> {
-  const redisClient = bluebird.promisifyAll(new RedisClient(config.redis));
+  const redisClient = bluebird.promisifyAll(new RedisClient(redisConfig));
   const instance = bluebird.promisifyAll(
     await redisClient.getSetInstanceAsync(),
   );
   await instance.flushallAsync();
   await instance.shutdownAsync();
 
-  await RedisSMQ.initializeWithConfig(config);
+  await RedisSMQ.initialize(redisConfig);
+
+  const configManager = new ConfigManager();
+  await configManager.updateConfig(config);
 
   ProducibleMessage.setDefaultConsumeOptions({
     ttl: 0,

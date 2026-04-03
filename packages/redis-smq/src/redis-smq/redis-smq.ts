@@ -23,6 +23,7 @@ import { DeadLetteredMessagesFactory } from './factories/queue-dead-lettered-mes
 import { PendingMessagesFactory } from './factories/queue-pending-messages-factory.js';
 import { RateLimitFactory } from './factories/queue-rate-limit-factory.js';
 import { LifecycleManager } from './lifecycle-manager.js';
+import { ConfigManagerFactory } from './factories/config-manager-factory.js';
 
 /**
  * Main RedisSMQ class providing a simplified API for Redis-based message queue operations.
@@ -37,6 +38,7 @@ export class RedisSMQ {
   static createMessageManager = MessageManagerFactory.create;
   static createQueueManager = QueueManagerFactory.create;
   static createNamespaceManager = NamespaceManagerFactory.create;
+  static createConfigManager = ConfigManagerFactory.create;
   static createQueuePublishedMessages = PublishedMessagesFactory.create;
   static createConsumerGroups = ConsumerGroupsFactory.create;
   static createQueueAcknowledgedMessages = AcknowledgedMessagesFactory.create;
@@ -54,8 +56,6 @@ export class RedisSMQ {
 
   // Lifecycle methods
   static initialize = LifecycleManager.initialize;
-  static initializeWithConfig = LifecycleManager.initializeWithConfig;
   static shutdown = LifecycleManager.shutdown;
-  static reset = LifecycleManager.reset;
-  static isInitialized = LifecycleManager.isInitialized;
+  static isRunning = LifecycleManager.isRunning;
 }

@@ -24,8 +24,8 @@ const config = {
   messageAudit: true, // Track all audit types
 };
 
-RedisSMQ.initializeWithConfig(config, (err) => {
-  // Your app...
+configManager.updateConfig(config, (err) => {
+  // ...
 });
 ```
 

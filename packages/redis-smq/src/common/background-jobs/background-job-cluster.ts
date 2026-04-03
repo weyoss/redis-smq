@@ -22,6 +22,7 @@ import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/
 import path from 'path';
 import { isMainThread } from 'node:worker_threads';
 import { IWorkerPayload } from '../abstract/worker/types/worker.js';
+import { RedisConfig } from '../redis/redis-config.js';
 
 const curDir = env.getCurrentDir();
 const workersPath = path.resolve(curDir, 'jobs');
@@ -68,7 +69,8 @@ export class BackgroundJobCluster extends Runnable<never> {
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback) => {
-        RedisConnectionPool.getInstance().acquire(
+        const redisConnectionPool = RedisConnectionPool.getInstance();
+        redisConnectionPool.acquire(
           ERedisConnectionAcquisitionMode.SHARED,
           (err, redisClient) => {
             if (err) return cb(err);
@@ -87,6 +89,7 @@ export class BackgroundJobCluster extends Runnable<never> {
               workersPath,
               {
                 config: this.config,
+                redisConfig: RedisConfig.getConfig(),
                 loggerContext: { namespaces: this.logger.getNamespaces() },
               },
               (err) => {

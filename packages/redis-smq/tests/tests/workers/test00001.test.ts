@@ -26,7 +26,7 @@ import {
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
-import { config } from '../../common/config.js';
+import { config, redisConfig } from '../../common/config.js';
 import { randomUUID } from 'node:crypto';
 import { ICallback } from 'redis-smq-common';
 
@@ -63,6 +63,7 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
   const requeueImmediateWorker = bluebird.promisifyAll(
     new RequeueImmediateWorker({
       config,
+      redisConfig,
       queueParsedParams: {
         queueParams: defaultQueue,
         groupId: null,
@@ -90,6 +91,7 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
         namespaces: [],
       },
       config,
+      redisConfig,
       consumerId: randomUUID(),
     }),
   );

@@ -7,23 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import {
-  ConfigManager,
-  IRedisSMQParsedConfig,
-  RedisSMQ,
-} from '../../../src/index.js';
-import { async } from 'redis-smq-common';
+import { ConfigManager, RedisSMQ } from '../../../src/index.js';
+import { async, IRedisConfig } from 'redis-smq-common';
 
 process.on('message', function (payload: unknown) {
   const {
-    config,
+    redisConfig,
   }: {
-    config: IRedisSMQParsedConfig;
+    redisConfig: IRedisConfig;
   } = JSON.parse(String(payload));
 
   async.series(
     [
-      (cb) => RedisSMQ.initialize(config.redis, cb),
+      (cb) => RedisSMQ.initialize(redisConfig, cb),
       (cb) => {
         const configManager = new ConfigManager();
         configManager.updateConfig(

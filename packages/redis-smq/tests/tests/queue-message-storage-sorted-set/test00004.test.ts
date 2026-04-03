@@ -23,13 +23,14 @@ import {
 import { BrowserStorageSortedSet } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-sorted-set.js';
 
 import { getProducer } from '../../common/producer.js';
+import { redisConfig } from '../../common/config.js';
 
 const { promisifyAll } = bluebird;
 
 it('QueueStorageSortedSet: should fetch items with correct pagination', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
+  const redisClient = promisifyAll(new RedisClient(redisConfig));
   const queueMessagesStorageSortedSet = promisifyAll(
     new BrowserStorageSortedSet(),
   );

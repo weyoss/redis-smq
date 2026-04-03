@@ -138,37 +138,9 @@ RedisSMQ.initialize(
 
 ## Configuration Options
 
-### Basic Setup
+### Initialize
 
 ```javascript
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
-  callback,
-);
-```
-
-### Advanced Setup (First Time)
-
-```javascript
-// Use initializeWithConfig for first-time configuration
-RedisSMQ.initializeWithConfig(
-  {
-    namespace: 'myapp-prod',
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: { host: '127.0.0.1', port: 6379, db: 0 },
-    },
-    eventBus: { enabled: true },
-    messageAudit: false,
-    //...
-  },
-  callback,
-);
-
-// Later, just use initialize()
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,

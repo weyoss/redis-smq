@@ -13,7 +13,7 @@ import {
   IConnectionPoolConfig,
 } from '../../../src/common/redis/redis-connection-pool/types/connection-pool.js';
 import bluebird from 'bluebird';
-import { config } from '../../common/config.js';
+import { redisConfig } from '../../common/config.js';
 import {
   concurrentConnections,
   connectionAcquisitionAndRelease,
@@ -38,7 +38,7 @@ describe('Redis Connection Pool', async () => {
   beforeEach(async () => {
     await connectionPool.shutdownAsync();
     pool = bluebird.promisifyAll(
-      await connectionPool.initializeAsync(config.redis, poolConfig),
+      await connectionPool.initializeAsync(redisConfig, poolConfig),
     );
   });
 

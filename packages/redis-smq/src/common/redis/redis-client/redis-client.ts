@@ -7,21 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import {
-  ICallback,
-  IRedisClient,
-  IRedisConfig,
-  RedisClientFactory,
-} from 'redis-smq-common';
-import { Configuration } from '../../../config-manager/configuration.js';
+import { ICallback, IRedisClient, RedisClientFactory } from 'redis-smq-common';
 import { scriptFileMap } from '../scripts.js';
 
 export class RedisClient extends RedisClientFactory {
-  constructor(cfg?: IRedisConfig) {
-    const config = cfg ?? Configuration.getConfig().redis;
-    super(config);
-  }
-
   protected override setupClient(
     client: IRedisClient,
     cb: ICallback<IRedisClient>,

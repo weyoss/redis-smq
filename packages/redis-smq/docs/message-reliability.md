@@ -111,7 +111,8 @@ const config = {
   },
 };
 
-RedisSMQ.initializeWithConfig(config, callback);
+const configManager = RedisSMQ.createConfigManager();
+configManager.updateConfig(config, callback);
 
 // Later, inspect dead-lettered messages
 const dlq = RedisSMQ.createQueueDeadLetteredMessages();
