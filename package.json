@@ -54,7 +54,7 @@
     "release:preminor": "scripts/release.sh preminor",
     "release:premajor": "scripts/release.sh premajor",
     "release:prerelease": "scripts/release.sh prerelease",
-    "docs": "scripts/document.sh",
+    "document": "scripts/document.sh",
     "lint": "scripts/lint.sh",
     "lint:all": "scripts/lint.sh --all",
     "redis:start": "scripts/redis.sh start",
