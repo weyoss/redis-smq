@@ -4,25 +4,13 @@
 
 ## Extends
 
-- `Required`\<`Omit`\<[`IRedisSMQConfig`](IRedisSMQConfig.md), `"messageAudit"`\>\>
-
-## Extended by
-
-- [`IRedisSMQDefaultConfig`](IRedisSMQDefaultConfig.md)
+- `Required`\<`Omit`\<[`IRedisSMQConfig`](IRedisSMQConfig.md), `"messageAudit"` \| `"logger"`\>\>
 
 ## Properties
 
 ### logger
 
-> **logger**: `ILoggerConfig`
-
-#### See
-
-/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
-
-#### Inherited from
-
-[`IRedisSMQConfig`](IRedisSMQConfig.md).[`logger`](IRedisSMQConfig.md#logger)
+> **logger**: [`ILoggerParsedConfig`](ILoggerParsedConfig.md)
 
 ---
 

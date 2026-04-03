@@ -9,3 +9,4 @@
 
 export * from './config.js';
 export * from './message-audit.js';
+export * from './logger.js';

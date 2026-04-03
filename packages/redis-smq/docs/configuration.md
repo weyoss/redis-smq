@@ -90,7 +90,7 @@ const configManager = new ConfigManager();
 // Update configuration
 await configManager.updateConfig({
   messageAudit: true,
-  logger: { enabled: true },
+  logger: true,
 });
 
 // Or with callback
@@ -107,7 +107,7 @@ configManager.updateConfig({ messageAudit: true }, (err) => {
 ```javascript
 const config = {
   namespace: 'myapp', // Isolates your app's queues (stored in Redis)
-  logger: { enabled: true }, // Console logging
+  logger: true, // Console logging
   messageAudit: false, // Track processed messages
 };
 ```
@@ -128,7 +128,12 @@ const configManager = new ConfigManager();
 await configManager.updateConfig({
   namespace: 'production-app',
   messageAudit: true,
-  logger: { enabled: true },
+  logger: {
+    enabled: true,
+    options: {
+      logLevel: 'DEBUG',
+    },
+  },
 });
 
 // Step 3: Verify configuration

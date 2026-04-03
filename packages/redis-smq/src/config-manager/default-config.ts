@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQDefaultConfig } from './types/index.js';
+import { IRedisSMQParsedConfig } from './types/index.js';
 import { EConsoleLoggerLevel } from 'redis-smq-common';
 
-export const defaultConfig: IRedisSMQDefaultConfig = {
+export const defaultConfig: IRedisSMQParsedConfig = {
   namespace: 'default',
   messageAudit: {
     acknowledgedMessages: {

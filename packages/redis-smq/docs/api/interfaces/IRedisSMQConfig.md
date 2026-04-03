@@ -6,7 +6,7 @@
 
 ### logger?
 
-> `optional` **logger**: `ILoggerConfig`
+> `optional` **logger**: `boolean` \| `ILoggerConfig`
 
 #### See
 

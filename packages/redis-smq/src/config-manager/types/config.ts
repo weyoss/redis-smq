@@ -7,8 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { IConsoleLoggerOptions, ILoggerConfig } from 'redis-smq-common';
-import { IMessageAuditConfig, IMessageAuditParsedConfig } from '../../index.js';
+import { ILoggerConfig } from 'redis-smq-common';
+import {
+  ILoggerParsedConfig,
+  IMessageAuditConfig,
+  IMessageAuditParsedConfig,
+} from '../../index.js';
 
 export interface IRedisSMQConfig {
   /**
@@ -26,7 +30,7 @@ export interface IRedisSMQConfig {
   /**
    * @see /packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
    */
-  logger?: ILoggerConfig;
+  logger?: boolean | ILoggerConfig;
 
   /**
    * Message audit configuration for tracking processed messages.
@@ -82,14 +86,8 @@ export interface IRedisSMQConfig {
 }
 
 export interface IRedisSMQParsedConfig extends Required<
-  Omit<IRedisSMQConfig, 'messageAudit'>
+  Omit<IRedisSMQConfig, 'messageAudit' | 'logger'>
 > {
   messageAudit: IMessageAuditParsedConfig;
-}
-
-export interface IRedisSMQDefaultConfig extends IRedisSMQParsedConfig {
-  logger: {
-    enabled: boolean;
-    options: Required<IConsoleLoggerOptions>;
-  };
+  logger: ILoggerParsedConfig;
 }

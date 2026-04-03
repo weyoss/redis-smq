@@ -68,6 +68,7 @@
 - [IExchangeParsedParams](interfaces/IExchangeParsedParams.md)
 - [IExchangeProperties](interfaces/IExchangeProperties.md)
 - [IHeartbeatPayload](interfaces/IHeartbeatPayload.md)
+- [ILoggerParsedConfig](interfaces/ILoggerParsedConfig.md)
 - [IMessageAuditConfig](interfaces/IMessageAuditConfig.md)
 - [IMessageAuditHistoryConfig](interfaces/IMessageAuditHistoryConfig.md)
 - [IMessageAuditMessagesConfig](interfaces/IMessageAuditMessagesConfig.md)
@@ -86,7 +87,6 @@
 - [IQueueRateLimit](interfaces/IQueueRateLimit.md)
 - [IQueueStateTransition](interfaces/IQueueStateTransition.md)
 - [IRedisSMQConfig](interfaces/IRedisSMQConfig.md)
-- [IRedisSMQDefaultConfig](interfaces/IRedisSMQDefaultConfig.md)
 - [IRedisSMQParsedConfig](interfaces/IRedisSMQParsedConfig.md)
 
 ## Type Aliases
