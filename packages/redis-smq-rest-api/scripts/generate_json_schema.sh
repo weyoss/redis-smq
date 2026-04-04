@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 # Copyright (c)
 # Weyoss <weyoss@outlook.com>
