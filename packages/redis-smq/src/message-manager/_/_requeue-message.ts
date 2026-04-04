@@ -123,12 +123,8 @@ export function _requeueMessage(
         ];
 
         // Build ARGV array for the Lua script
-        // ARGV layout for requeue-message.lua (updated):
-        // ARGV[1-40]: Constants (13 queue + 3 status + 24 message = 40)
-        // ARGV[41]: operationLockId (single parameter for entire batch)
-        // ARGV[42-48]: Message-specific parameters (7 values)
         const argv: (string | number)[] = [
-          // Queue Property Constants (1-13)
+          // Queue Property Constants (ARGV[1-13])
           EQueueProperty.QUEUE_TYPE,
           EQueueProperty.MESSAGES_COUNT,
           EQueueProperty.PENDING_MESSAGES_COUNT,
@@ -143,50 +139,45 @@ export function _requeueMessage(
           EQueueOperationalState.STOPPED,
           EQueueOperationalState.LOCKED,
 
-          // Message Status Constants (14-16) - Reordered to match Lua script
-          EMessagePropertyStatus.SCHEDULED, // ARGV[14] - EMessagePropertyStatusScheduled
-          EMessagePropertyStatus.PENDING, // ARGV[15] - EMessagePropertyStatusPending
-          EMessageProperty.STATUS, // ARGV[16] - EMessagePropertyStatus (generic)
+          // Message Status Constants (ARGV[14-15])
+          EMessagePropertyStatus.SCHEDULED,
+          EMessagePropertyStatus.PENDING,
 
-          // Message Property Constants (17-40) - 24 keys
-          EMessageProperty.ID, // 17
-          EMessageProperty.STATUS, // 18 - Used as STATUS field key
-          EMessageProperty.MESSAGE, // 19
-          EMessageProperty.SCHEDULED_AT, // 20
-          EMessageProperty.PUBLISHED_AT, // 21
-          EMessageProperty.PROCESSING_STARTED_AT, // 22
-          EMessageProperty.DEAD_LETTERED_AT, // 23
-          EMessageProperty.ACKNOWLEDGED_AT, // 24
-          EMessageProperty.UNACKNOWLEDGED_AT, // 25
-          EMessageProperty.LAST_UNACKNOWLEDGED_AT, // 26
-          EMessageProperty.LAST_SCHEDULED_AT, // 27
-          EMessageProperty.REQUEUED_AT, // 28
-          EMessageProperty.REQUEUE_COUNT, // 29
-          EMessageProperty.LAST_REQUEUED_AT, // 30
-          EMessageProperty.LAST_RETRIED_ATTEMPT_AT, // 31
-          EMessageProperty.SCHEDULED_CRON_FIRED, // 32
-          EMessageProperty.ATTEMPTS, // 33
-          EMessageProperty.SCHEDULED_REPEAT_COUNT, // 34
-          EMessageProperty.EXPIRED, // 35
-          EMessageProperty.EFFECTIVE_SCHEDULED_DELAY, // 36
-          EMessageProperty.SCHEDULED_TIMES, // 37
-          EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID, // 38
-          EMessageProperty.REQUEUED_MESSAGE_PARENT_ID, // 39
-          // Note: ARGV[40] is not used in this script (DEAD_LETTERED_MESSAGES_COUNT in other scripts)
-          // But we need to account for it in the offset
-          '', // Placeholder for ARGV[40] - not used but maintains correct offsets
+          // Message Property Keys (ARGV[16-39]) - 24 keys
+          EMessageProperty.ID,
+          EMessageProperty.STATUS,
+          EMessageProperty.MESSAGE,
+          EMessageProperty.SCHEDULED_AT,
+          EMessageProperty.PUBLISHED_AT,
+          EMessageProperty.PROCESSING_STARTED_AT,
+          EMessageProperty.DEAD_LETTERED_AT,
+          EMessageProperty.ACKNOWLEDGED_AT,
+          EMessageProperty.UNACKNOWLEDGED_AT,
+          EMessageProperty.LAST_UNACKNOWLEDGED_AT,
+          EMessageProperty.LAST_SCHEDULED_AT,
+          EMessageProperty.REQUEUED_AT,
+          EMessageProperty.REQUEUE_COUNT,
+          EMessageProperty.LAST_REQUEUED_AT,
+          EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
+          EMessageProperty.SCHEDULED_CRON_FIRED,
+          EMessageProperty.ATTEMPTS,
+          EMessageProperty.SCHEDULED_REPEAT_COUNT,
+          EMessageProperty.EXPIRED,
+          EMessageProperty.EFFECTIVE_SCHEDULED_DELAY,
+          EMessageProperty.SCHEDULED_TIMES,
+          EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID,
+          EMessageProperty.REQUEUED_MESSAGE_PARENT_ID,
+          EMessageProperty.LAST_PROCESSED_AT,
 
-          // Operation Lock ID (41) - empty for normal operations
-          '',
+          '', // ARGV[40] operationLockId
 
-          // Dynamic ARGV for the message (42-48)
-          newChildMessageId, // 42
-          JSON.stringify(newMessage.toJSON()), // 43
-          message.producibleMessage.getPriority() ?? '', // 44
-          ts, // 45 - newChildMessagePublishedAt
-          message.getMessageState().getRequeuedAt() ?? ts, // 46 - requeuedAt
-          ts, // 47 - lastRequeuedAt
-          consumerGroupId ?? '', // 48
+          newChildMessageId, // ARGV[41] newChildMessageId
+          JSON.stringify(newMessage.toJSON()), // ARGV[42] newChildMessage
+          message.producibleMessage.getPriority() ?? '', // ARGV[43] newChildMessagePriority
+          ts, // ARGV[44] - newChildMessagePublishedAt
+          message.getMessageState().getRequeuedAt() ?? ts, // ARGV[45] - requeuedAt
+          ts, // ARGV[46] - lastRequeuedAt
+          consumerGroupId ?? '', // ARGV[47]
         ];
 
         redisClient.runScript(

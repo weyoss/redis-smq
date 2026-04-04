@@ -41,7 +41,7 @@ local function publish_message(keys, args)
     local EMessagePropertyStatusScheduled = args[16]
     local EMessagePropertyStatusPending = args[17]
 
-    -- Message Property Keys (18-40)
+    -- Message Property Keys (18-41)
     local EMessagePropertyId = args[18]
     local EMessagePropertyStatus = args[19]
     local EMessagePropertyMessage = args[20]
@@ -65,37 +65,39 @@ local function publish_message(keys, args)
     local EMessagePropertyScheduledTimes = args[38]
     local EMessagePropertyScheduledMessageParentId = args[39]
     local EMessagePropertyRequeuedMessageParentId = args[40]
+    local EMessagePropertyLastProcessedAt = args[41]
 
-    -- Message Property Values (41-63)
-    local messageId = args[41]
-    local messageStatus = args[42]
-    local message = args[43]
-    local messageScheduledAt = args[44]
-    local messagePublishedAt = args[45]
-    local messageProcessingStartedAt = args[46]
-    local messageDeadLetteredAt = args[47]
-    local messageAcknowledgedAt = args[48]
-    local messageUnacknowledgedAt = args[49]
-    local messageLastUnacknowledgedAt = args[50]
-    local messageLastScheduledAt = args[51]
-    local messageRequeuedAt = args[52]
-    local messageRequeueCount = args[53]
-    local messageLastRequeuedAt = args[54]
-    local messageLastRetriedAttemptAt = args[55]
-    local messageScheduledCronFired = args[56]
-    local messageAttempts = args[57]
-    local messageScheduledRepeatCount = args[58]
-    local messageExpired = args[59]
-    local messageEffectiveScheduledDelay = args[60]
-    local messageScheduledTimes = args[61]
-    local messageScheduledMessageParentId = args[62]
-    local messageRequeuedMessageParentId = args[63]
+    -- Message Property Values (42-66)
+    local messageId = args[42]
+    local messageStatus = args[43]
+    local message = args[44]
+    local messageScheduledAt = args[45]
+    local messagePublishedAt = args[46]
+    local messageProcessingStartedAt = args[47]
+    local messageDeadLetteredAt = args[48]
+    local messageAcknowledgedAt = args[49]
+    local messageUnacknowledgedAt = args[50]
+    local messageLastUnacknowledgedAt = args[51]
+    local messageLastScheduledAt = args[52]
+    local messageRequeuedAt = args[53]
+    local messageRequeueCount = args[54]
+    local messageLastRequeuedAt = args[55]
+    local messageLastRetriedAttemptAt = args[56]
+    local messageScheduledCronFired = args[57]
+    local messageAttempts = args[58]
+    local messageScheduledRepeatCount = args[59]
+    local messageExpired = args[60]
+    local messageEffectiveScheduledDelay = args[61]
+    local messageScheduledTimes = args[62]
+    local messageScheduledMessageParentId = args[63]
+    local messageRequeuedMessageParentId = args[64]
+    local messageLastProcessedAt = args[65]  -- NEW
 
-    -- Consumer Group ID (64)
-    local consumerGroupId = args[64]
+    -- Consumer Group ID (66)
+    local consumerGroupId = args[66]
 
-    -- Lock ID for locked queue access (65) - New: optional lock ID for publishing to locked queues
-    local operationLockId = args[65]
+    -- Lock ID for locked queue access (67) - optional lock ID for publishing to locked queues
+    local operationLockId = args[67]
 
     -- Get queue type and operational state with a single multi-get call
     local queueProps = redis.call("HMGET", keyQueueProperties,
@@ -125,8 +127,8 @@ local function publish_message(keys, args)
     elseif operationalState == EQueueOperationalStateLocked then
         -- Queue is locked, check if operationLockId matches
         if not operationLockId or operationLockId == '' or
-           not currentLockId or currentLockId == '' or
-           operationLockId ~= currentLockId then
+            not currentLockId or currentLockId == '' or
+            operationLockId ~= currentLockId then
             return 'QUEUE_LOCKED'
         end
         -- Lock ID matches, allow publishing
@@ -203,7 +205,8 @@ local function publish_message(keys, args)
             EMessagePropertyEffectiveScheduledDelay, messageEffectiveScheduledDelay,
             EMessagePropertyScheduledTimes, messageScheduledTimes,
             EMessagePropertyScheduledMessageParentId, messageScheduledMessageParentId,
-            EMessagePropertyRequeuedMessageParentId, messageRequeuedMessageParentId
+            EMessagePropertyRequeuedMessageParentId, messageRequeuedMessageParentId,
+            EMessagePropertyLastProcessedAt, messageLastProcessedAt
     )
 
     -- Increment total messages count

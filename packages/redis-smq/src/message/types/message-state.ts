@@ -11,17 +11,23 @@ import { EMessageProperty } from './message.js';
 
 export interface IMessageStateTransferable {
   uuid: string;
-  publishedAt: number | null;
+
+  //
   scheduledAt: number | null;
+  publishedAt: number | null;
   requeuedAt: number | null;
-  lastRequeuedAt: number | null;
+  processingStartedAt: number | null;
   acknowledgedAt: number | null;
   unacknowledgedAt: number | null;
-  lastUnacknowledgedAt: number | null;
   deadLetteredAt: number | null;
-  processingStartedAt: number | null;
+
+  //
+  lastRequeuedAt: number | null;
+  lastUnacknowledgedAt: number | null;
   lastScheduledAt: number | null;
   lastRetriedAttemptAt: number | null;
+  lastProcessedAt: number | null;
+
   scheduledCronFired: boolean;
   attempts: number;
   scheduledRepeatCount: number;
@@ -57,7 +63,8 @@ export type TMessageStateProperty =
   | EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID
   | EMessageProperty.REQUEUED_MESSAGE_PARENT_ID
   | EMessageProperty.REQUEUE_COUNT
-  | EMessageProperty.LAST_REQUEUED_AT;
+  | EMessageProperty.LAST_REQUEUED_AT
+  | EMessageProperty.LAST_PROCESSED_AT;
 
 /**
  * Maps enum members to their corresponding property names in IMessageStateTransferable.
@@ -86,6 +93,7 @@ export const MessageStatePropertyMap = {
   [EMessageProperty.REQUEUED_MESSAGE_PARENT_ID]: 'requeuedMessageParentId',
   [EMessageProperty.REQUEUE_COUNT]: 'requeueCount',
   [EMessageProperty.LAST_REQUEUED_AT]: 'lastRequeuedAt',
+  [EMessageProperty.LAST_PROCESSED_AT]: 'lastProcessedAt',
 } as const;
 
 /**

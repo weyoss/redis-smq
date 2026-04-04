@@ -41,43 +41,44 @@ export enum EMessageProperty {
   UNACKNOWLEDGED_AT = 8,
   LAST_UNACKNOWLEDGED_AT = 9,
   LAST_SCHEDULED_AT = 10,
+  LAST_PROCESSED_AT = 11,
 
   /**
    * A timestamp that is set only when a message is manually requeued
    * for the first time.
    * This is used for tracking the "clone" action.
    */
-  REQUEUED_AT = 11,
+  REQUEUED_AT = 12,
 
   /**
    * A counter for how many times a message has been requeued.
    */
-  REQUEUE_COUNT = 12,
+  REQUEUE_COUNT = 13,
 
   /**
    * A timestamp that is updated each time a message is manually requeued.
    */
-  LAST_REQUEUED_AT = 13,
+  LAST_REQUEUED_AT = 14,
 
   /**
    * A timestamp that is set only when a message is automatically
    * retried after a processing failure (e.g., from an unacknowledged message).
    */
-  LAST_RETRIED_ATTEMPT_AT = 14,
+  LAST_RETRIED_ATTEMPT_AT = 15,
 
   // Scheduling properties
-  SCHEDULED_CRON_FIRED = 15,
-  ATTEMPTS = 16,
-  SCHEDULED_REPEAT_COUNT = 17,
-  EXPIRED = 18,
-  EFFECTIVE_SCHEDULED_DELAY = 19,
-  SCHEDULED_TIMES = 20,
+  SCHEDULED_CRON_FIRED = 16,
+  ATTEMPTS = 17,
+  SCHEDULED_REPEAT_COUNT = 18,
+  EXPIRED = 19,
+  EFFECTIVE_SCHEDULED_DELAY = 20,
+  SCHEDULED_TIMES = 21,
 
   // Relational properties for scheduled messages
-  SCHEDULED_MESSAGE_PARENT_ID = 21,
+  SCHEDULED_MESSAGE_PARENT_ID = 22,
 
   // Relational properties for manually requeued messages
-  REQUEUED_MESSAGE_PARENT_ID = 22,
+  REQUEUED_MESSAGE_PARENT_ID = 23,
 }
 
 export enum EMessagePropertyStatus {

@@ -81,13 +81,13 @@ export function _publishMessage(
     ? EMessagePropertyStatus.SCHEDULED
     : EMessagePropertyStatus.PENDING;
 
-  // ARGV layout for the publish-message.lua script (updated):
+  // ARGV layout for the publish-message.lua script (67 total arguments):
   // ARGV[1-13]: Queue property keys and state values (13 values)
   // ARGV[14-17]: Message priority and scheduling values (4 values)
-  // ARGV[18-40]: Message property keys (23 keys)
-  // ARGV[41-63]: Message property values (23 values)
-  // ARGV[64]: consumerGroupId
-  // ARGV[65]: operationLockId (optional, for locked queues)
+  // ARGV[18-41]: Message property keys (24 keys)
+  // ARGV[42-65]: Message property values (24 values)
+  // ARGV[66]: consumerGroupId
+  // ARGV[67]: operationLockId (optional, for locked queues)
 
   const queuePropertyValues = [
     EQueueProperty.QUEUE_TYPE,
@@ -136,6 +136,7 @@ export function _publishMessage(
     EMessageProperty.SCHEDULED_TIMES,
     EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID,
     EMessageProperty.REQUEUED_MESSAGE_PARENT_ID,
+    EMessageProperty.LAST_PROCESSED_AT,
   ];
 
   const messagePropertyValues = [
@@ -163,6 +164,7 @@ export function _publishMessage(
     messageState.getScheduledTimes(), // SCHEDULED_TIMES
     messageState.getScheduledMessageParentId() ?? '', // SCHEDULED_MESSAGE_PARENT_ID
     messageState.getRequeuedMessageParentId() ?? '', // REQUEUED_MESSAGE_PARENT_ID
+    messageState.getLastProcessedAt() ?? '', // LAST_PROCESSED_AT
   ];
 
   const scriptArgs = [

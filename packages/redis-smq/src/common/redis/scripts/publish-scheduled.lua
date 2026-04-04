@@ -28,8 +28,8 @@
 --     - keyScheduledMessage (for the original message)
 --
 -- ARGV:
---   ARGV[1-40]: A list of all EQueueProperty and EMessageProperty constants.
---   ARGV[41...]: A flat list of repeating parameters for each message.
+--   ARGV[1-41]: A list of all EQueueProperty and EMessageProperty constants.
+--   ARGV[42...]: A flat list of repeating parameters for each message.
 --
 -- ARGV structure per message (14 parameters):
 --   1. messageId (new message ID, or '')
@@ -69,19 +69,20 @@ local EQueuePropertyDeadLetteredMessagesCount = ARGV[5]
 local EQueuePropertyQueueTypePriorityQueue = ARGV[6]
 local EQueuePropertyQueueTypeLIFOQueue = ARGV[7]
 local EQueuePropertyQueueTypeFIFOQueue = ARGV[8]
-local EQueuePropertyOperationalState = ARGV[9]   -- New: Operational state field
-local EQueuePropertyLockId = ARGV[10]            -- New: Lock ID field
-local EQueueOperationalStateActive = ARGV[11]    -- New: ACTIVE state value
-local EQueueOperationalStatePaused = ARGV[12]    -- New: PAUSED state value
-local EQueueOperationalStateStopped = ARGV[13]   -- New: STOPPED state value
-local EQueueOperationalStateLocked = ARGV[14]    -- New: LOCKED state value
+
+local EQueuePropertyOperationalState = ARGV[9]
+local EQueuePropertyLockId = ARGV[10]
+local EQueueOperationalStateActive = ARGV[11]
+local EQueueOperationalStatePaused = ARGV[12]
+local EQueueOperationalStateStopped = ARGV[13]
+local EQueueOperationalStateLocked = ARGV[14]
 
 -- Message Status Constants (ARGV[15-17])
 local EMessagePropertyStatusPending = ARGV[15]
 local EMessagePropertyStatusScheduled = ARGV[16]
 local EMessagePropertyStatusDeadLettered = ARGV[17]
 
--- Message Property Constants (ARGV[18-40])
+-- Message Property Constants (ARGV[18-41]) - Updated to include LastProcessedAt
 local EMessagePropertyId = ARGV[18]
 local EMessagePropertyStatus = ARGV[19]
 local EMessagePropertyMessage = ARGV[20]
@@ -105,6 +106,7 @@ local EMessagePropertyEffectiveScheduledDelay = ARGV[37]
 local EMessagePropertyScheduledTimes = ARGV[38]
 local EMessagePropertyScheduledMessageParentId = ARGV[39]
 local EMessagePropertyRequeuedMessageParentId = ARGV[40]
+local EMessagePropertyLastProcessedAt = ARGV[41]
 
 -- Check queue operational state
 local queueProps = redis.call("HMGET", keyQueueProperties,
@@ -143,7 +145,7 @@ else
 end
 
 -- Loop constants
-local INITIAL_ARGV_OFFSET = 40
+local INITIAL_ARGV_OFFSET = 41
 local INITIAL_KEY_OFFSET = 7
 local PARAMS_PER_MESSAGE = 14
 local KEYS_PER_MESSAGE = 2
@@ -268,7 +270,7 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 EMessagePropertyStatusScheduled,
                 EMessagePropertyStatusPending,
 
-                -- Message Property Keys (23 keys: ARGV[18-40])
+                -- Message Property Keys (24 keys: ARGV[18-41])
                 EMessagePropertyId,
                 EMessagePropertyStatus,
                 EMessagePropertyMessage,
@@ -292,8 +294,9 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 EMessagePropertyScheduledTimes,
                 EMessagePropertyScheduledMessageParentId,
                 EMessagePropertyRequeuedMessageParentId,
+                EMessagePropertyLastProcessedAt,
 
-                -- Message Property Values (23 values: ARGV[41-63])
+                -- Message Property Values (24 values: ARGV[42-65])
                 newMessageId,                    -- ID
                 EMessagePropertyStatusPending,   -- STATUS
                 newMessage,                      -- MESSAGE
@@ -317,11 +320,12 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 '0',                             -- SCHEDULED_TIMES
                 scheduledMessageId,              -- SCHEDULED_MESSAGE_PARENT_ID
                 '',                              -- REQUEUED_MESSAGE_PARENT_ID
+                '',                              -- LAST_PROCESSED_AT
 
-                -- Consumer Group ID (ARGV[64])
+                -- Consumer Group ID (ARGV[66])
                 consumerGroupId,
 
-                -- Operation Lock ID (ARGV[65]) - empty for scheduled message processing
+                -- Operation Lock ID (ARGV[67]) - empty for scheduled message processing
                 ''
             }
             local result = publish_message(pKeys, pArgs)

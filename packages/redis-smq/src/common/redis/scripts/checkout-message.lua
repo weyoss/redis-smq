@@ -17,18 +17,19 @@
 -- KEYS[2]: keyQueueProperties
 --
 -- ARGV[1]: EMessagePropertyProcessingStartedAt
--- ARGV[2]: messageProcessingStartedAt (timestamp)
--- ARGV[3]: EMessagePropertyStatus
--- ARGV[4]: EMessagePropertyStatusProcessing
--- ARGV[5]: EMessagePropertyStatusPending
--- ARGV[6]: EMessagePropertyAttempts
--- ARGV[7]: EQueuePropertyProcessingMessagesCount
--- ARGV[8]: EQueuePropertyPendingMessagesCount
--- ARGV[9]: EQueuePropertyOperationalState (field name for operational state)
--- ARGV[10]: EQueueOperationalStateActive (ACTIVE state enum value)
--- ARGV[11]: EQueueOperationalStatePaused (PAUSED state enum value)
--- ARGV[12]: EQueueOperationalStateStopped (STOPPED state enum value)
--- ARGV[13]: EQueueOperationalStateLocked (LOCKED state enum value)
+-- ARGV[2]: EMessagePropertyLastProcessedAt
+-- ARGV[3]: messageProcessingStartedAt (timestamp)
+-- ARGV[4]: EMessagePropertyStatus
+-- ARGV[5]: EMessagePropertyStatusProcessing
+-- ARGV[6]: EMessagePropertyStatusPending
+-- ARGV[7]: EMessagePropertyAttempts
+-- ARGV[8]: EQueuePropertyProcessingMessagesCount
+-- ARGV[9]: EQueuePropertyPendingMessagesCount
+-- ARGV[10]: EQueuePropertyOperationalState (field name for operational state)
+-- ARGV[11]: EQueueOperationalStateActive (ACTIVE state enum value)
+-- ARGV[12]: EQueueOperationalStatePaused (PAUSED state enum value)
+-- ARGV[13]: EQueueOperationalStateStopped (STOPPED state enum value)
+-- ARGV[14]: EQueueOperationalStateLocked (LOCKED state enum value)
 --
 -- Returns:
 --   - The message data as a list of keys and values if successful.
@@ -42,19 +43,20 @@ local keyMessage = KEYS[1]
 local keyQueueProperties = KEYS[2]
 
 local EMessagePropertyProcessingStartedAt = ARGV[1]
-local messageProcessingStartedAt = ARGV[2]
-local EMessagePropertyStatus = ARGV[3]
-local EMessagePropertyStatusProcessing = ARGV[4]
-local EMessagePropertyStatusPending = ARGV[5]
-local EMessagePropertyAttempts = ARGV[6]
-local EQueuePropertyProcessingMessagesCount = ARGV[7]
-local EQueuePropertyPendingMessagesCount = ARGV[8]
+local EMessagePropertyLastProcessedAt = ARGV[2]
+local messageProcessingStartedAt = ARGV[3]
+local EMessagePropertyStatus = ARGV[4]
+local EMessagePropertyStatusProcessing = ARGV[5]
+local EMessagePropertyStatusPending = ARGV[6]
+local EMessagePropertyAttempts = ARGV[7]
+local EQueuePropertyProcessingMessagesCount = ARGV[8]
+local EQueuePropertyPendingMessagesCount = ARGV[9]
 -- Operational state constants
-local EQueuePropertyOperationalState = ARGV[9]
-local EQueueOperationalStateActive = ARGV[10]
-local EQueueOperationalStatePaused = ARGV[11]
-local EQueueOperationalStateStopped = ARGV[12]
-local EQueueOperationalStateLocked = ARGV[13]
+local EQueuePropertyOperationalState = ARGV[10]
+local EQueueOperationalStateActive = ARGV[11]
+local EQueueOperationalStatePaused = ARGV[12]
+local EQueueOperationalStateStopped = ARGV[13]
+local EQueueOperationalStateLocked = ARGV[14]
 
 -- Get current operational state
 local currentState = redis.call("HGET", keyQueueProperties, EQueuePropertyOperationalState)
@@ -86,24 +88,36 @@ else
 end
 
 -- Atomically get the current status of the message.
-local currentStatus = redis.call("HGET", keyMessage, EMessagePropertyStatus)
+local messageProps = redis.call("HMGET",
+    keyMessage,
+    EMessagePropertyStatus,
+    EMessagePropertyProcessingStartedAt
+)
 
 -- Only proceed if the message exists
-if currentStatus == false then
+if messageProps[1] == false then
     return 'MESSAGE_NOT_FOUND'
 end
 
 -- Return error if message is already processing,
 -- or is in another state (e.g., acknowledged, dead-lettered).
-if currentStatus ~= EMessagePropertyStatusPending then
+if messageProps[1] ~= EMessagePropertyStatusPending then
     return 'MESSAGE_NOT_PENDING'
 end
 
 -- The message is available. Claim it by setting its status to 'processing'.
-redis.call("HMSET", keyMessage,
-    EMessagePropertyStatus, EMessagePropertyStatusProcessing,
-    EMessagePropertyProcessingStartedAt, messageProcessingStartedAt
-)
+if messageProps[2] == '' then
+    redis.call("HMSET", keyMessage,
+        EMessagePropertyStatus, EMessagePropertyStatusProcessing,
+        EMessagePropertyProcessingStartedAt, messageProcessingStartedAt,
+        EMessagePropertyLastProcessedAt, messageProcessingStartedAt
+    )
+else
+    redis.call("HMSET", keyMessage,
+        EMessagePropertyStatus, EMessagePropertyStatusProcessing,
+        EMessagePropertyLastProcessedAt, messageProcessingStartedAt
+    )
+end
 
 -- Atomically increment the delivery attempts counter.
 redis.call("HINCRBY", keyMessage, EMessagePropertyAttempts, 1)

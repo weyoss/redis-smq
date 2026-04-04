@@ -31,13 +31,15 @@
 --     - keyNewMessage
 --
 -- ARGV:
---   ARGV[1-40]: A list of all EQueueProperty and EMessageProperty constants.
---   ARGV[41]: operationLockId  -- SINGLE lock ID for the entire batch
---   ARGV[42...]: A flat list of repeating parameters for each message being requeued.
+--   ARGV[1-39]: A list of all EQueueProperty, EMessagePropertyStatus, and EMessageProperty constants.
+--   ARGV[40]: operationLockId  -- SINGLE lock ID for the entire batch
+--   ARGV[41...]: A flat list of repeating parameters for each message being requeued.
 --
 -- ARGV structure:
---   - ARGV[1-40]: Constants (13 queue + 3 status + 24 message = 40)
---   - ARGV[41]: operationLockId (single parameter for entire batch)
+--   - ARGV[1-13]: Queue property constants (13 values)
+--   - ARGV[14-15]: Message status constants (2 values)
+--   - ARGV[16-39]: Message property keys (24 values)
+--   - ARGV[40]: operationLockId (single parameter for entire batch)
 --   - Then for each message (7 parameters):
 --       1. newChildMessageId
 --       2. newChildMessage (JSON)
@@ -72,50 +74,48 @@ local EQueuePropertyScheduledMessagesCount = ARGV[4]
 local EQueuePropertyQueueTypePriorityQueue = ARGV[5]
 local EQueuePropertyQueueTypeLIFOQueue = ARGV[6]
 local EQueuePropertyQueueTypeFIFOQueue = ARGV[7]
-local EQueuePropertyOperationalState = ARGV[8]   -- Operational state field
-local EQueuePropertyLockId = ARGV[9]            -- Lock ID field
-local EQueueOperationalStateActive = ARGV[10]    -- ACTIVE state value
-local EQueueOperationalStatePaused = ARGV[11]    -- PAUSED state value
-local EQueueOperationalStateStopped = ARGV[12]   -- STOPPED state value
-local EQueueOperationalStateLocked = ARGV[13]    -- LOCKED state value
+local EQueuePropertyOperationalState = ARGV[8]
+local EQueuePropertyLockId = ARGV[9]
+local EQueueOperationalStateActive = ARGV[10]
+local EQueueOperationalStatePaused = ARGV[11]
+local EQueueOperationalStateStopped = ARGV[12]
+local EQueueOperationalStateLocked = ARGV[13]
 
--- Message Status Constants (ARGV[14-16])
-local EMessagePropertyStatusScheduled = ARGV[14]  -- Reordered to match publish_message
+-- Message Status Constants (ARGV[14-15])
+local EMessagePropertyStatusScheduled = ARGV[14]
 local EMessagePropertyStatusPending = ARGV[15]
-local EMessagePropertyStatus = ARGV[16]           -- Generic status field
 
--- Message Property Constants (ARGV[17-40]) - 24 keys total
-local EMessagePropertyId = ARGV[17]
-local EMessagePropertyStatus_field = ARGV[18]     -- Renamed to avoid conflict with status constant
-local EMessagePropertyMessage = ARGV[19]
-local EMessagePropertyScheduledAt = ARGV[20]
-local EMessagePropertyPublishedAt = ARGV[21]
-local EMessagePropertyProcessingStartedAt = ARGV[22]
-local EMessagePropertyDeadLetteredAt = ARGV[23]
-local EMessagePropertyAcknowledgedAt = ARGV[24]
-local EMessagePropertyUnacknowledgedAt = ARGV[25]
-local EMessagePropertyLastUnacknowledgedAt = ARGV[26]
-local EMessagePropertyLastScheduledAt = ARGV[27]
-local EMessagePropertyRequeuedAt = ARGV[28]
-local EMessagePropertyRequeueCount = ARGV[29]
-local EMessagePropertyLastRequeuedAt = ARGV[30]
-local EMessagePropertyLastRetriedAttemptAt = ARGV[31]
-local EMessagePropertyScheduledCronFired = ARGV[32]
-local EMessagePropertyAttempts = ARGV[33]
-local EMessagePropertyScheduledRepeatCount = ARGV[34]
-local EMessagePropertyExpired = ARGV[35]
-local EMessagePropertyEffectiveScheduledDelay = ARGV[36]
-local EMessagePropertyScheduledTimes = ARGV[37]
-local EMessagePropertyScheduledMessageParentId = ARGV[38]
-local EMessagePropertyRequeuedMessageParentId = ARGV[39]
--- Note: ARGV[40] is not used in this script (was DEAD_LETTERED_MESSAGES_COUNT in publish-scheduled)
--- but we need to account for it in the offset
+-- Message Property Constants (ARGV[16-39]) - 24 keys total
+local EMessagePropertyId = ARGV[16]
+local EMessagePropertyStatus = ARGV[17]
+local EMessagePropertyMessage = ARGV[18]
+local EMessagePropertyScheduledAt = ARGV[19]
+local EMessagePropertyPublishedAt = ARGV[20]
+local EMessagePropertyProcessingStartedAt = ARGV[21]
+local EMessagePropertyDeadLetteredAt = ARGV[22]
+local EMessagePropertyAcknowledgedAt = ARGV[23]
+local EMessagePropertyUnacknowledgedAt = ARGV[24]
+local EMessagePropertyLastUnacknowledgedAt = ARGV[25]
+local EMessagePropertyLastScheduledAt = ARGV[26]
+local EMessagePropertyRequeuedAt = ARGV[27]
+local EMessagePropertyRequeueCount = ARGV[28]
+local EMessagePropertyLastRequeuedAt = ARGV[29]
+local EMessagePropertyLastRetriedAttemptAt = ARGV[30]
+local EMessagePropertyScheduledCronFired = ARGV[31]
+local EMessagePropertyAttempts = ARGV[32]
+local EMessagePropertyScheduledRepeatCount = ARGV[33]
+local EMessagePropertyExpired = ARGV[34]
+local EMessagePropertyEffectiveScheduledDelay = ARGV[35]
+local EMessagePropertyScheduledTimes = ARGV[36]
+local EMessagePropertyScheduledMessageParentId = ARGV[37]
+local EMessagePropertyRequeuedMessageParentId = ARGV[38]
+local EMessagePropertyLastProcessedAt = ARGV[39]
 
 -- Get the operation lock ID (single parameter for entire batch)
-local operationLockId = ARGV[41] or ''
+local operationLockId = ARGV[40] or ''
 
 -- Loop constants
-local INITIAL_ARGV_OFFSET = 41  -- Updated from 39 (constants up to 40 + 1 for operationLockId)
+local INITIAL_ARGV_OFFSET = 40
 local INITIAL_KEY_OFFSET = 6
 local PARAMS_PER_MESSAGE = 7
 local KEYS_PER_MESSAGE = 2
@@ -123,6 +123,11 @@ local keyIndex = INITIAL_KEY_OFFSET + 1
 local requeuedCount = 0
 
 for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
+    -- Extract message-specific KEYS
+    local keyOriginalMessage = KEYS[keyIndex]
+    local keyNewMessage = KEYS[keyIndex + 1]
+    keyIndex = keyIndex + KEYS_PER_MESSAGE
+
     -- Extract message-specific ARGV
     local newChildMessageId = ARGV[argvIndex]
     local newChildMessage = ARGV[argvIndex + 1]
@@ -131,11 +136,6 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     local requeuedAt = ARGV[argvIndex + 4]
     local lastRequeuedAt = ARGV[argvIndex + 5]
     local consumerGroupId = ARGV[argvIndex + 6]
-
-    -- Extract message-specific KEYS
-    local keyOriginalMessage = KEYS[keyIndex]
-    local keyNewMessage = KEYS[keyIndex + 1]
-    keyIndex = keyIndex + KEYS_PER_MESSAGE
 
     -- Fetch original message ID. Only proceed if the original message exists.
     local originalMessageId = redis.call("HGET", keyOriginalMessage, EMessagePropertyId)
@@ -160,82 +160,84 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 keyNewMessage
             }
             local pArgs = {
-                -- Queue properties and state values (13 values: ARGV[1-13])
-                EQueuePropertyQueueType,
-                EQueuePropertyMessagesCount,
-                EQueuePropertyPendingMessagesCount,
-                EQueuePropertyScheduledMessagesCount,
-                EQueuePropertyQueueTypePriorityQueue,
-                EQueuePropertyQueueTypeLIFOQueue,
-                EQueuePropertyQueueTypeFIFOQueue,
-                EQueuePropertyOperationalState,
-                EQueuePropertyLockId,
-                EQueueOperationalStateActive,
-                EQueueOperationalStatePaused,
-                EQueueOperationalStateStopped,
-                EQueueOperationalStateLocked,
+                -- Queue properties (ARGV[1-13])
+                EQueuePropertyQueueType,                    -- ARGV[1]
+                EQueuePropertyMessagesCount,                -- ARGV[2]
+                EQueuePropertyPendingMessagesCount,         -- ARGV[3]
+                EQueuePropertyScheduledMessagesCount,       -- ARGV[4]
+                EQueuePropertyQueueTypePriorityQueue,       -- ARGV[5]
+                EQueuePropertyQueueTypeLIFOQueue,           -- ARGV[6]
+                EQueuePropertyQueueTypeFIFOQueue,           -- ARGV[7]
+                EQueuePropertyOperationalState,             -- ARGV[8]
+                EQueuePropertyLockId,                       -- ARGV[9]
+                EQueueOperationalStateActive,               -- ARGV[10]
+                EQueueOperationalStatePaused,               -- ARGV[11]
+                EQueueOperationalStateStopped,              -- ARGV[12]
+                EQueueOperationalStateLocked,               -- ARGV[13]
 
-                -- Message priority and scheduling values (4 values: ARGV[14-17])
-                newChildMessagePriority,
-                '',  -- scheduledTimestamp (empty - message is pending, not scheduled)
-                EMessagePropertyStatusScheduled,
-                EMessagePropertyStatusPending,
+                -- Message priority and scheduling (ARGV[14-17])
+                newChildMessagePriority,                    -- ARGV[14]
+                '',                                         -- ARGV[15] (scheduledTimestamp - empty for pending)
+                EMessagePropertyStatusScheduled,            -- ARGV[16]
+                EMessagePropertyStatusPending,              -- ARGV[17]
 
-                -- Message Property Keys (23 keys: ARGV[18-40])
-                EMessagePropertyId,
-                EMessagePropertyStatus_field,    -- STATUS field key
-                EMessagePropertyMessage,
-                EMessagePropertyScheduledAt,
-                EMessagePropertyPublishedAt,
-                EMessagePropertyProcessingStartedAt,
-                EMessagePropertyDeadLetteredAt,
-                EMessagePropertyAcknowledgedAt,
-                EMessagePropertyUnacknowledgedAt,
-                EMessagePropertyLastUnacknowledgedAt,
-                EMessagePropertyLastScheduledAt,
-                EMessagePropertyRequeuedAt,
-                EMessagePropertyRequeueCount,
-                EMessagePropertyLastRequeuedAt,
-                EMessagePropertyLastRetriedAttemptAt,
-                EMessagePropertyScheduledCronFired,
-                EMessagePropertyAttempts,
-                EMessagePropertyScheduledRepeatCount,
-                EMessagePropertyExpired,
-                EMessagePropertyEffectiveScheduledDelay,
-                EMessagePropertyScheduledTimes,
-                EMessagePropertyScheduledMessageParentId,
-                EMessagePropertyRequeuedMessageParentId,
+                -- Message Property Keys (ARGV[18-41])
+                EMessagePropertyId,                         -- ARGV[18]
+                EMessagePropertyStatus,                     -- ARGV[19]
+                EMessagePropertyMessage,                    -- ARGV[20]
+                EMessagePropertyScheduledAt,                -- ARGV[21]
+                EMessagePropertyPublishedAt,                -- ARGV[22]
+                EMessagePropertyProcessingStartedAt,        -- ARGV[23]
+                EMessagePropertyDeadLetteredAt,             -- ARGV[24]
+                EMessagePropertyAcknowledgedAt,             -- ARGV[25]
+                EMessagePropertyUnacknowledgedAt,           -- ARGV[26]
+                EMessagePropertyLastUnacknowledgedAt,       -- ARGV[27]
+                EMessagePropertyLastScheduledAt,            -- ARGV[28]
+                EMessagePropertyRequeuedAt,                 -- ARGV[29]
+                EMessagePropertyRequeueCount,               -- ARGV[30]
+                EMessagePropertyLastRequeuedAt,             -- ARGV[31]
+                EMessagePropertyLastRetriedAttemptAt,       -- ARGV[32]
+                EMessagePropertyScheduledCronFired,         -- ARGV[33]
+                EMessagePropertyAttempts,                   -- ARGV[34]
+                EMessagePropertyScheduledRepeatCount,       -- ARGV[35]
+                EMessagePropertyExpired,                    -- ARGV[36]
+                EMessagePropertyEffectiveScheduledDelay,    -- ARGV[37]
+                EMessagePropertyScheduledTimes,             -- ARGV[38]
+                EMessagePropertyScheduledMessageParentId,   -- ARGV[39]
+                EMessagePropertyRequeuedMessageParentId,    -- ARGV[40]
+                EMessagePropertyLastProcessedAt,            -- ARGV[41]
 
-                -- Message Property Values (23 values: ARGV[41-63])
-                newChildMessageId,                -- ID
-                EMessagePropertyStatusPending,    -- STATUS
-                newChildMessage,                 -- MESSAGE
-                '',                              -- SCHEDULED_AT
-                newChildMessagePublishedAt,      -- PUBLISHED_AT
-                '',                              -- PROCESSING_STARTED_AT
-                '',                              -- DEAD_LETTERED_AT
-                '',                              -- ACKNOWLEDGED_AT
-                '',                              -- UNACKNOWLEDGED_AT
-                '',                              -- LAST_UNACKNOWLEDGED_AT
-                '',                              -- LAST_SCHEDULED_AT
-                '',                              -- REQUEUED_AT
-                '0',                             -- REQUEUE_COUNT
-                '',                              -- LAST_REQUEUED_AT
-                '',                              -- LAST_RETRIED_ATTEMPT_AT
-                '0',                             -- SCHEDULED_CRON_FIRED
-                '0',                             -- ATTEMPTS
-                '0',                             -- SCHEDULED_REPEAT_COUNT
-                '0',                             -- EXPIRED
-                '0',                             -- EFFECTIVE_SCHEDULED_DELAY
-                '0',                             -- SCHEDULED_TIMES
-                '',                              -- SCHEDULED_MESSAGE_PARENT_ID
-                originalMessageId,               -- REQUEUED_MESSAGE_PARENT_ID
+                -- Message Property Values (ARGV[42-65])
+                newChildMessageId,                          -- ARGV[42]
+                EMessagePropertyStatusPending,              -- ARGV[43] (messageStatus)
+                newChildMessage,                            -- ARGV[44] (message)
+                '',                                         -- ARGV[45] (messageScheduledAt)
+                newChildMessagePublishedAt,                 -- ARGV[46] (messagePublishedAt)
+                '',                                         -- ARGV[47] (messageProcessingStartedAt)
+                '',                                         -- ARGV[48] (messageDeadLetteredAt)
+                '',                                         -- ARGV[49] (messageAcknowledgedAt)
+                '',                                         -- ARGV[50] (messageUnacknowledgedAt)
+                '',                                         -- ARGV[51] (messageLastUnacknowledgedAt)
+                '',                                         -- ARGV[52] (messageLastScheduledAt)
+                '',                                         -- ARGV[53] (messageRequeuedAt)
+                '0',                                        -- ARGV[54] (messageRequeueCount)
+                '',                                         -- ARGV[55] (messageLastRequeuedAt)
+                '',                                         -- ARGV[56] (messageLastRetriedAttemptAt)
+                '0',                                        -- ARGV[57] (messageScheduledCronFired)
+                '0',                                        -- ARGV[58] (messageAttempts)
+                '0',                                        -- ARGV[59] (messageScheduledRepeatCount)
+                '0',                                        -- ARGV[60] (messageExpired)
+                '0',                                        -- ARGV[61] (messageEffectiveScheduledDelay)
+                '0',                                        -- ARGV[62] (messageScheduledTimes)
+                '',                                         -- ARGV[63] (messageScheduledMessageParentId)
+                originalMessageId,                          -- ARGV[64] (messageRequeuedMessageParentId)
+                '',                                         -- ARGV[65] (messageLastProcessedAt)
 
-                -- Consumer Group ID (ARGV[64])
-                consumerGroupId,
+                -- Consumer Group ID (ARGV[66])
+                consumerGroupId,                            -- ARGV[66]
 
-                -- Operation Lock ID (ARGV[65]) - use the batch-level operationLockId
-                operationLockId
+                -- Operation Lock ID (ARGV[67])
+                operationLockId                             -- ARGV[67]
             }
             local result = publish_message(pKeys, pArgs)
             if result ~= 'OK' then

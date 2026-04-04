@@ -27,6 +27,9 @@ export class MessageState {
   // The timestamp when message processing started.
   protected processingStartedAt: number | null = null;
 
+  // The timestamp when message was last processed.
+  protected lastProcessedAt: number | null = null;
+
   // The timestamp when the message was requeued.
   protected requeuedAt: number | null = null;
 
@@ -117,6 +120,7 @@ export class MessageState {
     instance.scheduledTimes = state.scheduledTimes;
     instance.scheduledMessageParentId = state.scheduledMessageParentId;
     instance.requeuedMessageParentId = state.requeuedMessageParentId;
+    instance.lastProcessedAt = state.lastProcessedAt;
     return instance;
   }
 
@@ -183,6 +187,26 @@ export class MessageState {
    */
   getProcessingStartedAt(): number | null {
     return this.processingStartedAt;
+  }
+
+  /**
+   * Sets the last processed timestamp for the message.
+   *
+   * @param timestamp - The timestamp (in milliseconds) when the message was last processed.
+   * @returns The current instance of `MessageState` for method chaining.
+   */
+  setLastProcessedAt(timestamp: number): MessageState {
+    this.lastProcessedAt = timestamp;
+    return this;
+  }
+
+  /**
+   * Retrieves the timestamp when the message was last processed.
+   *
+   * @returns The timestamp (in milliseconds) when the message was last processed, or `null` if not processed.
+   */
+  getLastProcessedAt(): number | null {
+    return this.lastUnacknowledgedAt;
   }
 
   /**
@@ -720,6 +744,7 @@ export class MessageState {
       scheduledTimes: this.scheduledTimes,
       scheduledMessageParentId: this.scheduledMessageParentId,
       requeuedMessageParentId: this.requeuedMessageParentId,
+      lastProcessedAt: this.lastProcessedAt,
     };
   }
 
@@ -753,6 +778,7 @@ export class MessageState {
     IMessageStateTransferable['scheduledTimes'],
     IMessageStateTransferable['scheduledMessageParentId'],
     IMessageStateTransferable['requeuedMessageParentId'],
+    IMessageStateTransferable['lastProcessedAt'],
   ] {
     return [
       this.uuid,
@@ -776,6 +802,7 @@ export class MessageState {
       this.scheduledTimes,
       this.scheduledMessageParentId,
       this.requeuedMessageParentId,
+      this.lastProcessedAt,
     ];
   }
 }

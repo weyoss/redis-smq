@@ -153,6 +153,10 @@ export const propertyConfigs: TPropertyConfigs = {
     parser: number,
     setter: (s, v) => s.setProcessingStartedAt(v),
   },
+  [EMessageProperty.LAST_PROCESSED_AT]: {
+    parser: number,
+    setter: (s, v) => s.setLastProcessedAt(v),
+  },
   [EMessageProperty.LAST_SCHEDULED_AT]: {
     parser: number,
     setter: (s, v) => s.setLastScheduledAt(v),

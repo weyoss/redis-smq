@@ -20,19 +20,18 @@
 -- KEYS[6]: keyQueueConsumerGroups
 -- KEYS[7]: keyMessage
 --
--- ARGV layout:
+-- ARGV layout (67 total arguments):
 -- ARGV[1-13]: Queue property keys and state values (13 values)
 -- ARGV[14-17]: Message priority and scheduling values (4 values)
--- ARGV[18-40]: Message property keys (23 keys)
--- ARGV[41-63]: Message property values (23 values)
--- ARGV[64]: consumerGroupId
--- ARGV[65]: operationLockId (optional, for locked queues)
+-- ARGV[18-41]: Message property keys (24 keys)
+-- ARGV[42-65]: Message property values (24 values)
+-- ARGV[66]: consumerGroupId
+-- ARGV[67]: operationLockId (optional, for locked queues)
 --
 -- Return codes:
 --   'OK' - Success
 --   'QUEUE_NOT_FOUND' - Queue does not exist
 --   'CONSUMER_GROUP_NOT_FOUND' - Specified consumer group does not exist
---   'MESSAGE_ALREADY_EXISTS' - Message with same ID already exists
 --   'MESSAGE_PRIORITY_REQUIRED' - Priority queue requires priority
 --   'PRIORITY_QUEUING_NOT_ENABLED' - Non-priority queue received priority
 --   'UNKNOWN_QUEUE_TYPE' - Invalid queue type

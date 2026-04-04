@@ -15,9 +15,10 @@ import {
 } from '../../../../queue-manager/index.js';
 import {
   EMessageUnacknowledgementAction,
-  TUnacknowledgementResult,
-  TUnacknowledgementResolution,
+  IMessageUnacknowledgementRecord,
   TUnacknowledgementBatch,
+  TUnacknowledgementResolution,
+  TUnacknowledgementResult,
 } from '../types/index.js';
 import { redisKeys } from '../../../../common/redis/redis-keys/redis-keys.js';
 import { ERedisScriptName } from '../../../../common/redis/scripts.js';
@@ -34,7 +35,6 @@ import {
   EMessagePropertyStatus,
 } from '../../../../message/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { IMessageUnacknowledgementRecord } from '../types/index.js';
 
 export function _executeUnacknowledgementScript(
   queue: IQueueParsedParams,
@@ -102,6 +102,10 @@ export function _executeUnacknowledgementScript(
 
       const unacknowledgedAt = state?.getUnacknowledgedAt() ?? now;
       const lastUnacknowledgedAt = now;
+      const deadLetteredAt =
+        msg.resolution.action === EMessageUnacknowledgementAction.DEAD_LETTER
+          ? now
+          : '';
 
       // Add history key to dynamic keys
       dynamicKeys.push(
@@ -132,7 +136,7 @@ export function _executeUnacknowledgementScript(
       dynamicArgs.push(
         messageId,
         msg.resolution.action,
-        state?.getDeadLetteredAt() ?? '',
+        deadLetteredAt,
         Number(state?.getExpired() ?? false),
         unacknowledgedAt,
         lastUnacknowledgedAt,

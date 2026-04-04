@@ -160,6 +160,7 @@ export class PublishScheduledWorker extends QueueWorkerAbstract {
         EMessageProperty.SCHEDULED_TIMES,
         EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID,
         EMessageProperty.REQUEUED_MESSAGE_PARENT_ID,
+        EMessageProperty.LAST_PROCESSED_AT,
       ];
 
       async.eachOf(

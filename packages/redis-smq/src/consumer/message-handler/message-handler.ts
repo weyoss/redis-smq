@@ -346,6 +346,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     const keys: string[] = [keyMessage, keyQueueProperties];
     const argv: (string | number)[] = [
       EMessageProperty.PROCESSING_STARTED_AT,
+      EMessageProperty.LAST_PROCESSED_AT,
       Date.now(),
       EMessageProperty.STATUS,
       EMessagePropertyStatus.PROCESSING,
