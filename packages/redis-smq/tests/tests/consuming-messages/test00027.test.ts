@@ -22,6 +22,7 @@ test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   await configManager.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
+        enabled: true,
         queueSize: 3,
       },
     },

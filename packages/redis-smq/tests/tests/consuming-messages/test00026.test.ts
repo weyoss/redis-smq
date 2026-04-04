@@ -23,6 +23,7 @@ test('ProducibleMessage storage: acknowledged.expire = 10000', async () => {
   await configManager.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
+        enabled: true,
         expire: 20000,
       },
     },

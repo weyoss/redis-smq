@@ -78,10 +78,12 @@ const config = {
 const config = {
   messageAudit: {
     acknowledgedMessages: {
+      enabled: true,
       queueSize: 5000, // Keep last 5,000 successful messages
       expire: 43200, // Delete after 12 hours (seconds)
     },
     deadLetteredMessages: {
+      enabled: true,
       queueSize: 10000, // Keep last 10,000 failed messages
       expire: 604800, // Delete after 7 days
     },

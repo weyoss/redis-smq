@@ -128,7 +128,7 @@ test('Configuration: message audit', async () => {
   expect(config9.deadLetteredMessages.enabled).toEqual(true);
   expect(config9.deadLetteredMessages.expire).toEqual(0);
   expect(config9.deadLetteredMessages.queueSize).toEqual(0);
-  expect(config9.acknowledgedMessages.enabled).toEqual(true);
+  expect(config9.acknowledgedMessages.enabled).toEqual(false);
   expect(config9.acknowledgedMessages.expire).toEqual(0);
   expect(config9.acknowledgedMessages.queueSize).toEqual(0);
   expect(config9.unacknowledgementHistory.enabled).toEqual(false);
@@ -143,7 +143,7 @@ test('Configuration: message audit', async () => {
   expect(config10.deadLetteredMessages.enabled).toEqual(true);
   expect(config10.deadLetteredMessages.expire).toEqual(0);
   expect(config10.deadLetteredMessages.queueSize).toEqual(0);
-  expect(config10.acknowledgedMessages.enabled).toEqual(true);
+  expect(config10.acknowledgedMessages.enabled).toEqual(false);
   expect(config10.acknowledgedMessages.expire).toEqual(90000);
   expect(config10.acknowledgedMessages.queueSize).toEqual(0);
   expect(config10.unacknowledgementHistory.enabled).toEqual(false);
@@ -155,6 +155,7 @@ test('Configuration: message audit', async () => {
       queueSize: 10000,
     },
     deadLetteredMessages: {
+      enabled: true,
       expire: 18000,
       queueSize: 20000,
     },
@@ -162,7 +163,7 @@ test('Configuration: message audit', async () => {
   expect(config11.deadLetteredMessages.enabled).toEqual(true);
   expect(config11.deadLetteredMessages.expire).toEqual(18000);
   expect(config11.deadLetteredMessages.queueSize).toEqual(20000);
-  expect(config11.acknowledgedMessages.enabled).toEqual(true);
+  expect(config11.acknowledgedMessages.enabled).toEqual(false);
   expect(config11.acknowledgedMessages.expire).toEqual(90000);
   expect(config11.acknowledgedMessages.queueSize).toEqual(10000);
   expect(config11.unacknowledgementHistory.enabled).toEqual(false);
@@ -227,10 +228,12 @@ test('Configuration: message audit', async () => {
 
   const config16 = parseMessageAuditConfig({
     acknowledgedMessages: {
+      enabled: true,
       expire: 90000,
       queueSize: 10000,
     },
     deadLetteredMessages: {
+      enabled: true,
       expire: 18000,
       queueSize: 20000,
     },

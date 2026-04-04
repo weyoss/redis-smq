@@ -107,7 +107,7 @@ configManager.updateConfig({ messageAudit: true }, (err) => {
 ```javascript
 const config = {
   namespace: 'myapp', // Isolates your app's queues (stored in Redis)
-  logger: true, // Console logging
+  logger: false, // Console logging
   messageAudit: false, // Track processed messages
 };
 ```
@@ -366,10 +366,12 @@ if (process.env.NODE_ENV === 'production') {
   await configManager.updateConfig({
     messageAudit: {
       acknowledgedMessages: {
+        enabled: true,
         queueSize: 10000, // Keep 10k successful messages
         expire: 86400, // Delete after 24 hours
       },
       deadLetteredMessages: {
+        enabled: true,
         queueSize: 5000, // Keep 5k failed messages
         expire: 604800, // Delete after 7 days
       },

@@ -30,12 +30,10 @@ function parseMessageAuditMessagesConfig(
   config: boolean | Partial<IMessageAuditMessagesConfig> | undefined,
   defaultConfigOptions: IMessageAuditMessagesConfig,
 ): IMessageAuditMessagesConfig {
-  // Handle undefined
   if (typeof config === 'undefined') {
-    return { ...defaultConfigOptions, enabled: false };
+    return { ...defaultConfigOptions };
   }
 
-  // Handle boolean
   if (typeof config === 'boolean') {
     return {
       ...defaultConfigOptions,
@@ -43,21 +41,18 @@ function parseMessageAuditMessagesConfig(
     };
   }
 
-  const queueSize = validateNumericValue(
-    config.queueSize ?? defaultConfigOptions.queueSize,
-  );
-  if (queueSize === false) throw new InvalidMessageAuditQueueSizeError();
-
-  const expire = validateNumericValue(
-    config.expire ?? defaultConfigOptions.expire,
-  );
-  if (expire === false) throw new ConfigurationMessageAuditExpireError();
-
-  return {
-    enabled: true,
-    queueSize,
-    expire,
+  const cfg = {
+    ...defaultConfigOptions,
+    ...config,
   };
+
+  if (validateNumericValue(cfg.queueSize) === false)
+    throw new InvalidMessageAuditQueueSizeError();
+
+  if (validateNumericValue(cfg.expire) === false)
+    throw new ConfigurationMessageAuditExpireError();
+
+  return cfg;
 }
 
 function parseUnacknowledgementHistoryConfig(
