@@ -9,6 +9,8 @@
 # in the root directory of this source tree.
 #
 
+set -euxo pipefail
+
 clean_root_directory() {
   echo "Cleaning root directory..."
   rm -rf node_modules && rm pnpm-lock.yaml

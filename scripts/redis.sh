@@ -9,6 +9,8 @@
 # in the root directory of this source tree.
 #
 
+set -euxo pipefail
+
 ensure_built() {
     echo "Ensuring redis-smq-common is built..."
     if ! pnpm -F redis-smq-common build; then

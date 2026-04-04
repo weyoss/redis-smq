@@ -9,8 +9,7 @@
 # in the root directory of this source tree.
 #
 
-set -x
-set -e
+set -euxo pipefail
 
 echo "Cleaning up old files ..."
 rm -rf src/api/generated

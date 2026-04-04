@@ -9,5 +9,7 @@
 # in the root directory of this source tree.
 #
 
-pnpm build:ca
+set -euxo pipefail
+
+pnpm build
 pnpm -r test

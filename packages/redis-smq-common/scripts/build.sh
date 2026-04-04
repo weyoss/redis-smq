@@ -7,8 +7,7 @@
 # in the root directory of this source tree.
 #
 
-set -x
-set -e
+set -euxo pipefail
 
 rm -rf dist
 

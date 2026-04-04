@@ -10,7 +10,7 @@
 # in the root directory of this source tree.
 #
 
-set -euo pipefail
+set -euxo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"

@@ -9,4 +9,6 @@
 # in the root directory of this source tree.
 #
 
+set -euxo pipefail
+
 pnpm exec redis-smq-ci consolidate-changelog CHANGELOG.md --force --verbose --no-metadata --output-dir release-notes

@@ -9,7 +9,7 @@
 # in the root directory of this source tree.
 #
 
-set -euo pipefail
+set -euxo pipefail
 
 # Extensions (regex alternation for bash's `=~` operator)
 ESLINT_EXTS="js|jsx|ts|tsx"
