@@ -1,6 +1,6 @@
 # RedisSMQ CI
 
-> 💡 **Note:** You are on the stable `master` branch. For the latest features (including breaking changes), check the [`next` branch](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-ci).
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-ci).
 
 CLI tools for RedisSMQ - Utilities for continuous integration and release management.
 
@@ -39,4 +39,4 @@ redis-smq-ci consolidate-changelog [input] [output] [options]
 
 ## License
 
-RedisSMQ CI Library is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/master/LICENSE).
+RedisSMQ CI Library is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
