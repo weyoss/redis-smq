@@ -15,7 +15,7 @@ Assigning explicit values prevents accidental reordering from breaking data comp
 
 ### ATTEMPTS
 
-> **ATTEMPTS**: `16`
+> **ATTEMPTS**: `17`
 
 ---
 
@@ -27,13 +27,13 @@ Assigning explicit values prevents accidental reordering from breaking data comp
 
 ### EFFECTIVE_SCHEDULED_DELAY
 
-> **EFFECTIVE_SCHEDULED_DELAY**: `19`
+> **EFFECTIVE_SCHEDULED_DELAY**: `20`
 
 ---
 
 ### EXPIRED
 
-> **EXPIRED**: `18`
+> **EXPIRED**: `19`
 
 ---
 
@@ -43,9 +43,15 @@ Assigning explicit values prevents accidental reordering from breaking data comp
 
 ---
 
+### LAST_PROCESSED_AT
+
+> **LAST_PROCESSED_AT**: `11`
+
+---
+
 ### LAST_REQUEUED_AT
 
-> **LAST_REQUEUED_AT**: `13`
+> **LAST_REQUEUED_AT**: `14`
 
 A timestamp that is updated each time a message is manually requeued.
 
@@ -53,7 +59,7 @@ A timestamp that is updated each time a message is manually requeued.
 
 ### LAST_RETRIED_ATTEMPT_AT
 
-> **LAST_RETRIED_ATTEMPT_AT**: `14`
+> **LAST_RETRIED_ATTEMPT_AT**: `15`
 
 A timestamp that is set only when a message is automatically
 retried after a processing failure (e.g., from an unacknowledged message).
@@ -92,7 +98,7 @@ retried after a processing failure (e.g., from an unacknowledged message).
 
 ### REQUEUE_COUNT
 
-> **REQUEUE_COUNT**: `12`
+> **REQUEUE_COUNT**: `13`
 
 A counter for how many times a message has been requeued.
 
@@ -100,7 +106,7 @@ A counter for how many times a message has been requeued.
 
 ### REQUEUED_AT
 
-> **REQUEUED_AT**: `11`
+> **REQUEUED_AT**: `12`
 
 A timestamp that is set only when a message is manually requeued
 for the first time.
@@ -110,7 +116,7 @@ This is used for tracking the "clone" action.
 
 ### REQUEUED_MESSAGE_PARENT_ID
 
-> **REQUEUED_MESSAGE_PARENT_ID**: `22`
+> **REQUEUED_MESSAGE_PARENT_ID**: `23`
 
 ---
 
@@ -122,25 +128,25 @@ This is used for tracking the "clone" action.
 
 ### SCHEDULED_CRON_FIRED
 
-> **SCHEDULED_CRON_FIRED**: `15`
+> **SCHEDULED_CRON_FIRED**: `16`
 
 ---
 
 ### SCHEDULED_MESSAGE_PARENT_ID
 
-> **SCHEDULED_MESSAGE_PARENT_ID**: `21`
+> **SCHEDULED_MESSAGE_PARENT_ID**: `22`
 
 ---
 
 ### SCHEDULED_REPEAT_COUNT
 
-> **SCHEDULED_REPEAT_COUNT**: `17`
+> **SCHEDULED_REPEAT_COUNT**: `18`
 
 ---
 
 ### SCHEDULED_TIMES
 
-> **SCHEDULED_TIMES**: `20`
+> **SCHEDULED_TIMES**: `21`
 
 ---
 

@@ -34,6 +34,12 @@
 
 ---
 
+### lastProcessedAt
+
+> **lastProcessedAt**: `number` \| `null`
+
+---
+
 ### lastRequeuedAt
 
 > **lastRequeuedAt**: `number` \| `null`

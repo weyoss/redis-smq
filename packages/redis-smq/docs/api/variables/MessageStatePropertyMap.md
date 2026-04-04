@@ -20,51 +20,55 @@ Using 'as const' for literal type inference.
 
 ### 11
 
-> `readonly` **11**: `"requeuedAt"` = `'requeuedAt'`
+> `readonly` **11**: `"lastProcessedAt"` = `'lastProcessedAt'`
 
 ### 12
 
-> `readonly` **12**: `"requeueCount"` = `'requeueCount'`
+> `readonly` **12**: `"requeuedAt"` = `'requeuedAt'`
 
 ### 13
 
-> `readonly` **13**: `"lastRequeuedAt"` = `'lastRequeuedAt'`
+> `readonly` **13**: `"requeueCount"` = `'requeueCount'`
 
 ### 14
 
-> `readonly` **14**: `"lastRetriedAttemptAt"` = `'lastRetriedAttemptAt'`
+> `readonly` **14**: `"lastRequeuedAt"` = `'lastRequeuedAt'`
 
 ### 15
 
-> `readonly` **15**: `"scheduledCronFired"` = `'scheduledCronFired'`
+> `readonly` **15**: `"lastRetriedAttemptAt"` = `'lastRetriedAttemptAt'`
 
 ### 16
 
-> `readonly` **16**: `"attempts"` = `'attempts'`
+> `readonly` **16**: `"scheduledCronFired"` = `'scheduledCronFired'`
 
 ### 17
 
-> `readonly` **17**: `"scheduledRepeatCount"` = `'scheduledRepeatCount'`
+> `readonly` **17**: `"attempts"` = `'attempts'`
 
 ### 18
 
-> `readonly` **18**: `"expired"` = `'expired'`
+> `readonly` **18**: `"scheduledRepeatCount"` = `'scheduledRepeatCount'`
 
 ### 19
 
-> `readonly` **19**: `"effectiveScheduledDelay"` = `'effectiveScheduledDelay'`
+> `readonly` **19**: `"expired"` = `'expired'`
 
 ### 20
 
-> `readonly` **20**: `"scheduledTimes"` = `'scheduledTimes'`
+> `readonly` **20**: `"effectiveScheduledDelay"` = `'effectiveScheduledDelay'`
 
 ### 21
 
-> `readonly` **21**: `"scheduledMessageParentId"` = `'scheduledMessageParentId'`
+> `readonly` **21**: `"scheduledTimes"` = `'scheduledTimes'`
 
 ### 22
 
-> `readonly` **22**: `"requeuedMessageParentId"` = `'requeuedMessageParentId'`
+> `readonly` **22**: `"scheduledMessageParentId"` = `'scheduledMessageParentId'`
+
+### 23
+
+> `readonly` **23**: `"requeuedMessageParentId"` = `'requeuedMessageParentId'`
 
 ### 3
 
