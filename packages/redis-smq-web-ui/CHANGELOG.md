@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.1...v10.0.0-next.2) (2026-04-04)
+
+### ✨ Features
+
+- **redis-smq-web-ui:** add message failure history tracking ([fcf3973](https://github.com/weyoss/redis-smq/commit/fcf397361af38ec51de12524394c50371671c301))
+- **redis-smq-web-ui:** support message unack history viewing ([772f7f1](https://github.com/weyoss/redis-smq/commit/772f7f107d811b3ba555adee99b22b6746c48172))
+
+### 📦 Build System
+
+- add strict bash script options for robustness and debugging ([9bd4cd2](https://github.com/weyoss/redis-smq/commit/9bd4cd202be824f4815e7bafebdf2a2a35d1a429))
+
 ## [10.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.0...v10.0.0-next.1) (2026-03-28)
 
 **Note:** Version bump only for package redis-smq-web-ui

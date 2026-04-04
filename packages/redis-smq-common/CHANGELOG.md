@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.1...v10.0.0-next.2) (2026-04-04)
+
+### 📦 Build System
+
+- add strict bash script options for robustness and debugging ([9bd4cd2](https://github.com/weyoss/redis-smq/commit/9bd4cd202be824f4815e7bafebdf2a2a35d1a429))
+- fix shell compatibility by using bash ([f4da551](https://github.com/weyoss/redis-smq/commit/f4da55123c9f1f8e8a9b32a7218890f36f943046))
+
 ## [10.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.0...v10.0.0-next.1) (2026-03-28)
 
 ### ♻️ Code Refactoring

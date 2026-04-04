@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.1...v10.0.0-next.2) (2026-04-04)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq:** update IRedisSMQConfig.logger to support boolean values
+- **redis-smq:** simplify RedisSMQ class API
+
+### ✨ Features
+
+- **redis-smq:** add cross-instance configuration synchronization ([e5a1636](https://github.com/weyoss/redis-smq/commit/e5a16360821605689afc15d08da0f8a7f379476e))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** audit messages only when enabled explicitly ([381b5ed](https://github.com/weyoss/redis-smq/commit/381b5ed3775e4e0773fb90d608b65bf001b40ff1))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** add lastProcessedAt prop to MessageState ([d4bfbf5](https://github.com/weyoss/redis-smq/commit/d4bfbf5f2b8ef1ae1c2b914e8799ba4f419d690d))
+- **redis-smq:** simplify RedisSMQ class API ([7e6837d](https://github.com/weyoss/redis-smq/commit/7e6837d7e3a07d107c611f40247a58d631144eec))
+- **redis-smq:** update IRedisSMQConfig.logger to support boolean values ([54f586e](https://github.com/weyoss/redis-smq/commit/54f586ec1cf686a08a1870b3c1060bfcdd4972af))
+
+### 📦 Build System
+
+- add strict bash script options for robustness and debugging ([9bd4cd2](https://github.com/weyoss/redis-smq/commit/9bd4cd202be824f4815e7bafebdf2a2a35d1a429))
+- fix shell compatibility by using bash ([f4da551](https://github.com/weyoss/redis-smq/commit/f4da55123c9f1f8e8a9b32a7218890f36f943046))
+
 ## [10.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.0...v10.0.0-next.1) (2026-03-28)
 
 ### ⚠ BREAKING CHANGES

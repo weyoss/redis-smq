@@ -3,6 +3,55 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.1...v10.0.0-next.2) (2026-04-04)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq:** update IRedisSMQConfig.logger to support boolean values
+- rename "docs" script to "document"
+- **redis-smq:** simplify RedisSMQ class API
+- refactor build process and script naming
+
+### ✨ Features
+
+- **redis-smq-ci:** add CI tools for RedisSMQ ([cdc2fbc](https://github.com/weyoss/redis-smq/commit/cdc2fbcd87ae2288fe5b69cd42605d93d66ea00e))
+- **redis-smq-rest-api:** add endpoint for fetching message unack history ([440cc9c](https://github.com/weyoss/redis-smq/commit/440cc9cb760af4d9eed0c84fec7d2c3d86ac3ec1))
+- **redis-smq-web-ui:** add message failure history tracking ([fcf3973](https://github.com/weyoss/redis-smq/commit/fcf397361af38ec51de12524394c50371671c301))
+- **redis-smq-web-ui:** support message unack history viewing ([772f7f1](https://github.com/weyoss/redis-smq/commit/772f7f107d811b3ba555adee99b22b6746c48172))
+- **redis-smq:** add cross-instance configuration synchronization ([e5a1636](https://github.com/weyoss/redis-smq/commit/e5a16360821605689afc15d08da0f8a7f379476e))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** audit messages only when enabled explicitly ([381b5ed](https://github.com/weyoss/redis-smq/commit/381b5ed3775e4e0773fb90d608b65bf001b40ff1))
+
+### 🚀 Chore
+
+- rename "docs" script to "document" ([beacc25](https://github.com/weyoss/redis-smq/commit/beacc2517b61fa650db9acb90cb937a813302e2f))
+
+### 📝 Documentation
+
+- **redis-smq-ci:** remove NPM badge for private package ([8959135](https://github.com/weyoss/redis-smq/commit/89591358ec8bc920b4157ea948aa24b6b821035f))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-benchmarks:** use new configuration/bootstrap API ([97645a1](https://github.com/weyoss/redis-smq/commit/97645a1ea0a5927e48912c730aaa7effd8a647d6))
+- **redis-smq-rest-api:** use new configuration/bootstrap API ([df0a062](https://github.com/weyoss/redis-smq/commit/df0a06253c443c66c4ee02c53d209391f9d45005))
+- **redis-smq-web-server:** use new configuration/bootstrap API ([a0f55dc](https://github.com/weyoss/redis-smq/commit/a0f55dc25cbfcc0b23fe94dcbece40c450e88703))
+- **redis-smq:** add lastProcessedAt prop to MessageState ([d4bfbf5](https://github.com/weyoss/redis-smq/commit/d4bfbf5f2b8ef1ae1c2b914e8799ba4f419d690d))
+- **redis-smq:** simplify RedisSMQ class API ([7e6837d](https://github.com/weyoss/redis-smq/commit/7e6837d7e3a07d107c611f40247a58d631144eec))
+- **redis-smq:** update IRedisSMQConfig.logger to support boolean values ([54f586e](https://github.com/weyoss/redis-smq/commit/54f586ec1cf686a08a1870b3c1060bfcdd4972af))
+
+### 📦 Build System
+
+- add strict bash script options for robustness and debugging ([9bd4cd2](https://github.com/weyoss/redis-smq/commit/9bd4cd202be824f4815e7bafebdf2a2a35d1a429))
+- fix shell compatibility by using bash ([f4da551](https://github.com/weyoss/redis-smq/commit/f4da55123c9f1f8e8a9b32a7218890f36f943046))
+- fix typo in "prepare" script ([d5e421b](https://github.com/weyoss/redis-smq/commit/d5e421bcb101f4d402ff1bc923f1c78e7edfd672))
+
+### 👷 Continuous Integration
+
+- consolidate changelogs into release artifacts ([8ae3a14](https://github.com/weyoss/redis-smq/commit/8ae3a142612de6d332d671d1ab7b7e74c43b78f0))
+- refactor build process and script naming ([ecae108](https://github.com/weyoss/redis-smq/commit/ecae10856bf5f660f1cd2006bf036dcb84f00470))
+
 ## [10.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.0...v10.0.0-next.1) (2026-03-28)
 
 ### ⚠ BREAKING CHANGES
