@@ -2,39 +2,27 @@
 
 # Configuration
 
-RedisSMQ separates system initialization from behavior configuration into two distinct APIs:
+**RedisSMQ splits system startup from behavior settings into two APIs:**
 
-1. **System initialization** - `RedisSMQ.initialize()`
-   - Establishes Redis connections
-   - Loads or creates the stored configuration
-   - Must be called once before any queue operations
-   - Takes Redis connection details (host, port, password)
+**1. System initialization** – `RedisSMQ.initialize()`
+Connects to Redis, loads the config, and starts the system. Call once before any queue operations.
 
-2. **Behavior configuration** - `ConfigManager`
-   - Manages settings like namespace, message audit, logging
-   - Reads/writes configuration to Redis
-   - Auto-syncs changes across all application instances
-   - Can be updated at runtime without restarting
+**2. Behavior configuration** – `ConfigManager`
+Controls settings like namespace, audit logs, and logging. Changes sync instantly across all app instances—no restart needed.
 
-Initialize your system once at application startup, then use [ConfigManager](api/classes/ConfigManager.md) to view or modify behavior settings as needed.
+Initialize once at startup, then use `ConfigManager` to adjust settings anytime.
 
-## Understanding Configuration in RedisSMQ
+**Important:** Configuration lives **inside Redis**, not in your code. This keeps settings consistent across your entire system.
 
-RedisSMQ stores its configuration **INSIDE Redis**, not in your application code. This ensures all parts of your system use the same settings.
+And there's only one way to initialize: `RedisSMQ.initialize()`. The Redis connection details you pass only tell
+it **where Redis is**—they don't configure the queue system itself.
 
-However, there's **only one initialization method**: `RedisSMQ.initialize()`
-
-- On **first run**: Creates default configuration in Redis if none exists
-- On **subsequent runs**: Loads existing configuration from Redis
-- The Redis connection parameters you pass to `initialize()` are used to **locate Redis**, not to configure the message queue system
-
-## Basic Initialization (Works for First-Time and Subsequent Runs)
+## System Initialization
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
 const { ERedisConfigClient } = require('redis-smq-common');
 
-// This works whether it's the first run or the 100th run
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
@@ -48,33 +36,6 @@ RedisSMQ.initialize(
     else console.log('RedisSMQ ready - configuration loaded from Redis');
   },
 );
-```
-
-**What happens behind the scenes:**
-
-1. RedisSMQ connects to `192.168.1.10:6380`
-2. Checks if configuration exists in Redis
-3. If **no configuration exists**, creates default configuration
-4. If **configuration exists**, loads it
-5. All components now use the stored configuration
-
-## Cross-Instance Configuration Synchronization
-
-When running multiple application instances, configuration changes automatically synchronize across all instances.
-
-**How it works:**
-
-- RedisSMQ listens for configuration changes via the internal event bus
-- When one instance updates configuration, it publishes the change
-- All other instances receive the update and reload automatically
-- Version checking prevents race conditions and stale updates
-
-```javascript
-// Instance A updates configuration
-await configManager.updateConfig({ messageAudit: true });
-
-// Instance B automatically receives the change (no manual reload needed)
-// Configuration.updated event is emitted on all instances
 ```
 
 ## Updating Configuration
@@ -98,6 +59,25 @@ configManager.updateConfig({ messageAudit: true }, (err) => {
   if (err) console.error('Update failed:', err);
   else console.log('Configuration updated');
 });
+```
+
+## Cross-Instance Configuration Synchronization
+
+When running multiple application instances, configuration changes automatically synchronize across all instances.
+
+**How it works:**
+
+- RedisSMQ listens for configuration changes via the internal event bus
+- When one instance updates configuration, it publishes the change
+- All other instances receive the update and reload automatically
+- Version checking prevents race conditions and stale updates
+
+```javascript
+// Instance A updates configuration
+await configManager.updateConfig({ messageAudit: true });
+
+// Instance B automatically receives the change (no manual reload needed)
+// Configuration.updated event is emitted on all instances
 ```
 
 ## Configuration Options
@@ -207,7 +187,7 @@ Message audit creates dedicated Redis storage to track processed messages. Use i
 
 ### Storage Types
 
-**Acknowledged Messages:** Tracks successfully processed message IDs per queue (Redis sorted set with timestamps)
+**Acknowledged Messages:** Tracks successfully processed message IDs per queue
 
 **Dead-Lettered Messages:** Tracks messages that failed and exceeded retry limits
 
