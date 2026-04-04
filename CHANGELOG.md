@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.0.0](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.2...v10.0.0) (2026-04-04)
+
+> 📖 **Detailed Release Notes**: [RedisSMQ v10.0.0](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.0.0.md)
+
+### 📝 Documentation
+
+- add consolidated changelog for v10.0.0-next.2 ([aa07b9f](https://github.com/weyoss/redis-smq/commit/aa07b9f2fd1b976cf7acaaa894fa03a974463cf8))
+- **redis-smq:** simplify EventBus documentation ([31d5081](https://github.com/weyoss/redis-smq/commit/31d5081c308e0a7f4693c11139eae36e218360b2))
+- **redis-smq:** simplify RedisSMQ setup documentation ([7e0cbb6](https://github.com/weyoss/redis-smq/commit/7e0cbb6ac6c6384891e92091bcdc25f1e7e1487c))
+- **redis-smq:** update API reference ([c0c0ceb](https://github.com/weyoss/redis-smq/commit/c0c0ceb2a2d989781464d1bf87f2738ba46be859))
+
 ## [10.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.1...v10.0.0-next.2) (2026-04-04)
 
 ### ⚠ BREAKING CHANGES
