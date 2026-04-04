@@ -23,10 +23,12 @@ if ! scripts/update_readme_files.sh; then
     exit 0  # Don't block the merge
 fi
 
-# Only proceed if we have actual changes
-if ! git diff --quiet -- README.md packages/*/README.md 2>/dev/null; then
-    git add README.md packages/*/README.md
+git add README.md packages/*/README.md
 
+# Create the commit (check if anything actually staged)
+if git diff --cached --quiet; then
+    echo "No changes to commit after staging" >&2
+else
     # Get destination branch (current branch or commit hash if detached)
     DEST_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)
     SOURCE_BRANCH=""
@@ -58,11 +60,6 @@ if ! git diff --quiet -- README.md packages/*/README.md 2>/dev/null; then
         COMMIT_MSG="docs: update READMEs (merge into $DEST_BRANCH)"
     fi
 
-    # Create the commit (check if anything actually staged)
-    if git diff --cached --quiet; then
-        echo "No changes to commit after staging" >&2
-    else
-        git commit -m "$COMMIT_MSG"
-        echo "✓ README files updated and committed"
-    fi
+    git commit -m "$COMMIT_MSG"
+    echo "✓ README files updated and committed"
 fi
