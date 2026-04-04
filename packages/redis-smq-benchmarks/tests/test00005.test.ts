@@ -7,7 +7,6 @@ import {
   it,
   vi,
 } from 'vitest';
-import bluebird from 'bluebird';
 import { EWorkerMessageType, IWorkerData } from '../src/types/index.js';
 import {
   env,
@@ -23,8 +22,8 @@ import {
 } from 'redis-smq';
 import { mockWorkerThread } from './mock-worker-thread.js';
 import path from 'node:path';
+import bluebird from 'bluebird';
 
-const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 const currentDir = env.getCurrentDir();
 
 describe('producer-worker-thread.ts', () => {
@@ -45,12 +44,10 @@ describe('producer-worker-thread.ts', () => {
       },
     };
 
-    await RedisSMQAsync.initializeWithConfigAsync({
-      redis: redisConfig,
-    });
+    await RedisSMQ.initialize(redisConfig);
 
-    const qm = bluebird.promisifyAll(RedisSMQAsync.createQueueManager());
-    await qm.saveAsync(
+    const qm = RedisSMQ.createQueueManager();
+    await qm.save(
       queue,
       EQueueType.FIFO_QUEUE,
       EQueueDeliveryModel.POINT_TO_POINT,
@@ -58,7 +55,7 @@ describe('producer-worker-thread.ts', () => {
   });
 
   afterAll(async () => {
-    await RedisSMQAsync.shutdownAsync();
+    await RedisSMQ.shutdown();
     await redisServer.shutdown();
   });
 

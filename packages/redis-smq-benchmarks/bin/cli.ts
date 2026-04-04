@@ -15,13 +15,7 @@ import {
   shutdownRedisServer,
   startRedisServer,
 } from '../src/common/redis-server.js';
-import {
-  async,
-  EConsoleLoggerLevel,
-  env,
-  ERedisConfigClient,
-  IRedisConfig,
-} from 'redis-smq-common';
+import { async, env, ERedisConfigClient, IRedisConfig } from 'redis-smq-common';
 import { ConsumerBenchmark } from '../src/consumer-benchmark.js';
 import { ProducerBenchmark } from '../src/producer-benchmark.js';
 import { runE2EBenchmark } from '../src/e2e-benchmark.js';
@@ -98,14 +92,14 @@ async.series(
       }
     },
     (cb) => {
-      RedisSMQ.initializeWithConfig(
+      RedisSMQ.initialize(useRedisConfig, cb);
+    },
+    (cb) => {
+      const configManager = RedisSMQ.createConfigManager();
+      configManager.updateConfig(
         {
-          redis: useRedisConfig,
-          eventBus: { enabled: false },
-          logger: {
-            enabled: false,
-            options: { logLevel: EConsoleLoggerLevel.DEBUG },
-          },
+          messageAudit: false,
+          logger: false,
         },
         cb,
       );

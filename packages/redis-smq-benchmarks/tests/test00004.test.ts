@@ -25,7 +25,6 @@ import {
 import { mockWorkerThread } from './mock-worker-thread.js';
 import path from 'node:path';
 
-const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 const currentDir = env.getCurrentDir();
 
 describe('consumer-worker-thread.ts', () => {
@@ -46,12 +45,10 @@ describe('consumer-worker-thread.ts', () => {
       },
     };
 
-    await RedisSMQAsync.initializeWithConfigAsync({
-      redis: redisConfig,
-    });
+    await RedisSMQ.initialize(redisConfig);
 
-    const qm = bluebird.promisifyAll(RedisSMQAsync.createQueueManager());
-    await qm.saveAsync(
+    const qm = RedisSMQ.createQueueManager();
+    await qm.save(
       queue,
       EQueueType.FIFO_QUEUE,
       EQueueDeliveryModel.POINT_TO_POINT,
@@ -59,7 +56,7 @@ describe('consumer-worker-thread.ts', () => {
   });
 
   afterAll(async () => {
-    await RedisSMQAsync.shutdownAsync();
+    await RedisSMQ.shutdown();
     await redisServer.shutdown();
   });
 
