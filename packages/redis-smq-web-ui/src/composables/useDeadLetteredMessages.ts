@@ -25,7 +25,7 @@ export function useDeadLetteredMessages(
   queueParams: Ref<IQueueParams>,
   initialPageSize = 20,
 ) {
-  // --- Configuration Fetching ---
+  // First, fetch the config to check if audit is enabled
   const {
     data: configData,
     isLoading: isConfigLoading,

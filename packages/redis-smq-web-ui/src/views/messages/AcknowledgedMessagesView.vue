@@ -28,8 +28,7 @@ const ns = computed(() => route.params.ns as string);
 const name = computed(() => route.params.queue as string);
 
 // Reactive queue params
-const queueParams = computed<IQueueParams | null>(() => {
-  if (!ns.value || !name.value) return null;
+const queueParams = computed<IQueueParams>(() => {
   return {
     ns: ns.value,
     name: name.value,

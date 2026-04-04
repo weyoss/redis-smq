@@ -834,10 +834,6 @@ const showControls = computed(() => {
   color: #0d6efd;
 }
 
-.status-0 {
-  background: #f8f9fa;
-  color: #6c757d;
-} /* SCHEDULED */
 .status-1 {
   background: #fff3cd;
   color: #856404;
@@ -847,18 +843,22 @@ const showControls = computed(() => {
   color: #055160;
 } /* PROCESSING */
 .status-3 {
+  background: #f8f9fa;
+  color: #6c757d;
+} /* SCHEDULED */
+.status-4 {
   background: #d1e7dd;
   color: #0f5132;
 } /* ACKNOWLEDGED */
-.status-4 {
-  background: #fff3cd;
-  color: #856404;
-} /* UNACK_DELAYING */
 .status-5 {
   background: #fff3cd;
   color: #856404;
 } /* UNACK_REQUEUING */
 .status-6 {
+  background: #fff3cd;
+  color: #856404;
+} /* UNACK_DELAYING */
+.status-7 {
   background: #f8d7da;
   color: #721c24;
 } /* DEAD_LETTERED */

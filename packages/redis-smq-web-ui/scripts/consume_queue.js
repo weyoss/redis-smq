@@ -9,14 +9,11 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQ } from 'redis-smq';
+import { ConfigManager, RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
 import path from 'path';
-import bluebird from 'bluebird';
-
-const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 /**
  * Create graceful shutdown handler
@@ -34,7 +31,7 @@ function createShutdownHandler() {
     console.log('\nInitiating graceful shutdown...');
 
     try {
-      await RedisSMQAsync.shutdownAsync();
+      await RedisSMQ.shutdown();
       console.log('Graceful shutdown completed');
       process.exit(0);
     } catch (error) {
@@ -86,10 +83,15 @@ async function configure() {
     },
   };
 
-  await RedisSMQAsync.initializeAsync(redisConfig);
+  await RedisSMQ.initialize(redisConfig);
   console.log(
     `Redis configured: ${redisConfig.options.host}:${redisConfig.options.port}`,
   );
+
+  const configManager = new ConfigManager();
+  await configManager.updateConfig({
+    messageAudit: true,
+  });
 
   return redisConfig;
 }
@@ -108,6 +110,11 @@ function parseArguments() {
     .requiredOption(
       '-q, --queue <ns:name>',
       'Queue to consume messages from (format: namespace:name)',
+    )
+    .option(
+      '-d, --dead-letter <boolean>',
+      'Dead letter messages from the queue',
+      false,
     )
     .parse();
 
@@ -137,9 +144,14 @@ try {
   const consumeQueue = parseQueue(options.queue);
 
   // Initialize consumer
-  const consumer = bluebird.promisifyAll(RedisSMQAsync.createConsumer());
-  await consumer.runAsync();
-  await consumer.consumeAsync(consumeQueue, (msg, cb) => cb());
+  const consumer = RedisSMQ.createConsumer();
+  await consumer.run();
+  await consumer.consume(consumeQueue, (msg, cb) => {
+    if (options.deadLetter) {
+      return cb(new Error('dead Letter'));
+    }
+    cb();
+  });
   console.log(
     `Consumer started - consuming from ${consumeQueue.ns}:${consumeQueue.name}`,
   );

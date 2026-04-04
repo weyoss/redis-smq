@@ -44,6 +44,7 @@ export function usePendingMessages(
       return getApiNamespacesNsQueuesNameMessages(ns, name, {
         page,
         pageSize,
+        status: 'pending',
       });
     },
     queryKeyPrefix: `${consumerGroupId.value ? `consumer-group-${consumerGroupId.value}-` : ''}pending-messages`,

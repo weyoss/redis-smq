@@ -139,6 +139,10 @@ const formattedProcessingStartedAt = computed(() => {
   return formatDate(props.message?.messageState.processingStartedAt);
 });
 
+const formattedLastProcessedAt = computed(() => {
+  return formatDate(props.message?.messageState.lastProcessedAt);
+});
+
 const formattedAcknowledgedAt = computed(() => {
   return formatDate(props.message?.messageState.acknowledgedAt);
 });
@@ -229,85 +233,166 @@ const isActionInProgress = computed(
   () => showDeleteModal.value || showRequeueModal.value,
 );
 
+// Enhanced timeline events with lastProcessedAt
 const timelineEvents = computed(() => {
   if (!props.message) return [];
-  const events = [
-    {
+
+  const events = [];
+
+  // Created event
+  if (props.message.createdAt) {
+    events.push({
       type: 'Created',
       timestamp: props.message.createdAt,
       icon: 'bi-plus-circle-fill',
       color: 'text-primary',
-    },
-    {
+      description: 'Message was created and queued',
+    });
+  }
+
+  // Scheduled events
+  if (props.message.messageState.scheduledAt) {
+    events.push({
       type: 'Scheduled',
       timestamp: props.message.messageState.scheduledAt,
       icon: 'bi-calendar-plus-fill',
       color: 'text-info',
-    },
-    {
+      description: props.message.scheduledCron
+        ? `Scheduled with cron pattern: ${props.message.scheduledCron}`
+        : props.message.scheduledDelay
+          ? `Scheduled with delay: ${props.message.scheduledDelay}ms`
+          : 'Message scheduled for future delivery',
+    });
+  }
+
+  if (props.message.messageState.lastScheduledAt) {
+    events.push({
       type: 'Last Scheduled',
       timestamp: props.message.messageState.lastScheduledAt,
       icon: 'bi-calendar-check-fill',
       color: 'text-info',
-    },
-    {
+      description: `Last scheduled occurrence (repeat count: ${props.message.messageState.scheduledRepeatCount})`,
+    });
+  }
+
+  // Published event
+  if (props.message.messageState.publishedAt) {
+    events.push({
       type: 'Published',
       timestamp: props.message.messageState.publishedAt,
       icon: 'bi-send-fill',
       color: 'text-primary',
-    },
-    {
+      description: 'Message was published to the queue',
+    });
+  }
+
+  // Processing events
+  if (props.message.messageState.processingStartedAt) {
+    events.push({
       type: 'Processing Started',
       timestamp: props.message.messageState.processingStartedAt,
       icon: 'bi-play-circle-fill',
       color: 'text-warning',
-    },
-    {
+      description: `Attempt #${props.message.messageState.attempts} - Consumer started processing`,
+    });
+  }
+
+  // Last Processed event
+  if (props.message.messageState.lastProcessedAt) {
+    const processingDuration =
+      props.message.messageState.processingStartedAt &&
+      props.message.messageState.lastProcessedAt
+        ? ` (duration: ${((props.message.messageState.lastProcessedAt - props.message.messageState.processingStartedAt) / 1000).toFixed(2)}s)`
+        : '';
+
+    events.push({
+      type: 'Last Processed',
+      timestamp: props.message.messageState.lastProcessedAt,
+      icon: 'bi-play-circle-fill',
+      color: 'text-warning',
+      description: `Message was processed by consumer${processingDuration}`,
+    });
+  }
+
+  // Acknowledged event
+  if (props.message.messageState.acknowledgedAt) {
+    events.push({
       type: 'Acknowledged',
       timestamp: props.message.messageState.acknowledgedAt,
       icon: 'bi-check2-circle',
       color: 'text-success',
-    },
-    {
+      description: 'Message was successfully acknowledged',
+    });
+  }
+
+  // Unacknowledged events
+  if (props.message.messageState.unacknowledgedAt) {
+    events.push({
       type: 'Unacknowledged',
       timestamp: props.message.messageState.unacknowledgedAt,
       icon: 'bi-arrow-counterclockwise',
       color: 'text-warning',
-    },
-    {
+      description: 'Message was not acknowledged by consumer',
+    });
+  }
+
+  if (props.message.messageState.lastUnacknowledgedAt) {
+    events.push({
       type: 'Last Unacknowledged',
       timestamp: props.message.messageState.lastUnacknowledgedAt,
       icon: 'bi-arrow-counterclockwise',
       color: 'text-warning',
-    },
-    {
+      description: `Last unacknowledged event (total attempts: ${props.message.messageState.attempts})`,
+    });
+  }
+
+  // Requeued events
+  if (props.message.messageState.requeuedAt) {
+    events.push({
       type: 'Requeued',
       timestamp: props.message.messageState.requeuedAt,
       icon: 'bi-arrow-repeat',
       color: 'text-secondary',
-    },
-    {
+      description: `Message was requeued (requeue count: ${props.message.messageState.requeueCount})`,
+    });
+  }
+
+  if (props.message.messageState.lastRequeuedAt) {
+    events.push({
       type: 'Last Requeued',
       timestamp: props.message.messageState.lastRequeuedAt,
       icon: 'bi-arrow-repeat',
       color: 'text-secondary',
-    },
-    {
+      description: 'Last time message was requeued',
+    });
+  }
+
+  // Retry events
+  if (props.message.messageState.lastRetriedAttemptAt) {
+    events.push({
       type: 'Last Retry Attempt',
       timestamp: props.message.messageState.lastRetriedAttemptAt,
       icon: 'bi-bootstrap-reboot',
       color: 'text-warning',
-    },
-    {
+      description: `Retry #${props.message.messageState.attempts} - Delay: ${props.message.retryDelay}ms`,
+    });
+  }
+
+  // Dead-lettered event
+  if (props.message.messageState.deadLetteredAt) {
+    events.push({
       type: 'Dead-lettered',
       timestamp: props.message.messageState.deadLetteredAt,
       icon: 'bi-x-octagon-fill',
       color: 'text-danger',
-    },
-  ];
-  return events
-    .filter((e) => !!e.timestamp)
-    .sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+      description:
+        props.message.messageState.attempts >= props.message.retryThreshold
+          ? `Message was dead-lettered after ${props.message.messageState.attempts} attempts (threshold: ${props.message.retryThreshold})`
+          : 'Message was moved to dead-letter queue',
+    });
+  }
+
+  return events.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 });
 
 function handleClose(): void {
@@ -366,7 +451,7 @@ function handleRequeueSuccess(): void {
         </div>
 
         <!-- Tabs -->
-        <div class="modal-tabs mb-3">
+        <div class="modal-tabs mb-3 overflow-x-auto">
           <button
             class="tab-button"
             :class="{ active: activeTab === 'overview' }"
@@ -609,6 +694,12 @@ function handleRequeueSuccess(): void {
                     }}</span>
                   </div>
                   <div class="info-item">
+                    <span class="info-label">Last Processed At:</span>
+                    <span class="info-value">{{
+                      formattedLastProcessedAt
+                    }}</span>
+                  </div>
+                  <div class="info-item">
                     <span class="info-label">Acknowledged At:</span>
                     <span class="info-value">{{
                       formattedAcknowledgedAt
@@ -795,25 +886,47 @@ function handleRequeueSuccess(): void {
             </div>
           </div>
 
-          <!-- Timeline Tab -->
+          <!-- Enhanced Timeline Tab -->
           <div v-if="activeTab === 'timeline'" class="tab-content">
-            <ul class="timeline">
-              <li
-                v-for="event in timelineEvents"
-                :key="`${event.type}-${event.timestamp}`"
-                class="timeline-item"
+            <div class="timeline-container">
+              <div
+                v-for="(event, index) in timelineEvents"
+                :key="index"
+                class="timeline-item enhanced"
               >
                 <div class="timeline-marker" :class="event.color">
                   <i :class="event.icon"></i>
                 </div>
                 <div class="timeline-content">
-                  <h5 class="timeline-title">{{ event.type }}</h5>
-                  <p class="timeline-time">
-                    {{ formatDate(event.timestamp) }}
+                  <div class="timeline-header">
+                    <h5 class="timeline-title">{{ event.type }}</h5>
+                    <span class="timeline-badge" :class="event.color">
+                      {{ formatDate(event.timestamp) }}
+                    </span>
+                  </div>
+                  <p v-if="event.description" class="timeline-description">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{ event.description }}
                   </p>
+                  <div class="timeline-details">
+                    <small class="text-muted">
+                      <i class="bi bi-clock me-1"></i>
+                      {{ formatDate(event.timestamp) }}
+                    </small>
+                  </div>
                 </div>
-              </li>
-            </ul>
+                <div
+                  v-if="index < timelineEvents.length - 1"
+                  class="timeline-connector"
+                ></div>
+              </div>
+
+              <!-- No events state -->
+              <div v-if="timelineEvents.length === 0" class="text-center py-4">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="mt-2 text-muted">No timeline events available</p>
+              </div>
+            </div>
           </div>
 
           <!-- Unack History Tab -->
@@ -1014,34 +1127,39 @@ function handleRequeueSuccess(): void {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  width: 100%;
-  overflow: hidden;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .tab-button {
   background: none;
   border: none;
-  padding: 0.875rem 1rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
   color: #6c757d;
-  border-bottom: 3px solid transparent;
+  border-radius: 6px;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .tab-button:hover:not(:disabled) {
   color: #495057;
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .tab-button.active {
   color: #0d6efd;
-  border-bottom-color: #0d6efd;
-  background: #ffffff;
+  background: #e7f3ff;
+}
+
+.tab-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Tab Content Animation */
@@ -1122,93 +1240,146 @@ function handleRequeueSuccess(): void {
   font-size: inherit;
 }
 
-/* Timeline Styles */
-.timeline {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Enhanced Timeline Styles */
+.timeline-container {
   position: relative;
+  padding: 1rem 0;
 }
 
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 20px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #e9ecef;
-}
-
-.timeline-item {
+.timeline-item.enhanced {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-
-.timeline-item:last-child {
-  margin-bottom: 0;
+  margin-bottom: 2rem;
 }
 
 .timeline-marker {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   background: #ffffff;
   border: 2px solid #e9ecef;
   z-index: 1;
   flex-shrink: 0;
+  margin-right: 1rem;
 }
 
 .timeline-marker.text-primary {
   border-color: #0d6efd;
+  color: #0d6efd;
 }
 .timeline-marker.text-info {
   border-color: #0dcaf0;
+  color: #0dcaf0;
 }
 .timeline-marker.text-warning {
   border-color: #ffc107;
+  color: #ffc107;
 }
 .timeline-marker.text-success {
   border-color: #198754;
+  color: #198754;
 }
 .timeline-marker.text-danger {
   border-color: #dc3545;
+  color: #dc3545;
+}
+.timeline-marker.text-secondary {
+  border-color: #6c757d;
+  color: #6c757d;
 }
 
 .timeline-content {
-  margin-left: 1.25rem;
-  padding-top: 0.25rem;
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.timeline-content:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .timeline-title {
   font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
+  color: #212529;
 }
 
-.timeline-time {
+.timeline-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.timeline-badge.text-primary {
+  background: #e7f3ff;
+  color: #0d6efd;
+}
+.timeline-badge.text-info {
+  background: #cff4fc;
+  color: #0dcaf0;
+}
+.timeline-badge.text-warning {
+  background: #fff3cd;
+  color: #ffc107;
+}
+.timeline-badge.text-success {
+  background: #d1e7dd;
+  color: #198754;
+}
+.timeline-badge.text-danger {
+  background: #f8d7da;
+  color: #dc3545;
+}
+
+.timeline-description {
   font-size: 0.875rem;
   color: #6c757d;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.timeline-details {
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+.timeline-connector {
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: -20px;
+  width: 2px;
+  background: #e9ecef;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .modal-tabs {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    overflow-x: auto;
+    padding: 0.375rem;
   }
 
   .tab-button {
-    padding: 0.75rem 0.75rem;
-    font-size: 0.82rem;
-    white-space: nowrap;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
   }
 
   .info-item {
@@ -1220,15 +1391,10 @@ function handleRequeueSuccess(): void {
   .info-value {
     text-align: left;
   }
-}
 
-@media (max-width: 576px) {
-  .message-body {
-    max-height: 45vh;
-  }
-
-  .timeline::before {
-    left: 16px;
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .timeline-marker {
@@ -1237,8 +1403,24 @@ function handleRequeueSuccess(): void {
     font-size: 1rem;
   }
 
-  .timeline-content {
-    margin-left: 1rem;
+  .timeline-connector {
+    left: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .message-body {
+    max-height: 45vh;
+  }
+
+  .timeline-marker {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+  }
+
+  .timeline-connector {
+    left: 13px;
   }
 }
 
@@ -1246,7 +1428,8 @@ function handleRequeueSuccess(): void {
 @media (prefers-color-scheme: dark) {
   .status-bar,
   .modal-tabs,
-  .info-section {
+  .info-section,
+  .timeline-content {
     background: #2d2d2d;
     border-color: #404040;
   }
@@ -1258,7 +1441,8 @@ function handleRequeueSuccess(): void {
   }
 
   .tab-button.active {
-    background: #1a1a1a;
+    background: #1a3a5f;
+    color: #9ec1ff;
   }
 
   .timeline-marker {
@@ -1266,15 +1450,28 @@ function handleRequeueSuccess(): void {
     border-color: #404040;
   }
 
-  .timeline::before {
+  .timeline-connector {
     background: #404040;
+  }
+
+  .timeline-title {
+    color: #e5e7eb;
+  }
+
+  .info-label {
+    color: #a0a0a0;
+  }
+
+  .info-value {
+    color: #ffffff;
   }
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .tab-content,
-  .tab-button {
+  .tab-button,
+  .timeline-content {
     transition: none;
     animation: none;
   }

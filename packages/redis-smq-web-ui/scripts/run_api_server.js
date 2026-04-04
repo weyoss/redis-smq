@@ -13,10 +13,6 @@ import { RedisSMQRestApi } from 'redis-smq-rest-api';
 import { ERedisConfigClient, net, RedisServer } from 'redis-smq-common';
 import fs from 'fs';
 import path from 'path';
-import { RedisSMQ } from 'redis-smq';
-import bluebird from 'bluebird';
-
-const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 // Define the run directory path
 const envFilePath = path.resolve('./.env');
@@ -43,9 +39,6 @@ console.log(`Redis server is running on port ${redisPort}`);
 
 const httpPort = await net.getRandomPort();
 config.apiServer.port = httpPort;
-
-await RedisSMQAsync.initializeWithConfigAsync(config);
-await RedisSMQAsync.shutdownAsync();
 
 // Pass the config to the RedisSmqRestApi constructor
 const server = new RedisSMQRestApi(config);
