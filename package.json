@@ -46,7 +46,7 @@
     "build:clean": "scripts/build.sh all",
     "build:clean:workspaces": "scripts/build.sh workspaces",
     "test": "scripts/test.sh",
-    "prepare": ".husky",
+    "prepare": "husky",
     "release:patch": "scripts/release.sh patch",
     "release:minor": "scripts/release.sh minor",
     "release:major": "scripts/release.sh major",
