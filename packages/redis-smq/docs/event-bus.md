@@ -82,107 +82,6 @@ eventBus.on('consumer.consumeMessage.messageAcknowledged', (messageId) => {
 
 See [TRedisSMQEvent](api/type-aliases/TRedisSMQEvent.md).
 
-### Configuration Events
-
-```javascript
-'configuration.updated'; // Emitted when config changes via ConfigManager
-```
-
-### Heartbeat Events
-
-```javascript
-'consumerHeartbeat.heartbeat';
-```
-
-## Real-World Examples
-
-### Monitor Message Processing
-
-```javascript
-eventBus.on(
-  'consumer.dequeueMessage.messageReceived',
-  (messageId, queue, consumerId) => {
-    console.log(`📥 Processing ${messageId} from ${queue.name}`);
-    startTimer(messageId);
-  },
-);
-
-eventBus.on(
-  'consumer.consumeMessage.messageAcknowledged',
-  (messageId, queue, messageHandlerId, consumerId) => {
-    const duration = endTimer(messageId);
-    console.log(`✅ Processed ${messageId} in ${duration}ms`);
-  },
-);
-```
-
-### Track Failures with Detailed Logging
-
-```javascript
-eventBus.on(
-  'consumer.consumeMessage.messageRetrying',
-  (messageId, queue, retryCount, error) => {
-    console.warn(`🔄 Retry ${retryCount} for ${messageId}`, {
-      queue: queue.name,
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    });
-  },
-);
-
-eventBus.on(
-  'consumer.consumeMessage.messageDeadLettered',
-  (messageId, queue, messageHandlerId, consumerId, deadLetterCause) => {
-    console.error(`💀 Dead-lettered ${messageId}`, {
-      queue: queue.name,
-      cause: deadLetterCause,
-      timestamp: new Date().toISOString(),
-    });
-  },
-);
-```
-
-### Monitor Consumer Health
-
-```javascript
-const consumerHeartbeats = new Map();
-
-eventBus.on('consumerHeartbeat.heartbeat', (consumerId, timestamp) => {
-  consumerHeartbeats.set(consumerId, timestamp);
-
-  // Check for stale consumers
-  const now = Date.now();
-  for (const [id, lastBeat] of consumerHeartbeats) {
-    if (now - lastBeat > 30000) {
-      // 30 seconds
-      console.warn(`⚠️ Consumer ${id} appears stale`);
-    }
-  }
-});
-
-eventBus.on('consumer.error', (err, consumerId) => {
-  console.error(`❌ Consumer ${consumerId} error:`, err);
-  consumerHeartbeats.delete(consumerId);
-});
-```
-
-### React to Configuration Changes
-
-```javascript
-let currentConfig = Configuration.getConfig();
-
-eventBus.on('configuration.updated', (newConfig, version) => {
-  console.log(`Config updated to v${version}`);
-
-  if (newConfig.messageAudit !== currentConfig.messageAudit) {
-    console.log('Message audit setting changed, reinitializing...');
-    // Reinitialize components that depend on audit setting
-  }
-
-  currentConfig = newConfig;
-});
-```
-
 ## Best Practices
 
 ### 1. Start Event Bus Early
@@ -236,7 +135,7 @@ await RedisSMQ.shutdown();
 // EventBus is automatically stopped and cleaned up
 ```
 
-### Manual Shutdown (Advanced)
+### Manual Shutdown
 
 ```javascript
 await EventBus.shutdown();
