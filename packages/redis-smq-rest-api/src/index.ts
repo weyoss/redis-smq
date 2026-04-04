@@ -10,7 +10,6 @@
 import { bodyParser } from '@koa/bodyparser';
 import cors from '@koa/cors';
 import { asValue } from 'awilix';
-import bluebird from 'bluebird';
 import * as http from 'http';
 import Koa from 'koa';
 import mount from 'koa-mount';
@@ -34,9 +33,6 @@ import {
 import { errorHandlerMiddleware } from './lib/errors/middlewares/errorHandlerMiddleware.js';
 import { registerResources } from './lib/router/index.js';
 import { routing } from './routing/routing.js';
-
-// Promisify external async APIs
-const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 export class RedisSMQRestApi {
   protected app: Koa<
@@ -129,7 +125,7 @@ export class RedisSMQRestApi {
   protected async bootstrap() {
     if (this.bootstrapped) return;
 
-    await RedisSMQAsync.initializeAsync(this.config.redis);
+    await RedisSMQ.initialize(this.config.redis);
     await this.initApplicationMiddlewares();
     await this.initRouting();
     await this.initOpenApi();
@@ -165,7 +161,7 @@ export class RedisSMQRestApi {
       await new Promise((resolve) => this.httpServer.close(resolve));
     }
     await Container.getInstance().dispose();
-    await RedisSMQAsync.shutdownAsync();
+    await RedisSMQ.shutdown();
     this.logger.info('RedisSMQ HTTP API has been shutdown.');
   }
 }

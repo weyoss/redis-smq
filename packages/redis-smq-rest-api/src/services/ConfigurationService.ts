@@ -7,19 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { Configuration } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
+import { ConfigManager } from 'redis-smq';
 
 export class ConfigurationService {
-  protected configuration;
+  protected configManager;
 
-  constructor(configuration: Configuration) {
-    this.configuration = promisifyAll(configuration);
+  constructor(configManager: ConfigManager) {
+    this.configManager = configManager;
   }
 
   async getConfiguration() {
-    return this.configuration.getConfig();
+    return this.configManager.getConfig();
   }
 }

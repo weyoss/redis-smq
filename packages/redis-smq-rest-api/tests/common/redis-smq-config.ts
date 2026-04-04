@@ -16,8 +16,5 @@ export const redisSMQConfig: IRedisSMQConfig = {
       logLevel: 'DEBUG',
     },
   },
-  eventBus: {
-    enabled: true,
-  },
   messageAudit: true,
 };

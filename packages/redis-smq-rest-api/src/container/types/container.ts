@@ -23,7 +23,7 @@ import {
   Exchange,
   ExchangeDirect,
   ExchangeTopic,
-  Configuration,
+  ConfigManager,
   QueueStateManager,
 } from 'redis-smq';
 import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
@@ -54,7 +54,7 @@ export interface IContainer {
   exchangeTopic: ExchangeTopic;
   consumerGroups: ConsumerGroups;
   producer: Producer;
-  configuration: Configuration;
+  configManager: ConfigManager;
   config: IRedisSMQRestApiParsedConfig;
 
   queuesService: QueuesService;

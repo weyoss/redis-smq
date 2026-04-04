@@ -20,7 +20,7 @@ describe('getConfigurationController', () => {
       await request.get('/api/config');
     expect(response1.status).toEqual(200);
     expect(Object.keys(response1.body?.data ?? {}).sort()).toEqual(
-      ['namespace', 'redis', 'logger', 'eventBus', 'messageAudit'].sort(),
+      ['namespace', 'logger', 'messageAudit'].sort(),
     );
   });
 });

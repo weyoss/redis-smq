@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { Consumer, ProducibleMessage, RedisSMQ } from 'redis-smq';
+import { Consumer, EventBus, ProducibleMessage, RedisSMQ } from 'redis-smq';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 import { config } from './common/config.js';
 import {
@@ -23,8 +22,6 @@ import {
 } from './common/start-redis-server.js';
 import { BackoffConfig } from 'redis-smq-common';
 
-const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
-
 beforeAll(async () => {
   await initializeRedis();
 });
@@ -37,11 +34,9 @@ afterAll(async () => {
 beforeEach(async () => {
   const redis = await getRedisClientInstance();
   await redis.flushallAsync();
-  await RedisSMQAsync.initializeWithConfigAsync({
-    ...redisSMQConfig,
-    redis: config.redis,
-  });
-  await RedisSMQAsync.shutdownAsync();
+  await RedisSMQ.initialize(config.redis!);
+  await RedisSMQ.createConfigManager().updateConfig(redisSMQConfig);
+  await RedisSMQ.shutdown();
   ProducibleMessage.setDefaultConsumeOptions({
     ttl: 0,
     retryThreshold: 3,
@@ -70,9 +65,10 @@ beforeEach(async () => {
   });
 
   await startApiServer();
+  await EventBus.getInstance().run();
 });
 
 afterEach(async () => {
   await stopApiServer();
-  await RedisSMQAsync.shutdownAsync();
+  await RedisSMQ.shutdown();
 });

@@ -11,20 +11,19 @@
 
 import { Command } from 'commander';
 import { RedisSMQRestApi } from '../src/index.js';
-import { EConsoleLoggerLevel } from 'redis-smq-common';
+import {
+  EConsoleLoggerLevel,
+  ERedisConfigClient,
+  TConsoleLoggerLevelName,
+} from 'redis-smq-common';
 import {
   DEFAULT_BASE_PATH,
   DEFAULT_PORT,
   IRedisSMQRestApiCliOptions,
   IRedisSMQRestApiConfig,
 } from '../src/config/index.js';
-import { defaultConfig as defaultRedisSMQConfig } from 'redis-smq';
 
-// Keep existing behavior for deriving a numeric default log level
-const defaultLogLevel =
-  typeof defaultRedisSMQConfig.logger.options.logLevel === 'number'
-    ? defaultRedisSMQConfig.logger.options.logLevel
-    : EConsoleLoggerLevel[defaultRedisSMQConfig.logger.options.logLevel];
+const defaultLogLevel: TConsoleLoggerLevelName = 'INFO';
 
 const program = new Command();
 
@@ -47,30 +46,22 @@ program
   .option(
     '-c, --redis-client <ioredis|redis>',
     'Redis client. Valid options are: ioredis, redis.',
-    defaultRedisSMQConfig.redis.client,
+    ERedisConfigClient.IOREDIS,
   )
-  .option(
-    '-r, --redis-host <string>',
-    'Redis server host',
-    defaultRedisSMQConfig.redis.options.host,
-  )
+  .option('-r, --redis-host <string>', 'Redis server host', '127.0.0.1')
   .option(
     // Use -o to avoid colliding with -p (API port)
     '-o, --redis-port <number>',
     'Redis server port',
-    String(defaultRedisSMQConfig.redis.options.port),
+    '6379',
   )
-  .option(
-    '-d, --redis-db <number>',
-    'Redis database number',
-    String(defaultRedisSMQConfig.redis.options.db),
-  )
+  .option('-d, --redis-db <number>', 'Redis database number', '0')
 
   // Logging options
   .option(
     '-e, --enable-log <0|1>',
     'Enable console logging: 0 (disabled), 1 (enabled)',
-    String(Number(defaultRedisSMQConfig.logger.enabled)),
+    '0',
   )
   .option(
     '-v, --log-level <0|1|2|3>',
