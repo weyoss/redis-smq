@@ -19,7 +19,7 @@ A high-performance Redis message queue for Node.js — simple to use, built for 
 - 🔒 [Queue state management](packages/redis-smq/docs/queue-state-management-system.md): pause/stop/resume + audit
 - ⏱️ [Message TTL & consumption timeouts](packages/redis-smq/docs/messages.md)
 - 🚀 [High-throughput design](packages/redis-smq/docs/performance.md) with atomic Lua scripts
-- 📦 [Batch acks](packages/redis-smq/docs/message-batch-unacknowledgements.md) & [Batch unacks](packages/redis-smq/docs/message-batch-unacknowledgements.md) — 99% fewer Redis calls
+- 📦 [Batch acks](packages/redis-smq/docs/message-batch-acknowledgements.md) & [Batch unacks](packages/redis-smq/docs/message-batch-unacknowledgements.md) — 99% fewer Redis calls
 - 🧵 [Worker threads](packages/redis-smq/docs/message-handler-worker-threads.md) for CPU-heavy handlers
 - 🔄 [Multi-queue producers & consumers](packages/redis-smq/docs/consuming-messages.md) with [multiplexing](packages/redis-smq/docs/multiplexing.md) support
 - 📡 [Event bus](packages/redis-smq/docs/event-bus.md) for real-time internal events
