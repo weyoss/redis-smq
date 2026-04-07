@@ -11,6 +11,13 @@
 
 set -euxo pipefail
 
+# Skip hook during rebase operations
+if [ -d "$(git rev-parse --git-path rebase-merge)" ] || \
+   [ -d "$(git rev-parse --git-path rebase-apply)" ]; then
+    echo "[update-readme-files] Rebase in progress, skipping README update to avoid detached HEAD issues"
+    exit 0
+fi
+
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
