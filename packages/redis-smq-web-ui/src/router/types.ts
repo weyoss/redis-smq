@@ -35,6 +35,7 @@ export type RouteParamsMap = {
   exchangeDetails: { params: { ns: string; exchange: string } };
 
   // System routes
+  configuration: undefined;
   notFound: undefined;
 };
 

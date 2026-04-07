@@ -114,6 +114,12 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+// Navigate to configuration page
+const navigateToConfiguration = () => {
+  isUserMenuOpen.value = false;
+  router.push('configuration');
+};
+
 // Toggle user menu
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value;
@@ -213,6 +219,16 @@ onBeforeUnmount(() => {
                     class="user-menu-dropdown"
                     role="menu"
                   >
+                    <li role="none">
+                      <button
+                        class="dropdown-item"
+                        role="menuitem"
+                        @click="navigateToConfiguration"
+                      >
+                        <i class="bi bi-gear-wide-connected me-2"></i>
+                        Configuration
+                      </button>
+                    </li>
                     <li role="none" class="dropdown-divider"></li>
                     <li role="none">
                       <div class="dropdown-item version-item">

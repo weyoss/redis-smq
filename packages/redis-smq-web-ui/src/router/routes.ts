@@ -199,6 +199,19 @@ export const routes = [
     },
   }),
 
+  // System routes
+  asRoute({
+    path: '/config',
+    name: 'configuration',
+    component: () => import('@/views/configuration/ConfigurationView.vue'),
+    meta: {
+      title: 'Configuration',
+      icon: 'bi-gear-wide-connected',
+      systemRoute: true,
+      breadcrumb: { label: 'Configuration', path: '/config' },
+    },
+  }),
+
   // 404 handler
   asRoute({
     path: '/:pathMatch(.*)*',
