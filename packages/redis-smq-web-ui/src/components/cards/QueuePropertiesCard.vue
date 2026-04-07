@@ -11,12 +11,13 @@
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
 import { EQueueDeliveryModel, EQueueType } from '@/types';
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
+import type { RouteName } from '@/router/types.ts';
 
 const selectedQueueStore = useSelectedQueueStore();
 const queuesPropertiesStore = useSelectedQueuePropertiesStore();
-const router = useRouter();
+const router = useTypedRouter();
 
 const queue = computed(() => {
   return selectedQueueStore.selectedQueue;
@@ -38,7 +39,15 @@ const error = computed(() => {
   return null;
 });
 
-const messageStats = computed(() => {
+const messageStats = computed<
+  {
+    label: string;
+    value: number;
+    icon: string;
+    iconClass: string;
+    routeName: RouteName | null;
+  }[]
+>(() => {
   if (!queueProperties.value) return [];
   return [
     {
@@ -46,14 +55,14 @@ const messageStats = computed(() => {
       value: queueProperties.value.pendingMessagesCount,
       icon: 'bi-clock-history',
       iconClass: 'pending-icon',
-      routeName: 'Pending Messages',
+      routeName: 'pendingMessages',
     },
     {
       label: 'Dead-lettered',
       value: queueProperties.value.deadLetteredMessagesCount,
       icon: 'bi-x-octagon-fill',
       iconClass: 'dead-lettered-icon',
-      routeName: 'Dead-Lettered Messages',
+      routeName: 'deadLetteredMessages',
     },
     {
       label: 'Processing',
@@ -67,14 +76,14 @@ const messageStats = computed(() => {
       value: queueProperties.value.acknowledgedMessagesCount,
       icon: 'bi-check-circle-fill',
       iconClass: 'acknowledged-icon',
-      routeName: 'Acknowledged Messages',
+      routeName: 'acknowledgedMessages',
     },
     {
       label: 'Scheduled',
       value: queueProperties.value.scheduledMessagesCount,
       icon: 'bi-calendar-plus-fill',
       iconClass: 'scheduled-icon',
-      routeName: 'Scheduled Messages',
+      routeName: 'scheduledMessages',
     },
     {
       label: 'Requeued',
@@ -95,16 +104,25 @@ const messageStats = computed(() => {
       value: queueProperties.value.messagesCount,
       icon: 'bi-collection-fill',
       iconClass: 'total-icon',
-      routeName: 'Messages',
+      routeName: 'messages',
     },
   ];
 });
 
 // Navigation
-function navigateToMessages(routeName: string | null) {
+function navigateToMessages(routeName: RouteName | null) {
   if (!routeName || !queue.value) return;
-  router.push({
-    name: routeName,
+  if (
+    ![
+      'publishedMessages',
+      'pendingMessages',
+      'scheduledMessages',
+      'deadLetteredMessages',
+    ].includes(routeName)
+  ) {
+    return;
+  }
+  router.push(routeName, {
     params: {
       ns: queue.value.ns,
       queue: queue.value.name,

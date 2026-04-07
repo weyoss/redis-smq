@@ -14,7 +14,6 @@ import {
   ExchangeTypeString,
   type IExchangeParsedParams,
 } from '@/types';
-import { useExchangeNavigation } from '@/composables/useExchangeNavigation';
 import { useExchangeModals } from '@/composables/useExchangeModals';
 
 // API hooks for fetching exchange data
@@ -31,6 +30,7 @@ import { getErrorMessage } from '@/lib/error';
 import BindQueueModal from '@/components/modals/BindQueueModal.vue';
 import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
 import DeleteExchangeModal from '@/components/modals/DeleteExchangeModal.vue';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 interface QueueData {
   items: string[];
@@ -38,6 +38,8 @@ interface QueueData {
   routingKeys?: string[];
   bindingPatterns?: string[];
 }
+
+const router = useTypedRouter();
 
 const props = defineProps<{
   exchange: IExchangeParsedParams;
@@ -48,7 +50,6 @@ const emit = defineEmits<{
   (e: 'dataChanged'): void;
 }>();
 
-const { goToExchangePage } = useExchangeNavigation();
 const modals = useExchangeModals();
 
 // --- Step 1: Fetch Routing Keys and Binding Patterns ---
@@ -347,6 +348,15 @@ const handleUnbindSuccess = () => {
 const handleDeleted = () => {
   modals.closeModals();
   emit('deleted');
+};
+
+const goToExchangePage = (ex: IExchangeParsedParams) => {
+  router.push('exchangeDetails', {
+    params: {
+      exchange: ex.name,
+      ns: ex.ns,
+    },
+  });
 };
 </script>
 

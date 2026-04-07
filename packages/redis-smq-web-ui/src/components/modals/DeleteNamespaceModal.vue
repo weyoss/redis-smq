@@ -8,30 +8,67 @@
   -->
 
 <script lang="ts" setup>
+import { computed, watch } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import BaseModal from '@/components/modals/BaseModal.vue';
-import type { IAPIError } from '@/types';
+import {
+  useDeleteApiNamespacesNs,
+  getGetApiNamespacesQueryKey,
+} from '@/api/generated/namespaces/namespaces';
+import { getErrorMessage } from '@/lib/error.ts';
 
 interface Props {
   isVisible: boolean;
   namespace: string | null;
-  queueCount: number;
-  isDeleting: boolean;
-  error: IAPIError | null;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
   (e: 'cancel'): void;
-  (e: 'confirm'): void;
+  (e: 'success'): void;
 }>();
 
+const queryClient = useQueryClient();
+
+// Delete namespace mutation
+const deleteMutation = useDeleteApiNamespacesNs({
+  mutation: {
+    onSuccess: () => {
+      // Invalidate namespaces list query to refresh the list
+      queryClient.invalidateQueries({
+        queryKey: getGetApiNamespacesQueryKey(),
+      });
+      // Emit success and close modal
+      emit('success');
+    },
+  },
+});
+
+const isDeleting = computed(() => deleteMutation.isPending.value);
+const error = computed(() =>
+  getErrorMessage(deleteMutation.error.value?.error),
+);
+
+// Reset mutation when modal closes
+watch(
+  () => props.isVisible,
+  (visible) => {
+    if (!visible) {
+      deleteMutation.reset();
+    }
+  },
+);
+
 function handleClose() {
-  if (!props.isDeleting) emit('cancel');
+  if (!isDeleting.value) {
+    emit('cancel');
+  }
 }
 
-function handleConfirm() {
-  if (!props.isDeleting) emit('confirm');
+async function handleConfirm() {
+  if (!props.namespace || isDeleting.value) return;
+  await deleteMutation.mutateAsync({ ns: props.namespace });
 }
 </script>
 
@@ -55,38 +92,24 @@ function handleConfirm() {
             </strong>
             ?
           </p>
-
-          <div
-            class="namespace-details"
-            role="group"
-            aria-label="Namespace details"
-          >
-            <div class="detail-item">
-              <span class="detail-label">Queues in namespace:</span>
-              <span class="detail-value">{{ queueCount }}</span>
-            </div>
-          </div>
         </section>
 
         <!-- Warning -->
         <section class="warning-section" aria-live="polite">
           <div class="warning-content">
-            <div class="warning-icon" aria-hidden="true">
-              <i class="bi bi-shield-exclamation"></i>
-            </div>
             <div class="warning-text">
-              <h4 class="warning-title">Warning</h4>
-              <ul class="warning-list">
-                <li>
-                  All queues in this namespace will be permanently deleted
-                </li>
-                <li>All messages in these queues will be lost</li>
-                <li>
-                  Ensure all consumers connected to these queues are
-                  disconnected
-                </li>
-                <li>This action cannot be reversed</li>
-              </ul>
+              <div class="warning-requirements">
+                <div class="requirements-title">
+                  <i class="bi bi-check-circle me-1"></i>
+                  Before proceeding, ensure:
+                </div>
+                <ul class="requirements-list">
+                  <li>- All queues are empty</li>
+                  <li>- No active consumers are connected to any queue</li>
+                  <li>- No exchanges have bound queues</li>
+                  <li>- No background processes are using this namespace</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
@@ -179,67 +202,53 @@ function handleConfirm() {
   font-size: 0.9em;
 }
 
-/* Namespace details */
-.namespace-details {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
+/* Requirements Section */
+.warning-requirements {
+  margin-bottom: 1rem;
+  background: #fff8e1;
   border-radius: 8px;
-  padding: clamp(10px, 2.6vw, 14px);
+  padding: 0.75rem;
+  border-left: 3px solid #ffc107;
 }
 
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.detail-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.detail-value {
-  font-weight: 700;
-  font-size: 1.125rem;
-}
-
-/* Warning section */
-.warning-section {
-  background-color: #f8d7da;
-  border: 1px solid #f5c2c7;
-  border-radius: 8px;
-  padding: clamp(10px, 2.6vw, 14px);
-  color: #58151c;
-}
-
-.warning-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.warning-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.warning-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.warning-list {
-  margin: 0;
-  padding-left: 1.25rem;
+.requirements-title,
+.consequences-title {
   font-size: 0.875rem;
-  line-height: 1.5;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  color: #856404;
 }
 
-.warning-list li {
-  margin-bottom: 0.25rem;
+.requirements-list,
+.consequences-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.requirements-list li,
+.consequences-list li {
+  display: flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin-bottom: 0.375rem;
+  color: #856404;
+}
+
+.requirements-list li:last-child,
+.consequences-list li:last-child {
+  margin-bottom: 0;
+}
+
+.requirements-list li i,
+.consequences-list li i {
+  font-size: 0.875rem;
+  width: 18px;
+  flex-shrink: 0;
+  color: #ffc107;
 }
 
 /* Error section */

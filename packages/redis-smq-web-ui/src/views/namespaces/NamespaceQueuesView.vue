@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, watchEffect } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 
 import { getErrorMessage } from '@/lib/error.ts';
@@ -27,9 +27,10 @@ import { useGetApiNamespaces } from '@/api/generated/namespaces/namespaces';
 import PageContent from '@/components/PageContent.vue';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
 import QueueListItem from '@/components/QueueListItem.vue';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 const route = useRoute();
-const router = useRouter();
+const router = useTypedRouter();
 const queryClient = useQueryClient();
 const selectedNamespaceStore = useSelectedNamespaceStore();
 const pageContentStore = usePageContentStore();
@@ -86,7 +87,7 @@ const error = computed(() => namespacesError.value || queuesError.value);
 
 function goBackToNamespaces() {
   selectedNamespaceStore.clearSelectedNamespace();
-  router.push({ name: 'Namespaces' });
+  router.push('namespaces');
 }
 
 // Modal Actions
@@ -159,8 +160,8 @@ const pageActions = computed((): PageAction[] => {
 
 watchEffect(() => {
   pageContentStore.setPageHeader({
-    title: namespace.value,
-    subtitle: `Manage queues in namespace: ${namespace.value}`,
+    title: `Namespace Queues: ${namespace.value}`,
+    subtitle: `View and manage queues in the "${namespace.value}" namespace`,
     icon: 'bi bi-folder-fill',
   });
 

@@ -7,8 +7,9 @@
  * in the root directory of this source tree.
  */
 
-export * from '@/types/messages.ts';
-export * from '@/types/queues.ts';
-export * from '@/types/exchanges.ts';
-export * from '@/types/error.ts';
-export * from '@/types/config.ts';
+export enum EConsoleLoggerLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+}

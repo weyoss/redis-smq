@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export * from '@/types/messages.ts';
-export * from '@/types/queues.ts';
-export * from '@/types/exchanges.ts';
-export * from '@/types/error.ts';
-export * from '@/types/config.ts';
+import { routes } from '@/router/routes.ts';
+
+export const getMainNavRoutes = () =>
+  routes.filter((route) => route.meta?.mainNav === true);

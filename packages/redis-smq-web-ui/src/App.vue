@@ -9,35 +9,36 @@
 
 <script setup lang="ts">
 import BreadcrumbsBar from '@/components/BreadcrumbsPanel.vue';
-import { main } from '@/router/main.ts';
 import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
-import { type RouteRecordNameGeneric, useRouter } from 'vue-router';
 import packageJson from '../package.json';
 import logoImageSmall from '@/assets/images/redis-smq-logo-small.png';
 import logoImageBig from '@/assets/images/redis-smq-logo-big.png';
+import { getMainNavRoutes } from '@/router/getMainNavRoutes.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
+import type { RouteName } from '@/router/types.ts';
 
 // App state
 const isLoading = ref(true);
 const appError = ref<string | null>(null);
 
 // Router for navigation state
-const router = useRouter();
+const router = useTypedRouter();
 
 // App version from package.json
-const appVersion = computed(() => {
-  return packageJson.version || '0.0.0';
-});
+const appVersion = computed(() => packageJson.version || '0.0.0');
+
+// Get main navigation routes from routes config
+const mainNavRoutes = computed(() => getMainNavRoutes());
+
+// User menu state
+const isUserMenuOpen = ref(false);
+const userMenuRef = ref<HTMLElement | null>(null);
 
 // App initialization function
 const initializeApp = async () => {
   try {
     isLoading.value = true;
     appError.value = null;
-
-    // Add any app initialization logic here
-    // e.g., check authentication, load user preferences, etc.
-    // At this time no initialization is required
-
     // Simulate app initialization
     await new Promise((resolve) => setTimeout(resolve, 1500));
   } catch (error) {
@@ -54,8 +55,8 @@ onMounted(() => {
 });
 
 // Check if route is active
-const isActiveRoute = (routeName: RouteRecordNameGeneric) => {
-  return router.currentRoute.value.name === routeName;
+const isActiveRoute = (routeName: RouteName) => {
+  return router.isActiveRoute(routeName);
 };
 
 // Retry app initialization
@@ -63,34 +64,60 @@ const retryInitialization = () => {
   initializeApp();
 };
 
-// Mobile navigation state and a11y handling
+// Mobile navigation state
 const isMobileNavOpen = ref(false);
 const mobileNavDropdown = ref<HTMLElement | null>(null);
+
+// Get current page name for mobile nav
+const currentPageName = computed(() => {
+  const currentRoute = mainNavRoutes.value.find((route) =>
+    isActiveRoute(route.name),
+  );
+  return currentRoute?.name || 'Navigation';
+});
 
 // Close mobile nav on route change
 watch(
   () => router.currentRoute.value.fullPath,
   () => {
     isMobileNavOpen.value = false;
+    isUserMenuOpen.value = false;
   },
 );
 
 // Close on outside click
 function handleDocumentClick(e: MouseEvent) {
-  if (!isMobileNavOpen.value) return;
   const target = e.target as Node;
-  const container = mobileNavDropdown.value;
-  if (container && !container.contains(target)) {
-    isMobileNavOpen.value = false;
+
+  // Handle mobile nav close
+  if (isMobileNavOpen.value) {
+    const container = mobileNavDropdown.value;
+    if (container && !container.contains(target)) {
+      isMobileNavOpen.value = false;
+    }
+  }
+
+  // Handle user menu close
+  if (isUserMenuOpen.value) {
+    const menu = userMenuRef.value;
+    if (menu && !menu.contains(target)) {
+      isUserMenuOpen.value = false;
+    }
   }
 }
 
 // Close on Escape key
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && isMobileNavOpen.value) {
+  if (e.key === 'Escape') {
     isMobileNavOpen.value = false;
+    isUserMenuOpen.value = false;
   }
 }
+
+// Toggle user menu
+const toggleUserMenu = () => {
+  isUserMenuOpen.value = !isUserMenuOpen.value;
+};
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick, true);
@@ -160,6 +187,43 @@ onBeforeUnmount(() => {
                 <span class="brand-subtitle">Web UI</span>
               </div>
             </div>
+
+            <!-- Top Right Menu -->
+            <div class="header-actions">
+              <div ref="userMenuRef" class="user-menu">
+                <button
+                  class="user-menu-toggle"
+                  type="button"
+                  :aria-expanded="isUserMenuOpen"
+                  aria-haspopup="true"
+                  aria-label="User menu"
+                  @click="toggleUserMenu"
+                >
+                  <i class="bi bi-person-circle"></i>
+                  <span class="user-name">Admin</span>
+                  <i
+                    class="bi bi-chevron-down"
+                    :class="{ rotated: isUserMenuOpen }"
+                  ></i>
+                </button>
+
+                <transition name="menu-fade">
+                  <ul
+                    v-show="isUserMenuOpen"
+                    class="user-menu-dropdown"
+                    role="menu"
+                  >
+                    <li role="none" class="dropdown-divider"></li>
+                    <li role="none">
+                      <div class="dropdown-item version-item">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span>Version {{ appVersion }}</span>
+                      </div>
+                    </li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
           </div>
 
           <!-- Navigation -->
@@ -171,7 +235,7 @@ onBeforeUnmount(() => {
             <!-- Desktop Navigation -->
             <ul class="nav-list nav-desktop" role="tablist">
               <li
-                v-for="route in main"
+                v-for="route in mainNavRoutes"
                 :key="route.name"
                 class="nav-item"
                 role="presentation"
@@ -184,7 +248,13 @@ onBeforeUnmount(() => {
                   }"
                   :aria-current="isActiveRoute(route.name) ? 'page' : undefined"
                 >
-                  <span class="nav-label">{{ route.name }}</span>
+                  <i
+                    v-if="route.meta?.icon"
+                    :class="[route.meta.icon, 'me-2']"
+                  ></i>
+                  <span class="nav-label">{{
+                    route.meta?.title || route.name
+                  }}</span>
                   <span
                     v-if="isActiveRoute(route.name)"
                     class="nav-indicator"
@@ -204,12 +274,7 @@ onBeforeUnmount(() => {
                   aria-controls="mobile-nav-menu"
                   @click="isMobileNavOpen = !isMobileNavOpen"
                 >
-                  <span class="current-page">
-                    {{
-                      main.find((r) => isActiveRoute(r.name))?.name ||
-                      'Navigation'
-                    }}
-                  </span>
+                  <span class="current-page">{{ currentPageName }}</span>
                   <i class="bi bi-chevron-down toggle-icon"></i>
                 </button>
                 <ul
@@ -218,7 +283,11 @@ onBeforeUnmount(() => {
                   class="mobile-nav-menu"
                   role="menu"
                 >
-                  <li v-for="route in main" :key="route.name" role="none">
+                  <li
+                    v-for="route in mainNavRoutes"
+                    :key="route.name"
+                    role="none"
+                  >
                     <RouterLink
                       :to="{ name: route.name }"
                       class="mobile-nav-link"
@@ -227,7 +296,11 @@ onBeforeUnmount(() => {
                       }"
                       role="menuitem"
                     >
-                      {{ route.name }}
+                      <i
+                        v-if="route.meta?.icon"
+                        :class="[route.meta.icon, 'me-2']"
+                      ></i>
+                      {{ route.meta?.title || route.name }}
                     </RouterLink>
                   </li>
                 </ul>
@@ -323,7 +396,7 @@ onBeforeUnmount(() => {
 .app {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  overflow-x: hidden; /* Prevent horizontal overflow on mobile */
+  overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   touch-action: manipulation;
@@ -375,7 +448,7 @@ onBeforeUnmount(() => {
   object-fit: contain;
   filter: brightness(1.1) contrast(1.1);
   transition: all 0.3s ease;
-  max-width: 100%; /* Fluid images to avoid overflow */
+  max-width: 100%;
   height: auto;
 }
 
@@ -400,18 +473,146 @@ onBeforeUnmount(() => {
   margin-top: 0.25rem;
 }
 
+/* Header Actions - Top Right Menu */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 40px;
+  cursor: pointer;
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.user-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.user-menu-toggle i:first-child {
+  font-size: 1.25rem;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.user-menu-toggle .bi-chevron-down {
+  font-size: 0.875rem;
+  transition: transform 0.2s ease;
+}
+
+.user-menu-toggle .bi-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e9ecef;
+  margin: 0;
+  padding: 0.5rem 0;
+  list-style: none;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #495057;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item i {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #0d6efd;
+}
+
+.dropdown-item:hover i {
+  color: #0d6efd;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e9ecef;
+  margin: 0.25rem 0;
+}
+
+.version-item {
+  cursor: default;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.version-item:hover {
+  background: none;
+  color: #6c757d;
+}
+
+.version-item:hover i {
+  color: #6c757d;
+}
+
+/* Menu fade animation */
+.menu-fade-enter-active,
+.menu-fade-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.menu-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.menu-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
 /* Loading Screen Specific Styles */
 .loading-screen {
-  /* The minimum width for the loading logo “frame.” */
   --loading-logo-min: 120px;
-  /* The fluid (viewport-based) preferred width. Setting this to 0vw effectively disables fluid scaling */
   --loading-logo-fluid: 60vw;
-  /* The maximum width for the loading logo “frame.” */
   --loading-logo-max: 240px;
-
-  /* Hard cap for the image inside the frame. */
   --loading-img-max: 220px;
-  /* Scales the inner image to 82% of the frame width. */
   --loading-img-percent: 82%;
 
   position: fixed;
@@ -442,14 +643,13 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .brand-logo {
-  /* Make the glass frame responsive with original-ish aspect ratio */
   width: clamp(
     var(--loading-logo-min),
     var(--loading-logo-fluid),
     var(--loading-logo-max)
   );
-  aspect-ratio: 465 / 315; /* keep the frame proportions consistent */
-  height: auto; /* let aspect-ratio control height */
+  aspect-ratio: 465 / 315;
+  height: auto;
   border-radius: 20px;
 }
 
@@ -458,7 +658,6 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .logo-image {
-  /* Scale the logo inside the frame responsively, with a sensible max */
   width: min(var(--loading-img-percent), var(--loading-img-max));
   height: auto;
 }
@@ -595,10 +794,12 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 1.5rem 0 1rem 0;
   min-height: 80px;
+  gap: 2rem;
 }
 
 .app-header .brand-section {
   margin-bottom: 0;
+  flex: 1;
 }
 
 .app-header .brand-section:hover {
@@ -689,7 +890,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis; /* Prevent overly long labels from overflowing */
+  text-overflow: ellipsis;
 }
 
 .nav-indicator {
@@ -765,7 +966,7 @@ onBeforeUnmount(() => {
   padding: 0.5rem 0;
   list-style: none;
   z-index: 1000;
-  max-height: 60vh; /* Scrollable on small screens */
+  max-height: 60vh;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -812,7 +1013,7 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   padding: 2rem;
   width: 100%;
-  overflow-wrap: anywhere; /* Avoid long content causing horizontal scroll */
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -936,18 +1137,6 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -978,7 +1167,9 @@ onBeforeUnmount(() => {
 .mobile-nav-toggle:focus,
 .mobile-nav-link:focus,
 .footer-link:focus,
-.btn:focus {
+.btn:focus,
+.user-menu-toggle:focus,
+.dropdown-item:focus {
   outline: 2px solid #0d6efd;
   outline-offset: 2px;
 }
@@ -987,7 +1178,9 @@ onBeforeUnmount(() => {
 .mobile-nav-toggle:focus-visible,
 .mobile-nav-link:focus-visible,
 .footer-link:focus-visible,
-.btn:focus-visible {
+.btn:focus-visible,
+.user-menu-toggle:focus-visible,
+.dropdown-item:focus-visible {
   outline: 2px solid #0d6efd;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
@@ -1013,10 +1206,26 @@ onBeforeUnmount(() => {
   }
 
   .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     padding: 1rem 0 0.5rem 0;
+  }
+
+  .brand-section {
+    flex: 1;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .user-menu-toggle {
+    padding: 0.5rem;
+  }
+
+  .user-menu-toggle i:first-child {
+    font-size: 1.5rem;
   }
 
   .content-container {
@@ -1040,7 +1249,6 @@ onBeforeUnmount(() => {
     padding-right: 1rem;
   }
 
-  /* Header brand adjustments for mobile (unchanged) */
   .app-header .brand-section {
     gap: 0.75rem;
   }
@@ -1064,7 +1272,6 @@ onBeforeUnmount(() => {
     letter-spacing: 1.5px;
   }
 
-  /* Avoid sticky conflict with header on mobile: make breadcrumbs non-sticky */
   :deep(.breadcrumb-navigation) {
     position: static !important;
     top: auto !important;
@@ -1073,7 +1280,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 480px) {
-  /* Header brand adjustments for small screens (unchanged) */
   .app-header .brand-section {
     gap: 0.5rem;
   }
@@ -1097,7 +1303,6 @@ onBeforeUnmount(() => {
     letter-spacing: 1px;
   }
 
-  /* Loading screen text tweaks for small screens */
   .loading-screen .brand-section {
     margin-bottom: 2rem;
     gap: 0.75rem;
@@ -1123,12 +1328,14 @@ onBeforeUnmount(() => {
   .brand-logo,
   .nav-link,
   .mobile-nav-toggle,
-  .footer-link {
+  .footer-link,
+  .user-menu-toggle {
     transition: none;
   }
   .nav-link:hover,
   .mobile-nav-toggle:hover,
-  .footer-link:hover {
+  .footer-link:hover,
+  .user-menu-toggle:hover {
     transform: none;
   }
 }

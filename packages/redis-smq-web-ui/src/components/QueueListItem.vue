@@ -9,16 +9,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useSelectedQueueStore } from '@/stores/selectedQueue';
 import DeleteQueueModal from '@/components/modals/DeleteQueueModal.vue';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 const props = defineProps<{
   ns: string;
   name: string;
 }>();
 
-const router = useRouter();
+const router = useTypedRouter();
 const selectedQueueStore = useSelectedQueueStore();
 
 // Modal state
@@ -27,7 +27,7 @@ const showDeleteModal = ref(false);
 // Navigation
 function handleView() {
   selectedQueueStore.selectQueue(props.ns, props.name);
-  router.push({ name: 'Queue', params: { ns: props.ns, queue: props.name } });
+  router.push('queue', { params: { ns: props.ns, queue: props.name } });
 }
 
 // Delete handlers

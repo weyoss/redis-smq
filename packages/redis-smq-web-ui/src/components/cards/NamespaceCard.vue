@@ -12,6 +12,9 @@ import { computed } from 'vue';
 import { useGetApiNamespacesNsQueues } from '@/api/generated/namespace-queues/namespace-queues';
 import { useGetApiNamespacesNsExchanges } from '@/api/generated/namespace-exchanges/namespace-exchanges';
 import type { IQueueParams } from '@/types';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
+
+const router = useTypedRouter();
 
 const props = defineProps<{
   namespace: string;
@@ -19,10 +22,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'click'): void;
   (e: 'delete', ns: string): void;
-  (e: 'viewExchanges', ns: string): void;
-  (e: 'queueClick', queue: IQueueParams): void;
 }>();
 
 // Fetch queues
@@ -72,8 +72,29 @@ function handleRetry() {
   refetchExchanges();
 }
 
-function handleQueueClick(queue: IQueueParams) {
-  emit('queueClick', queue);
+function navigateToQueuePage(queue: IQueueParams) {
+  router.push('queue', {
+    params: {
+      ns: queue.ns,
+      queue: queue.name,
+    },
+  });
+}
+
+function navigateToNamespaceExchanges(ns: string) {
+  router.push('namespaceExchanges', {
+    params: {
+      ns,
+    },
+  });
+}
+
+function navigateToNamespaceQueues(ns: string) {
+  router.push('namespaceQueues', {
+    params: {
+      ns,
+    },
+  });
 }
 </script>
 
@@ -131,13 +152,16 @@ function handleQueueClick(queue: IQueueParams) {
     <div v-else class="card-body">
       <!-- Quick actions -->
       <div class="quick-actions">
-        <button class="action-btn" @click.stop="emit('click')">
+        <button
+          class="action-btn"
+          @click.stop="navigateToNamespaceQueues(namespace)"
+        >
           <i class="bi bi-list-ul"></i>
           <span>{{ queueCount }} queues</span>
         </button>
         <button
           class="action-btn"
-          @click.stop="emit('viewExchanges', namespace)"
+          @click.stop="navigateToNamespaceExchanges(namespace)"
         >
           <i class="bi bi-diagram-3"></i>
           <span>{{ exchangeCount }} exchanges</span>
@@ -152,7 +176,7 @@ function handleQueueClick(queue: IQueueParams) {
             v-for="queue in recentQueues"
             :key="queue.name"
             class="queue-item"
-            @click.stop="handleQueueClick(queue)"
+            @click.stop="navigateToQueuePage(queue)"
           >
             <i class="bi bi-box"></i>
             <span class="queue-name">{{ queue.name }}</span>

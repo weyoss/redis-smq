@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watchEffect } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import {
   EExchangeType,
   type IExchangeParsedParams,
@@ -31,43 +31,30 @@ import BindQueueModal from '@/components/modals/BindQueueModal.vue';
 import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
 import DeleteExchangeModal from '@/components/modals/DeleteExchangeModal.vue';
 import { useExchangeModals } from '@/composables/useExchangeModals';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 // Composables
 const route = useRoute();
-const router = useRouter();
+const router = useTypedRouter();
 const pageContentStore = usePageContentStore();
 const modals = useExchangeModals();
 
 // Extract exchange details from route
 const exchangeName = computed(() => String(route.params.exchange));
 const namespace = computed(() => String(route.params.ns));
-const exchangeTypeFromRoute = computed(() => route.params.type as string);
 
 // Create exchange object for modal operations
-const currentExchange = computed<IExchangeParsedParams>(() => ({
-  name: exchangeName.value,
-  ns: namespace.value,
-  type: exchangeType.value,
-}));
+const currentExchange = ref<IExchangeParsedParams | null>(null);
 
-// Determine exchange type from route
-const exchangeType = computed<EExchangeType>(() => {
-  switch (exchangeTypeFromRoute.value) {
-    case 'direct':
-      return EExchangeType.DIRECT;
-    case 'topic':
-      return EExchangeType.TOPIC;
-    case 'fanout':
-      return EExchangeType.FANOUT;
-    default:
-      return EExchangeType.DIRECT;
-  }
-});
+// State for exchange type from API
+const exchangeType = ref<EExchangeType>(EExchangeType.DIRECT);
+const isLoadingExchange = ref(true);
+const exchangeError = ref<Error | null>(null);
 
 // Validation
 const isValidRoute = computed(() => !!(exchangeName.value && namespace.value));
 
-// Selected items for operations - we still need this locally for the unbind modal
+// Selected items for operations
 const selectedQueueForUnbind = ref<{
   name: string;
   bindingKey?: string;
@@ -76,7 +63,30 @@ const selectedQueueForUnbind = ref<{
 // Filter state
 const selectedFilterKey = ref<string>('');
 
-// Exchange type specific configurations
+// Fetch exchange details from API to get type
+const {
+  data: exchangeData,
+  isLoading: isLoadingExchangeData,
+  error: fetchExchangeError,
+  refetch: refetchExchange,
+} = useGetApiNamespacesNsExchangesExchange(namespace, exchangeName, {
+  query: {
+    enabled: isValidRoute,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  },
+});
+
+// Update exchange type when data loads
+watchEffect(() => {
+  if (exchangeData.value?.data) {
+    currentExchange.value = exchangeData.value.data;
+    exchangeType.value = exchangeData.value.data.type;
+  }
+  isLoadingExchange.value = isLoadingExchangeData.value;
+  exchangeError.value = fetchExchangeError.value as Error | null;
+});
+
+// Exchange type specific configurations (now computed based on API data)
 const exchangeConfig = computed(() => {
   switch (exchangeType.value) {
     case EExchangeType.DIRECT:
@@ -134,15 +144,7 @@ const exchangeConfig = computed(() => {
   }
 });
 
-// --- API Data Fetching ---
-
-// Fetch exchange details to verify it exists
-const { isLoading: isLoadingExchange, error: exchangeError } =
-  useGetApiNamespacesNsExchangesExchange(namespace, exchangeName, {
-    query: {
-      enabled: isValidRoute,
-    },
-  });
+// --- API Data Fetching (conditional based on exchange type) ---
 
 // Fetch routing keys (for direct exchanges)
 const {
@@ -153,7 +155,10 @@ const {
 } = useGetApiNamespacesNsExchangesExchangeRoutingKeys(namespace, exchangeName, {
   query: {
     enabled: computed(
-      () => isValidRoute.value && exchangeConfig.value.useRoutingKeys,
+      () =>
+        isValidRoute.value &&
+        exchangeConfig.value.useRoutingKeys &&
+        !isLoadingExchange.value,
     ),
   },
 });
@@ -170,7 +175,10 @@ const {
   {
     query: {
       enabled: computed(
-        () => isValidRoute.value && exchangeConfig.value.usePatterns,
+        () =>
+          isValidRoute.value &&
+          exchangeConfig.value.usePatterns &&
+          !isLoadingExchange.value,
       ),
     },
   },
@@ -188,7 +196,7 @@ const {
   undefined,
   {
     query: {
-      enabled: isValidRoute,
+      enabled: computed(() => isValidRoute.value && !isLoadingExchange.value),
     },
   },
 );
@@ -252,7 +260,8 @@ const {
         () =>
           isValidRoute.value &&
           !!selectedFilterKey.value &&
-          !!exchangeConfig.value.filterKey,
+          !!exchangeConfig.value.filterKey &&
+          !isLoadingExchange.value,
       ),
     },
   },
@@ -378,19 +387,26 @@ const errorMessage = computed(() => {
 // --- Event Handlers ---
 
 const handleBindQueue = () => {
-  modals.openBindModal(currentExchange.value);
+  if (currentExchange.value) {
+    modals.openBindModal(currentExchange.value);
+  }
 };
 
 const handleUnbindQueue = (queueName: string, bindingKey?: string) => {
   selectedQueueForUnbind.value = { name: queueName, bindingKey };
-  modals.openUnbindModal(currentExchange.value, queueName, bindingKey);
+  if (currentExchange.value) {
+    modals.openUnbindModal(currentExchange.value, queueName, bindingKey);
+  }
 };
 
 const handleDeleteExchange = () => {
-  modals.openDeleteModal(currentExchange.value);
+  if (currentExchange.value) {
+    modals.openDeleteModal(currentExchange.value);
+  }
 };
 
 const handleRefresh = () => {
+  refetchExchange();
   if (exchangeConfig.value.useRoutingKeys) {
     refetchRoutingKeys();
   }
@@ -410,6 +426,7 @@ const clearFilter = () => {
 const handleBindSuccess = () => {
   modals.closeModals();
   // Refresh data after successful bind
+  refetchExchange();
   if (exchangeConfig.value.useRoutingKeys) {
     refetchRoutingKeys();
   }
@@ -422,6 +439,7 @@ const handleBindSuccess = () => {
 const handleUnbindSuccess = () => {
   modals.closeModals();
   // Refresh data after successful unbind
+  refetchExchange();
   if (exchangeConfig.value.useRoutingKeys) {
     refetchRoutingKeys();
   }
@@ -435,7 +453,7 @@ const handleUnbindSuccess = () => {
 // After successful deletion, navigate away
 const onDeleted = () => {
   modals.closeModals();
-  router.push('/exchanges');
+  router.push('exchanges');
 };
 
 // --- Page Content Setup ---
@@ -501,11 +519,13 @@ watchEffect(() => {
     return;
   }
 
-  pageContentStore.setPageHeader({
-    title: `${exchangeConfig.value.title}: ${exchangeName.value}`,
-    subtitle: `Namespace: ${namespace.value} • ${exchangeConfig.value.subtitle}`,
-    icon: exchangeConfig.value.icon,
-  });
+  if (!isLoadingExchange.value && currentExchange.value) {
+    pageContentStore.setPageHeader({
+      title: `${exchangeConfig.value.title}: ${exchangeName.value}`,
+      subtitle: `Namespace: ${namespace.value} • ${exchangeConfig.value.subtitle}`,
+      icon: exchangeConfig.value.icon,
+    });
+  }
 
   pageContentStore.setPageActions(pageActions.value);
   pageContentStore.setLoadingState(isLoading.value);
@@ -513,7 +533,11 @@ watchEffect(() => {
   if (hasError.value) {
     pageContentStore.setErrorState(errorMessage.value);
     pageContentStore.setEmptyState(false);
-  } else if (!isLoading.value && totalBindingKeys.value === 0) {
+  } else if (
+    !isLoading.value &&
+    totalBindingKeys.value === 0 &&
+    currentExchange.value
+  ) {
     const emptyStateMessage = exchangeConfig.value.useFanout
       ? 'This fanout exchange has no queue bindings. Bind a queue to start broadcasting messages.'
       : `This ${exchangeConfig.value.title.toLowerCase()} has no ${exchangeConfig.value.statsKey}. Bind a queue with a ${exchangeConfig.value.bindingLabel.toLowerCase()} to start routing messages.`;
@@ -535,7 +559,7 @@ watchEffect(() => {
 // Navigate back to exchanges list if route becomes invalid
 onMounted(() => {
   if (!isValidRoute.value) {
-    router.push('/exchanges');
+    router.push('exchanges');
   }
 });
 
@@ -548,241 +572,267 @@ onMounted(() => {
 <template>
   <div class="exchange-view">
     <PageContent>
-      <!-- Exchange Overview Stats -->
-      <div
-        v-if="!isLoading && !hasError && totalBindingKeys > 0"
-        class="stats-overview"
-      >
-        <div class="stats-grid">
-          <!-- First stat card (keys/patterns/queues) -->
-          <div class="stat-card">
-            <div class="stat-icon" :class="exchangeConfig.statsKey">
-              <i :class="exchangeConfig.icon" aria-hidden="true"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ totalBindingKeys }}</div>
-              <div class="stat-label">
-                {{
-                  exchangeConfig.statsKey === 'routingKeys'
-                    ? 'Routing Keys'
-                    : exchangeConfig.statsKey === 'bindingPatterns'
-                      ? 'Binding Patterns'
-                      : 'Bound Queues'
-                }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Second stat card (queues) -->
-          <div class="stat-card">
-            <div class="stat-icon queues">
-              <i class="bi bi-box" aria-hidden="true"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ totalQueues }}</div>
-              <div class="stat-label">
-                Bound {{ totalQueues === 1 ? 'Queue' : 'Queues' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Third stat card for fanout (message delivery) -->
-          <div v-if="exchangeConfig.useFanout" class="stat-card">
-            <div class="stat-icon broadcast">
-              <i class="bi bi-broadcast" aria-hidden="true"></i>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">100%</div>
-              <div class="stat-label">Message Delivery</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filter controls (for direct/topic exchanges) -->
-        <div
-          v-if="!exchangeConfig.useFanout && bindingKeysWithCounts.length > 0"
-          class="filter-controls"
-        >
-          <label :for="`${exchangeConfig.filterKey}Filter`">
-            View Bindings for:
-          </label>
-          <select
-            :id="`${exchangeConfig.filterKey}Filter`"
-            v-model="selectedFilterKey"
-          >
-            <option value="">
-              All
-              {{
-                exchangeConfig.statsKey === 'routingKeys'
-                  ? 'Routing Keys'
-                  : 'Binding Patterns'
-              }}
-            </option>
-            <option
-              v-for="item in bindingKeysWithCounts"
-              :key="item.key"
-              :value="item.key"
-            >
-              {{ item.key }} ({{ item.queueCount }}
-              {{ item.queueCount === 1 ? 'queue' : 'queues' }})
-            </option>
-          </select>
-          <button
-            v-if="selectedFilterKey"
-            type="button"
-            class="btn-clear-filter"
-            aria-label="Clear filter"
-            @click="clearFilter"
-          >
-            <i class="bi bi-x-circle"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Exchange Info (for fanout) -->
-      <div
-        v-if="
-          exchangeConfig.useFanout && !isLoading && !hasError && totalQueues > 0
-        "
-        class="exchange-info"
-      >
-        <div class="info-card">
-          <div class="info-header">
-            <i class="bi bi-info-circle" aria-hidden="true"></i>
-            <h3>How Fanout Exchange Works</h3>
-          </div>
-          <p class="info-description">
-            Fanout exchanges broadcast every message to all bound queues. When
-            you publish a message to this exchange, it will be delivered to
-            <strong
-              >all {{ totalQueues }} bound queue{{
-                totalQueues === 1 ? '' : 's'
-              }}</strong
-            >
-            regardless of routing keys.
-          </p>
-        </div>
-      </div>
-
-      <!-- Queue Bindings -->
-      <div
-        v-if="!isLoading && !hasError && queueBindings.length > 0"
-        class="bindings-section"
-      >
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="bi bi-diagram-3" aria-hidden="true"></i>
-            <span v-if="selectedFilterKey && !exchangeConfig.useFanout">
-              Bindings for "{{ selectedFilterKey }}"
-            </span>
-            <span v-else-if="exchangeConfig.useFanout"> Bound Queues </span>
-            <span v-else> All Queue Bindings </span>
-          </h2>
-          <button
-            v-if="selectedFilterKey && !exchangeConfig.useFanout"
-            type="button"
-            class="btn-back"
-            @click="clearFilter"
-          >
-            <i class="bi bi-arrow-left"></i>
-            Back to All
-            {{
-              exchangeConfig.statsKey === 'routingKeys'
-                ? 'Routing Keys'
-                : 'Patterns'
-            }}
-          </button>
-        </div>
-
-        <div class="bindings-list">
-          <div
-            v-for="binding in queueBindings"
-            :key="binding.bindingKey"
-            class="binding-card"
-          >
-            <!-- Header (only for non-fanout or when not showing single binding) -->
-            <div
-              v-if="!exchangeConfig.useFanout || !selectedFilterKey"
-              class="binding-header"
-            >
-              <div class="binding-key-info">
-                <div
-                  class="binding-key-badge"
-                  :title="exchangeConfig.bindingLabel"
-                >
-                  <i :class="exchangeConfig.icon" aria-hidden="true"></i>
-                  <span class="binding-key-text">{{ binding.bindingKey }}</span>
-                </div>
-                <div class="queue-count">
-                  {{ binding.totalQueues }}
-                  {{ binding.totalQueues === 1 ? 'queue' : 'queues' }}
-                </div>
-              </div>
-
-              <!-- Pattern explanation for topic exchanges -->
-              <div
-                v-if="
-                  exchangeConfig.usePatterns && binding.bindingKey !== 'default'
-                "
-                class="pattern-explanation"
-              >
-                <i class="bi bi-info-circle" aria-hidden="true"></i>
-                <span class="explanation-text">
-                  Matches routing keys like:
-                  {{ getPatternExample(binding.bindingKey) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Queues list -->
-            <div class="queues-list">
-              <div
-                v-for="queue in binding.queues"
-                :key="`${binding.bindingKey}-${queue.name}`"
-                class="queue-item"
-              >
-                <div class="queue-info">
-                  <i class="bi bi-box" aria-hidden="true"></i>
-                  <span class="queue-name">{{ queue.name }}</span>
-                  <span class="queue-namespace">{{ queue.ns }}</span>
-                </div>
-                <button
-                  type="button"
-                  class="btn-unbind"
-                  :disabled="modals.showUnbindModal.value"
-                  :aria-label="`Unbind queue ${queue.name}${binding.bindingKey !== 'default' ? ` from ${exchangeConfig.bindingLabel.toLowerCase()} ${binding.bindingKey}` : ''}`"
-                  @click="
-                    handleUnbindQueue(
-                      queue.name,
-                      binding.bindingKey !== 'default'
-                        ? binding.bindingKey
-                        : undefined,
-                    )
-                  "
-                >
-                  <i class="bi bi-x-circle" aria-hidden="true"></i>
-                  <span>Unbind</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- No queues placeholder -->
-            <div v-if="!binding.queues.length" class="no-queues">
-              <i class="bi bi-inbox" aria-hidden="true"></i>
-              <span
-                >No queues bound to this
-                {{ exchangeConfig.bindingLabel.toLowerCase() }}</span
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="isLoading" class="loading-state">
+      <!-- Loading State for Exchange Data -->
+      <div v-if="isLoadingExchange" class="loading-state">
         <i class="bi bi-arrow-repeat spin" aria-hidden="true"></i>
         <span>Loading exchange data...</span>
       </div>
+
+      <!-- Error State -->
+      <div v-else-if="exchangeError" class="error-state">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <h3>Failed to Load Exchange</h3>
+        <p>{{ getErrorMessage(exchangeError) }}</p>
+        <button class="btn btn-primary" @click="() => refetchExchange">
+          <i class="bi bi-arrow-clockwise me-2"></i>
+          Try Again
+        </button>
+      </div>
+
+      <!-- Exchange Content -->
+      <template v-else-if="currentExchange">
+        <!-- Exchange Overview Stats -->
+        <div
+          v-if="!isLoading && !hasError && totalBindingKeys > 0"
+          class="stats-overview"
+        >
+          <div class="stats-grid">
+            <!-- First stat card (keys/patterns/queues) -->
+            <div class="stat-card">
+              <div class="stat-icon" :class="exchangeConfig.statsKey">
+                <i :class="exchangeConfig.icon" aria-hidden="true"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ totalBindingKeys }}</div>
+                <div class="stat-label">
+                  {{
+                    exchangeConfig.statsKey === 'routingKeys'
+                      ? 'Routing Keys'
+                      : exchangeConfig.statsKey === 'bindingPatterns'
+                        ? 'Binding Patterns'
+                        : 'Bound Queues'
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Second stat card (queues) -->
+            <div class="stat-card">
+              <div class="stat-icon queues">
+                <i class="bi bi-box" aria-hidden="true"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ totalQueues }}</div>
+                <div class="stat-label">
+                  Bound {{ totalQueues === 1 ? 'Queue' : 'Queues' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Third stat card for fanout (message delivery) -->
+            <div v-if="exchangeConfig.useFanout" class="stat-card">
+              <div class="stat-icon broadcast">
+                <i class="bi bi-broadcast" aria-hidden="true"></i>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Message Delivery</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter controls (for direct/topic exchanges) -->
+          <div
+            v-if="!exchangeConfig.useFanout && bindingKeysWithCounts.length > 0"
+            class="filter-controls"
+          >
+            <label :for="`${exchangeConfig.filterKey}Filter`">
+              View Bindings for:
+            </label>
+            <select
+              :id="`${exchangeConfig.filterKey}Filter`"
+              v-model="selectedFilterKey"
+            >
+              <option value="">
+                All
+                {{
+                  exchangeConfig.statsKey === 'routingKeys'
+                    ? 'Routing Keys'
+                    : 'Binding Patterns'
+                }}
+              </option>
+              <option
+                v-for="item in bindingKeysWithCounts"
+                :key="item.key"
+                :value="item.key"
+              >
+                {{ item.key }} ({{ item.queueCount }}
+                {{ item.queueCount === 1 ? 'queue' : 'queues' }})
+              </option>
+            </select>
+            <button
+              v-if="selectedFilterKey"
+              type="button"
+              class="btn-clear-filter"
+              aria-label="Clear filter"
+              @click="clearFilter"
+            >
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Exchange Info (for fanout) -->
+        <div
+          v-if="
+            exchangeConfig.useFanout &&
+            !isLoading &&
+            !hasError &&
+            totalQueues > 0
+          "
+          class="exchange-info"
+        >
+          <div class="info-card">
+            <div class="info-header">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+              <h3>How Fanout Exchange Works</h3>
+            </div>
+            <p class="info-description">
+              Fanout exchanges broadcast every message to all bound queues. When
+              you publish a message to this exchange, it will be delivered to
+              <strong
+                >all {{ totalQueues }} bound queue{{
+                  totalQueues === 1 ? '' : 's'
+                }}</strong
+              >
+              regardless of routing keys.
+            </p>
+          </div>
+        </div>
+
+        <!-- Queue Bindings -->
+        <div
+          v-if="!isLoading && !hasError && queueBindings.length > 0"
+          class="bindings-section"
+        >
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="bi bi-diagram-3" aria-hidden="true"></i>
+              <span v-if="selectedFilterKey && !exchangeConfig.useFanout">
+                Bindings for "{{ selectedFilterKey }}"
+              </span>
+              <span v-else-if="exchangeConfig.useFanout"> Bound Queues </span>
+              <span v-else> All Queue Bindings </span>
+            </h2>
+            <button
+              v-if="selectedFilterKey && !exchangeConfig.useFanout"
+              type="button"
+              class="btn-back"
+              @click="clearFilter"
+            >
+              <i class="bi bi-arrow-left"></i>
+              Back to All
+              {{
+                exchangeConfig.statsKey === 'routingKeys'
+                  ? 'Routing Keys'
+                  : 'Patterns'
+              }}
+            </button>
+          </div>
+
+          <div class="bindings-list">
+            <div
+              v-for="binding in queueBindings"
+              :key="binding.bindingKey"
+              class="binding-card"
+            >
+              <!-- Header (only for non-fanout or when not showing single binding) -->
+              <div
+                v-if="!exchangeConfig.useFanout || !selectedFilterKey"
+                class="binding-header"
+              >
+                <div class="binding-key-info">
+                  <div
+                    class="binding-key-badge"
+                    :title="exchangeConfig.bindingLabel"
+                  >
+                    <i :class="exchangeConfig.icon" aria-hidden="true"></i>
+                    <span class="binding-key-text">{{
+                      binding.bindingKey
+                    }}</span>
+                  </div>
+                  <div class="queue-count">
+                    {{ binding.totalQueues }}
+                    {{ binding.totalQueues === 1 ? 'queue' : 'queues' }}
+                  </div>
+                </div>
+
+                <!-- Pattern explanation for topic exchanges -->
+                <div
+                  v-if="
+                    exchangeConfig.usePatterns &&
+                    binding.bindingKey !== 'default'
+                  "
+                  class="pattern-explanation"
+                >
+                  <i class="bi bi-info-circle" aria-hidden="true"></i>
+                  <span class="explanation-text">
+                    Matches routing keys like:
+                    {{ getPatternExample(binding.bindingKey) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Queues list -->
+              <div class="queues-list">
+                <div
+                  v-for="queue in binding.queues"
+                  :key="`${binding.bindingKey}-${queue.name}`"
+                  class="queue-item"
+                >
+                  <div class="queue-info">
+                    <i class="bi bi-box" aria-hidden="true"></i>
+                    <span class="queue-name">{{ queue.name }}</span>
+                    <span class="queue-namespace">{{ queue.ns }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-unbind"
+                    :disabled="modals.showUnbindModal.value"
+                    :aria-label="`Unbind queue ${queue.name}${binding.bindingKey !== 'default' ? ` from ${exchangeConfig.bindingLabel.toLowerCase()} ${binding.bindingKey}` : ''}`"
+                    @click="
+                      handleUnbindQueue(
+                        queue.name,
+                        binding.bindingKey !== 'default'
+                          ? binding.bindingKey
+                          : undefined,
+                      )
+                    "
+                  >
+                    <i class="bi bi-x-circle" aria-hidden="true"></i>
+                    <span>Unbind</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- No queues placeholder -->
+              <div v-if="!binding.queues.length" class="no-queues">
+                <i class="bi bi-inbox" aria-hidden="true"></i>
+                <span
+                  >No queues bound to this
+                  {{ exchangeConfig.bindingLabel.toLowerCase() }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoading" class="loading-state">
+          <i class="bi bi-arrow-repeat spin" aria-hidden="true"></i>
+          <span>Loading exchange data...</span>
+        </div>
+      </template>
     </PageContent>
 
     <!-- Delete Exchange Modal (using shared modal state) -->
@@ -849,6 +899,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Keep all existing styles */
 .exchange-view,
 .exchange-view * {
   box-sizing: border-box;
@@ -865,7 +916,32 @@ onMounted(() => {
   overflow-x: hidden;
 }
 
-/* Stats Overview */
+/* Add error state styles */
+.error-state {
+  text-align: center;
+  padding: 3rem;
+  border-radius: 12px;
+  border: 1px solid #f5c2c7;
+  background-color: #f8d7da;
+}
+
+.error-state i {
+  font-size: 3rem;
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+.error-state h3 {
+  color: #721c24;
+  margin-bottom: 0.5rem;
+}
+
+.error-state p {
+  color: #721c24;
+  margin-bottom: 1.5rem;
+}
+
+/* Keep all other existing styles from original */
 .stats-overview {
   margin-bottom: clamp(16px, 2.5vw, 24px);
 }
@@ -946,7 +1022,6 @@ onMounted(() => {
   overflow-wrap: anywhere;
 }
 
-/* Filter controls */
 .filter-controls {
   display: flex;
   align-items: center;
@@ -985,7 +1060,6 @@ onMounted(() => {
   color: #dc3545;
 }
 
-/* Exchange Info (Fanout) */
 .exchange-info {
   margin-bottom: clamp(12px, 2.5vw, 24px);
 }
@@ -1025,7 +1099,6 @@ onMounted(() => {
   overflow-wrap: anywhere;
 }
 
-/* Bindings Section */
 .bindings-section {
   margin-top: clamp(12px, 2.5vw, 24px);
 }
@@ -1249,7 +1322,6 @@ onMounted(() => {
   font-size: 1.25rem;
 }
 
-/* Loading State */
 .loading-state {
   display: flex;
   align-items: center;

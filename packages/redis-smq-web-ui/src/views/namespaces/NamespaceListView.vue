@@ -8,30 +8,18 @@
   -->
 
 <script setup lang="ts">
-import type { IQueueParams } from '@/types';
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useQueryClient } from '@tanstack/vue-query';
+import { computed, onMounted, ref, watchEffect } from 'vue';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent.ts';
-
-// Generated API hooks
-import {
-  useGetApiNamespaces,
-  useDeleteApiNamespacesNs,
-  getGetApiNamespacesQueryKey,
-} from '@/api/generated/namespaces/namespaces';
-
+import { useGetApiNamespaces } from '@/api/generated/namespaces/namespaces';
 import PageContent from '@/components/PageContent.vue';
 import NamespaceCard from '@/components/cards/NamespaceCard.vue';
 import DeleteNamespaceModal from '@/components/modals/DeleteNamespaceModal.vue';
 import { getErrorMessage } from '@/lib/error.ts';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
-import { useSelectedNamespaceStore } from '@/stores/selectedNamespace.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
-const router = useRouter();
-const queryClient = useQueryClient();
+const router = useTypedRouter();
 const selectedQueueStore = useSelectedQueueStore();
-const selectedNamespaceStore = useSelectedNamespaceStore();
 const pageContentStore = usePageContentStore();
 
 // Local state
@@ -59,24 +47,6 @@ const isLoading = computed(() => isLoadingNamespaces.value);
 // Error state
 const error = computed(() => namespacesError.value);
 
-// Delete namespace mutation
-const deleteMutation = useDeleteApiNamespacesNs({
-  mutation: {
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getGetApiNamespacesQueryKey(),
-      });
-      showDeleteModal.value = false;
-      namespaceToDelete.value = null;
-    },
-  },
-});
-
-const isDeleting = computed(() => deleteMutation.isPending.value);
-const deleteError = computed(() =>
-  getErrorMessage(deleteMutation.error.value?.error),
-);
-
 // Page actions
 const pageActions = computed((): PageAction[] => [
   {
@@ -89,43 +59,24 @@ const pageActions = computed((): PageAction[] => [
   },
 ]);
 
-// Navigation
-function goToNamespace(ns: string) {
-  selectedNamespaceStore.selectNamespace(ns);
-  router.push({ name: 'Namespace Queues', params: { ns } });
-}
-
-function goToExchanges(ns: string) {
-  selectedNamespaceStore.selectNamespace(ns);
-  router.push({ name: 'Namespace Exchanges', params: { ns } });
-}
-
-function goToQueue(queue: IQueueParams) {
-  selectedQueueStore.selectQueue(queue.ns, queue.name);
-  router.push({ name: 'Queue', params: { ns: queue.ns, queue: queue.name } });
-}
-
 // Delete handlers
 function confirmDelete(namespace: string) {
   namespaceToDelete.value = namespace;
   showDeleteModal.value = true;
 }
 
-function cancelDelete() {
+function handleDeleteCancel() {
   showDeleteModal.value = false;
   namespaceToDelete.value = null;
-  deleteMutation.reset();
 }
 
-async function deleteNamespace() {
-  if (!namespaceToDelete.value) return;
-  await deleteMutation.mutateAsync({ ns: namespaceToDelete.value });
+function handleDeleteSuccess() {
+  showDeleteModal.value = false;
+  namespaceToDelete.value = null;
+  refetchNamespaces();
 }
 
-// Page content
-import { watch } from 'vue';
-
-watch([isLoading, error, namespaces], () => {
+watchEffect(() => {
   pageContentStore.setPageHeader({
     title: 'Namespaces',
     subtitle: 'Organize and manage your message queue namespaces',
@@ -143,7 +94,7 @@ watch([isLoading, error, namespaces], () => {
       title: 'No Namespaces Found',
       message: 'Namespaces are created automatically when you create queues.',
       actionLabel: 'Create Queue',
-      actionHandler: () => router.push({ name: 'Queues' }),
+      actionHandler: () => router.push('queues'),
     });
   } else {
     pageContentStore.setErrorState(null);
@@ -153,52 +104,30 @@ watch([isLoading, error, namespaces], () => {
 
 onMounted(() => {
   selectedQueueStore.clearSelectedQueue();
+  refetchNamespaces();
 });
 </script>
 
 <template>
   <div>
     <PageContent>
-      <!-- Error Banner -->
-      <div
-        v-if="deleteError && !showDeleteModal"
-        class="alert alert-warning alert-dismissible fade show mb-4"
-        role="alert"
-      >
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        {{ deleteError }}
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Close"
-          @click="deleteMutation.reset()"
-        ></button>
-      </div>
-
       <!-- Namespaces Grid -->
       <div class="namespaces-grid">
         <NamespaceCard
           v-for="ns in namespaces"
           :key="ns"
           :namespace="ns"
-          :is-deleting="isDeleting && namespaceToDelete === ns"
-          @click="goToNamespace(ns)"
           @delete="confirmDelete"
-          @view-exchanges="goToExchanges"
-          @queue-click="goToQueue"
         />
       </div>
     </PageContent>
 
-    <!-- Delete Modal -->
+    <!-- Delete Modal (self-contained) -->
     <DeleteNamespaceModal
       :is-visible="showDeleteModal"
       :namespace="namespaceToDelete"
-      :queue-count="0"
-      :is-deleting="isDeleting"
-      :error="deleteError"
-      @cancel="cancelDelete"
-      @confirm="deleteNamespace"
+      @cancel="handleDeleteCancel"
+      @success="handleDeleteSuccess"
     />
   </div>
 </template>
@@ -208,41 +137,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 1.5rem;
-}
-
-.alert-warning {
-  color: #664d03;
-  background-color: #fff3cd;
-  border-color: #ffecb5;
-  padding: 0.75rem 1rem;
-  border-radius: 0.375rem;
-  position: relative;
-  padding-right: 3rem;
-}
-
-.alert-dismissible .btn-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  font-size: 1.125rem;
-  cursor: pointer;
-  opacity: 0.5;
-}
-
-.alert-dismissible .btn-close:hover {
-  opacity: 0.75;
-}
-
-.alert-dismissible .btn-close::before {
-  content: '×';
-  font-weight: bold;
-}
-
-.mb-4 {
-  margin-bottom: 1.5rem;
 }
 
 @media (max-width: 768px) {

@@ -67,7 +67,7 @@ watchEffect(() => {
   pageContentStore.setPageHeader({
     title: pageTitle,
     subtitle: pageSubtitle,
-    icon: 'bi bi-card-list',
+    icon: 'bi bi-list-ul',
   });
   pageContentStore.setPageActions(pageActions.value);
   pageContentStore.setLoadingState(isLoadingQueues.value);

@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watchEffect } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 import {
   useGetApiNamespacesNsExchanges,
@@ -33,10 +33,11 @@ import { EExchangeType } from '@/types/exchanges.ts';
 import ExchangeCard from '@/components/cards/ExchangeCard.vue';
 import type { GetApiNamespacesNsExchanges200 } from '@/api/model';
 import { useSelectedNamespaceStore } from '@/stores/selectedNamespace.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 // Composables
 const route = useRoute();
-const router = useRouter();
+const router = useTypedRouter();
 const pageContentStore = usePageContentStore();
 const queryClient = useQueryClient();
 const selectedNamespaceStore = useSelectedNamespaceStore();
@@ -117,7 +118,7 @@ const exchangeStats = computed(() => {
 // Navigation helpers
 function goBackToNamespaces() {
   selectedNamespaceStore.clearSelectedNamespace();
-  router.push({ name: 'Namespaces' });
+  router.push('namespaces');
 }
 
 const handleCreateExchange = () => {
@@ -200,8 +201,8 @@ watchEffect(() => {
   }
 
   pageContentStore.setPageHeader({
-    title: `Exchanges in "${namespace.value}"`,
-    subtitle: `View and manage exchanges in the ${namespace.value} namespace`,
+    title: `Namespace Exchanges: ${namespace.value}`,
+    subtitle: `View and manage exchanges in the "${namespace.value}" namespace`,
     icon: 'bi bi-diagram-3',
   });
 

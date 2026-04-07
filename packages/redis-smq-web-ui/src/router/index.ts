@@ -7,22 +7,14 @@
  * in the root directory of this source tree.
  */
 
+import { createRouter, createWebHistory } from 'vue-router';
 import { routes } from '@/router/routes.ts';
 import { usePageContentStore } from '@/stores/pageContent.ts';
-import NotFoundViewView from '@/views/NotFoundView.vue';
-import { createRouter, createWebHistory } from 'vue-router';
 import { getConfig } from '@/config';
 
 const router = createRouter({
   history: createWebHistory(getConfig('BASE_PATH')),
-  routes: [
-    ...routes,
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'NotFound',
-      component: NotFoundViewView,
-    },
-  ],
+  routes: [...routes],
 });
 
 // Auto-reset page content on route changes

@@ -9,7 +9,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 import {
   getApiQueues,
@@ -24,8 +23,9 @@ import {
   getGetApiNamespacesNsQueuesNameConsumersQueryKey,
 } from '@/api/generated/queue-consumers/queue-consumers.ts';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
-const router = useRouter();
+const router = useTypedRouter();
 const queryClient = useQueryClient();
 
 // Local UI state: Create Queue modal
@@ -56,14 +56,14 @@ const quickActions = [
     description: 'Bind your queue to an exchange',
     icon: 'bi-diagram-3',
     color: 'info',
-    action: () => router.push({ name: 'Exchanges' }),
+    action: () => router.push('exchanges'),
   },
   {
     title: 'View Queues',
     description: 'Manage existing queues',
     icon: 'bi-list-ul',
     color: 'info',
-    action: () => router.push({ name: 'Queues' }),
+    action: () => router.push('queues'),
   },
   {
     title: 'Documentation',
@@ -214,7 +214,7 @@ onMounted(() => {
         <div class="hero-actions">
           <button
             class="btn btn-primary btn-lg hero-btn"
-            @click="router.push({ name: 'Queues' })"
+            @click="router.push('queues')"
           >
             <i class="bi bi-plus-circle me-2"></i>
             Get Started

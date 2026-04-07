@@ -8,12 +8,12 @@
   -->
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
-const router = useRouter();
+const router = useTypedRouter();
 
 function goHome(): void {
-  router.push({ name: 'Home' });
+  router.push('home');
 }
 
 function goBack(): void {
@@ -25,7 +25,7 @@ function goBack(): void {
 }
 
 function goToQueues(): void {
-  router.push({ name: 'Queues' });
+  router.push('queues');
 }
 </script>
 

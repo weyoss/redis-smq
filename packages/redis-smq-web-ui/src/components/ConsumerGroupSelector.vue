@@ -10,8 +10,8 @@
 <script setup lang="ts">
 import { useQueueConsumerGroups } from '@/composables/useQueueConsumerGroups.ts';
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 interface Props {
   showSectionHeader?: boolean;
@@ -23,7 +23,7 @@ withDefaults(defineProps<Props>(), {
 
 const selectedQueueStore = useSelectedQueueStore();
 const queueConsumerGroups = useQueueConsumerGroups();
-const router = useRouter();
+const router = useTypedRouter();
 
 // Computed properties
 const selectedQueue = computed(() => selectedQueueStore.selectedQueue);
@@ -48,9 +48,7 @@ const queueDisplayName = computed(() => {
 // Event handlers
 function handleConsumerGroupSelect(consumerGroupId: string) {
   if (!selectedQueue.value) return;
-
-  router.push({
-    name: 'Pending Messages',
+  router.push('pendingMessages', {
     params: {
       ns: selectedQueue.value.ns,
       queue: selectedQueue.value.name,

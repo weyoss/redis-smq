@@ -8,163 +8,70 @@
   -->
 
 <script setup lang="ts">
-import { routes } from '@/router/routes.ts';
 import { computed } from 'vue';
-import { useRoute, useRouter, type RouteRecordRaw } from 'vue-router';
+import { useRoute } from 'vue-router';
+import { getBreadcrumbTrail } from '@/router/getBreadcrumbTrail.ts';
+import type { AppRouteRecord } from '@/router/routes.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 interface BreadcrumbItem {
   title: string;
-  to?: string;
+  path: string;
   active: boolean;
 }
 
 const route = useRoute();
-const router = useRouter();
+const router = useTypedRouter();
 
-const breadcrumbs = computed(() => {
+const breadcrumbs = computed((): BreadcrumbItem[] => {
   try {
-    const items: BreadcrumbItem[] = [];
-    const currentPath = route.path;
     const params = route.params as Record<string, string>;
+    const matchedRoute = route.matched[route.matched.length - 1] as unknown as
+      | AppRouteRecord
+      | undefined;
 
-    // Build breadcrumb trail by matching path segments
-    const pathSegments = buildPathSegments(currentPath, params);
+    if (!matchedRoute) {
+      return [];
+    }
 
-    pathSegments.forEach((segment, index) => {
-      const routeConfig = findRouteByPath(segment.pattern);
-      if (!routeConfig) return;
+    const trail = getBreadcrumbTrail(matchedRoute, params);
 
-      const isLast = index === pathSegments.length - 1;
-      const title = resolveTitle(routeConfig);
-
-      if (title) {
-        items.push({
-          title,
-          to: isLast ? undefined : segment.actualPath,
-          active: isLast,
-        });
-      }
-    });
-
-    return items;
+    return trail.map((item, index) => ({
+      title: item.label,
+      path: item.path,
+      active: index === trail.length - 1,
+    }));
   } catch (error) {
     console.warn('Error building breadcrumbs:', error);
     return [];
   }
 });
 
-function buildPathSegments(
-  currentPath: string,
-  params: Record<string, string>,
-): Array<{ pattern: string; actualPath: string }> {
-  const segments: Array<{ pattern: string; actualPath: string }> = [];
-
-  // Parse the current path and build segments progressively
-  const pathParts = currentPath.split('/').filter((part) => part);
-  let builtPath = '';
-
-  // Add root if we're not already there
-  if (currentPath !== '/' && findRouteByPath('/')) {
-    segments.push({ pattern: '/', actualPath: '/' });
+function navigateTo(path: string): void {
+  if (!path || path === '') {
+    console.warn('Invalid breadcrumb path');
+    return;
   }
 
-  for (let i = 0; i < pathParts.length; i++) {
-    builtPath += '/' + pathParts[i];
-
-    // Try to find matching pattern for this path segment
-    const pattern = findMatchingPattern(builtPath, params);
-    if (pattern) {
-      segments.push({
-        pattern,
-        actualPath: builtPath,
-      });
-    }
-  }
-
-  return segments;
-}
-
-function findMatchingPattern(
-  path: string,
-  params: Record<string, string>,
-): string | null {
-  // Sort routes by specificity (more specific patterns first)
-  const sortedRoutes = [...routes].sort((a, b) => {
-    const aSpecificity = getPatternSpecificity(a.path);
-    const bSpecificity = getPatternSpecificity(b.path);
-    return bSpecificity - aSpecificity;
-  });
-
-  for (const routeConfig of sortedRoutes) {
-    if (matchesPattern(path, routeConfig.path, params)) {
-      return routeConfig.path;
-    }
-  }
-
-  return null;
-}
-
-function getPatternSpecificity(pattern: string): number {
-  // More specific patterns have fewer parameters and more static segments
-  const parts = pattern.split('/').filter((part) => part);
-  let specificity = parts.length * 10;
-
-  // Reduce specificity for each parameter
-  for (const part of parts) {
-    if (part.startsWith(':')) {
-      specificity -= 5;
-    }
-  }
-
-  return specificity;
-}
-
-function matchesPattern(
-  path: string,
-  pattern: string,
-  params: Record<string, string>,
-): boolean {
-  const pathParts = path.split('/').filter((part) => part);
-  const patternParts = pattern.split('/').filter((part) => part);
-
-  if (pathParts.length !== patternParts.length) {
-    return false;
-  }
-
-  for (let i = 0; i < patternParts.length; i++) {
-    const patternPart = patternParts[i];
-    const pathPart = pathParts[i];
-
-    if (patternPart.startsWith(':')) {
-      // This is a parameter, check if it matches
-      const paramName = patternPart.substring(1);
-      if (params[paramName] !== pathPart) {
-        return false;
-      }
-    } else if (patternPart !== pathPart) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-function findRouteByPath(path: string): RouteRecordRaw | undefined {
-  return routes.find((routeConfig) => routeConfig.path === path);
-}
-
-function resolveTitle(routeConfig: RouteRecordRaw): string {
-  // Fallback to route name
-  return String(routeConfig.meta?.title || routeConfig.name);
-}
-
-function navigateTo(to: string): void {
   try {
-    router.push(to);
+    // If it's the current path, reload the page to refresh data
+    if (path === route.path) {
+      router.go(0);
+    } else {
+      router.navigateTo(path);
+    }
   } catch (error) {
     console.error('Navigation error:', error);
   }
 }
+
+// Debug: Log breadcrumbs to see what paths are being generated
+const debugBreadcrumbs = computed(() => {
+  if (import.meta.env.DEV) {
+    console.log('Breadcrumbs:', breadcrumbs.value);
+  }
+  return breadcrumbs.value;
+});
 </script>
 
 <template>
@@ -184,12 +91,11 @@ function navigateTo(to: string): void {
         <!-- Breadcrumb Items -->
         <ol class="breadcrumb-list">
           <li
-            v-for="(item, index) in breadcrumbs"
+            v-for="(item, index) in debugBreadcrumbs"
             :key="`${item.title}-${index}`"
             class="breadcrumb-item"
             :class="{
               'breadcrumb-item-active': item.active,
-              'breadcrumb-item-clickable': !item.active && item.to,
             }"
             :aria-current="item.active ? 'page' : undefined"
           >
@@ -198,21 +104,20 @@ function navigateTo(to: string): void {
               <i class="bi bi-chevron-right"></i>
             </div>
 
-            <!-- Non-active breadcrumb items (clickable) -->
+            <!-- Breadcrumb Link (all items are clickable) -->
             <button
-              v-if="!item.active && item.to"
               type="button"
               class="breadcrumb-link"
-              :title="`Navigate to ${item.title}`"
-              @click="navigateTo(item.to)"
+              :class="{ 'breadcrumb-link-active': item.active }"
+              :title="
+                item.active
+                  ? 'Refresh current page'
+                  : `Navigate to ${item.title}`
+              "
+              @click="navigateTo(item.path)"
             >
               <span class="breadcrumb-text">{{ item.title }}</span>
             </button>
-
-            <!-- Active breadcrumb item (current page) -->
-            <div v-else class="breadcrumb-current" :title="item.title">
-              <span class="breadcrumb-text">{{ item.title }}</span>
-            </div>
           </li>
         </ol>
       </div>
@@ -239,11 +144,9 @@ function navigateTo(to: string): void {
   border-bottom: 1px solid #e9ecef;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
   position: sticky;
-  /* Allow host to set an offset to avoid overlapping the sticky header */
   top: 0;
   z-index: 1020;
   margin-bottom: 0;
-  /* Prevent horizontal scroll bleeding */
   overflow-x: hidden;
   will-change: transform;
 }
@@ -260,7 +163,6 @@ function navigateTo(to: string): void {
   gap: 1rem;
   padding: 1rem 0;
   min-height: 60px;
-  /* Ensure children can shrink without overflow */
   min-width: 0;
 }
 
@@ -308,13 +210,12 @@ function navigateTo(to: string): void {
   flex-shrink: 0;
 }
 
-/* Breadcrumb Links */
+/* Breadcrumb Links - Base style */
 .breadcrumb-link {
   background: none;
   border: none;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  color: #6c757d;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -323,37 +224,46 @@ function navigateTo(to: string): void {
   display: flex;
   align-items: center;
   min-width: 0;
+  color: #6c757d;
 }
 
-.breadcrumb-link:hover {
+/* Non-active breadcrumb links */
+.breadcrumb-link:not(.breadcrumb-link-active) {
+  color: #6c757d;
+}
+
+.breadcrumb-link:not(.breadcrumb-link-active):hover {
   background: #f8f9fa;
   color: #0d6efd;
   transform: translateY(-1px);
 }
 
-.breadcrumb-link:focus {
+.breadcrumb-link:not(.breadcrumb-link-active):focus {
   outline: 2px solid #0d6efd;
   outline-offset: 2px;
   background: #f8f9fa;
   color: #0d6efd;
 }
 
-.breadcrumb-link:active {
+.breadcrumb-link:not(.breadcrumb-link-active):active {
   transform: translateY(0);
 }
 
-/* Current Page */
-.breadcrumb-current {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+/* Active breadcrumb link (current page) */
+.breadcrumb-link-active {
   background: linear-gradient(135deg, #e7f3ff 0%, #cce7ff 100%);
   border: 1px solid #b3d9ff;
   color: #0d6efd;
-  font-size: 0.9rem;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  min-width: 0;
+}
+
+.breadcrumb-link-active:hover {
+  background: linear-gradient(135deg, #d4e8ff 0%, #b8d9ff 100%);
+  transform: translateY(-1px);
+}
+
+.breadcrumb-link-active:active {
+  transform: translateY(0);
 }
 
 /* Breadcrumb Text */
@@ -361,13 +271,11 @@ function navigateTo(to: string): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Responsive clamp prevents overflow while keeping reasonable width */
   max-width: clamp(120px, 28vw, 220px);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  /* Disable sticky on small screens to avoid overlapping sticky header */
   .breadcrumb-navigation {
     position: static;
     top: auto;
@@ -394,8 +302,7 @@ function navigateTo(to: string): void {
     gap: 0.25rem;
   }
 
-  .breadcrumb-link,
-  .breadcrumb-current {
+  .breadcrumb-link {
     padding: 0.375rem 0.5rem;
     font-size: 0.85rem;
   }
@@ -426,8 +333,7 @@ function navigateTo(to: string): void {
     font-size: 0.75rem;
   }
 
-  .breadcrumb-link,
-  .breadcrumb-current {
+  .breadcrumb-link {
     padding: 0.25rem 0.375rem;
     font-size: 0.8rem;
   }
@@ -461,17 +367,17 @@ function navigateTo(to: string): void {
     border-bottom-color: #000;
   }
 
-  .breadcrumb-link {
+  .breadcrumb-link:not(.breadcrumb-link-active) {
     border: 1px solid transparent;
   }
 
-  .breadcrumb-link:hover,
-  .breadcrumb-link:focus {
+  .breadcrumb-link:not(.breadcrumb-link-active):hover,
+  .breadcrumb-link:not(.breadcrumb-link-active):focus {
     border-color: #000;
     background: #f0f0f0;
   }
 
-  .breadcrumb-current {
+  .breadcrumb-link-active {
     border-color: #000;
     background: #e0e0e0;
   }
@@ -500,7 +406,7 @@ function navigateTo(to: string): void {
     background: #000 !important;
   }
 
-  .breadcrumb-current {
+  .breadcrumb-link-active {
     background: #f0f0f0 !important;
     border-color: #000 !important;
   }

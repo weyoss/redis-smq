@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
@@ -32,10 +32,11 @@ import { useGetApiNamespacesNsQueuesNameState } from '@/api/generated/queue-oper
 import QueueMessageStatsCard from '@/components/cards/QueueMessageStatsCard.vue';
 import QueueConfigurationCard from '@/components/cards/QueueConfigurationCard.vue';
 import QueueOperationalStateHistoryCard from '@/components/cards/QueueOperationalStateHistoryCard.vue';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
 
 // Core State & Route Params
 const route = useRoute();
-const router = useRouter();
+const router = useTypedRouter();
 const queryClient = useQueryClient();
 const pageContentStore = usePageContentStore();
 const selectedQueueStore = useSelectedQueueStore();
@@ -125,7 +126,7 @@ async function handleDeleteSuccess() {
     queryKey: getGetApiNamespacesNsQueuesNameQueryKey(ns.value, name.value),
   });
   // Navigate away on successful deletion
-  await router.push({ name: 'Queues' });
+  await router.push('queues');
 }
 
 async function handlePauseSuccess() {
@@ -166,7 +167,7 @@ const isAnyOperationInProgress = computed(
 );
 
 // Page Content Management
-const pageTitle = computed(() => `${name.value} @ ${ns.value}`);
+const pageTitle = computed(() => `Queue: ${name.value}@${ns.value}`);
 const pageSubtitle = 'Queue Details & Management';
 
 const pageActions = computed((): PageAction[] => {
@@ -229,7 +230,7 @@ const pageActions = computed((): PageAction[] => {
 
 function goBackToQueues() {
   selectedQueueStore.clearSelectedQueue();
-  router.push({ name: 'Queues' });
+  router.push('queues');
 }
 
 // Sync component state with the global page content store
@@ -336,8 +337,8 @@ watch(
       <div v-if="queue" class="details-grid">
         <!-- Full Width Row -->
         <div class="details-full-width">
-          <QueueConfigurationCard />
           <QueueMessageStatsCard />
+          <QueueConfigurationCard />
           <QueueRateLimitCard />
           <ConsumerGroupsCard />
           <QueueOperationalStateHistoryCard />

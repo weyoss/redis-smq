@@ -10,12 +10,13 @@
 <script setup lang="ts">
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+import { useTypedRouter } from '@/router/useTypeRouter.ts';
+import type { RouteName } from '@/router/types.ts';
 
 const selectedQueueStore = useSelectedQueueStore();
 const queuesPropertiesStore = useSelectedQueuePropertiesStore();
-const router = useRouter();
+const router = useTypedRouter();
 
 const queue = computed(() => {
   return selectedQueueStore.selectedQueue;
@@ -37,7 +38,16 @@ const error = computed(() => {
   return null;
 });
 
-const messageStats = computed(() => {
+const messageStats = computed<
+  {
+    label: string;
+    value: number;
+    icon: string;
+    iconClass: string;
+    routeName: RouteName | null;
+    description: string;
+  }[]
+>(() => {
   if (!queueProperties.value) return [];
   return [
     {
@@ -45,7 +55,7 @@ const messageStats = computed(() => {
       value: queueProperties.value.messagesCount,
       icon: 'bi-collection-fill',
       iconClass: 'total-icon',
-      routeName: 'Messages',
+      routeName: 'messages',
       description: 'All messages in the queue',
     },
     {
@@ -53,7 +63,7 @@ const messageStats = computed(() => {
       value: queueProperties.value.pendingMessagesCount,
       icon: 'bi-clock-history',
       iconClass: 'pending-icon',
-      routeName: 'Pending Messages',
+      routeName: 'pendingMessages',
       description: 'Messages waiting to be processed',
     },
     {
@@ -69,7 +79,7 @@ const messageStats = computed(() => {
       value: queueProperties.value.acknowledgedMessagesCount,
       icon: 'bi-check-circle-fill',
       iconClass: 'acknowledged-icon',
-      routeName: 'Acknowledged Messages',
+      routeName: 'acknowledgedMessages',
       description: 'Successfully processed messages',
     },
     {
@@ -77,7 +87,7 @@ const messageStats = computed(() => {
       value: queueProperties.value.deadLetteredMessagesCount,
       icon: 'bi-x-octagon-fill',
       iconClass: 'dead-lettered-icon',
-      routeName: 'Dead-Lettered Messages',
+      routeName: 'deadLetteredMessages',
       description: 'Messages that failed processing',
     },
     {
@@ -85,7 +95,7 @@ const messageStats = computed(() => {
       value: queueProperties.value.scheduledMessagesCount,
       icon: 'bi-calendar-plus-fill',
       iconClass: 'scheduled-icon',
-      routeName: 'Scheduled Messages',
+      routeName: 'scheduledMessages',
       description: 'Messages scheduled for future delivery',
     },
     {
@@ -108,10 +118,9 @@ const messageStats = computed(() => {
 });
 
 // Navigation
-function navigateToMessages(routeName: string | null) {
+function navigateToMessages(routeName: RouteName | null) {
   if (!routeName || !queue.value) return;
-  router.push({
-    name: routeName,
+  router.push(routeName, {
     params: {
       ns: queue.value.ns,
       queue: queue.value.name,
@@ -203,8 +212,8 @@ function getPercentage(value: number | null | undefined): number {
           role="link"
           tabindex="0"
           :title="'View all messages in this queue'"
-          @click="navigateToMessages('Messages')"
-          @keydown.enter="navigateToMessages('Messages')"
+          @click="navigateToMessages('messages')"
+          @keydown.enter="navigateToMessages('messages')"
         >
           <div class="total-content">
             <div class="total-icon-wrapper">
