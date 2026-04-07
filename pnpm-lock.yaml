@@ -2683,10 +2683,10 @@ packages:
       }
     engines: { node: ^20.17.0 || >=22.9.0 }
 
-  '@sigstore/protobuf-specs@0.5.0':
+  '@sigstore/protobuf-specs@0.5.1':
     resolution:
       {
-        integrity: sha512-MM8XIwUjN2bwvCg1QvrMtbBmpcSHrkhFSCu1D11NyPvDQ25HEc4oG5/OcQfd/Tlf/OxmKWERDj0zGE23jQaMwA==,
+        integrity: sha512-/ScWUhhoFasJsSRGTVBwId1loQjjnjAfE4djL6ZhrXRpNCmPTnUKF5Jokd58ILseOMjzET3UrMOtJPS9sYeI0g==,
       }
     engines: { node: ^18.17.0 || >=20.5.0 }
 
@@ -3859,10 +3859,10 @@ packages:
         integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==,
       }
 
-  baseline-browser-mapping@2.10.14:
+  baseline-browser-mapping@2.10.16:
     resolution:
       {
-        integrity: sha512-fOVLPAsFTsQfuCkvahZkzq6nf8KvGWanlYoTh0SVA0A/PIUxQGU2AOZAoD95n2gFLVDW/jP6sbGLny95nmEuHA==,
+        integrity: sha512-Lyf3aK28zpsD1yQMiiHD4RvVb6UdMoo8xzG2XzFIfR9luPzOpcBlAsT/qfB1XWS1bxWT+UtE4WmQgsp297FYOA==,
       }
     engines: { node: '>=6.0.0' }
     hasBin: true
@@ -4141,10 +4141,10 @@ packages:
       }
     engines: { node: '>=6' }
 
-  caniuse-lite@1.0.30001785:
+  caniuse-lite@1.0.30001786:
     resolution:
       {
-        integrity: sha512-blhOL/WNR+Km1RI/LCVAvA73xplXA7ZbjzI4YkMK9pa6T/P3F2GxjNpEkyw5repTw9IvkyrjyHpwjnhZ5FOvYQ==,
+        integrity: sha512-4oxTZEvqmLLrERwxO76yfKM7acZo310U+v4kqexI2TL1DkkUEMT8UijrxxcnVdxR3qkVf5awGRX+4Z6aPHVKrA==,
       }
 
   chai@5.3.3:
@@ -5069,10 +5069,10 @@ packages:
     engines: { node: '>=0.10.0' }
     hasBin: true
 
-  electron-to-chromium@1.5.331:
+  electron-to-chromium@1.5.332:
     resolution:
       {
-        integrity: sha512-IbxXrsTlD3hRodkLnbxAPP4OuJYdWCeM3IOdT+CpcMoIwIoDfCmRpEtSPfwBXxVkg9xmBeY7Lz2Eo2TDn/HC3Q==,
+        integrity: sha512-7OOtytmh/rINMLwaFTbcMVvYXO3AUm029X0LcyfYk0B557RlPkdpTpnH9+htMlfu5dKwOmT0+Zs2Aw+lnn6TeQ==,
       }
 
   elliptic@6.6.1:
@@ -7359,10 +7359,10 @@ packages:
         integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==,
       }
 
-  lru-cache@11.2.7:
+  lru-cache@11.3.2:
     resolution:
       {
-        integrity: sha512-aY/R+aEsRelme17KGQa/1ZSIpLpNYYrhcrepKTZgE+W3WM16YMCaPwOHLHsmopZHELU0Ojin1lPVxKR0MihncA==,
+        integrity: sha512-wgWa6FWQ3QRRJbIjbsldRJZxdxYngT/dO0I5Ynmlnin8qy7tC6xYzbcJjtN4wHLXtkbVwHzk0C+OejVw1XM+DQ==,
       }
     engines: { node: 20 || >=22 }
 
@@ -9931,16 +9931,16 @@ packages:
       }
     engines: { node: '>=14.0.0' }
 
-  tldts-core@7.0.27:
+  tldts-core@7.0.28:
     resolution:
       {
-        integrity: sha512-YQ7uPjgWUibIK6DW5lrKujGwUKhLevU4hcGbP5O6TcIUb+oTjJYJVWPS4nZsIHrEEEG6myk/oqAJUEQmpZrHsg==,
+        integrity: sha512-7W5Efjhsc3chVdFhqtaU0KtK32J37Zcr9RKtID54nG+tIpcY79CQK/veYPODxtD/LJ4Lue66jvrQzIX2Z2/pUQ==,
       }
 
-  tldts@7.0.27:
+  tldts@7.0.28:
     resolution:
       {
-        integrity: sha512-I4FZcVFcqCRuT0ph6dCDpPuO4Xgzvh+spkcTr1gK7peIvxWauoloVO0vuy1FQnijT63ss6AsHB6+OIM4aXHbPg==,
+        integrity: sha512-+Zg3vWhRUv8B1maGSTFdev9mjoo8Etn2Ayfs4cnjlD3CsGkxXX4QyW3j2WJ0wdjYcYmy7Lx2RDsZMhgCWafKIw==,
       }
     hasBin: true
 
@@ -11045,7 +11045,7 @@ snapshots:
       '@csstools/css-color-parser': 4.0.2(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)
       '@csstools/css-parser-algorithms': 4.0.0(@csstools/css-tokenizer@4.0.0)
       '@csstools/css-tokenizer': 4.0.0
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
 
   '@asamuzakjp/dom-selector@6.8.1':
     dependencies:
@@ -11053,7 +11053,7 @@ snapshots:
       bidi-js: 1.0.3
       css-tree: 3.2.1
       is-potential-custom-element-name: 1.0.1
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
@@ -11973,7 +11973,7 @@ snapshots:
       agent-base: 7.1.4
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
       - supports-color
@@ -11996,7 +11996,7 @@ snapshots:
       common-ancestor-path: 1.0.1
       hosted-git-info: 9.0.2
       json-stringify-nice: 1.1.4
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
       minimatch: 10.2.5
       nopt: 8.1.0
       npm-install-checks: 7.1.2
@@ -12040,7 +12040,7 @@ snapshots:
       '@gar/promise-retry': 1.0.3
       '@npmcli/promise-spawn': 9.0.1
       ini: 6.0.0
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
       npm-pick-manifest: 11.0.3
       proc-log: 6.1.0
       semver: 7.7.2
@@ -12541,18 +12541,18 @@ snapshots:
 
   '@sigstore/bundle@4.0.0':
     dependencies:
-      '@sigstore/protobuf-specs': 0.5.0
+      '@sigstore/protobuf-specs': 0.5.1
 
   '@sigstore/core@3.2.0': {}
 
-  '@sigstore/protobuf-specs@0.5.0': {}
+  '@sigstore/protobuf-specs@0.5.1': {}
 
   '@sigstore/sign@4.1.1':
     dependencies:
       '@gar/promise-retry': 1.0.3
       '@sigstore/bundle': 4.0.0
       '@sigstore/core': 3.2.0
-      '@sigstore/protobuf-specs': 0.5.0
+      '@sigstore/protobuf-specs': 0.5.1
       make-fetch-happen: 15.0.5
       proc-log: 6.1.0
     transitivePeerDependencies:
@@ -12560,7 +12560,7 @@ snapshots:
 
   '@sigstore/tuf@4.0.2':
     dependencies:
-      '@sigstore/protobuf-specs': 0.5.0
+      '@sigstore/protobuf-specs': 0.5.1
       tuf-js: 4.1.0
     transitivePeerDependencies:
       - supports-color
@@ -12569,7 +12569,7 @@ snapshots:
     dependencies:
       '@sigstore/bundle': 4.0.0
       '@sigstore/core': 3.2.0
-      '@sigstore/protobuf-specs': 0.5.0
+      '@sigstore/protobuf-specs': 0.5.1
 
   '@simple-libs/child-process-utils@1.0.2':
     dependencies:
@@ -13367,7 +13367,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.10.14: {}
+  baseline-browser-mapping@2.10.16: {}
 
   before-after-hook@2.2.3: {}
 
@@ -13491,9 +13491,9 @@ snapshots:
 
   browserslist@4.28.2:
     dependencies:
-      baseline-browser-mapping: 2.10.14
-      caniuse-lite: 1.0.30001785
-      electron-to-chromium: 1.5.331
+      baseline-browser-mapping: 2.10.16
+      caniuse-lite: 1.0.30001786
+      electron-to-chromium: 1.5.332
       node-releases: 2.0.37
       update-browserslist-db: 1.2.3(browserslist@4.28.2)
 
@@ -13538,7 +13538,7 @@ snapshots:
       '@npmcli/fs': 5.0.0
       fs-minipass: 3.0.3
       glob: 13.0.6
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
       minipass: 7.1.3
       minipass-collect: 2.0.1
       minipass-flush: 1.0.7
@@ -13578,7 +13578,7 @@ snapshots:
 
   camelcase@5.3.1: {}
 
-  caniuse-lite@1.0.30001785: {}
+  caniuse-lite@1.0.30001786: {}
 
   chai@5.3.3:
     dependencies:
@@ -13929,7 +13929,7 @@ snapshots:
       '@asamuzakjp/css-color': 4.1.2
       '@csstools/css-syntax-patches-for-csstree': 1.1.2(css-tree@3.2.1)
       css-tree: 3.2.1
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
 
   csstype@3.2.3: {}
 
@@ -14089,7 +14089,7 @@ snapshots:
     dependencies:
       jake: 10.9.4
 
-  electron-to-chromium@1.5.331: {}
+  electron-to-chromium@1.5.332: {}
 
   elliptic@6.6.1:
     dependencies:
@@ -14866,7 +14866,7 @@ snapshots:
 
   hosted-git-info@9.0.2:
     dependencies:
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
 
   html-encoding-sniffer@4.0.0:
     dependencies:
@@ -15668,7 +15668,7 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  lru-cache@11.2.7: {}
+  lru-cache@11.3.2: {}
 
   lru-cache@5.1.1:
     dependencies:
@@ -16500,7 +16500,7 @@ snapshots:
 
   path-scurry@2.0.2:
     dependencies:
-      lru-cache: 11.2.7
+      lru-cache: 11.3.2
       minipass: 7.1.3
 
   path-to-regexp@0.1.13: {}
@@ -17033,7 +17033,7 @@ snapshots:
     dependencies:
       '@sigstore/bundle': 4.0.0
       '@sigstore/core': 3.2.0
-      '@sigstore/protobuf-specs': 0.5.0
+      '@sigstore/protobuf-specs': 0.5.1
       '@sigstore/sign': 4.1.1
       '@sigstore/tuf': 4.0.2
       '@sigstore/verify': 3.1.0
@@ -17351,11 +17351,11 @@ snapshots:
 
   tinyspy@4.0.4: {}
 
-  tldts-core@7.0.27: {}
+  tldts-core@7.0.28: {}
 
-  tldts@7.0.27:
+  tldts@7.0.28:
     dependencies:
-      tldts-core: 7.0.27
+      tldts-core: 7.0.28
 
   tmp@0.2.5: {}
 
@@ -17375,7 +17375,7 @@ snapshots:
 
   tough-cookie@6.0.1:
     dependencies:
-      tldts: 7.0.27
+      tldts: 7.0.28
 
   tr46@6.0.0:
     dependencies:

@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.0.0...v10.1.0-next.0) (2026-04-07)
+
+### ✨ Features
+
+- **redis-smq-web-ui:** add configuration view and management ([9456d41](https://github.com/weyoss/redis-smq/commit/9456d41e6a24689b15736f8846e3e0dac73fd04f))
+
+### 📝 Documentation
+
+- update READMEs (v10.0.0 → next) ([b326b35](https://github.com/weyoss/redis-smq/commit/b326b3512651adde1d1e2742636750564f33f318))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** use typed router, clean up codebase ([2c07654](https://github.com/weyoss/redis-smq/commit/2c07654139ce3460841ccd2c9abd930887eb048c))
+
 ## [10.0.0](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.2...v10.0.0) (2026-04-04)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.0.0](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.0.0.md)

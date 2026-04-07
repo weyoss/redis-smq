@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.0.0...v10.1.0-next.0) (2026-04-07)
+
+### ✨ Features
+
+- **redis-smq-rest-api:** add API endpoint for updating config ([317b7db](https://github.com/weyoss/redis-smq/commit/317b7db5255bffbf5236fece003c6a8a1acff96c))
+- **redis-smq-web-ui:** add configuration view and management ([9456d41](https://github.com/weyoss/redis-smq/commit/9456d41e6a24689b15736f8846e3e0dac73fd04f))
+
+### 🐛 Bug Fixes
+
+- detect staged changes in post-merge hook ([851640b](https://github.com/weyoss/redis-smq/commit/851640b6ec9970357f68e5edd4ed633b67a2e1c9))
+
+### 📝 Documentation
+
+- fix incorrect link to batch acks documentation ([68ee003](https://github.com/weyoss/redis-smq/commit/68ee0039580252ee865374b88d985faad1baae24))
+- update READMEs (v10.0.0 → next) ([b326b35](https://github.com/weyoss/redis-smq/commit/b326b3512651adde1d1e2742636750564f33f318))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** use typed router, clean up codebase ([2c07654](https://github.com/weyoss/redis-smq/commit/2c07654139ce3460841ccd2c9abd930887eb048c))
+
+### 👷 Continuous Integration
+
+- detect branch correctly during rebase operations ([6349d02](https://github.com/weyoss/redis-smq/commit/6349d02aedd43c24a644d3f1ab77e168d833eeb3))
+- remove post-merge hooks ([f8a5495](https://github.com/weyoss/redis-smq/commit/f8a5495013853b745bf1d97349db00113039f124))
+- skip README update to avoid detached HEAD issues ([721d381](https://github.com/weyoss/redis-smq/commit/721d38101c5cdef61ea8840cd9d2407264d76ed7))
+
 ## [10.0.0](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.2...v10.0.0) (2026-04-04)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.0.0](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.0.0.md)
