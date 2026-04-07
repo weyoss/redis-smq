@@ -12,15 +12,17 @@ import {
   TControllerRequestPayloadEmpty,
 } from '../../lib/controller/types/index.js';
 import { Container } from '../../container/Container.js';
-import { GetConfigurationControllerResponseDTO } from './GetConfigurationControllerResponseDTO.js';
+import { UpdateConfigurationControllerRequestBodyDTO } from './UpdateConfigurationControllerRequestBodyDTO.js';
+import { UpdateConfigurationControllerResponseDTO } from './UpdateConfigurationControllerResponseDTO.js';
 
-export const getConfigurationController: TControllerRequestHandler<
+export const updateConfigurationController: TControllerRequestHandler<
   TControllerRequestPayloadEmpty,
   TControllerRequestPayloadEmpty,
-  TControllerRequestPayloadEmpty,
-  GetConfigurationControllerResponseDTO
-> = async () => {
+  UpdateConfigurationControllerRequestBodyDTO,
+  UpdateConfigurationControllerResponseDTO
+> = async (ctx) => {
   const service = Container.getInstance().resolve('configurationService');
-  const r = await service.getConfig();
+  const cfg = ctx.scope.resolve('requestBodyDTO');
+  const r = await service.updateConfig(cfg);
   return [200, r];
 };

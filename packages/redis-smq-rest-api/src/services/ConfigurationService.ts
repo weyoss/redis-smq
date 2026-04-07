@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigManager } from 'redis-smq';
+import { ConfigManager, IRedisSMQConfig } from 'redis-smq';
 
 export class ConfigurationService {
   protected configManager;
@@ -16,7 +16,12 @@ export class ConfigurationService {
     this.configManager = configManager;
   }
 
-  async getConfiguration() {
+  async getConfig() {
+    return this.configManager.getConfig();
+  }
+
+  async updateConfig(cfg: IRedisSMQConfig) {
+    await this.configManager.updateConfig(cfg);
     return this.configManager.getConfig();
   }
 }
