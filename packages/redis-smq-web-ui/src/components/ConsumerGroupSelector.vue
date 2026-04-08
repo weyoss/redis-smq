@@ -12,6 +12,7 @@ import { useQueueConsumerGroups } from '@/composables/useQueueConsumerGroups.ts'
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useTypedRouter } from '@/router/useTypeRouter.ts';
+import { EMessageType } from '@/types';
 
 interface Props {
   showSectionHeader?: boolean;
@@ -48,12 +49,12 @@ const queueDisplayName = computed(() => {
 // Event handlers
 function handleConsumerGroupSelect(consumerGroupId: string) {
   if (!selectedQueue.value) return;
-  router.push('pendingMessages', {
+  router.push('messages', {
     params: {
       ns: selectedQueue.value.ns,
       queue: selectedQueue.value.name,
     },
-    query: { consumerGroupId },
+    query: { type: EMessageType.PENDING, consumerGroupId },
   });
 }
 

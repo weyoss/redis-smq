@@ -63,7 +63,7 @@ export interface MessagesQueryConfig {
   queryKeyPrefix: string;
   enableDelete?: boolean;
   enableRequeue?: boolean;
-  enabled?: Ref<boolean | null>; // When false, query is disabled. When null, wait. When true, enable if queue exists.
+  enabled?: Ref<boolean | null>;
 }
 
 export function useMessages(
@@ -79,28 +79,12 @@ export function useMessages(
     pageSize: initialPageSize,
   });
 
-  // Modified queryKey - include enabled state
-  const queryKey = computed(() => {
-    if (!queueParams.value || !isEnabled.value) {
-      return ['disabled', config.queryKeyPrefix];
-    }
-    return [
-      config.queryKeyPrefix,
-      queueParams.value.ns,
-      queueParams.value.name,
-      'page',
-      pagination.currentPage,
-      'size',
-      pagination.pageSize,
-    ];
-  });
-
   // Helper to extract total count
   function extractTotalItems(payload: MessagesApiResponse): number {
     return payload?.data?.totalItems ?? 0;
   }
 
-  // Computed enabled state - FIXED!
+  // Computed enabled state
   const isEnabled = computed(() => {
     // First check: queue params must exist
     const queueExists = !!(queueParams.value?.ns && queueParams.value?.name);
@@ -119,7 +103,21 @@ export function useMessages(
     return true;
   });
 
-  // Single page query
+  // Build query key - include all dependencies that should trigger a refetch
+  const queryKey = computed(() => {
+    if (!queueParams.value || !isEnabled.value) {
+      return ['disabled', config.queryKeyPrefix];
+    }
+    return [
+      config.queryKeyPrefix,
+      queueParams.value.ns,
+      queueParams.value.name,
+      pagination.currentPage,
+      pagination.pageSize,
+    ];
+  });
+
+  // Single page query - React Query automatically fetches when enabled becomes true
   const {
     data,
     error: fetchError,
@@ -157,20 +155,7 @@ export function useMessages(
     staleTime: 1000 * 30,
   });
 
-  watch(
-    isEnabled,
-    (enabled) => {
-      if (enabled) {
-        // Force a refetch when enabled becomes true
-        setTimeout(() => {
-          refetch();
-        }, 0);
-      }
-    },
-    { immediate: true },
-  );
-
-  // Watch for queueParams changes
+  // Only watch for queueParams changes to reset pagination
   watch(
     () => queueParams.value,
     (newQueue, oldQueue) => {
@@ -180,19 +165,18 @@ export function useMessages(
           newQueue.ns !== oldQueue.ns ||
           newQueue.name !== oldQueue.name)
       ) {
+        // Reset to first page when queue changes
         pagination.currentPage = 1;
-        // Force a refetch when queue changes
-        setTimeout(() => {
-          refetch();
-        }, 0);
       }
     },
-    { immediate: true, deep: true },
+    { deep: true },
   );
 
   // Mutations
   const onMutationSuccess = async () => {
-    // Invalidate all queries for this queue
+    // Only invalidate if enabled
+    if (!isEnabled.value) return;
+
     const baseKey = [
       config.queryKeyPrefix,
       queueParams.value?.ns,
@@ -200,7 +184,7 @@ export function useMessages(
     ];
     await queryClient.invalidateQueries({
       queryKey: baseKey,
-      refetchType: 'all',
+      refetchType: 'active',
     });
   };
 
@@ -310,6 +294,7 @@ export function useMessages(
   }
 
   async function handleRefresh() {
+    if (!isEnabled.value) return;
     pagination.currentPage = 1;
     await refetch();
   }
@@ -330,10 +315,10 @@ export function useMessages(
 
   // Prefetch adjacent pages for smoother navigation
   watch(
-    () => [pagination.currentPage, data.value],
+    () => pagination.currentPage,
     () => {
+      if (!isEnabled.value) return;
       if (!queueParams.value) return;
-      if (!isEnabled.value) return; // Don't prefetch if not enabled
 
       const totalPages = paginationInfo.value.totalPages;
 
@@ -343,9 +328,7 @@ export function useMessages(
           config.queryKeyPrefix,
           queueParams.value.ns,
           queueParams.value.name,
-          'page',
           pagination.currentPage + 1,
-          'size',
           pagination.pageSize,
         ];
 
@@ -369,9 +352,7 @@ export function useMessages(
           config.queryKeyPrefix,
           queueParams.value.ns,
           queueParams.value.name,
-          'page',
           pagination.currentPage - 1,
-          'size',
           pagination.pageSize,
         ];
 
@@ -389,7 +370,7 @@ export function useMessages(
         });
       }
     },
-    { immediate: true },
+    { immediate: false },
   );
 
   return {
@@ -407,12 +388,11 @@ export function useMessages(
     refresh: handleRefresh,
     deleteMessage: config.enableDelete ? deleteMessage : undefined,
     requeueMessage: config.enableRequeue ? requeueMessage : undefined,
-    // Expose additional state
     totalMessages,
     hasNextPage,
     hasPreviousPage,
     currentPage: computed(() => pagination.currentPage),
-    isSuccess, // Expose success state
-    data, // Expose raw data for debugging
+    isSuccess,
+    data,
   };
 }

@@ -12,7 +12,7 @@ import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueuePropertie
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useTypedRouter } from '@/router/useTypeRouter.ts';
-import type { RouteName } from '@/router/types.ts';
+import { EMessageType } from '@/types';
 
 const selectedQueueStore = useSelectedQueueStore();
 const queuesPropertiesStore = useSelectedQueuePropertiesStore();
@@ -44,26 +44,18 @@ const messageStats = computed<
     value: number;
     icon: string;
     iconClass: string;
-    routeName: RouteName | null;
+    messageType: EMessageType | null;
     description: string;
   }[]
 >(() => {
   if (!queueProperties.value) return [];
   return [
     {
-      label: 'Total Messages',
-      value: queueProperties.value.messagesCount,
-      icon: 'bi-collection-fill',
-      iconClass: 'total-icon',
-      routeName: 'messages',
-      description: 'All messages in the queue',
-    },
-    {
       label: 'Pending',
       value: queueProperties.value.pendingMessagesCount,
       icon: 'bi-clock-history',
       iconClass: 'pending-icon',
-      routeName: 'pendingMessages',
+      messageType: EMessageType.PENDING,
       description: 'Messages waiting to be processed',
     },
     {
@@ -71,7 +63,7 @@ const messageStats = computed<
       value: queueProperties.value.processingMessagesCount,
       icon: 'bi-hourglass-split',
       iconClass: 'processing-icon',
-      routeName: null,
+      messageType: null,
       description: 'Messages currently being processed',
     },
     {
@@ -79,7 +71,7 @@ const messageStats = computed<
       value: queueProperties.value.acknowledgedMessagesCount,
       icon: 'bi-check-circle-fill',
       iconClass: 'acknowledged-icon',
-      routeName: 'acknowledgedMessages',
+      messageType: EMessageType.ACKNOWLEDGED,
       description: 'Successfully processed messages',
     },
     {
@@ -87,7 +79,7 @@ const messageStats = computed<
       value: queueProperties.value.deadLetteredMessagesCount,
       icon: 'bi-x-octagon-fill',
       iconClass: 'dead-lettered-icon',
-      routeName: 'deadLetteredMessages',
+      messageType: EMessageType.DEAD_LETTERED,
       description: 'Messages that failed processing',
     },
     {
@@ -95,7 +87,7 @@ const messageStats = computed<
       value: queueProperties.value.scheduledMessagesCount,
       icon: 'bi-calendar-plus-fill',
       iconClass: 'scheduled-icon',
-      routeName: 'scheduledMessages',
+      messageType: EMessageType.SCHEDULED,
       description: 'Messages scheduled for future delivery',
     },
     {
@@ -103,7 +95,7 @@ const messageStats = computed<
       value: queueProperties.value.delayedMessagesCount,
       icon: 'bi-stopwatch-fill',
       iconClass: 'delayed-icon',
-      routeName: null,
+      messageType: null,
       description: 'Messages with delayed delivery',
     },
     {
@@ -111,19 +103,22 @@ const messageStats = computed<
       value: queueProperties.value.requeuedMessagesCount,
       icon: 'bi-arrow-repeat',
       iconClass: 'requeued-icon',
-      routeName: null,
+      messageType: null,
       description: 'Messages returned to queue for reprocessing',
     },
   ];
 });
 
 // Navigation
-function navigateToMessages(routeName: RouteName | null) {
-  if (!routeName || !queue.value) return;
-  router.push(routeName, {
+function navigateToMessages(messageType: EMessageType | null) {
+  if (!messageType || !queue.value) return;
+  router.push('messages', {
     params: {
       ns: queue.value.ns,
       queue: queue.value.name,
+    },
+    query: {
+      type: messageType,
     },
   });
 }
@@ -212,8 +207,8 @@ function getPercentage(value: number | null | undefined): number {
           role="link"
           tabindex="0"
           :title="'View all messages in this queue'"
-          @click="navigateToMessages('messages')"
-          @keydown.enter="navigateToMessages('messages')"
+          @click="navigateToMessages(EMessageType.PUBLISHED)"
+          @keydown.enter="navigateToMessages(EMessageType.PUBLISHED)"
         >
           <div class="total-content">
             <div class="total-icon-wrapper">
@@ -243,12 +238,12 @@ function getPercentage(value: number | null | undefined): number {
             )"
             :key="stat.label"
             class="stat-item"
-            :class="{ clickable: !!stat.routeName }"
-            :role="stat.routeName ? 'link' : 'listitem'"
-            :tabindex="stat.routeName ? 0 : -1"
+            :class="{ clickable: !!stat.messageType }"
+            :role="stat.messageType ? 'link' : 'listitem'"
+            :tabindex="stat.messageType ? 0 : -1"
             :title="stat.description"
-            @click="navigateToMessages(stat.routeName)"
-            @keydown.enter="navigateToMessages(stat.routeName)"
+            @click="navigateToMessages(stat.messageType)"
+            @keydown.enter="navigateToMessages(stat.messageType)"
           >
             <div class="stat-content">
               <div class="stat-header">
@@ -257,7 +252,7 @@ function getPercentage(value: number | null | undefined): number {
                 </div>
                 <div class="stat-label">{{ stat.label }}</div>
                 <div
-                  v-if="stat.routeName"
+                  v-if="stat.messageType"
                   class="stat-arrow"
                   aria-hidden="true"
                 >

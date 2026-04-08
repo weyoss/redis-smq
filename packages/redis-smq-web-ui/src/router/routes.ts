@@ -11,6 +11,7 @@ import { type RouteRecordRaw } from 'vue-router';
 import HomeViewView from '@/views/HomeView.vue';
 import ExchangeListView from '@/views/exchanges/ExchangeListView.vue';
 import type { RouteName } from './types';
+import { EMessageType } from '@/types';
 
 export interface BreadcrumbMeta {
   label: string;
@@ -23,12 +24,7 @@ export interface AppRouteMeta {
   mainNav?: boolean;
   icon?: string;
   breadcrumb?: BreadcrumbMeta;
-  messageType?:
-    | 'published'
-    | 'pending'
-    | 'acknowledged'
-    | 'dead-lettered'
-    | 'scheduled';
+  messageType?: EMessageType;
   systemRoute?: boolean;
 }
 
@@ -122,64 +118,11 @@ export const routes = [
   asRoute({
     path: '/ns/:ns/queues/:queue/messages',
     name: 'messages',
-    component: () => import('@/views/messages/PublishedMessagesView.vue'),
+    component: () => import('@/views/messages/MessagesView.vue'),
     meta: {
-      title: 'Published Messages',
-      messageType: 'published',
+      title: 'Queue Messages',
       breadcrumb: {
-        label: 'Published Messages',
-        parent: 'queue',
-      },
-    },
-  }),
-  asRoute({
-    path: '/ns/:ns/queues/:queue/pending-messages',
-    name: 'pendingMessages',
-    component: () => import('@/views/messages/PendingMessagesView.vue'),
-    meta: {
-      title: 'Pending Messages',
-      messageType: 'pending',
-      breadcrumb: {
-        label: 'Pending Messages',
-        parent: 'queue',
-      },
-    },
-  }),
-  asRoute({
-    path: '/ns/:ns/queues/:queue/acknowledged-messages',
-    name: 'acknowledgedMessages',
-    component: () => import('@/views/messages/AcknowledgedMessagesView.vue'),
-    meta: {
-      title: 'Acknowledged Messages',
-      messageType: 'acknowledged',
-      breadcrumb: {
-        label: 'Acknowledged Messages',
-        parent: 'queue',
-      },
-    },
-  }),
-  asRoute({
-    path: '/ns/:ns/queues/:queue/dead-lettered-messages',
-    name: 'deadLetteredMessages',
-    component: () => import('@/views/messages/DeadLetteredMessagesView.vue'),
-    meta: {
-      title: 'Dead-Lettered Messages',
-      messageType: 'dead-lettered',
-      breadcrumb: {
-        label: 'Dead-Lettered Messages',
-        parent: 'queue',
-      },
-    },
-  }),
-  asRoute({
-    path: '/ns/:ns/queues/:queue/scheduled-messages',
-    name: 'scheduledMessages',
-    component: () => import('@/views/messages/ScheduledMessagesView.vue'),
-    meta: {
-      title: 'Scheduled Messages',
-      messageType: 'scheduled',
-      breadcrumb: {
-        label: 'Scheduled Messages',
+        label: 'Messages',
         parent: 'queue',
       },
     },

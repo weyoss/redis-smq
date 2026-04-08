@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { type Ref } from 'vue';
+import { type Ref, computed } from 'vue';
 import { getApiNamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
 import { getApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupIdMessages } from '@/api/generated/consumer-groups/consumer-groups.ts';
 import {
@@ -26,6 +26,18 @@ export function usePendingMessages(
   consumerGroupId: Ref<string | null>,
   initialPageSize = 20,
 ) {
+  // Use a stable base prefix that doesn't change with consumer group
+  const basePrefix = 'pending-messages';
+
+  // Create a stable query key prefix that only changes when needed
+  const queryKeyPrefix = computed(() => {
+    // Use a consistent prefix pattern
+    if (consumerGroupId.value) {
+      return `${basePrefix}-cg-${consumerGroupId.value}`;
+    }
+    return basePrefix;
+  });
+
   const config: MessagesQueryConfig = {
     queryFn: async ({ ns, name, page, pageSize }) => {
       // Add consumer group ID if present in extra parameters
@@ -47,9 +59,9 @@ export function usePendingMessages(
         status: 'pending',
       });
     },
-    queryKeyPrefix: `${consumerGroupId.value ? `consumer-group-${consumerGroupId.value}-` : ''}pending-messages`,
+    queryKeyPrefix: queryKeyPrefix.value,
     enableDelete: true,
-    enableRequeue: false, // Pending messages can not be requeued
+    enableRequeue: false,
   };
 
   return useMessages(queueParams, config, initialPageSize);

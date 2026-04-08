@@ -22,19 +22,30 @@ import { getErrorMessage } from '@/lib/error.ts';
  * in the server configuration before fetching messages.
  */
 export function useDeadLetteredMessages(
-  queueParams: Ref<IQueueParams>,
+  queueParams: Ref<IQueueParams | null>,
   initialPageSize = 20,
 ) {
-  // First, fetch the config to check if audit is enabled
+  // Check if this composable is active (has valid queue params)
+  const isActive = computed(() => {
+    return !!(queueParams.value?.ns && queueParams.value?.name);
+  });
+
+  // Fetch config only when this composable is active
   const {
     data: configData,
     isLoading: isConfigLoading,
     error: configApiError,
     refetch: refetchConfig,
-  } = useGetApiConfig();
+  } = useGetApiConfig({
+    query: {
+      enabled: isActive, // Only fetch config when this composable is active
+    },
+  });
 
   const deadLetteringEnabled = computed<boolean | null>(() => {
-    if (isConfigLoading.value) return null; // Indeterminate state
+    // If not active, return false immediately
+    if (!isActive.value) return false;
+    if (isConfigLoading.value) return null;
     const enabled =
       configData.value?.data?.messageAudit?.deadLetteredMessages?.enabled;
     return typeof enabled === 'boolean' ? enabled : false;
@@ -42,7 +53,13 @@ export function useDeadLetteredMessages(
 
   const configError = computed(() => getErrorMessage(configApiError.value));
 
-  // --- Messages Composable Setup ---
+  // Only enable messages query if:
+  // 1. This composable is active (has valid queue params)
+  // 2. Dead lettering is enabled in config
+  const isMessagesEnabled = computed(() => {
+    return isActive.value && deadLetteringEnabled.value === true;
+  });
+
   const config: MessagesQueryConfig = {
     queryFn: async ({ ns, name, page, pageSize }) => {
       return getApiNamespacesNsQueuesNameMessages(ns, name, {
@@ -53,17 +70,14 @@ export function useDeadLetteredMessages(
     },
     queryKeyPrefix: 'dead-lettered-messages',
     enableDelete: true,
-    enableRequeue: true, // Dead-lettered messages can be requeued
-    enabled: deadLetteringEnabled, // Pass the computed enabled flag
+    enableRequeue: true,
+    enabled: isMessagesEnabled,
   };
 
   const messagesComposable = useMessages(queueParams, config, initialPageSize);
 
-  // --- Combined State for the View ---
   return {
     ...messagesComposable,
-
-    // Configuration state
     isConfigLoading,
     configError,
     deadLetteringEnabled,

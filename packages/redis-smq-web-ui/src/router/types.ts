@@ -8,6 +8,7 @@
  */
 
 import 'vue-router';
+import { EMessageType } from '@/types';
 
 export type RouteParamsMap = {
   // Top-level routes (no params)
@@ -22,14 +23,12 @@ export type RouteParamsMap = {
 
   // Queue routes
   queue: { params: { ns: string; queue: string } };
-  messages: { params: { ns: string; queue: string } };
-  pendingMessages: {
+
+  //
+  messages: {
     params: { ns: string; queue: string };
-    query?: { consumerGroupId: string };
+    query: { type: EMessageType; consumerGroupId?: string };
   };
-  acknowledgedMessages: { params: { ns: string; queue: string } };
-  deadLetteredMessages: { params: { ns: string; queue: string } };
-  scheduledMessages: { params: { ns: string; queue: string } };
 
   // Exchange route
   exchangeDetails: { params: { ns: string; exchange: string } };

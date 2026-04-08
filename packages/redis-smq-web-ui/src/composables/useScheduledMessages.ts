@@ -20,7 +20,7 @@ import type { IQueueParams } from '@/types/index.ts';
  * (scheduled messages are already queued for future execution)
  */
 export function useScheduledMessages(
-  queueParams: Ref<IQueueParams>,
+  queueParams: Ref<IQueueParams | null>,
   initialPageSize = 20,
 ) {
   const config: MessagesQueryConfig = {

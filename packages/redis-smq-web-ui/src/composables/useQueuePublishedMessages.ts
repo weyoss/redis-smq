@@ -19,7 +19,7 @@ import type { IQueueParams } from '@/types/index.ts';
  * Composable for all queue messages with full delete and requeue capabilities
  */
 export function useQueuePublishedMessages(
-  queueParams: Ref<IQueueParams>,
+  queueParams: Ref<IQueueParams | null>,
   initialPageSize = 20,
 ) {
   const config: MessagesQueryConfig = {
