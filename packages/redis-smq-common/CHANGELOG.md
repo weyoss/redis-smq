@@ -7,7 +7,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- update READMEs (v10.0.0 → next) ([b326b35](https://github.com/weyoss/redis-smq/commit/b326b3512651adde1d1e2742636750564f33f318))
+- update READMEs (v10.0.0 → next) ([8247b2f](https://github.com/weyoss/redis-smq/commit/8247b2f19d7caefcac6efdebd33f5592f743a1e7))
 
 ## [10.0.0](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.2...v10.0.0) (2026-04-04)
 
@@ -15,36 +15,36 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- add consolidated changelog for v10.0.0-next.2 ([aa07b9f](https://github.com/weyoss/redis-smq/commit/aa07b9f2fd1b976cf7acaaa894fa03a974463cf8))
+- add consolidated changelog for v10.0.0-next.2 ([33a6a4a](https://github.com/weyoss/redis-smq/commit/33a6a4af0c0ceb20b93aaff54c409bd2d3f92273))
 
 ## [10.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.1...v10.0.0-next.2) (2026-04-04)
 
 ### 📦 Build System
 
-- add strict bash script options for robustness and debugging ([9bd4cd2](https://github.com/weyoss/redis-smq/commit/9bd4cd202be824f4815e7bafebdf2a2a35d1a429))
-- fix shell compatibility by using bash ([f4da551](https://github.com/weyoss/redis-smq/commit/f4da55123c9f1f8e8a9b32a7218890f36f943046))
+- add strict bash script options for robustness and debugging ([64f1a0a](https://github.com/weyoss/redis-smq/commit/64f1a0ab5b13982b9e039530f94cdc1016d18adf))
+- fix shell compatibility by using bash ([3066eea](https://github.com/weyoss/redis-smq/commit/3066eea5bb4e7ddff744e1e855753881d8fb8ed1))
 
 ## [10.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.0.0-next.0...v10.0.0-next.1) (2026-03-28)
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** add exists() method to IRedisClient ([b39e64a](https://github.com/weyoss/redis-smq/commit/b39e64a23057cc7cccc4054ab1f3002825000999))
+- **redis-smq-common:** add exists() method to IRedisClient ([ec7d6c7](https://github.com/weyoss/redis-smq/commit/ec7d6c76f5219199d446ee2907ed35b28228fa33))
 
 ## [10.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.6...v10.0.0-next.0) (2026-03-25)
 
 ### 🐛 Bug Fixes
 
-- **redis-smq-common:** update IRedisClient.md reference ([d232393](https://github.com/weyoss/redis-smq/commit/d232393eb6a635cd94d68901b201bdc5449fbd63))
+- **redis-smq-common:** update IRedisClient.md reference ([8777608](https://github.com/weyoss/redis-smq/commit/877760825abde9aa6698f390f99c883907561559))
 
 ### 🚀 Chore
 
-- **redis-smq-common:** update tar to v7.5.12 to address security issues ([eb32415](https://github.com/weyoss/redis-smq/commit/eb32415810c0ba7ca7abccecabe03675800068d0))
-- use underscore for script filename convention ([4df1236](https://github.com/weyoss/redis-smq/commit/4df1236b3a78767f84f9d23591e7dc4871b28d71))
+- **redis-smq-common:** update tar to v7.5.12 to address security issues ([b7cf083](https://github.com/weyoss/redis-smq/commit/b7cf0836659e50e9299d839b3706aeff262ab21a))
+- use underscore for script filename convention ([4d942b6](https://github.com/weyoss/redis-smq/commit/4d942b619b2e7680398723277e01bbbfba3d0f30))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** add 'zpoplpush' command ([09d706e](https://github.com/weyoss/redis-smq/commit/09d706e9f26cbeebb8f35da02df25cc1028c885c))
-- **redis-smq-common:** add withOptionalCallback to async utils ([4d32dfe](https://github.com/weyoss/redis-smq/commit/4d32dfee72febbc248759e45e47493746f8d0361))
+- **redis-smq-common:** add 'zpoplpush' command ([138b075](https://github.com/weyoss/redis-smq/commit/138b07512ad1cf103773dec4e5e9001225c92512))
+- **redis-smq-common:** add withOptionalCallback to async utils ([72a11c6](https://github.com/weyoss/redis-smq/commit/72a11c6f79eee197c9d62da835f88e196d25a2dd))
 
 ## [9.1.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.5...v9.1.0-next.6) (2026-03-12)
 
@@ -54,10 +54,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** integrate Backoff into existing components ([1f760e6](https://github.com/weyoss/redis-smq/commit/1f760e69432b551315724dbd332264be8ebc1210))
-- **redis-smq-common:** modularize Backoff strategies for better integration ([15e2280](https://github.com/weyoss/redis-smq/commit/15e22804a285583b77fd0485c56a82935161f8db))
-- **redis-smq-common:** simplify Timer utility ([3d26631](https://github.com/weyoss/redis-smq/commit/3d26631c43e452c5ea59c294d75c057d5dd97e61))
-- **redis-smq-common:** update API reference ([28e6d86](https://github.com/weyoss/redis-smq/commit/28e6d86357289f5954b156ce49f993f6e2ef5094))
+- **redis-smq-common:** integrate Backoff into existing components ([9ac5dbb](https://github.com/weyoss/redis-smq/commit/9ac5dbb9c67f42dcf5c6ba79228b7222906127f3))
+- **redis-smq-common:** modularize Backoff strategies for better integration ([88f5c1d](https://github.com/weyoss/redis-smq/commit/88f5c1d473d2979dd097a2432e58900d98ce8b10))
+- **redis-smq-common:** simplify Timer utility ([7c900d2](https://github.com/weyoss/redis-smq/commit/7c900d2d9bbaa5aa724216bdd45b423484f17bce))
+- **redis-smq-common:** update API reference ([6e80316](https://github.com/weyoss/redis-smq/commit/6e80316170eeca2bc7c69667be221068551a325a))
 
 ## [9.1.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.3...v9.1.0-next.4) (2026-03-03)
 
@@ -71,8 +71,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** update err type to handle any kind of thrown errors ([ace66f0](https://github.com/weyoss/redis-smq/commit/ace66f0cefc5cf236e4e35b2eea9746b15c63af0))
-- suppress error reporting for non-operational Runnable instances ([7d6db5a](https://github.com/weyoss/redis-smq/commit/7d6db5ac10aef94fa1c7108977cb434849e877e6))
+- **redis-smq-common:** update err type to handle any kind of thrown errors ([404c27d](https://github.com/weyoss/redis-smq/commit/404c27d55500d7c5218d5caa4c5662244415eeff))
+- suppress error reporting for non-operational Runnable instances ([3c897b0](https://github.com/weyoss/redis-smq/commit/3c897b0ae44682e6baf0959088b2f39e6dfc8b62))
 
 ## [9.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.1.0-next.0...v9.1.0-next.1) (2026-02-25)
 
@@ -82,30 +82,30 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 🚀 Chore
 
-- optimize npm keywords for maximum search coverage ([ab86170](https://github.com/weyoss/redis-smq/commit/ab861705317792f5b3bc5b0faed390f18959923a))
-- update READMEs after merging 'v9.0.14' into 'next' ([fb28ded](https://github.com/weyoss/redis-smq/commit/fb28ded9c0d44b598c8d7af2e847864cb6c4ce62))
-- upgrade packages to latest versions to mitigate security vulnerabilities ([0533085](https://github.com/weyoss/redis-smq/commit/0533085b12ab350ec556e4b841411b8518e85125))
+- optimize npm keywords for maximum search coverage ([7432ecc](https://github.com/weyoss/redis-smq/commit/7432eccb19df6718da0da6e1cc2bd8e8f4b64de3))
+- update READMEs after merging 'v9.0.14' into 'next' ([ab23f2b](https://github.com/weyoss/redis-smq/commit/ab23f2b0e6c32ffcf2a235db2322bf1a7cd94b70))
+- upgrade packages to latest versions to mitigate security vulnerabilities ([bf55522](https://github.com/weyoss/redis-smq/commit/bf55522ebc97f8a66e929d231a7d05caabac24d9))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update API reference ([4ca2699](https://github.com/weyoss/redis-smq/commit/4ca26999683f303666e9ab308e9d9dda0ee451da))
-- **redis-smq-common:** update API reference ([0a8b4ec](https://github.com/weyoss/redis-smq/commit/0a8b4ecde80c2dd4519c02d16a6d2231ef2076b9))
+- **redis-smq-common:** update API reference ([cca024c](https://github.com/weyoss/redis-smq/commit/cca024cd444816a051788869fc8fc6ece294bd72))
+- **redis-smq-common:** update API reference ([7575e18](https://github.com/weyoss/redis-smq/commit/7575e184365b9b6bf21e379d27ef1fd0f75a144d))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** improve Runnable for safe concurrent lifecycle calls ([a29c582](https://github.com/weyoss/redis-smq/commit/a29c582a992d023f3f74fb200e92ec3e51816b5a))
-- **redis-smq-common:** introduce 'lindex' method to IRedisClient Interface ([4d81ded](https://github.com/weyoss/redis-smq/commit/4d81dedeed9e863f468206fdd9440651ba8e2362))
-- **redis-smq-common:** modularize CPUMonitor for improved component integration ([8ba003d](https://github.com/weyoss/redis-smq/commit/8ba003d2792184722a2b8820ce4152bfa17a0f2b))
-- **redis-smq-common:** modularize Heartbeat for improved component integration ([54e1010](https://github.com/weyoss/redis-smq/commit/54e101082f8655787a4f15413e2f2d09a3ecb37f))
-- **redis-smq-common:** optimize debug and info usage throughout codebase ([1a61a76](https://github.com/weyoss/redis-smq/commit/1a61a7628fa6714620f4cb767d0ef04508a9ee5e))
-- **redis-smq-common:** require 'ns' argument for createLogger() ([4875d47](https://github.com/weyoss/redis-smq/commit/4875d47ed9f19443fdf3c84f8bfac27979c245c9))
-- **redis-smq-common:** restructure WorkerCluster for clearer responsibility separation ([bbd7981](https://github.com/weyoss/redis-smq/commit/bbd7981052448681605327e2c24875610bcd946a))
+- **redis-smq-common:** improve Runnable for safe concurrent lifecycle calls ([d4f885b](https://github.com/weyoss/redis-smq/commit/d4f885bb5679f3402acd1a8b9554b5843799cbae))
+- **redis-smq-common:** introduce 'lindex' method to IRedisClient Interface ([e925f27](https://github.com/weyoss/redis-smq/commit/e925f27ca9bd3a69386951ceb907ec0aff8b9e97))
+- **redis-smq-common:** modularize CPUMonitor for improved component integration ([c9df955](https://github.com/weyoss/redis-smq/commit/c9df95540ea81912a6e90430123c0c7393c0813e))
+- **redis-smq-common:** modularize Heartbeat for improved component integration ([ca361c0](https://github.com/weyoss/redis-smq/commit/ca361c04fb3d6efca5aaa359b4412e4342f58931))
+- **redis-smq-common:** optimize debug and info usage throughout codebase ([0ac4a20](https://github.com/weyoss/redis-smq/commit/0ac4a20d8c159dc3427c2b044df0c08c3dcba30c))
+- **redis-smq-common:** require 'ns' argument for createLogger() ([d194f9f](https://github.com/weyoss/redis-smq/commit/d194f9fb4a6b4bf4c3bd4449c3b422c6f8490202))
+- **redis-smq-common:** restructure WorkerCluster for clearer responsibility separation ([1cbda77](https://github.com/weyoss/redis-smq/commit/1cbda770e4d6e0a22f2e56d6861831a14a741739))
 
 ## [9.0.14](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.2...v9.0.14) (2026-02-06)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([6702cc6](https://github.com/weyoss/redis-smq/commit/6702cc6e9a2bb89786eaa85e57bd719053699337))
+- update READMEs after merging 'origin/next' into 'master' ([283b0ee](https://github.com/weyoss/redis-smq/commit/283b0ee73f6157df662c948cebcd3e4a0941c666))
 
 ## [9.0.14-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.14-next.1...v9.0.14-next.2) (2026-02-06)
 
@@ -119,49 +119,49 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.13' into 'next' ([4f98587](https://github.com/weyoss/redis-smq/commit/4f98587171c14f024cf09f00c4d268f54d486e6e))
+- update READMEs after merging 'v9.0.13' into 'next' ([0d455ae](https://github.com/weyoss/redis-smq/commit/0d455aeb544473e24a17c8745d79a9861a6df6e5))
 
 ## [9.0.13](https://github.com/weyoss/redis-smq/compare/v9.0.13-next.0...v9.0.13) (2026-01-30)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([fefc4e0](https://github.com/weyoss/redis-smq/commit/fefc4e06d8b503a039c4ebd823ff71fcdafe0907))
+- update READMEs after merging 'origin/next' into 'master' ([276f166](https://github.com/weyoss/redis-smq/commit/276f166290c5891aeca8dd1680212c265dd6f792))
 
 ## [9.0.13-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.12...v9.0.13-next.0) (2026-01-30)
 
 ### 🚀 Chore
 
-- **redis-smq-common:** update tar to v7.5.7 to address security vulnerability ([b478215](https://github.com/weyoss/redis-smq/commit/b4782151822cbcbe1d457139721980bf60652d09))
-- update READMEs after merging 'v9.0.12' into 'next' ([a70906c](https://github.com/weyoss/redis-smq/commit/a70906c1672dfecf9d5c9cce6dc13e4e5230b8b0))
+- **redis-smq-common:** update tar to v7.5.7 to address security vulnerability ([fab495d](https://github.com/weyoss/redis-smq/commit/fab495d603efecb9fd9b6aef6259aadd1fdca4ce))
+- update READMEs after merging 'v9.0.12' into 'next' ([be52cae](https://github.com/weyoss/redis-smq/commit/be52cae3ef6c18967b6e56e9fbae6421853fae4a))
 
 ## [9.0.12](https://github.com/weyoss/redis-smq/compare/v9.0.12-next.0...v9.0.12) (2026-01-28)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([77befc7](https://github.com/weyoss/redis-smq/commit/77befc7a0699bddd2f69a1965264e69278bbfd9a))
+- update READMEs after merging 'origin/next' into 'master' ([74d4242](https://github.com/weyoss/redis-smq/commit/74d4242232668dd055553aeb36eac57e918eb559))
 
 ## [9.0.12-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.11...v9.0.12-next.0) (2026-01-28)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.11' into 'next' ([ae8c4fa](https://github.com/weyoss/redis-smq/commit/ae8c4fa3177996fc3b077b30e9af3d3b917f4ea9))
+- update READMEs after merging 'v9.0.11' into 'next' ([055ab50](https://github.com/weyoss/redis-smq/commit/055ab50bd0096472c46f434c60c52ca59c157bc9))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update API reference ([d5590f0](https://github.com/weyoss/redis-smq/commit/d5590f0825b975bf9bcf80373d74d2af4003e30a))
+- **redis-smq-common:** update API reference ([54ba6d2](https://github.com/weyoss/redis-smq/commit/54ba6d23f13304bcd6975281fe486e41af7d431f))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** load workers recursively from a directory ([0497c4a](https://github.com/weyoss/redis-smq/commit/0497c4ab5706eba2da4ba80dd0a97a4927bd08aa))
-- **redis-smq-common:** make RedisServer more resilient to startup and shutdown errors ([b6ee6be](https://github.com/weyoss/redis-smq/commit/b6ee6be5763eea8d4e425cb72780afd1f8032ee9))
-- **redis-smq-common:** mov lua scripts loading to a goingUp() procedure ([bf7d840](https://github.com/weyoss/redis-smq/commit/bf7d840bcde7fabe675f9475ffb33d401937a405))
-- **redis-smq-common:** update API reference ([9956cbd](https://github.com/weyoss/redis-smq/commit/9956cbd90172e6e7f8b98d22acdb674a523fc93b))
+- **redis-smq-common:** load workers recursively from a directory ([bfb869f](https://github.com/weyoss/redis-smq/commit/bfb869ff0999b2b3dd6078e13d431f6324368196))
+- **redis-smq-common:** make RedisServer more resilient to startup and shutdown errors ([af9ecef](https://github.com/weyoss/redis-smq/commit/af9ecef9c55f54f654526d78bef6b271e6d524f5))
+- **redis-smq-common:** mov lua scripts loading to a goingUp() procedure ([dd940ec](https://github.com/weyoss/redis-smq/commit/dd940ec928f4c9ff32441e16e4256b29c2275132))
+- **redis-smq-common:** update API reference ([f2f33f0](https://github.com/weyoss/redis-smq/commit/f2f33f00bbf4d4811f64b3f0ff76ed0b853cdc3e))
 
 ## [9.0.11](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.2...v9.0.11) (2026-01-22)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([f4730cc](https://github.com/weyoss/redis-smq/commit/f4730ccbccd42edaccae45b926d61bcdc8387088))
+- update READMEs after merging 'origin/next' into 'master' ([41f9352](https://github.com/weyoss/redis-smq/commit/41f935228d60c8d4e81dc520273f99fb3ca21478))
 
 ## [9.0.11-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.11-next.1...v9.0.11-next.2) (2026-01-22)
 
@@ -169,46 +169,46 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## <small>9.0.11-next.1 (2026-01-22)</small>
 
-- chore: update lodash to v4.17.23 to address security vulnerabilities ([33b0266](https://github.com/weyoss/redis-smq/commit/33b0266))
+- chore: update lodash to v4.17.23 to address security vulnerabilities ([17bda3e](https://github.com/weyoss/redis-smq/commit/17bda3e))
 
 ## [9.0.11-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.4...v9.0.11-next.0) (2026-01-22)
 
 ### 🚀 Chore
 
-- continue updating packages to fix security vulnerabilities ([e92a155](https://github.com/weyoss/redis-smq/commit/e92a155cffa92e68bb159ac397d54a549bf1acb6))
-- update packages to latest versions to address security vulnerabilities ([4d19ed8](https://github.com/weyoss/redis-smq/commit/4d19ed8bae1bd89e484c974183baa069407a7203))
+- continue updating packages to fix security vulnerabilities ([975c9a6](https://github.com/weyoss/redis-smq/commit/975c9a6eaf266b4d0799da9e2ae1b9d516b4a9bc))
+- update packages to latest versions to address security vulnerabilities ([157bad1](https://github.com/weyoss/redis-smq/commit/157bad181e14df398de93ba46c3eebf351383151))
 
 ### 📝 Documentation
 
-- improve README files for clarity ([6ba6543](https://github.com/weyoss/redis-smq/commit/6ba65433d6743d336141e7351ee6267de42a0219))
-- **redis-smq-common:** update API reference ([c10163c](https://github.com/weyoss/redis-smq/commit/c10163c9a65970ee9ddb5f44ff1670b2dc91cd01))
+- improve README files for clarity ([2f30700](https://github.com/weyoss/redis-smq/commit/2f3070058b07425825ae91bdce52bbb2f4aa50aa))
+- **redis-smq-common:** update API reference ([ec6109e](https://github.com/weyoss/redis-smq/commit/ec6109e983be3f9ee22d927ff53bf2e935ed08e1))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** add 'set' method to IRedisTransaction interface ([b8130a1](https://github.com/weyoss/redis-smq/commit/b8130a1e0449ca48ea805706eabef2f9eb7fcf83))
+- **redis-smq-common:** add 'set' method to IRedisTransaction interface ([c2e138f](https://github.com/weyoss/redis-smq/commit/c2e138f5c50d861d2b42b673d4ca39fc5fd3d7f1))
 
 ## [9.0.10-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.3...v9.0.10-next.4) (2026-01-16)
 
 ### 📝 Documentation
 
-- adjust badges position to enhance page styling ([ef3e2fe](https://github.com/weyoss/redis-smq/commit/ef3e2fe19a1f61fb0cbd861090686c7ccfe3bbbe))
-- refine notifications for master and next branch clarity ([63fef1b](https://github.com/weyoss/redis-smq/commit/63fef1bd430680e0de7eba7fe2b8c8f82e821bb9))
+- adjust badges position to enhance page styling ([89309c6](https://github.com/weyoss/redis-smq/commit/89309c671d7e52265a4c6e0df4d6126e91b6e408))
+- refine notifications for master and next branch clarity ([e1e755e](https://github.com/weyoss/redis-smq/commit/e1e755e7086a98d4128ec3173c28056a8008acec))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** enhance class and type naming throughout codebase ([cf165b7](https://github.com/weyoss/redis-smq/commit/cf165b7d2ccaf28e808da54fcd27ff0a9de10fda))
+- **redis-smq-common:** enhance class and type naming throughout codebase ([5ce50ed](https://github.com/weyoss/redis-smq/commit/5ce50edfcd7bfda18036569cc0c9b2946aec5620))
 
 ## [9.0.10-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.2...v9.0.10-next.3) (2026-01-16)
 
 ### 🐛 Bug Fixes
 
-- **redis-smq-common:** resolve event emitter memory leak in piping, enhance worker architecture ([cfd58bb](https://github.com/weyoss/redis-smq/commit/cfd58bbd1abd0132cc7a7bc7b1d7b668fc995c52))
+- **redis-smq-common:** resolve event emitter memory leak in piping, enhance worker architecture ([b5f21a0](https://github.com/weyoss/redis-smq/commit/b5f21a09a57979e50f3fa7501621aafe314ef7e9))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** add class-based support for worker threads ([6d283d0](https://github.com/weyoss/redis-smq/commit/6d283d03301ec9b03cd46ab85cc37fcbd2c244b0))
-- **redis-smq-common:** clean up WorkerResourceGroup.shutDownWorkers() method ([edf2efd](https://github.com/weyoss/redis-smq/commit/edf2efdc5e6ffa2fea41c8b5a0914eea21c37c6f))
-- **redis-smq-common:** enhance Runnable base class implementation ([21e2d85](https://github.com/weyoss/redis-smq/commit/21e2d852ff94cfc38895bb618926818f96ed6d97))
+- **redis-smq-common:** add class-based support for worker threads ([bc6515c](https://github.com/weyoss/redis-smq/commit/bc6515c12a36727963f92476e60ab279eb4fb1f6))
+- **redis-smq-common:** clean up WorkerResourceGroup.shutDownWorkers() method ([c06954a](https://github.com/weyoss/redis-smq/commit/c06954a3f396e010dd49a2f264f3001ff90f1d80))
+- **redis-smq-common:** enhance Runnable base class implementation ([1e1717f](https://github.com/weyoss/redis-smq/commit/1e1717f3bba9f83f2d69fb2bdf9bda2ced03f3d3))
 
 ## [9.0.10-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.10-next.1...v9.0.10-next.2) (2026-01-10)
 
@@ -222,13 +222,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.9' into 'next' ([12dc2bc](https://github.com/weyoss/redis-smq/commit/12dc2bc7c5d88d5a62613db05e0b43aa3047ca1b))
+- update READMEs after merging 'v9.0.9' into 'next' ([f463934](https://github.com/weyoss/redis-smq/commit/f463934b59b6196d231e5552402f449d2b986a25))
 
 ## [9.0.9](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.5...v9.0.9) (2026-01-09)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([ebe66cc](https://github.com/weyoss/redis-smq/commit/ebe66cceb3c6e8067b0324c3e4076dfb496d49be))
+- update READMEs after merging 'origin/next' into 'master' ([c046d46](https://github.com/weyoss/redis-smq/commit/c046d462c3c9ee32cda218cbbbf24a93f4cee829))
 
 ## [9.0.9-next.5](https://github.com/weyoss/redis-smq/compare/v9.0.9-next.4...v9.0.9-next.5) (2026-01-09)
 
@@ -254,57 +254,57 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 🐛 Bug Fixes
 
-- **redis-smq-common:** include 'bin' directory in npm package ([71b1cb5](https://github.com/weyoss/redis-smq/commit/71b1cb5b9afe8625fd29d028cc022a94ff5d4a09))
+- **redis-smq-common:** include 'bin' directory in npm package ([b927668](https://github.com/weyoss/redis-smq/commit/b927668455b7290748831c2edcbd800acdd812d4))
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.8' into 'next' ([9ea29cc](https://github.com/weyoss/redis-smq/commit/9ea29cc2af7906285c5ccc675c65167d2e8005d6))
+- update READMEs after merging 'v9.0.8' into 'next' ([be16380](https://github.com/weyoss/redis-smq/commit/be16380741ba4625d1469aa3cc9d6075ead70e6f))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** enhance logger interface with child logger support ([f48345f](https://github.com/weyoss/redis-smq/commit/f48345fd7d2ed200a55257b1181d0a025bbcba31))
+- **redis-smq-common:** enhance logger interface with child logger support ([94c2f84](https://github.com/weyoss/redis-smq/commit/94c2f8479d089f91fc714a5630f11a15894bf16e))
 
 ## [9.0.8](https://github.com/weyoss/redis-smq/compare/v9.0.8-next.0...v9.0.8) (2026-01-04)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([5905226](https://github.com/weyoss/redis-smq/commit/59052262bd6b2077043ed6c74b7d0739a308dc0e))
+- update READMEs after merging 'origin/next' into 'master' ([9250c21](https://github.com/weyoss/redis-smq/commit/9250c21f14bf0ee8f64db057ccaac091ba202891))
 
 ## [9.0.8-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.7-next.0...v9.0.8-next.0) (2026-01-03)
 
 ### 📝 Documentation
 
-- fix markdown formatting and improve consistency ([382b3e8](https://github.com/weyoss/redis-smq/commit/382b3e8438826b6969d35cf9878fe0a61972ec03))
+- fix markdown formatting and improve consistency ([0639c66](https://github.com/weyoss/redis-smq/commit/0639c668dfdca90e9542c599ef6bc57b6179dda2))
 
 ## [9.0.7-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.6...v9.0.7-next.0) (2026-01-03)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.6' into 'next' ([ca76ab8](https://github.com/weyoss/redis-smq/commit/ca76ab8e5d1c313a9eaa17f034143d95cd98b94d))
+- update READMEs after merging 'v9.0.6' into 'next' ([d73c0e3](https://github.com/weyoss/redis-smq/commit/d73c0e336134566b7342fa23029cb78c28952d71))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** enhance error system with structured errors ([3c35d6e](https://github.com/weyoss/redis-smq/commit/3c35d6ee973fa7d786a77e9e0f543a8d2bfcb333))
+- **redis-smq-common:** enhance error system with structured errors ([e64f068](https://github.com/weyoss/redis-smq/commit/e64f06801db2e477f678d34b3e5853fc5be19c73))
 
 ## [9.0.6](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.2...v9.0.6) (2025-12-27)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([a1905cb](https://github.com/weyoss/redis-smq/commit/a1905cb56c43f62d9a4a41b82c319e17a9ef32e1))
+- update READMEs after merging 'origin/next' into 'master' ([173e226](https://github.com/weyoss/redis-smq/commit/173e2262de8da26d86b366c6edd94e166a092445))
 
 ## [9.0.6-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.1...v9.0.6-next.2) (2025-12-26)
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update class EventBus/EventBusRedis refs ([67726ab](https://github.com/weyoss/redis-smq/commit/67726ab6d4026548177861c9af8b73aebd8bbda4))
+- **redis-smq-common:** update class EventBus/EventBusRedis refs ([5a847df](https://github.com/weyoss/redis-smq/commit/5a847dfc40b7d623035f079d476122632d81e0fd))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** add namespace support to EventBus classes ([da4124d](https://github.com/weyoss/redis-smq/commit/da4124df63065dac73d950d298b9ddfa672c29ad))
+- **redis-smq-common:** add namespace support to EventBus classes ([bb455f9](https://github.com/weyoss/redis-smq/commit/bb455f96685f02fd10e2a126487f3750524bd0fc))
 
 ### ✅ Tests
 
-- **redis-smq-common:** add test for EventBus custom namespace usage ([54cd0b6](https://github.com/weyoss/redis-smq/commit/54cd0b6a653d1d743599b23ebf1a49e2f82e57a6))
+- **redis-smq-common:** add test for EventBus custom namespace usage ([3f736aa](https://github.com/weyoss/redis-smq/commit/3f736aaf7e7bdb191a15f80bb97b7e65d80cdcf5))
 
 ## [9.0.6-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.6-next.0...v9.0.6-next.1) (2025-12-25)
 
@@ -314,61 +314,61 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 🚀 Chore
 
-- fix outdated email address in different files ([ef0ec13](https://github.com/weyoss/redis-smq/commit/ef0ec13b7ea93de572b0913031bddf682dceb502))
-- update copyright info ([09c04af](https://github.com/weyoss/redis-smq/commit/09c04af231725845f05e1a781d3211e87ded0b91))
-- update READMEs after merging 'master' into 'next' ([7a7b35a](https://github.com/weyoss/redis-smq/commit/7a7b35a1a8171d70a2309bbb82b39ca5283b0499))
+- fix outdated email address in different files ([1690afe](https://github.com/weyoss/redis-smq/commit/1690afe67b467f59c0298d91e84009ec064a66f4))
+- update copyright info ([36bd6d8](https://github.com/weyoss/redis-smq/commit/36bd6d87854a07d4e694bddbf80bf8fd9da9a9b0))
+- update READMEs after merging 'master' into 'next' ([3c8846b](https://github.com/weyoss/redis-smq/commit/3c8846b35551620e77ad6ef0ac27ac8e6c2ab717))
 
 ### ✅ Tests
 
-- **redis-smq-common:** test async.series() error handling ([487b343](https://github.com/weyoss/redis-smq/commit/487b343aa8dd99f1b3f5aff9296f1071e40716e8))
+- **redis-smq-common:** test async.series() error handling ([53a53d7](https://github.com/weyoss/redis-smq/commit/53a53d7149b6ece2799155ba75bb3d1058b79f99))
 
 ## [9.0.5](https://github.com/weyoss/redis-smq/compare/v9.0.5-next.1...v9.0.5) (2025-12-15)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'next' into 'master' ([fd588f51](https://github.com/weyoss/redis-smq/commit/fd588f512c71160164728218df7e66eeefe32675))
+- update READMEs after merging 'next' into 'master' ([75334e3a](https://github.com/weyoss/redis-smq/commit/75334e3a337363ef8d949f4740887f6817d5cd18))
 
 ## [9.0.5-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.5-next.0...v9.0.5-next.1) (2025-12-14)
 
 ### 📝 Documentation
 
-- **redis-smq-common:** improve formatting ([d2e2015](https://github.com/weyoss/redis-smq/commit/d2e2015257d2b45c9c46183b8daaf87314c688f8))
+- **redis-smq-common:** improve formatting ([4eb04af](https://github.com/weyoss/redis-smq/commit/4eb04af18ce77effb252aef5d72d7cdc26472922))
 
 ## [9.0.5-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.4...v9.0.5-next.0) (2025-12-04)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.4' into 'next' ([9fce2ae](https://github.com/weyoss/redis-smq/commit/9fce2ae4158c1c2ca112a897e08d73913d1a7bd1))
+- update READMEs after merging 'v9.0.4' into 'next' ([f899525](https://github.com/weyoss/redis-smq/commit/f899525ff2a689e5189fa61e4a39829b4694f513))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update API reference ([5c61442](https://github.com/weyoss/redis-smq/commit/5c6144292169b47c37f401ac1f51d3af9bbfc9be))
+- **redis-smq-common:** update API reference ([a4e02cb](https://github.com/weyoss/redis-smq/commit/a4e02cba6b26a325cee839d7a309801448ba0b27))
 
 ## [9.0.4](https://github.com/weyoss/redis-smq/compare/v9.0.4-next.0...v9.0.4) (2025-11-13)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([9f03064](https://github.com/weyoss/redis-smq/commit/9f030649dc6fe369c0e49bd2843a9fcf05a1e68e))
+- update READMEs after merging 'origin/next' into 'master' ([f2dfdb8](https://github.com/weyoss/redis-smq/commit/f2dfdb8bfe73e1b04c47f5931fbcd9ca2f6596c3))
 
 ## [9.0.4-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.3...v9.0.4-next.0) (2025-11-11)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'v9.0.3' into 'next' ([5bc9ff0](https://github.com/weyoss/redis-smq/commit/5bc9ff0c9b8d8743a7613fbd499124dab05b1433))
+- update READMEs after merging 'v9.0.3' into 'next' ([d973314](https://github.com/weyoss/redis-smq/commit/d973314abddc2a5497b53b7a8e1ab3fdf785ebae))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq:** expand IRedisClient with additional Redis operations ([a282844](https://github.com/weyoss/redis-smq/commit/a282844a9b0e2c4b1c36b242f49788d16b2683a8))
+- **redis-smq:** expand IRedisClient with additional Redis operations ([25c9f7f](https://github.com/weyoss/redis-smq/commit/25c9f7fa8d03c5a0171ee8758640ede5f881c983))
 
 ### ✅ Tests
 
-- **redis-smq-common:** make scan operation tests more flexible ([7b54475](https://github.com/weyoss/redis-smq/commit/7b54475504ef262f18f81ffa951171176cef52c0))
+- **redis-smq-common:** make scan operation tests more flexible ([4aa1115](https://github.com/weyoss/redis-smq/commit/4aa1115aab0deacd3c6e0e0f6a5397e65f35d911))
 
 ## [9.0.3](https://github.com/weyoss/redis-smq/compare/v9.0.3-next.1...v9.0.3) (2025-11-10)
 
 ### 🚀 Chore
 
-- update READMEs after merging 'origin/next' into 'master' ([6a3d1ab](https://github.com/weyoss/redis-smq/commit/6a3d1ab48e5fc08b56e0a8ae12e70fc5ba9b55a7))
+- update READMEs after merging 'origin/next' into 'master' ([45472c2](https://github.com/weyoss/redis-smq/commit/45472c2cb1bec7c76fc2dd6db6449ed1a34f43cf))
 
 ## [9.0.3-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.3-next.0...v9.0.3-next.1) (2025-11-10)
 
@@ -378,40 +378,40 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- update README files ([aa98d75](https://github.com/weyoss/redis-smq/commit/aa98d752f69ed1593ae43f0e38b9df087b11d6de))
+- update README files ([cee0ef3](https://github.com/weyoss/redis-smq/commit/cee0ef3f71df2157c7b4a5845bfeb0ab413de4e9))
 
 ## [9.0.2](https://github.com/weyoss/redis-smq/compare/v9.0.2-next.1...v9.0.2) (2025-11-08)
 
 ### 📝 Documentation
 
-- update README files ([20d454a](https://github.com/weyoss/redis-smq/commit/20d454a7179f55132f5bdeb1d53603f945352bba))
+- update README files ([4473451](https://github.com/weyoss/redis-smq/commit/44734515d013dcab915d3877689b16900d032681))
 
 ## [9.0.2-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.2-next.0...v9.0.2-next.1) (2025-11-08)
 
 ### 🐛 Bug Fixes
 
-- update deps to resolve security vulnerabilities ([390d488](https://github.com/weyoss/redis-smq/commit/390d4880241c6bc3cf37e94d1b09f34197a7fa7b))
+- update deps to resolve security vulnerabilities ([eeec75f](https://github.com/weyoss/redis-smq/commit/eeec75fdb7813a05dabc332185416a1377c6e7dd))
 
 ### 📝 Documentation
 
-- update npm badge links to point to GitHub releases ([1eaee9e](https://github.com/weyoss/redis-smq/commit/1eaee9e1734b4e78ac56ca9853baac1d58dd2ec9))
+- update npm badge links to point to GitHub releases ([c6421ac](https://github.com/weyoss/redis-smq/commit/c6421acacfce4aec3950357e5e7543cda7c495c5))
 
 ## [9.0.2-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.1...v9.0.2-next.0) (2025-11-08)
 
 ### ✅ Tests
 
-- rename test_workspace_esm.sh to test-workspace-esm.sh ([4c56821](https://github.com/weyoss/redis-smq/commit/4c5682125c99949118141418c11bd296d2869172))
+- rename test_workspace_esm.sh to test-workspace-esm.sh ([8e22339](https://github.com/weyoss/redis-smq/commit/8e22339cf87b3abc3fe71ac61fd9d93a9e8be869))
 
 ### 📦‍ Build System
 
-- automate README.md files update ([9d54181](https://github.com/weyoss/redis-smq/commit/9d54181260e6615d176fe47b4786f8edb21c2911))
+- automate README.md files update ([7d4811f](https://github.com/weyoss/redis-smq/commit/7d4811f3d152feb7cb98298513425a2e0b1baf01))
 
 ## [9.0.1](https://github.com/weyoss/redis-smq/compare/v9.0.0...v9.0.1) (2025-11-07)
 
 ### 📝 Documentation
 
-- update install commands to use [@latest](https://github.com/latest) instead of [@next](https://github.com/next) ([353abe8](https://github.com/weyoss/redis-smq/commit/353abe893f457f706290c7c182a2b8bc07458dbe))
-- update README files for release v9 ([b838b11](https://github.com/weyoss/redis-smq/commit/b838b119323e9c73a420bef1d07a0d432f3607f0))
+- update install commands to use [@latest](https://github.com/latest) instead of [@next](https://github.com/next) ([07f2109](https://github.com/weyoss/redis-smq/commit/07f2109455120d8d314e594e6b3f35d0460e7c1d))
+- update README files for release v9 ([805886d](https://github.com/weyoss/redis-smq/commit/805886d41212b28eb537796c12f736fe9202e014))
 
 ## [9.0.0](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.18...v9.0.0) (2025-11-07)
 
@@ -421,14 +421,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- convert relative paths to absolute URLs in package READMEs ([ad5da5f](https://github.com/weyoss/redis-smq/commit/ad5da5f14aeb01822e560e7e15473dc27518e80a))
+- convert relative paths to absolute URLs in package READMEs ([1da8173](https://github.com/weyoss/redis-smq/commit/1da817349fed106e0551fdb069321609cc373c8c))
 
 ## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
 
 ### 📝 Documentation
 
-- **redis-smq-common:** restructure README, move details to separate files ([fbdc31d](https://github.com/weyoss/redis-smq/commit/fbdc31d336543a25ffa0f17d2cafeb6ca685134f))
-- standardize documentation links to use relative paths ([fc7c474](https://github.com/weyoss/redis-smq/commit/fc7c474bffbd2160fb9bb8727cec4bbdc5a23dc8))
+- **redis-smq-common:** restructure README, move details to separate files ([08c3605](https://github.com/weyoss/redis-smq/commit/08c3605380ce58af1a33833216d02187411a5521))
+- standardize documentation links to use relative paths ([56f25b2](https://github.com/weyoss/redis-smq/commit/56f25b2dfff77708bb99c94f9d3f72caa6b1105b))
 
 ## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
 
@@ -450,13 +450,13 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- fix license section formatting and standardize project names ([abbdbda](https://github.com/weyoss/redis-smq/commit/abbdbdae6fc42f0a9353b7cd786386a98e6e850d))
+- fix license section formatting and standardize project names ([9752491](https://github.com/weyoss/redis-smq/commit/9752491d72f19a5b470f95f6afb79bdb132b78f2))
 
 ## [9.0.0-next.11](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.10...v9.0.0-next.11) (2025-10-27)
 
 ### 🐛 Bug Fixes
 
-- correct codecov badge URL format ([3ebb5c8](https://github.com/weyoss/redis-smq/commit/3ebb5c8ba8a7f9902de054d7aaf0c1fc572fb9a6))
+- correct codecov badge URL format ([2b9e3f0](https://github.com/weyoss/redis-smq/commit/2b9e3f09d923d6e2310ef447bc1be60180af200d))
 
 ## [9.0.0-next.10](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.9...v9.0.0-next.10) (2025-10-26)
 
@@ -466,7 +466,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- **redis-smq-common:** standardize markdown formatting in API documentation ([445296c](https://github.com/weyoss/redis-smq/commit/445296cd091e1e6a77116238cc4b0327323f9f8a))
+- **redis-smq-common:** standardize markdown formatting in API documentation ([7509e66](https://github.com/weyoss/redis-smq/commit/7509e662c5ff8e04fa9c53deaa8696ebdbebc1d8))
 
 ## [9.0.0-next.8](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.7...v9.0.0-next.8) (2025-10-18)
 
@@ -484,14 +484,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- add GitHub note callouts in README files ([86e855a](https://github.com/weyoss/redis-smq/commit/86e855ae7aea91e3295301671b8da3249164ea40))
-- **redis-smq-common:** update docs and clean up ([21cedc6](https://github.com/weyoss/redis-smq/commit/21cedc648fb8df7cc58ea44fe16790ccacbb92a5))
-- standardize "next" branch reference ([15f3e4f](https://github.com/weyoss/redis-smq/commit/15f3e4f4347fd4f76f9dc167dd72f174f178ab8e))
-- update README files for next branch with pre-release badges and doc links ([463250b](https://github.com/weyoss/redis-smq/commit/463250bbd754d44ae6741abcf4e2d62995aef620))
+- add GitHub note callouts in README files ([4c42582](https://github.com/weyoss/redis-smq/commit/4c42582dbfa3349a3d414a39a1f41a1e372913c0))
+- **redis-smq-common:** update docs and clean up ([6e21508](https://github.com/weyoss/redis-smq/commit/6e21508c6cf3c0ab868a4637b82bd5707bc406bb))
+- standardize "next" branch reference ([ba24b3b](https://github.com/weyoss/redis-smq/commit/ba24b3bac54af4c2658699e0866c27bec4febdfc))
+- update README files for next branch with pre-release badges and doc links ([005ccf4](https://github.com/weyoss/redis-smq/commit/005ccf411df460984615a4101b385a2d8023dab5))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** upgrade node-redis client to v5 ([0746f52](https://github.com/weyoss/redis-smq/commit/0746f52a3080bb80398b4a8ce8847910806363ab))
+- **redis-smq-common:** upgrade node-redis client to v5 ([82a0171](https://github.com/weyoss/redis-smq/commit/82a0171171240d526e45f7991c71cca2a8f66683))
 
 ## [9.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-10-09)
 
@@ -502,38 +502,38 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### ✨ Features
 
-- **redis-smq-common:** add child logger creation ([20c4c80](https://github.com/weyoss/redis-smq/commit/20c4c803ee48f3bf9aeb3c23e9846adfa1138bb8))
-- **redis-smq-common:** add WATCH/MULTI/EXEC transaction helper with retry logic ([7d8420b](https://github.com/weyoss/redis-smq/commit/7d8420bf356532c56cc8ebefb0754c79ae4bb16f))
+- **redis-smq-common:** add child logger creation ([ee2d70d](https://github.com/weyoss/redis-smq/commit/ee2d70d68645a48612270033046855c975cffb9b))
+- **redis-smq-common:** add WATCH/MULTI/EXEC transaction helper with retry logic ([60f3ef9](https://github.com/weyoss/redis-smq/commit/60f3ef929f77cc68d73848c05b98b386ed099594))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** add API documentation for WATCH transaction helper ([053ada5](https://github.com/weyoss/redis-smq/commit/053ada52cfe52f2c57123647d81826e89e20d8e1))
-- **redis-smq-common:** restructure and expand logger documentation ([1b2e341](https://github.com/weyoss/redis-smq/commit/1b2e34106b42a91289fa373c855076ec295dedf3))
-- **redis-smq-common:** update API reference ([be62a09](https://github.com/weyoss/redis-smq/commit/be62a09a5748743ae89c143925c22e8db7b15aea))
-- **redis-smq-common:** update error classes reference ([f74e2d4](https://github.com/weyoss/redis-smq/commit/f74e2d47eb028917f6a1917f33b6226cd5233d59))
-- **redis-smq-common:** update Redis client documentation ([78abf35](https://github.com/weyoss/redis-smq/commit/78abf35841fd8fe78f0217916ba0b8d0dd1a165f))
+- **redis-smq-common:** add API documentation for WATCH transaction helper ([12d51ae](https://github.com/weyoss/redis-smq/commit/12d51ae27cebbe846939b9a0910b24d288903632))
+- **redis-smq-common:** restructure and expand logger documentation ([912ce54](https://github.com/weyoss/redis-smq/commit/912ce547957ef7592313c9bee71e81008930a634))
+- **redis-smq-common:** update API reference ([9f4cf94](https://github.com/weyoss/redis-smq/commit/9f4cf9428e8824f98fbbb24f62971c2f7151e6a2))
+- **redis-smq-common:** update error classes reference ([6db6516](https://github.com/weyoss/redis-smq/commit/6db651642ccf86e7f1c8f5f54e92fb8d2ceafcc1))
+- **redis-smq-common:** update Redis client documentation ([145c5a3](https://github.com/weyoss/redis-smq/commit/145c5a3ff89f7c850b3327eb2d2bfebf72c2da4e))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** clean up ConsoleLogger ([7900592](https://github.com/weyoss/redis-smq/commit/7900592344cbffad324705edc311ea5b8c98f26f))
-- **redis-smq-common:** consolidate Redis client creation logic into factory class ([0742c5d](https://github.com/weyoss/redis-smq/commit/0742c5d0be7c0bc6a3b8b5c07d576ab09d32a97d))
-- **redis-smq-common:** redesign event bus architecture with Runnable base class ([1e5fcb4](https://github.com/weyoss/redis-smq/commit/1e5fcb46905b6374109762258562f08c2d0f0e7c))
-- **redis-smq-common:** remove isFormatted method ([cd3523c](https://github.com/weyoss/redis-smq/commit/cd3523cfa80e792ef45b817f408903dd970a3546))
-- **redis-smq-common:** simplify logger architecture, improve namespace handling ([64d30c2](https://github.com/weyoss/redis-smq/commit/64d30c2ab0ecb59aefc939e89d1d6b3cac390c61))
-- **redis-smq-common:** update copyright headers ([d14cde3](https://github.com/weyoss/redis-smq/commit/d14cde3e13d3d28b8a3868d07a0b7b1098cd1cd2))
-- **redis-smq-common:** update test utilities to use RedisClientFactory ([fa077d5](https://github.com/weyoss/redis-smq/commit/fa077d506f6d04231e1c5454b93ab196e664c833))
-- **redis-smq-common:** use RedisClientFactory in EventBusRedis ([b7a16c6](https://github.com/weyoss/redis-smq/commit/b7a16c640814d817b1f8bfeb881e9543ff93ef17))
-- **redis-smq:** integrate connection pooling and reorganize error handling ([fa61afb](https://github.com/weyoss/redis-smq/commit/fa61afbd7c2538383b086c200b275749c5b96314))
+- **redis-smq-common:** clean up ConsoleLogger ([0d71a78](https://github.com/weyoss/redis-smq/commit/0d71a786f88f8fa50932375c4235af5a83dccb95))
+- **redis-smq-common:** consolidate Redis client creation logic into factory class ([46804f8](https://github.com/weyoss/redis-smq/commit/46804f899055dc49a45c4920011a0e0ee95e54ca))
+- **redis-smq-common:** redesign event bus architecture with Runnable base class ([8ae3bfd](https://github.com/weyoss/redis-smq/commit/8ae3bfd3e0d46692e6b32a5c90714fcf332f338c))
+- **redis-smq-common:** remove isFormatted method ([e09d4b0](https://github.com/weyoss/redis-smq/commit/e09d4b0466233ed238efd35a86a19c9408fabfb9))
+- **redis-smq-common:** simplify logger architecture, improve namespace handling ([dad6399](https://github.com/weyoss/redis-smq/commit/dad6399b2c3605ba24a1763f602af3e1cd949911))
+- **redis-smq-common:** update copyright headers ([6bde3d9](https://github.com/weyoss/redis-smq/commit/6bde3d9a1adb73e60df83291b7566f4cd1961725))
+- **redis-smq-common:** update test utilities to use RedisClientFactory ([bc2adf8](https://github.com/weyoss/redis-smq/commit/bc2adf8557603ed26b55fe853b9d05eebb7b17ed))
+- **redis-smq-common:** use RedisClientFactory in EventBusRedis ([e834484](https://github.com/weyoss/redis-smq/commit/e8344848b3dee1b28a772681e8739963efafac83))
+- **redis-smq:** integrate connection pooling and reorganize error handling ([af20b9c](https://github.com/weyoss/redis-smq/commit/af20b9c4438d26bd51608d36ca7177f6ed097866))
 
 ## [9.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-09-09)
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update console logger documentation ([be75a62](https://github.com/weyoss/redis-smq/commit/be75a622faeb36cb198e4de84cba076d4cc157f1))
+- **redis-smq-common:** update console logger documentation ([029500b](https://github.com/weyoss/redis-smq/commit/029500b912523f96f9614729639aa4d6dabf0cf3))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** remove custom date format support from console logger ([92f8dd9](https://github.com/weyoss/redis-smq/commit/92f8dd9eec5baf162fce3974c0d69c41595b5164))
+- **redis-smq-common:** remove custom date format support from console logger ([866f0e3](https://github.com/weyoss/redis-smq/commit/866f0e37c9cbe2f428856f223322ea83969be5cd))
 
 ## [9.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-09-07)
 
@@ -547,14 +547,14 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📝 Documentation
 
-- **redis-smq-common:** add missing copyright headers ([c44887a](https://github.com/weyoss/redis-smq/commit/c44887a437e131334bb096547d2eb8df7e8f50fd))
-- **redis-smq-common:** improve documentation ([6d7a5a9](https://github.com/weyoss/redis-smq/commit/6d7a5a96f6e268e96d2b47b2b6f564f760ed31af))
-- **redis-smq-common:** update API documentation format and structure ([46a8c66](https://github.com/weyoss/redis-smq/commit/46a8c6674b69e1933b0797ca6005153099d82b8b))
+- **redis-smq-common:** add missing copyright headers ([4469fc9](https://github.com/weyoss/redis-smq/commit/4469fc96d7400109b395f791772fd09373e5935b))
+- **redis-smq-common:** improve documentation ([5325965](https://github.com/weyoss/redis-smq/commit/5325965db4440927f831413e91aaa9367b268a25))
+- **redis-smq-common:** update API documentation format and structure ([38454e5](https://github.com/weyoss/redis-smq/commit/38454e5f5bcfc5793a706e48d3305c6e537fcdad))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** improve package.json metadata ([7ba7535](https://github.com/weyoss/redis-smq/commit/7ba753578636f3002f8ccaa115fe7ad3f4e91550))
-- **redis-smq-common:** improve script loading to support multi-file scripts ([581855a](https://github.com/weyoss/redis-smq/commit/581855a281795368e93dbc36c9dba90b3681dc34))
+- **redis-smq-common:** improve package.json metadata ([f99f6eb](https://github.com/weyoss/redis-smq/commit/f99f6eb5e2900c497d306b5f7b67a46139126dde))
+- **redis-smq-common:** improve script loading to support multi-file scripts ([fa4b522](https://github.com/weyoss/redis-smq/commit/fa4b52293df6ea22f8404bf8d24d92c6e28b4cd8))
 
 ## [8.3.1](https://github.com/weyoss/redis-smq/compare/v8.3.0...v8.3.1) (2025-05-06)
 
@@ -564,62 +564,62 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### ✨ Features
 
-- **redis-smq-common:** implement additional async utilities and factories ([030d2ec](https://github.com/weyoss/redis-smq/commit/030d2ec849315bb381593fb9781839937761b66e))
+- **redis-smq-common:** implement additional async utilities and factories ([7358db6](https://github.com/weyoss/redis-smq/commit/7358db6e08451de6ea2b480de8c36898c4e56a6f))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update ConsoleLogger constructor description ([f777ec6](https://github.com/weyoss/redis-smq/commit/f777ec63e2a963e32f1663c4571a878fa636f114))
+- **redis-smq-common:** update ConsoleLogger constructor description ([10f085a](https://github.com/weyoss/redis-smq/commit/10f085a547f19303f281b477afc9de639b8a2657))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** improve Redis server platform support and constants organization ([d542a0a](https://github.com/weyoss/redis-smq/commit/d542a0ac7ae0c0a7ada81b60f5da347b44129792))
+- **redis-smq-common:** improve Redis server platform support and constants organization ([732fdb0](https://github.com/weyoss/redis-smq/commit/732fdb0e860433df6b64ab270f54581aabe7cd44))
 
 ## [8.2.1](https://github.com/weyoss/redis-smq/compare/v8.2.0...v8.2.1) (2025-04-22)
 
 ### 🐛 Bug Fixes
 
-- **redis-smq-common:** set default log level to INFO ([bbd6952](https://github.com/weyoss/redis-smq/commit/bbd6952938ce8f2633a54bc3384e97dee873a820))
+- **redis-smq-common:** set default log level to INFO ([98a66d4](https://github.com/weyoss/redis-smq/commit/98a66d4953f89662faac695c113bce220678a26b))
 
 ## [8.2.0](https://github.com/weyoss/redis-smq/compare/v8.1.0...v8.2.0) (2025-04-20)
 
 ### ✨ Features
 
-- **redis-smq-common:** implement ConsoleLogger and improve logging ([37122c2](https://github.com/weyoss/redis-smq/commit/37122c240d2fce3aebd74c8b82166503c2bf4eaf))
+- **redis-smq-common:** implement ConsoleLogger and improve logging ([95024ca](https://github.com/weyoss/redis-smq/commit/95024caef5aa77ad7a14d8ebed18691fcb61af28))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** enhance logger documentation and add ConsoleLogger API reference ([e6299d7](https://github.com/weyoss/redis-smq/commit/e6299d7d0c72eebd4273307b855e6538d3fac280))
+- **redis-smq-common:** enhance logger documentation and add ConsoleLogger API reference ([f76725e](https://github.com/weyoss/redis-smq/commit/f76725e733dbb895fd791526a0e31208394d6484))
 
 ### ✅ Tests
 
-- **redis-smq-common:** enhance logger tests ([98a275b](https://github.com/weyoss/redis-smq/commit/98a275b8528ae9ebd64e4a139867a4d8c0724d0f))
+- **redis-smq-common:** enhance logger tests ([4c5e942](https://github.com/weyoss/redis-smq/commit/4c5e94261c9bc17c8423fded8c32ed246d5373fc))
 
 ## [8.1.0](https://github.com/weyoss/redis-smq/compare/v8.0.3...v8.1.0) (2025-04-16)
 
 ### ✨ Features
 
-- **redis-smq-common:** add scard method to Redis client ([fc0243c](https://github.com/weyoss/redis-smq/commit/fc0243ca8fda486685589f0efd97d43c932e6750))
+- **redis-smq-common:** add scard method to Redis client ([2ef536f](https://github.com/weyoss/redis-smq/commit/2ef536f19968983ea82a055748b4860573ce3926))
 
 ### 📝 Documentation
 
-- **redis-smq:** update documentation and interfaces ([f917cd9](https://github.com/weyoss/redis-smq/commit/f917cd92b1edfb33190f25feec5577538a64517a))
+- **redis-smq:** update documentation and interfaces ([3cf744a](https://github.com/weyoss/redis-smq/commit/3cf744ad9d1996eeac58d4765bde2d33595ba309))
 
 ## [8.0.3](https://github.com/weyoss/redis-smq/compare/v8.0.2...v8.0.3) (2025-04-14)
 
 ### 🚀 Chore
 
-- **redis-smq-common:** enhance Redis server management with CLI and scripts ([1fec53e](https://github.com/weyoss/redis-smq/commit/1fec53eb25dd16ea28efaf2a5b31eeab09539ec4))
+- **redis-smq-common:** enhance Redis server management with CLI and scripts ([73074ce](https://github.com/weyoss/redis-smq/commit/73074cef7a04e93ad6db2a3c3717411d5cfe118b))
 
 ## [8.0.2](https://github.com/weyoss/redis-smq/compare/v8.0.1...v8.0.2) (2025-04-14)
 
 ### 🚀 Chore
 
-- **redis-smq-common:** update Valkey server binary URLs to v7.2.8-2 ([e6b9b8d](https://github.com/weyoss/redis-smq/commit/e6b9b8d31af9d321b3ad208bebabd09171932822))
+- **redis-smq-common:** update Valkey server binary URLs to v7.2.8-2 ([5e821a3](https://github.com/weyoss/redis-smq/commit/5e821a3952d128a502f2bfcd3026e8175e48434e))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** update package description and documentation link ([3a5d91c](https://github.com/weyoss/redis-smq/commit/3a5d91c05faed92c395eaa541c346d8ecb5273b7))
-- reorganize and enhance documentation across packages ([212fe75](https://github.com/weyoss/redis-smq/commit/212fe75143f1c446045c346e460065215e98f1d7))
+- **redis-smq-common:** update package description and documentation link ([54e6e54](https://github.com/weyoss/redis-smq/commit/54e6e544ca1740e82f226d3681c96b1212429297))
+- reorganize and enhance documentation across packages ([128d333](https://github.com/weyoss/redis-smq/commit/128d33329adc9e4659a07f42fc552ede618e1a57))
 
 ## [8.0.1](https://github.com/weyoss/redis-smq/compare/v8.0.0...v8.0.1) (2025-04-13)
 
@@ -637,26 +637,26 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### ✨ Features
 
-- **redis-smq-common:** add options to build/download Redis binary ([f00df37](https://github.com/weyoss/redis-smq/commit/f00df374184f8baa70e44f7d28398802cc1492d6))
+- **redis-smq-common:** add options to build/download Redis binary ([2021a63](https://github.com/weyoss/redis-smq/commit/2021a634932ba936bce268914c0bacaa47799545))
 
 ### 📝 Documentation
 
-- **redis-smq-common:** clarify FileLock method descriptions ([3578221](https://github.com/weyoss/redis-smq/commit/35782211cc263192e2ed91ef54ba3e78dcb3194e))
-- **redis-smq-common:** clean up redis-client.md ([e0b31b4](https://github.com/weyoss/redis-smq/commit/e0b31b414485acf74c250e812ddc40c0edd63aa1))
-- **redis-smq-common:** fix capitalization of FileLock in README ([2d448e0](https://github.com/weyoss/redis-smq/commit/2d448e0ee73e9eea7809a4586774ede2f0a1e9e9))
-- **redis-smq-common:** fix typo in redis-server.md ([2657b3b](https://github.com/weyoss/redis-smq/commit/2657b3b56e8b259650180912e26f0f063edae34c))
-- **redis-smq-common:** improve documentation structure ([975b696](https://github.com/weyoss/redis-smq/commit/975b696db60cf152244ffef1c09642aa93d3732f))
+- **redis-smq-common:** clarify FileLock method descriptions ([86e44ba](https://github.com/weyoss/redis-smq/commit/86e44ba4cbc07d2c9a12912cf40df2f58b6f7ef8))
+- **redis-smq-common:** clean up redis-client.md ([b6cd1b0](https://github.com/weyoss/redis-smq/commit/b6cd1b035f11a4badf02288439e46f4aa8ca0a68))
+- **redis-smq-common:** fix capitalization of FileLock in README ([3bbf562](https://github.com/weyoss/redis-smq/commit/3bbf56274510b08a813f32072ba3f4b350bea156))
+- **redis-smq-common:** fix typo in redis-server.md ([65f56f7](https://github.com/weyoss/redis-smq/commit/65f56f7555dc08e4819d2fc57d160290564707c0))
+- **redis-smq-common:** improve documentation structure ([8b4e6f7](https://github.com/weyoss/redis-smq/commit/8b4e6f7806ba5182d312e3321b35254ea3b4a9f9))
 
 ### ♻️ Code Refactoring
 
-- **redis-smq-common:** download and use pre-built Redis binaries ([9a3d244](https://github.com/weyoss/redis-smq/commit/9a3d244599b97732bfaa544e44fa7b39fddaef56))
-- **redis-smq-common:** implement FileLock class with improved locking mechanism ([77c1cff](https://github.com/weyoss/redis-smq/commit/77c1cffae9071ea275afaa28964d1b684490b653))
-- **redis-smq-common:** rename createClient ([7d748d8](https://github.com/weyoss/redis-smq/commit/7d748d8f9cc364df8e81aaf7506ee63a66702fcb))
-- **redis-smq-common:** shorten imports ([21ec49a](https://github.com/weyoss/redis-smq/commit/21ec49ae23418b917d68bac2a711545db43f1bad))
+- **redis-smq-common:** download and use pre-built Redis binaries ([e71be54](https://github.com/weyoss/redis-smq/commit/e71be54919f185613fffb08a7c977700fea9fbf6))
+- **redis-smq-common:** implement FileLock class with improved locking mechanism ([ac5469a](https://github.com/weyoss/redis-smq/commit/ac5469a0d75254c6b7981ecec7973c50b31ff01d))
+- **redis-smq-common:** rename createClient ([e8eb7fc](https://github.com/weyoss/redis-smq/commit/e8eb7fcf77e753ed83ef09c4a9e7f2d04a69b442))
+- **redis-smq-common:** shorten imports ([80f72c5](https://github.com/weyoss/redis-smq/commit/80f72c5c8d12219a36419dbd7365779a9d533742))
 
 ### ✅ Tests
 
-- **redis-smq-common:** use os.tmpdir() for test lock files ([f33b738](https://github.com/weyoss/redis-smq/commit/f33b738cc9f2b2adb7ece1f5154fc7255709120e))
+- **redis-smq-common:** use os.tmpdir() for test lock files ([b78d75b](https://github.com/weyoss/redis-smq/commit/b78d75be15b49fee3c5cddb27740f9468d44741f))
 
 ## [8.0.0-rc.35](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.34...v8.0.0-rc.35) (2025-03-22)
 
@@ -666,19 +666,19 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 📦‍ Build System
 
-- update repository links and issue tracking ([de60250](https://github.com/weyoss/redis-smq/commit/de60250675b57213408e8580f90ed43f71856b0f))
+- update repository links and issue tracking ([dba6935](https://github.com/weyoss/redis-smq/commit/dba69352c507b9e2ed963b1af074fa362cd2554d))
 
 ## [8.0.0-rc.33](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.32...v8.0.0-rc.33) (2025-03-22)
 
 ### 📦‍ Build System
 
-- update .npmignore files to properly include source files ([8c7ec7d](https://github.com/weyoss/redis-smq/commit/8c7ec7d9d98f51d346167c7d723fd4d78705430b))
+- update .npmignore files to properly include source files ([0be9bc3](https://github.com/weyoss/redis-smq/commit/0be9bc3832f4953d7ddb67ba9bd18971e408092c))
 
 ## [8.0.0-rc.32](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.31...v8.0.0-rc.32) (2025-03-22)
 
 ### 📦‍ Build System
 
-- update .npmignore files to include only essential files ([9f537a0](https://github.com/weyoss/redis-smq/commit/9f537a06e1bebfacc1204698c6f3f15afcf768e3))
+- update .npmignore files to include only essential files ([6f7e7d8](https://github.com/weyoss/redis-smq/commit/6f7e7d83f655d4b47fc971dbf6fb2dfc7b531b6d))
 
 ## [8.0.0-rc.31](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.30...v8.0.0-rc.31) (2025-03-22)
 
@@ -688,21 +688,21 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### ♻️ Code Refactoring
 
-- merge redis-server and net utils into redis-smq-common ([3591e20](https://github.com/weyoss/redis-smq/commit/3591e2060dec07ed05d13dba7b3a6154b5bc8057))
+- merge redis-server and net utils into redis-smq-common ([9340e57](https://github.com/weyoss/redis-smq/commit/9340e578677796daf7dc2ffe5f7d5127072c61b7))
 
 ## [8.0.0-rc.30](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.29...v8.0.0-rc.30) (2025-03-21)
 
 ### 🚀 Chore
 
-- migrate to monorepo structure ([8ef9888](https://github.com/weyoss/redis-smq/commit/8ef988862cedd84eddbd3e4eb5e2f50d575fe30f))
+- migrate to monorepo structure ([37e0142](https://github.com/weyoss/redis-smq/commit/37e0142cfc140990d9367ee260ba2b08a82d626a))
 
 ### 📝 Documentation
 
-- update README files with latest release and coverage badges ([0efb786](https://github.com/weyoss/redis-smq/commit/0efb7863a58bf8b2ec43cfe5b46b016c9a40b0fe))
+- update README files with latest release and coverage badges ([8eabf08](https://github.com/weyoss/redis-smq/commit/8eabf08d53fdf313d0e2708672f89c5386700ef6))
 
 ### ✅ Tests
 
-- remove unused data directory parameter from startRedisServer ([46af2f4](https://github.com/weyoss/redis-smq/commit/46af2f40585cc4387a070f3d6c76d95d12a84ba7))
+- remove unused data directory parameter from startRedisServer ([c1572b4](https://github.com/weyoss/redis-smq/commit/c1572b4ddae7e37a9ad70fed7eac3d6291df9ddd))
 
 ## [3.0.0-rc.17](https://github.com/weyoss/redis-smq-common/compare/v3.0.0-rc.16...v3.0.0-rc.17) (2025-02-13)
 
