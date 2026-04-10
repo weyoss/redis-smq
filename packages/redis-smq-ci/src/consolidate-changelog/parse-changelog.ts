@@ -20,7 +20,7 @@ export function parseChangelog(content: string): Map<string, IChangelogEntry> {
   let currentSection: string | null = null;
 
   for (const line of lines) {
-    const versionMatch = line.match(/^## \[([^\]]+)\]\([^)]+\) \(([^)]+)\)/);
+    const versionMatch = line.match(/^## \[([^\]]+)]\([^)]+\) \(([^)]+)\)/);
     if (versionMatch) {
       if (currentEntry) {
         entries.set(currentEntry.version, currentEntry);

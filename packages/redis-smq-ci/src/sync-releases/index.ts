@@ -7,6 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export * from './consolidate-changelog/index.js';
-export * from './sync-releases/index.js';
-export * from './update-changelog-hashes/index.js';
+export * from './types/index.js';
+export * from './sync-releases.js';
