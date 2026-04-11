@@ -60,7 +60,9 @@
     "redis:start": "scripts/redis.sh start",
     "redis:download": "scripts/redis.sh download",
     "redis:build": "scripts/redis.sh build",
-    "changelog": "scripts/consolidate_changelog.sh"
+    "changelog:consolidate": "scripts/consolidate_changelog.sh",
+    "changelog:update-hashes": "scripts/update_changelog_hashes.sh",
+    "gh:sync-releases": "scripts/sync_gh_releases.sh"
   },
   "lint-staged": {
     "*": "scripts/lint.sh"
