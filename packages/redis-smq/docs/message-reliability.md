@@ -105,6 +105,7 @@ Messages that exceed retry limits are moved to a dead letter queue:
 const config = {
   messageAudit: {
     deadLetteredMessages: {
+      enabled: true,
       queueSize: 10000, // Keep last 10,000 failed messages
       expire: 604800, // Keep for 7 days
     },

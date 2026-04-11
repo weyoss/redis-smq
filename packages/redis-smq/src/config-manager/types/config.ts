@@ -53,25 +53,27 @@ export interface IRedisSMQConfig {
    * @example
    * ```typescript
    * // Enable audit for all processed messages (unlimited storage)
-   * const config = {
+   * let config = {
    *   messageAudit: true
    * };
    *
    * // Enable audit only for dead-lettered messages
-   * const config = {
+   * config = {
    *   messageAudit: {
    *     deadLetteredMessages: true
    *   }
    * };
    *
    * // Enable audit with storage limits
-   * const config = {
+   * config = {
    *   messageAudit: {
    *     acknowledgedMessages: {
+   *       enabled: true,
    *       queueSize: 5000,        // track last 5,000 message IDs per queue
    *       expire: 12 * 60 * 60    // retain for 12 hours
    *     },
    *     deadLetteredMessages: {
+   *       enabled: true,
    *       queueSize: 10000,       // track last 10,000 message IDs per queue
    *       expire: 7 * 24 * 60 * 60 // retain for 7 days
    *     }
