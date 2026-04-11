@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.1.0-next.0...v10.1.0-next.1) (2026-04-11)
+
+### 📝 Documentation
+
+- update changelog commit hashes after email change ([ce13adf](https://github.com/weyoss/redis-smq/commit/ce13adfc8cf2e9a5b7f2573a413e534ed4cafec3))
+
 ## [10.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.0.0...v10.1.0-next.0) (2026-04-07)
 
 ### 📝 Documentation

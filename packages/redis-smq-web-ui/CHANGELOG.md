@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.0-next.1](https://github.com/weyoss/redis-smq/compare/v10.1.0-next.0...v10.1.0-next.1) (2026-04-11)
+
+### 📝 Documentation
+
+- update changelog commit hashes after email change ([ce13adf](https://github.com/weyoss/redis-smq/commit/ce13adfc8cf2e9a5b7f2573a413e534ed4cafec3))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** remove unused QueuePropertiesCard component ([89cf01d](https://github.com/weyoss/redis-smq/commit/89cf01d988e9ebf38eb9e3343e00d74b16d427f8))
+- **redis-smq-web-ui:** unify all message views into single MessagesView ([5b9f177](https://github.com/weyoss/redis-smq/commit/5b9f17789fe6fa70e09a27a2df434c649484bf7b))
+
 ## [10.1.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.0.0...v10.1.0-next.0) (2026-04-07)
 
 ### ✨ Features

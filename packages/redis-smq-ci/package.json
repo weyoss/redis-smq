@@ -1,7 +1,7 @@
 {
   "name": "redis-smq-ci",
   "private": true,
-  "version": "10.1.0-next.0",
+  "version": "10.1.0-next.1",
   "description": "CLI tools for RedisSMQ",
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
