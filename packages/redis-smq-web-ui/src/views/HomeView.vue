@@ -24,6 +24,7 @@ import {
 } from '@/api/generated/queue-consumers/queue-consumers.ts';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
 import { useTypedRouter } from '@/router/useTypeRouter.ts';
+import type { IQueueParams } from '@/types';
 
 const router = useTypedRouter();
 const queryClient = useQueryClient();
@@ -179,6 +180,15 @@ const loadDashboardData = async () => {
 onMounted(() => {
   loadDashboardData();
 });
+
+const onQueueCreated = (queue: IQueueParams) => {
+  router.push('queue', {
+    params: {
+      ns: queue.ns,
+      queue: queue.name,
+    },
+  });
+};
 </script>
 
 <template>
@@ -354,7 +364,7 @@ onMounted(() => {
     <CreateQueueModal
       :is-visible="showCreateQueueModal"
       @close="showCreateQueueModal = false"
-      @created="loadDashboardData"
+      @created="onQueueCreated"
     />
   </div>
 </template>
