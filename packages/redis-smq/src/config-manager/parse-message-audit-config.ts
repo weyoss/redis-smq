@@ -15,9 +15,9 @@ import {
 } from '../errors/index.js';
 import {
   IMessageAuditConfig,
-  IMessageAuditParsedConfig,
-  IMessageAuditMessagesConfig,
   IMessageAuditHistoryConfig,
+  IMessageAuditMessagesConfig,
+  IMessageAuditParsedConfig,
 } from './types/index.js';
 
 function validateNumericValue(value: unknown): number | false {

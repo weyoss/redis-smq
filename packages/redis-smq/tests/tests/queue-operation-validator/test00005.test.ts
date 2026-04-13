@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, test, describe, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import {
   createQueue,
   getDefaultQueue,

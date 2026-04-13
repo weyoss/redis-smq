@@ -2,29 +2,21 @@
 
 # Class: MessageManager
 
-The MessageManager class provides methods for interacting with Redis-SMQ messages.
-It utilizes the RedisClient to perform operations on Redis.
+Manages individual message operations.
 
-This class allows you to inspect, modify, and manage individual messages
-across the system, regardless of their current state or queue location.
+Provides methods to get, delete, and requeue messages by ID,
+plus status and state inspection.
 
 ## Example
 
-```typescript
+```ts
 const messageManager = new MessageManager();
 
-// Using callback
-messageManager.getMessageStatus('msg-123', (err, status) => {
-  if (err) {
-    console.error('Failed to get message status:', err);
-  } else {
-    console.log('Message status:', status);
-  }
-});
-
-// Using promise
+// Get message status
 const status = await messageManager.getMessageStatus('msg-123');
-console.log('Message status:', status);
+
+// Requeue a message
+const newId = await messageManager.requeueMessageById('msg-123');
 ```
 
 ## Constructors
@@ -47,58 +39,31 @@ console.log('Message status:', status);
 
 Deletes a single message by its ID.
 
-This method permanently removes a single message from the system.
-It's a convenience wrapper around `deleteMessagesByIds`.
-
 ##### Parameters
 
 ###### id
 
 `string`
 
-The ID of the message to delete
+Message ID
 
 ##### Returns
 
 `Promise`\<[`IMessageManagerDeleteResponse`](../interfaces/IMessageManagerDeleteResponse.md)\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the associated queue is locked.
-
-##### Throws
-
-When the queue is in an invalid state.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const result = await messageManager.deleteMessageById('msg-123');
 
-// Callback pattern
-messageManager.deleteMessageById('msg-123', (err, response) => {
-  if (err) {
-    console.error('Failed to delete message:', err);
-  } else {
-    console.log(`Message deleted: ${response.deletedIds[0]}`);
-  }
+// Callback
+messageManager.deleteMessageById('msg-123', (err, result) => {
+  if (err) throw err;
+  console.log(result);
 });
-
-// Promise pattern
-async function deleteIfFailed(messageId: string) {
-  try {
-    const status = await messageManager.getMessageStatus(messageId);
-    if (status === EMessagePropertyStatus.DEAD_LETTERED) {
-      await messageManager.deleteMessageById(messageId);
-      console.log(`Deleted dead-lettered message: ${messageId}`);
-    }
-  } catch (err) {
-    console.error('Failed to delete message:', err);
-  }
-}
 ```
 
 #### Call Signature
@@ -107,64 +72,37 @@ async function deleteIfFailed(messageId: string) {
 
 Deletes a single message by its ID.
 
-This method permanently removes a single message from the system.
-It's a convenience wrapper around `deleteMessagesByIds`.
-
 ##### Parameters
 
 ###### id
 
 `string`
 
-The ID of the message to delete
+Message ID
 
 ###### cb
 
 `ICallback`\<[`IMessageManagerDeleteResponse`](../interfaces/IMessageManagerDeleteResponse.md)\>
 
-Optional callback function that will be called with the result. - On success: `cb(null, response)` where response contains deletion statistics. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the response.
+(err, response) => void. Returns IMessageManagerDeleteResponse
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the associated queue is locked.
-
-##### Throws
-
-When the queue is in an invalid state.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const result = await messageManager.deleteMessageById('msg-123');
 
-// Callback pattern
-messageManager.deleteMessageById('msg-123', (err, response) => {
-  if (err) {
-    console.error('Failed to delete message:', err);
-  } else {
-    console.log(`Message deleted: ${response.deletedIds[0]}`);
-  }
+// Callback
+messageManager.deleteMessageById('msg-123', (err, result) => {
+  if (err) throw err;
+  console.log(result);
 });
-
-// Promise pattern
-async function deleteIfFailed(messageId: string) {
-  try {
-    const status = await messageManager.getMessageStatus(messageId);
-    if (status === EMessagePropertyStatus.DEAD_LETTERED) {
-      await messageManager.deleteMessageById(messageId);
-      console.log(`Deleted dead-lettered message: ${messageId}`);
-    }
-  } catch (err) {
-    console.error('Failed to delete message:', err);
-  }
-}
 ```
 
 ---
@@ -177,63 +115,32 @@ async function deleteIfFailed(messageId: string) {
 
 Deletes multiple messages by their IDs.
 
-This method permanently removes multiple messages from the system. The deletion
-is performed atomically across all message-related data structures.
-
 ##### Parameters
 
 ###### ids
 
 `string`[]
 
-Array of message IDs to delete
+Array of message IDs
 
 ##### Returns
 
 `Promise`\<[`IMessageManagerDeleteResponse`](../interfaces/IMessageManagerDeleteResponse.md)\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the associated queue is locked.
-
-##### Throws
-
-When the queue is in an invalid state.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const result = await messageManager.deleteMessagesByIds(['msg-1', 'msg-2']);
+console.log(`Deleted: ${result.deletedCount}`);
 
-// Callback pattern
-messageManager.deleteMessagesByIds(
-  ['msg-1', 'msg-2', 'msg-3'],
-  (err, response) => {
-    if (err) {
-      console.error('Failed to delete messages:', err);
-    } else {
-      console.log(`Deleted ${response.deletedCount} messages`);
-      console.log('Deleted IDs:', response.deletedIds);
-    }
-  },
-);
-
-// Promise pattern
-async function cleanupOldMessages(messageIds: string[]) {
-  try {
-    const response = await messageManager.deleteMessagesByIds(messageIds);
-    console.log(
-      `Successfully cleaned up ${response.deletedCount} old messages`,
-    );
-    return response;
-  } catch (err) {
-    console.error('Cleanup failed:', err);
-    throw err;
-  }
-}
+// Callback
+messageManager.deleteMessagesByIds(['msg-1', 'msg-2'], (err, result) => {
+  if (err) throw err;
+  console.log(result);
+});
 ```
 
 #### Call Signature
@@ -242,69 +149,38 @@ async function cleanupOldMessages(messageIds: string[]) {
 
 Deletes multiple messages by their IDs.
 
-This method permanently removes multiple messages from the system. The deletion
-is performed atomically across all message-related data structures.
-
 ##### Parameters
 
 ###### ids
 
 `string`[]
 
-Array of message IDs to delete
+Array of message IDs
 
 ###### cb
 
 `ICallback`\<[`IMessageManagerDeleteResponse`](../interfaces/IMessageManagerDeleteResponse.md)\>
 
-Optional callback function that will be called with the deletion result. - On success: `cb(null, response)` where response contains deletion statistics. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the response.
+(err, response) => void. Returns IMessageManagerDeleteResponse
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the associated queue is locked.
-
-##### Throws
-
-When the queue is in an invalid state.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const result = await messageManager.deleteMessagesByIds(['msg-1', 'msg-2']);
+console.log(`Deleted: ${result.deletedCount}`);
 
-// Callback pattern
-messageManager.deleteMessagesByIds(
-  ['msg-1', 'msg-2', 'msg-3'],
-  (err, response) => {
-    if (err) {
-      console.error('Failed to delete messages:', err);
-    } else {
-      console.log(`Deleted ${response.deletedCount} messages`);
-      console.log('Deleted IDs:', response.deletedIds);
-    }
-  },
-);
-
-// Promise pattern
-async function cleanupOldMessages(messageIds: string[]) {
-  try {
-    const response = await messageManager.deleteMessagesByIds(messageIds);
-    console.log(
-      `Successfully cleaned up ${response.deletedCount} old messages`,
-    );
-    return response;
-  } catch (err) {
-    console.error('Cleanup failed:', err);
-    throw err;
-  }
-}
+// Callback
+messageManager.deleteMessagesByIds(['msg-1', 'msg-2'], (err, result) => {
+  if (err) throw err;
+  console.log(result);
+});
 ```
 
 ---
@@ -315,9 +191,7 @@ async function cleanupOldMessages(messageIds: string[]) {
 
 > **getMessageById**(`messageId`): `Promise`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>
 
-Retrieves a single message by its ID.
-
-This method returns the full message object including all metadata and body content.
+Gets a single message by its ID.
 
 ##### Parameters
 
@@ -325,57 +199,33 @@ This method returns the full message object including all metadata and body cont
 
 `string`
 
-The ID of the message to retrieve
+Message ID
 
 ##### Returns
 
 `Promise`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const message = await messageManager.getMessageById('msg-123');
+console.log(message.getBody());
 
-// Callback pattern
+// Callback
 messageManager.getMessageById('msg-123', (err, message) => {
-  if (err) {
-    console.error('Message not found:', err);
-  } else {
-    console.log('Message details:');
-    console.log(`  ID: ${message.getId()}`);
-    console.log(`  Body:`, message.getBody());
-  }
+  if (err) throw err;
+  console.log(message);
 });
-
-// Promise pattern
-async function inspectAndRequeue(messageId: string) {
-  try {
-    const message = await messageManager.getMessageById(messageId);
-    const body = message.getBody();
-    // ...
-    // ...
-    const newId = await messageManager.requeueMessageById(messageId);
-    console.log(`Message ${messageId} requeued as ${newId}`);
-  } catch (err) {
-    console.error('Failed to inspect message:', err);
-  }
-}
 ```
 
 #### Call Signature
 
 > **getMessageById**(`messageId`, `cb`): `void`
 
-Retrieves a single message by its ID.
-
-This method returns the full message object including all metadata and body content.
+Gets a single message by its ID.
 
 ##### Parameters
 
@@ -383,54 +233,32 @@ This method returns the full message object including all metadata and body cont
 
 `string`
 
-The ID of the message to retrieve
+Message ID
 
 ###### cb
 
 `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>
 
-Optional callback function that will be called with the result. - On success: `cb(null, message)` where message is the full message object. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the message.
+(err, message) => void. Returns IMessageTransferable
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const message = await messageManager.getMessageById('msg-123');
+console.log(message.getBody());
 
-// Callback pattern
+// Callback
 messageManager.getMessageById('msg-123', (err, message) => {
-  if (err) {
-    console.error('Message not found:', err);
-  } else {
-    console.log('Message details:');
-    console.log(`  ID: ${message.getId()}`);
-    console.log(`  Body:`, message.getBody());
-  }
+  if (err) throw err;
+  console.log(message);
 });
-
-// Promise pattern
-async function inspectAndRequeue(messageId: string) {
-  try {
-    const message = await messageManager.getMessageById(messageId);
-    const body = message.getBody();
-    // ...
-    // ...
-    const newId = await messageManager.requeueMessageById(messageId);
-    console.log(`Message ${messageId} requeued as ${newId}`);
-  } catch (err) {
-    console.error('Failed to inspect message:', err);
-  }
-}
 ```
 
 ---
@@ -441,10 +269,7 @@ async function inspectAndRequeue(messageId: string) {
 
 > **getMessagesByIds**(`messageIds`): `Promise`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>[]\>
 
-Retrieves multiple messages by their IDs.
-
-This method returns full message objects for multiple message IDs in a single
-operation, which is more efficient than calling `getMessageById` for each ID.
+Gets multiple messages by their IDs.
 
 ##### Parameters
 
@@ -452,66 +277,32 @@ operation, which is more efficient than calling `getMessageById` for each ID.
 
 `string`[]
 
-An array of IDs of the messages to retrieve
+Array of message IDs
 
 ##### Returns
 
 `Promise`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>[]\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When any of the messages don't exist (in strict mode).
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const messages = await messageManager.getMessagesByIds(['msg-1', 'msg-2']);
 
-// Callback pattern
-messageManager.getMessagesByIds(
-  ['msg-1', 'msg-2', 'msg-3'],
-  (err, messages) => {
-    if (err) {
-      console.error('Failed to get messages:', err);
-    } else {
-      console.log(`Retrieved ${messages.length} messages`);
-      messages.forEach((msg) => {
-        console.log(`Message ${msg.getId()}:`, msg.getBody());
-      });
-    }
-  },
-);
-
-// Promise pattern
-async function batchProcessMessages(messageIds: string[]) {
-  try {
-    const messages = await messageManager.getMessagesByIds(messageIds);
-    const results = [];
-
-    for (const msg of messages) {
-      const result = await processMessage(msg);
-      results.push({ id: msg.getId(), result });
-    }
-
-    console.log(`Processed ${results.length} messages`);
-    return results;
-  } catch (err) {
-    console.error('Batch processing failed:', err);
-  }
-}
+// Callback
+messageManager.getMessagesByIds(['msg-1', 'msg-2'], (err, messages) => {
+  if (err) throw err;
+  console.log(messages.length);
+});
 ```
 
 #### Call Signature
 
 > **getMessagesByIds**(`messageIds`, `cb`): `void`
 
-Retrieves multiple messages by their IDs.
-
-This method returns full message objects for multiple message IDs in a single
-operation, which is more efficient than calling `getMessageById` for each ID.
+Gets multiple messages by their IDs.
 
 ##### Parameters
 
@@ -519,62 +310,31 @@ operation, which is more efficient than calling `getMessageById` for each ID.
 
 `string`[]
 
-An array of IDs of the messages to retrieve
+Array of message IDs
 
 ###### cb
 
 `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>[]\>
 
-Optional callback function that will be called with the result. - On success: `cb(null, messages)` where messages is an array of message objects. - On error: `cb(error)` with any Redis or system errors. - If not provided, the method returns a Promise that resolves with the messages.
+(err, messages) => void. Returns IMessageTransferable[]
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When any of the messages don't exist (in strict mode).
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const messages = await messageManager.getMessagesByIds(['msg-1', 'msg-2']);
 
-// Callback pattern
-messageManager.getMessagesByIds(
-  ['msg-1', 'msg-2', 'msg-3'],
-  (err, messages) => {
-    if (err) {
-      console.error('Failed to get messages:', err);
-    } else {
-      console.log(`Retrieved ${messages.length} messages`);
-      messages.forEach((msg) => {
-        console.log(`Message ${msg.getId()}:`, msg.getBody());
-      });
-    }
-  },
-);
-
-// Promise pattern
-async function batchProcessMessages(messageIds: string[]) {
-  try {
-    const messages = await messageManager.getMessagesByIds(messageIds);
-    const results = [];
-
-    for (const msg of messages) {
-      const result = await processMessage(msg);
-      results.push({ id: msg.getId(), result });
-    }
-
-    console.log(`Processed ${results.length} messages`);
-    return results;
-  } catch (err) {
-    console.error('Batch processing failed:', err);
-  }
-}
+// Callback
+messageManager.getMessagesByIds(['msg-1', 'msg-2'], (err, messages) => {
+  if (err) throw err;
+  console.log(messages.length);
+});
 ```
 
 ---
@@ -585,7 +345,7 @@ async function batchProcessMessages(messageIds: string[]) {
 
 > **getMessageState**(`messageId`): `Promise`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\>
 
-Retrieves the state of a message with the given ID.
+Gets the state of a message (timestamps, attempts, etc.).
 
 ##### Parameters
 
@@ -593,49 +353,33 @@ Retrieves the state of a message with the given ID.
 
 `string`
 
-The ID of the message to retrieve the state for
+Message ID
 
 ##### Returns
 
 `Promise`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const state = await messageManager.getMessageState('msg-123');
+console.log(state.attempts);
 
-// Callback pattern
+// Callback
 messageManager.getMessageState('msg-123', (err, state) => {
-  if (err) {
-    console.error('Failed to get message state:', err);
-  } else {
-    // ...
-  }
+  if (err) throw err;
+  console.log(state);
 });
-
-// Promise pattern
-async function analyzeMessageProcessing(messageId: string) {
-  try {
-    const state = await messageManager.getMessageState(messageId);
-    // ...
-  } catch (err) {
-    console.error('Failed to analyze message:', err);
-  }
-}
 ```
 
 #### Call Signature
 
 > **getMessageState**(`messageId`, `cb`): `void`
 
-Retrieves the state of a message with the given ID.
+Gets the state of a message (timestamps, attempts, etc.).
 
 ##### Parameters
 
@@ -643,48 +387,32 @@ Retrieves the state of a message with the given ID.
 
 `string`
 
-The ID of the message to retrieve the state for
+Message ID
 
 ###### cb
 
 `ICallback`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\>
 
-Optional callback function that will be called with the result. - On success: `cb(null, state)` where state contains detailed message metadata. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the state.
+(err, state) => void. Returns IMessageStateTransferable
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const state = await messageManager.getMessageState('msg-123');
+console.log(state.attempts);
 
-// Callback pattern
+// Callback
 messageManager.getMessageState('msg-123', (err, state) => {
-  if (err) {
-    console.error('Failed to get message state:', err);
-  } else {
-    // ...
-  }
+  if (err) throw err;
+  console.log(state);
 });
-
-// Promise pattern
-async function analyzeMessageProcessing(messageId: string) {
-  try {
-    const state = await messageManager.getMessageState(messageId);
-    // ...
-  } catch (err) {
-    console.error('Failed to analyze message:', err);
-  }
-}
 ```
 
 ---
@@ -695,7 +423,7 @@ async function analyzeMessageProcessing(messageId: string) {
 
 > **getMessageStatus**(`messageId`): `Promise`\<[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)\>
 
-Retrieves the status of a message with the given ID.
+Gets the status of a message.
 
 ##### Parameters
 
@@ -703,50 +431,32 @@ Retrieves the status of a message with the given ID.
 
 `string`
 
-The ID of the message to retrieve the status for
+Message ID
 
 ##### Returns
 
 `Promise`\<[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const status = await messageManager.getMessageStatus('msg-123');
 
-// Callback pattern
+// Callback
 messageManager.getMessageStatus('msg-123', (err, status) => {
-  if (err) {
-    console.error('Message not found or error:', err);
-  } else {
-    // ...
-  }
+  if (err) throw err;
+  console.log(status);
 });
-
-// Promise pattern
-async function isMessageProcessed(messageId: string): Promise<boolean> {
-  try {
-    const status = await messageManager.getMessageStatus(messageId);
-    return status === EMessagePropertyStatus.ACKNOWLEDGED;
-  } catch (err) {
-    console.error('Failed to check message status:', err);
-    return false;
-  }
-}
 ```
 
 #### Call Signature
 
 > **getMessageStatus**(`messageId`, `cb`): `void`
 
-Retrieves the status of a message with the given ID.
+Gets the status of a message.
 
 ##### Parameters
 
@@ -754,49 +464,31 @@ Retrieves the status of a message with the given ID.
 
 `string`
 
-The ID of the message to retrieve the status for
+Message ID
 
 ###### cb
 
 `ICallback`\<[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)\>
 
-Optional callback function that will be called with the result. - On success: `cb(null, status)` where status is the message status enum. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the status.
+(err, status) => void. Returns EMessagePropertyStatus
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const status = await messageManager.getMessageStatus('msg-123');
 
-// Callback pattern
+// Callback
 messageManager.getMessageStatus('msg-123', (err, status) => {
-  if (err) {
-    console.error('Message not found or error:', err);
-  } else {
-    // ...
-  }
+  if (err) throw err;
+  console.log(status);
 });
-
-// Promise pattern
-async function isMessageProcessed(messageId: string): Promise<boolean> {
-  try {
-    const status = await messageManager.getMessageStatus(messageId);
-    return status === EMessagePropertyStatus.ACKNOWLEDGED;
-  } catch (err) {
-    console.error('Failed to check message status:', err);
-    return false;
-  }
-}
 ```
 
 ---
@@ -807,10 +499,9 @@ async function isMessageProcessed(messageId: string): Promise<boolean> {
 
 > **getMessageUnacknowledgementHistory**(`messageId`): `Promise`\<[`TMessageUnacknowledgementHistory`](../type-aliases/TMessageUnacknowledgementHistory.md)\>
 
-Retrieves the unacknowledgement history for a message.
+Gets the unacknowledgement history for a message.
 
-This method returns the complete history of unacknowledgement events for a message,
-including the cause of each failure, the action taken, and timestamps.
+Requires message audit to be enabled in configuration.
 
 ##### Parameters
 
@@ -818,37 +509,36 @@ including the cause of each failure, the action taken, and timestamps.
 
 `string`
 
-The ID of the message to retrieve history for
+Message ID
 
 ##### Returns
 
 `Promise`\<[`TMessageUnacknowledgementHistory`](../type-aliases/TMessageUnacknowledgementHistory.md)\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
-
-// Get all history records
+```ts
+// Promise
 const history =
   await messageManager.getMessageUnacknowledgementHistory('msg-123');
+console.log(history.length);
+
+// Callback
+messageManager.getMessageUnacknowledgementHistory('msg-123', (err, history) => {
+  if (err) throw err;
+  console.log(history);
+});
 ```
 
 #### Call Signature
 
 > **getMessageUnacknowledgementHistory**(`messageId`, `cb`): `void`
 
-Retrieves the unacknowledgement history for a message.
+Gets the unacknowledgement history for a message.
 
-This method returns the complete history of unacknowledgement events for a message,
-including the cause of each failure, the action taken, and timestamps.
+Requires message audit to be enabled in configuration.
 
 ##### Parameters
 
@@ -856,31 +546,33 @@ including the cause of each failure, the action taken, and timestamps.
 
 `string`
 
-The ID of the message to retrieve history for
+Message ID
 
 ###### cb
 
 `ICallback`\<[`TMessageUnacknowledgementHistory`](../type-aliases/TMessageUnacknowledgementHistory.md)\>
 
+(err, history) => void. Returns TMessageUnacknowledgementHistory
+
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
-
-// Get all history records
+```ts
+// Promise
 const history =
   await messageManager.getMessageUnacknowledgementHistory('msg-123');
+console.log(history.length);
+
+// Callback
+messageManager.getMessageUnacknowledgementHistory('msg-123', (err, history) => {
+  if (err) throw err;
+  console.log(history);
+});
 ```
 
 ---
@@ -891,11 +583,7 @@ const history =
 
 > **requeueMessageById**(`messageId`): `Promise`\<`string`\>
 
-Requeues a message with the given ID.
-
-This operation creates a new copy of the message and marks the original as requeued.
-The new message is placed back into the queue for reprocessing, while the original
-message's state is updated to reflect that it has been requeued.
+Requeues a message (creates a new copy for reprocessing).
 
 ##### Parameters
 
@@ -903,84 +591,32 @@ message's state is updated to reflect that it has been requeued.
 
 `string`
 
-The ID of the message to requeue
+Message ID to requeue
 
 ##### Returns
 
 `Promise`\<`string`\>
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
-
-##### Throws
-
-When the message cannot be requeued (e.g., already acknowledged).
-
-##### Throws
-
-When the requeue operation fails.
-
-##### Throws
-
-When Redis returns an unexpected response.
-
-##### Throws
-
-When the associated queue is locked.
-
-##### Throws
-
-When the queue is in an invalid state.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const newId = await messageManager.requeueMessageById('msg-123');
 
-// Callback pattern
-messageManager.requeueMessageById('msg-123', (err, newMessageId) => {
-  if (err) {
-    console.error('Failed to requeue message:', err);
-  } else {
-    console.log(`Message requeued. New ID: ${newMessageId}`);
-  }
+// Callback
+messageManager.requeueMessageById('msg-123', (err, newId) => {
+  if (err) throw err;
+  console.log(newId);
 });
-
-// Promise pattern
-async function retryFailedMessages(messageIds: string[]) {
-  const results = {
-    success: [],
-    failed: [],
-  };
-
-  for (const id of messageIds) {
-    try {
-      const newId = await messageManager.requeueMessageById(id);
-      results.success.push({ original: id, new: newId });
-      console.log(`Message ${id} requeued as ${newId}`);
-    } catch (err) {
-      results.failed.push({ id, error: err.message });
-      console.error(`Failed to requeue ${id}:`, err.message);
-    }
-  }
-
-  return results;
-}
 ```
 
 #### Call Signature
 
 > **requeueMessageById**(`messageId`, `cb`): `void`
 
-Requeues a message with the given ID.
-
-This operation creates a new copy of the message and marks the original as requeued.
-The new message is placed back into the queue for reprocessing, while the original
-message's state is updated to reflect that it has been requeued.
+Requeues a message (creates a new copy for reprocessing).
 
 ##### Parameters
 
@@ -988,77 +624,29 @@ message's state is updated to reflect that it has been requeued.
 
 `string`
 
-The ID of the message to requeue
+Message ID to requeue
 
 ###### cb
 
 `ICallback`\<`string`\>
 
-Optional callback function that will be called with the result. - On success: `cb(null, newMessageId)` where newMessageId is the ID of the new message. - On error: `cb(error)` with one of the errors listed below. - If not provided, the method returns a Promise that resolves with the new message ID.
+(err, newMessageId) => void. Returns string
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided,
-  otherwise returns void.
-
-##### Throws
-
-When the message with the given ID doesn't exist.
-
-##### Throws
-
-When the message cannot be requeued (e.g., already acknowledged).
-
-##### Throws
-
-When the requeue operation fails.
-
-##### Throws
-
-When Redis returns an unexpected response.
-
-##### Throws
-
-When the associated queue is locked.
-
-##### Throws
-
-When the queue is in an invalid state.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-const messageManager = new MessageManager();
+```ts
+// Promise
+const newId = await messageManager.requeueMessageById('msg-123');
 
-// Callback pattern
-messageManager.requeueMessageById('msg-123', (err, newMessageId) => {
-  if (err) {
-    console.error('Failed to requeue message:', err);
-  } else {
-    console.log(`Message requeued. New ID: ${newMessageId}`);
-  }
+// Callback
+messageManager.requeueMessageById('msg-123', (err, newId) => {
+  if (err) throw err;
+  console.log(newId);
 });
-
-// Promise pattern
-async function retryFailedMessages(messageIds: string[]) {
-  const results = {
-    success: [],
-    failed: [],
-  };
-
-  for (const id of messageIds) {
-    try {
-      const newId = await messageManager.requeueMessageById(id);
-      results.success.push({ original: id, new: newId });
-      console.log(`Message ${id} requeued as ${newId}`);
-    } catch (err) {
-      results.failed.push({ id, error: err.message });
-      console.error(`Failed to requeue ${id}:`, err.message);
-    }
-  }
-
-  return results;
-}
 ```

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, test, describe } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { createQueue } from '../../common/message-producing-consuming.js';
 import { EQueueType, QueueOperationValidator } from '../../../src/index.js';
 import bluebird from 'bluebird';

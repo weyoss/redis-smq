@@ -16,13 +16,25 @@ import { AcknowledgmentAuditDisabledError } from '../errors/index.js';
 import { Configuration } from '../config-manager/configuration.js';
 
 /**
- * Manages acknowledged messages in a queue.
+ * Handles acknowledged message operations for a queue.
  *
- * Acknowledged messages are those that have been successfully processed by consumers
- * and can be safely removed from the active queue. This class allows for tracking
- * and management of these messages when the system is configured to audit them.
+ * Acknowledged messages are those that have been successfully processed.
+ * Requires message audit to be enabled in configuration.
  *
- * @see /packages/redis-smq/docs/configuration.md#message-audit
+ * @example
+ * const acknowledged = new QueueAcknowledgedMessages();
+ *
+ * // Count acknowledged messages
+ * const count = await acknowledged.countMessages('orders');
+ *
+ * // Get first page of acknowledged messages
+ * const page = await acknowledged.getMessages('orders', 1, 20);
+ * page.items.forEach(msg => {
+ *   console.log(`Processed message: ${msg.getId()}`);
+ * });
+ *
+ * // Purge all acknowledged messages
+ * const jobId = await acknowledged.purge('orders');
  */
 export class QueueAcknowledgedMessages extends QueueMessagesAbstract {
   public readonly messageType = EQueueMessageType.ACKNOWLEDGED;

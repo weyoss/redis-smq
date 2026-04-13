@@ -8,12 +8,12 @@
  */
 
 import {
+  env,
   Heartbeat,
   IHeartbeatConfig,
   ILogger,
   IRedisClient,
 } from 'redis-smq-common';
-import { env } from 'redis-smq-common';
 import * as os from 'node:os';
 import { IHeartbeatPayload } from './types/index.js';
 

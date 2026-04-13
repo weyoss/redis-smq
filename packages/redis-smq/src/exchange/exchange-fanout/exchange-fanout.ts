@@ -42,32 +42,19 @@ import { _validateOperation } from '../../queue-operation-validator/_/_validate-
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 
 /**
- * Fanout Exchange implementation for RedisSMQ.
+ * Fanout exchange for broadcasting messages to all bound queues.
  *
- * A fanout exchange routes messages to all queues that are bound to it, ignoring routing keys.
- * This is useful for broadcasting messages to multiple consumers or implementing pub/sub patterns.
- *
- * Features:
- * - Message broadcasting to all bound queues
- * - Atomic queue binding and unbinding operations
- * - Concurrent modification detection using Redis WATCH
- * - Namespace isolation for multi-tenant applications
- * - Comprehensive error handling and validation
+ * Routes messages to all queues bound to the exchange, ignoring routing keys.
+ * Ideal for pub/sub patterns where every consumer should receive the message.
  *
  * @example
- * ```typescript
  * const fanoutExchange = new ExchangeFanout();
  *
- * // Callback pattern
- * fanoutExchange.bindQueue('notifications', 'broadcast-exchange', (err) => {
- *   if (err) console.error('Failed to bind:', err);
- *   else console.log('Queue bound');
- * });
+ * // Bind a queue
+ * await fanoutExchange.bindQueue('notifications', 'broadcast');
  *
- * // Promise pattern
- * await fanoutExchange.bindQueue('notifications', 'broadcast-exchange');
- * console.log('Queue bound');
- * ```
+ * // Match all bound queues
+ * const queues = await fanoutExchange.matchQueues('broadcast');
  */
 export class ExchangeFanout {
   protected readonly type = EExchangeType.FANOUT;
@@ -81,37 +68,21 @@ export class ExchangeFanout {
   }
 
   /**
-   * Retrieves all queues bound to the specified fanout exchange.
+   * Gets all queues bound to a fanout exchange (for message production).
    *
-   * This method returns all queues that are currently bound to the fanout exchange.
-   * In a fanout exchange, messages are delivered to all bound queues regardless
-   * of routing keys.
-   *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param cb - Optional callback invoked with the list of bound queues
-   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err, queues) => void. Returns IQueueParams[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * fanoutExchange.matchQueues('broadcast-exchange', (err, queues) => {
-   *   if (err) {
-   *     console.error('Failed to get bound queues:', err);
-   *   } else {
-   *     console.log(`Found ${queues.length} bound queues`);
-   *   }
-   * });
+   * // Promise
+   * const queues = await fanoutExchange.matchQueues('broadcast');
    *
-   * // Promise pattern
-   * try {
-   *   const queues = await fanoutExchange.matchQueues('broadcast-exchange');
-   *   console.log(`Found ${queues.length} bound queues`);
-   * } catch (err) {
-   *   console.error('Failed to get bound queues:', err);
-   * }
-   * ```
+   * // Callback
+   * fanoutExchange.matchQueues('broadcast', (err, queues) => {
+   *   if (err) throw err;
+   *   console.log(queues);
+   * });
    */
   matchQueues(exchange: string | IExchangeParams): Promise<IQueueParams[]>;
   matchQueues(
@@ -130,27 +101,19 @@ export class ExchangeFanout {
   /**
    * Creates a fanout exchange.
    *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param queuePolicy - The queue policy for this exchange (STANDARD or PRIORITY)
-   * @param cb - Optional callback invoked when creation completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param queuePolicy - STANDARD or PRIORITY
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * fanoutExchange.create('broadcast-exchange', EExchangeQueuePolicy.STANDARD, (err) => {
-   *   if (err) console.error('Failed to create exchange:', err);
-   *   else console.log('Exchange created');
-   * });
+   * // Promise
+   * await fanoutExchange.create('broadcast', EExchangeQueuePolicy.STANDARD);
    *
-   * // Promise pattern
-   * try {
-   *   await fanoutExchange.create('broadcast-exchange', EExchangeQueuePolicy.STANDARD);
-   *   console.log('Exchange created');
-   * } catch (err) {
-   *   console.error('Failed to create exchange:', err);
-   * }
-   * ```
+   * // Callback
+   * fanoutExchange.create('broadcast', EExchangeQueuePolicy.STANDARD, (err) => {
+   *   if (err) throw err;
+   * });
    */
   create(
     exchange: string | IExchangeParams,
@@ -178,35 +141,20 @@ export class ExchangeFanout {
   }
 
   /**
-   * Deletes a fanout exchange from the system.
+   * Deletes a fanout exchange.
    *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param cb - Optional callback invoked when deletion completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
-   * @throws ExchangeHasBoundQueuesError
-   * @throws ExchangeNotFoundError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * fanoutExchange.delete('old-broadcast-exchange', (err) => {
-   *   if (err) {
-   *     console.error('Failed to delete exchange:', err);
-   *   } else {
-   *     console.log('Exchange deleted successfully');
-   *   }
-   * });
+   * // Promise
+   * await fanoutExchange.delete('old-broadcast');
    *
-   * // Promise pattern
-   * try {
-   *   await fanoutExchange.delete('old-broadcast-exchange');
-   *   console.log('Exchange deleted successfully');
-   * } catch (err) {
-   *   console.error('Failed to delete exchange:', err);
-   * }
-   * ```
+   * // Callback
+   * fanoutExchange.delete('old-broadcast', (err) => {
+   *   if (err) throw err;
+   * });
    */
   delete(exchange: string | IExchangeParams): Promise<void>;
   delete(exchange: string | IExchangeParams, cb: ICallback): void;
@@ -302,39 +250,19 @@ export class ExchangeFanout {
   /**
    * Binds a queue to a fanout exchange.
    *
-   * This method creates a binding between a queue and a fanout exchange, enabling
-   * messages published to the exchange to be delivered to the bound queue.
-   *
-   * @param queue - The queue to bind (string name or object with ns/name)
-   * @param exchange - The exchange to bind to (string name or object with ns/name)
-   * @param cb - Optional callback invoked when binding completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidQueueParametersError
-   * @throws InvalidExchangeParametersError
-   * @throws QueueNotFoundError
-   * @throws ExchangeNotFoundError
-   * @throws NamespaceMismatchError
+   * @param queue - Queue name (string) or { name, ns }
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * fanoutExchange.bindQueue('email-notifications', 'user-events', (err) => {
-   *   if (err) {
-   *     console.error('Failed to bind:', err);
-   *   } else {
-   *     console.log('Queue bound successfully');
-   *   }
-   * });
+   * // Promise
+   * await fanoutExchange.bindQueue('notifications', 'broadcast');
    *
-   * // Promise pattern
-   * try {
-   *   await fanoutExchange.bindQueue('email-notifications', 'user-events');
-   *   console.log('Queue bound successfully');
-   * } catch (err) {
-   *   console.error('Failed to bind:', err);
-   * }
-   * ```
+   * // Callback
+   * fanoutExchange.bindQueue('notifications', 'broadcast', (err) => {
+   *   if (err) throw err;
+   * });
    */
   bindQueue(
     queue: IQueueParams | string,
@@ -502,38 +430,19 @@ export class ExchangeFanout {
   /**
    * Unbinds a queue from a fanout exchange.
    *
-   * This method removes the binding between a queue and a fanout exchange, stopping
-   * message delivery from the exchange to the specified queue.
-   *
-   * @param queue - The queue to unbind (string name or object with ns/name)
-   * @param exchange - The exchange to unbind from (string name or object with ns/name)
-   * @param cb - Optional callback invoked when unbinding completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidQueueParametersError
-   * @throws InvalidExchangeParametersError
-   * @throws NamespaceMismatchError
-   * @throws QueueNotBoundError
+   * @param queue - Queue name (string) or { name, ns }
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * fanoutExchange.unbindQueue('email-notifications', 'user-events', (err) => {
-   *   if (err) {
-   *     console.error('Failed to unbind:', err);
-   *   } else {
-   *     console.log('Queue unbound successfully');
-   *   }
-   * });
+   * // Promise
+   * await fanoutExchange.unbindQueue('notifications', 'broadcast');
    *
-   * // Promise pattern
-   * try {
-   *   await fanoutExchange.unbindQueue('email-notifications', 'user-events');
-   *   console.log('Queue unbound successfully');
-   * } catch (err) {
-   *   console.error('Failed to unbind:', err);
-   * }
-   * ```
+   * // Callback
+   * fanoutExchange.unbindQueue('notifications', 'broadcast', (err) => {
+   *   if (err) throw err;
+   * });
    */
   unbindQueue(
     queue: IQueueParams | string,
@@ -648,35 +557,21 @@ export class ExchangeFanout {
   }
 
   /**
-   * Retrieves all bound queues for a fanout exchange.
+   * Gets all bound queues for a fanout exchange.
    *
-   * This method returns the complete list of queues bound to the fanout exchange.
-   *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param cb - Optional callback invoked with the list of bound queues
-   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err, queues) => void. Returns IQueueParams[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * fanoutExchange.getBindings('broadcast-exchange', (err, queues) => {
-   *   if (err) {
-   *     console.error('Failed to get bindings:', err);
-   *   } else {
-   *     console.log(`Found ${queues.length} bound queues`);
-   *   }
-   * });
+   * // Promise
+   * const queues = await fanoutExchange.getBindings('broadcast');
    *
-   * // Promise pattern
-   * try {
-   *   const queues = await fanoutExchange.getBindings('broadcast-exchange');
-   *   console.log(`Found ${queues.length} bound queues`);
-   * } catch (err) {
-   *   console.error('Failed to get bindings:', err);
-   * }
-   * ```
+   * // Callback
+   * fanoutExchange.getBindings('broadcast', (err, queues) => {
+   *   if (err) throw err;
+   *   console.log(queues);
+   * });
    */
   getBindings(exchange: string | IExchangeParams): Promise<IQueueParams[]>;
   getBindings(

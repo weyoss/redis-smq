@@ -7,9 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer, IQueueParsedParams } from '../../src/index.js';
+import {
+  Consumer,
+  EMessageUnacknowledgementCause,
+  IQueueParsedParams,
+} from '../../src/index.js';
 import { getEventBus } from './event-bus-redis.js';
-import { EMessageUnacknowledgementCause } from '../../src/index.js';
 
 export async function untilMessageAcknowledged(
   consumer: Consumer,

@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-// redis-smq/factories/namespace-manager-factory.ts
 import { FactoryAbstract } from './factory-abstract.js';
 import { NamespaceManager } from '../../namespace-manager/index.js';
 
@@ -15,17 +14,7 @@ export class NamespaceManagerFactory extends FactoryAbstract {
   /**
    * Creates a NamespaceManager instance.
    *
-   * @returns A new NamespaceManager instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const namespaceManager = RedisSMQ.createNamespaceManager();
-   * namespaceManager.getNamespaces((err, namespaces) => {
-   *   if (err) return console.error('Failed to get namespaces:', err);
-   *   console.log('Namespaces:', namespaces);
-   * });
-   * ```
+   * @returns {NamespaceManager} A new NamespaceManager instance
    */
   static create = (): NamespaceManager => {
     this.ensureInitialized();

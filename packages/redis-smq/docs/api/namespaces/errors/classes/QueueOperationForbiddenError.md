@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `RedisSMQError`\<\{ `operation`: [`EQueueOperation`](../../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>
+- `RedisSMQError`\<\{ `operation`: [`EQueueOperation`](../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>
 
 ## Constructors
 
@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `operation`: [`EQueueOperation`](../../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `operation`: [`EQueueOperation`](../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `operation`: [`EQueueOperation`](../../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
+> **getMetadata**(): \{ `operation`: [`EQueueOperation`](../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Returns
 
-\{ `operation`: [`EQueueOperation`](../../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
+\{ `operation`: [`EQueueOperation`](../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Inherited from
 

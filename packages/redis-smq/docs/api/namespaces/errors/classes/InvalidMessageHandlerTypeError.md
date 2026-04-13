@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `RedisSMQError`\<\{ `queue`: [`IQueueParsedParams`](../../../../interfaces/IQueueParsedParams.md); \}\>
+- `RedisSMQError`\<\{ `queue`: [`IQueueParsedParams`](../../../interfaces/IQueueParsedParams.md); \}\>
 
 ## Constructors
 
@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `queue`: [`IQueueParsedParams`](../../../../interfaces/IQueueParsedParams.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `queue`: [`IQueueParsedParams`](../../../interfaces/IQueueParsedParams.md); \}\>\]
 
 #### Returns
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `queue`: [`IQueueParsedParams`](../../../../interfaces/IQueueParsedParams.md); \} \| `null`
+> **getMetadata**(): \{ `queue`: [`IQueueParsedParams`](../../../interfaces/IQueueParsedParams.md); \} \| `null`
 
 #### Returns
 
-\{ `queue`: [`IQueueParsedParams`](../../../../interfaces/IQueueParsedParams.md); \} \| `null`
+\{ `queue`: [`IQueueParsedParams`](../../../interfaces/IQueueParsedParams.md); \} \| `null`
 
 #### Inherited from
 

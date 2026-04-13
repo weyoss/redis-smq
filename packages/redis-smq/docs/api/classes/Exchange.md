@@ -2,30 +2,20 @@
 
 # Class: Exchange
 
-Exchange management operations.
+Provides read-only exchange discovery operations.
 
-This class provides methods for querying and retrieving exchange information
-across the RedisSMQ system. It handles exchange discovery at global, namespace,
-and queue-specific levels.
-
-All methods are read-only operations that query existing exchange data from Redis.
-For exchange creation, binding, and deletion operations, use the specific exchange
-type classes (ExchangeDirect, ExchangeTopic, ExchangeFanout).
+For exchange creation, binding, and deletion, use ExchangeDirect, ExchangeTopic, or ExchangeFanout.
 
 ## Example
 
-```typescript
+```ts
 const exchange = new Exchange();
 
-// Callback pattern
-exchange.getAllExchanges((err, exchanges) => {
-  if (err) console.error('Failed:', err);
-  else console.log('Exchanges:', exchanges.length);
-});
-
-// Promise pattern
+// Get all exchanges
 const exchanges = await exchange.getAllExchanges();
-console.log('Exchanges:', exchanges.length);
+
+// Get exchanges in a namespace
+const nsExchanges = await exchange.getNamespaceExchanges('production');
 ```
 
 ## Constructors
@@ -33,9 +23,6 @@ console.log('Exchanges:', exchanges.length);
 ### Constructor
 
 > **new Exchange**(): `Exchange`
-
-Creates a new Exchange instance.
-Initializes the logger with the class name for consistent logging context.
 
 #### Returns
 
@@ -49,11 +36,7 @@ Initializes the logger with the class name for consistent logging context.
 
 > **getAllExchanges**(`cb?`): `Promise`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Retrieve all exchanges across all namespaces in the system.
-
-This method queries the global exchanges index and returns all registered
-exchanges regardless of their namespace or type. Each exchange entry includes
-its namespace, name, and type information.
+Gets all exchanges across all namespaces.
 
 ##### Parameters
 
@@ -61,54 +44,32 @@ its namespace, name, and type information.
 
 `ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Optional callback invoked with an array of all exchange parameters or an error
+(err, exchanges) => void. Returns IExchangeParsedParams[]
 
 ##### Returns
 
 `Promise`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-CallbackEmptyReplyError via callback on unexpected empty Redis reply.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern
-exchange.getAllExchanges((err, exchanges) => {
-  if (err) {
-    console.error('Failed to get exchanges:', err);
-    return;
-  }
-  console.log(`Found ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
-  });
-});
+```ts
+// Promise
+const exchanges = await exchange.getAllExchanges();
 
-// Promise pattern
-try {
-  const exchanges = await exchange.getAllExchanges();
-  console.log(`Found ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
-  });
-} catch (err) {
-  console.error('Failed to get exchanges:', err);
-}
+// Callback
+exchange.getAllExchanges((err, exchanges) => {
+  if (err) throw err;
+  console.log(exchanges.length);
+});
 ```
 
 #### Call Signature
 
 > **getAllExchanges**(`cb`): `void`
 
-Retrieve all exchanges across all namespaces in the system.
-
-This method queries the global exchanges index and returns all registered
-exchanges regardless of their namespace or type. Each exchange entry includes
-its namespace, name, and type information.
+Gets all exchanges across all namespaces.
 
 ##### Parameters
 
@@ -116,43 +77,25 @@ its namespace, name, and type information.
 
 `ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Optional callback invoked with an array of all exchange parameters or an error
+(err, exchanges) => void. Returns IExchangeParsedParams[]
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-CallbackEmptyReplyError via callback on unexpected empty Redis reply.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern
-exchange.getAllExchanges((err, exchanges) => {
-  if (err) {
-    console.error('Failed to get exchanges:', err);
-    return;
-  }
-  console.log(`Found ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
-  });
-});
+```ts
+// Promise
+const exchanges = await exchange.getAllExchanges();
 
-// Promise pattern
-try {
-  const exchanges = await exchange.getAllExchanges();
-  console.log(`Found ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
-  });
-} catch (err) {
-  console.error('Failed to get exchanges:', err);
-}
+// Callback
+exchange.getAllExchanges((err, exchanges) => {
+  if (err) throw err;
+  console.log(exchanges.length);
+});
 ```
 
 ---
@@ -163,11 +106,7 @@ try {
 
 > **getNamespaceExchanges**(`ns`): `Promise`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Retrieve all exchanges within a specific namespace.
-
-This method queries the namespace-specific exchanges index and returns all
-exchanges registered within the given namespace. The namespace parameter
-is validated to ensure it conforms to Redis key naming requirements.
+Gets all exchanges within a specific namespace.
 
 ##### Parameters
 
@@ -175,52 +114,32 @@ is validated to ensure it conforms to Redis key naming requirements.
 
 `string`
 
-The namespace to query. Must be a valid Redis key identifier.
+Namespace name
 
 ##### Returns
 
 `Promise`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the namespace is invalid.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern
-exchange.getNamespaceExchanges('production', (err, exchanges) => {
-  if (err) {
-    console.error('Failed to get namespace exchanges:', err);
-    return;
-  }
-  console.log(`Production namespace has ${exchanges.length} exchanges:`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type})`);
-  });
-});
+```ts
+// Promise
+const exchanges = await exchange.getNamespaceExchanges('production');
 
-// Promise pattern
-try {
-  const exchanges = await exchange.getNamespaceExchanges('staging');
-  console.log(`Staging namespace has ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => console.log(`- ${ex.name} (${ex.type})`));
-} catch (err) {
-  console.error('Failed to get namespace exchanges:', err);
-}
+// Callback
+exchange.getNamespaceExchanges('production', (err, exchanges) => {
+  if (err) throw err;
+  console.log(exchanges);
+});
 ```
 
 #### Call Signature
 
 > **getNamespaceExchanges**(`ns`, `cb`): `void`
 
-Retrieve all exchanges within a specific namespace.
-
-This method queries the namespace-specific exchanges index and returns all
-exchanges registered within the given namespace. The namespace parameter
-is validated to ensure it conforms to Redis key naming requirements.
+Gets all exchanges within a specific namespace.
 
 ##### Parameters
 
@@ -228,47 +147,31 @@ is validated to ensure it conforms to Redis key naming requirements.
 
 `string`
 
-The namespace to query. Must be a valid Redis key identifier.
+Namespace name
 
 ###### cb
 
 `ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Optional callback invoked with an array of exchange parameters for the namespace or an error
+(err, exchanges) => void. Returns IExchangeParsedParams[]
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the namespace is invalid.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern
-exchange.getNamespaceExchanges('production', (err, exchanges) => {
-  if (err) {
-    console.error('Failed to get namespace exchanges:', err);
-    return;
-  }
-  console.log(`Production namespace has ${exchanges.length} exchanges:`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type})`);
-  });
-});
+```ts
+// Promise
+const exchanges = await exchange.getNamespaceExchanges('production');
 
-// Promise pattern
-try {
-  const exchanges = await exchange.getNamespaceExchanges('staging');
-  console.log(`Staging namespace has ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => console.log(`- ${ex.name} (${ex.type})`));
-} catch (err) {
-  console.error('Failed to get namespace exchanges:', err);
-}
+// Callback
+exchange.getNamespaceExchanges('production', (err, exchanges) => {
+  if (err) throw err;
+  console.log(exchanges);
+});
 ```
 
 ---
@@ -279,20 +182,13 @@ try {
 
 > **getQueueExchanges**(`queue`): `Promise`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Retrieve all exchanges that a specific queue is bound to.
-
-This method queries the queue's reverse binding index to find all exchanges
-(of any type) that the queue is currently bound to. This is useful for
-understanding message routing paths and managing queue dependencies.
-
-The queue parameter can be either a string name (using the default namespace)
-or a complete IQueueParams object specifying both namespace and name.
+Gets all exchanges that a queue is bound to.
 
 ##### Parameters
 
 ###### queue
 
-Queue name (string) or complete queue parameters (IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -300,58 +196,32 @@ Queue name (string) or complete queue parameters (IQueueParams)
 
 `Promise`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - using queue name (default namespace)
-exchange.getQueueExchanges('order-processing', (err, exchanges) => {
-  if (err) {
-    console.error('Failed to get queue bindings:', err);
-    return;
-  }
-  console.log(`Queue is bound to ${exchanges.length} exchanges:`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
-  });
-});
+```ts
+// Promise
+const exchanges = await exchange.getQueueExchanges('orders');
 
-// Promise pattern - using complete queue parameters
-try {
-  const exchanges = await exchange.getQueueExchanges({
-    name: 'notifications',
-    ns: 'production',
-  });
-  console.log(`Queue bound to ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => console.log(`- ${ex.name} (${ex.type})`));
-} catch (err) {
-  console.error('Failed to get queue bindings:', err);
-}
+// Callback
+exchange.getQueueExchanges('orders', (err, exchanges) => {
+  if (err) throw err;
+  console.log(exchanges);
+});
 ```
 
 #### Call Signature
 
 > **getQueueExchanges**(`queue`, `cb`): `void`
 
-Retrieve all exchanges that a specific queue is bound to.
-
-This method queries the queue's reverse binding index to find all exchanges
-(of any type) that the queue is currently bound to. This is useful for
-understanding message routing paths and managing queue dependencies.
-
-The queue parameter can be either a string name (using the default namespace)
-or a complete IQueueParams object specifying both namespace and name.
+Gets all exchanges that a queue is bound to.
 
 ##### Parameters
 
 ###### queue
 
-Queue name (string) or complete queue parameters (IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -359,42 +229,23 @@ Queue name (string) or complete queue parameters (IQueueParams)
 
 `ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
-Optional callback invoked with an array of exchange parameters the queue is bound to or an error
+(err, exchanges) => void. Returns IExchangeParsedParams[]
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid.
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - using queue name (default namespace)
-exchange.getQueueExchanges('order-processing', (err, exchanges) => {
-  if (err) {
-    console.error('Failed to get queue bindings:', err);
-    return;
-  }
-  console.log(`Queue is bound to ${exchanges.length} exchanges:`);
-  exchanges.forEach((ex) => {
-    console.log(`- ${ex.name} (${ex.type}) in ${ex.ns}`);
-  });
-});
+```ts
+// Promise
+const exchanges = await exchange.getQueueExchanges('orders');
 
-// Promise pattern - using complete queue parameters
-try {
-  const exchanges = await exchange.getQueueExchanges({
-    name: 'notifications',
-    ns: 'production',
-  });
-  console.log(`Queue bound to ${exchanges.length} exchanges`);
-  exchanges.forEach((ex) => console.log(`- ${ex.name} (${ex.type})`));
-} catch (err) {
-  console.error('Failed to get queue bindings:', err);
-}
+// Callback
+exchange.getQueueExchanges('orders', (err, exchanges) => {
+  if (err) throw err;
+  console.log(exchanges);
+});
 ```

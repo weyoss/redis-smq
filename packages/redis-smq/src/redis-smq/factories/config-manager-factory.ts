@@ -14,16 +14,7 @@ export class ConfigManagerFactory extends FactoryAbstract {
   /**
    * Creates a ConfigManager instance.
    *
-   * @returns A new ConfigManager instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript*
-   * const configManager = RedisSMQ.createConfigManager();
-   * configManager.updateConfig(updates, (err) => {
-   *   // ...
-   * );
-   * ```
+   * @returns {ConfigManager} A new ConfigManager instance
    */
   static create = (): ConfigManager => {
     this.ensureInitialized();

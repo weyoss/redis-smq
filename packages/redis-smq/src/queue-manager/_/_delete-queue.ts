@@ -12,12 +12,12 @@ import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
 import {
   ConsumerSetMismatchError,
-  QueueHasBoundExchangesError,
   QueueHasActiveConsumersError,
+  QueueHasBoundExchangesError,
+  QueueLockedError,
   QueueNotEmptyError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
-  QueueLockedError,
 } from '../../errors/index.js';
 import {
   EQueueOperationalState,

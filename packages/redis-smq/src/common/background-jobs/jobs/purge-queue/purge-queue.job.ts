@@ -10,9 +10,13 @@
 import { BackgroundJobWorkerAbstract } from '../../../abstract/background-job/background-job-worker-abstract.js';
 import { async, ICallback, PanicError } from 'redis-smq-common';
 import { PurgeQueueJobManager } from './purge-queue-job-manager.js';
-import { IBrowserPage, IMessageBrowser } from '../../../index.js';
+import {
+  EBackgroundJobStatus,
+  IBackgroundJob,
+  IBrowserPage,
+  IMessageBrowser,
+} from '../../../index.js';
 import { _deleteMessage } from '../../../../message-manager/_/_delete-message.js';
-import { EBackgroundJobStatus, IBackgroundJob } from '../../../index.js';
 import { BackgroundJobCanceledError } from '../../../../errors/index.js';
 import { TPurgeQueueJobPayload } from './types/index.js';
 import { MessageBrowserFactory } from '../../../../queue-messages/message-browser-factory.js';

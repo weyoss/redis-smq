@@ -7,18 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { expect, test, describe, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import {
   createQueue,
   getDefaultQueue,
   produceMessage,
 } from '../../common/message-producing-consuming.js';
 import {
-  EStateTransitionReason,
   EQueueType,
-  QueueStateManager,
-  QueueOperationValidator,
+  EStateTransitionReason,
   IQueueParams,
+  QueueOperationValidator,
+  QueueStateManager,
 } from '../../../src/index.js';
 import bluebird from 'bluebird';
 

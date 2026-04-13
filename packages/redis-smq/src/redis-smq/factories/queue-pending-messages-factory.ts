@@ -14,17 +14,7 @@ export class PendingMessagesFactory extends FactoryAbstract {
   /**
    * Creates a QueuePendingMessages instance.
    *
-   * @returns A new QueuePendingMessages instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const pendingMessages = RedisSMQ.createQueuePendingMessages();
-   * pendingMessages.countMessages('my-queue', (err, count) => {
-   *   if (err) return console.error('Failed to count pending:', err);
-   *   console.log('Pending count:', count);
-   * });
-   * ```
+   * @returns {QueuePendingMessages} A new QueuePendingMessages instance
    */
   static create = (): QueuePendingMessages => {
     this.ensureInitialized();

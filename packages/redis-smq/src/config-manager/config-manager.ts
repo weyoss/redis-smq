@@ -14,34 +14,25 @@ import { InvalidConfigurationError } from '../errors/index.js';
 import { Configuration } from './configuration.js';
 
 /**
- * Manages RedisSMQ configuration operations including retrieval, updates, and reloads.
- * Provides a high-level interface for interacting with the configuration system,
- * handling validation, persistence, and cross-instance synchronization.
+ * Manages RedisSMQ configuration operations.
  *
- * This class works in conjunction with Configuration (low-level persistence) and
- * ConfigSync (cross-instance synchronization) to provide a complete configuration
- * management solution.
+ * Provides methods to get, update, and reload configuration,
+ * with validation and cross-instance synchronization.
  *
  * @example
- * ```typescript
- * // Get current configuration
  * const config = ConfigManager.getConfig();
  *
- * // Update configuration
  * await configManager.updateConfig({ messageAudit: true });
  *
- * // Reload configuration from Redis
- * await configManager.reload();
- * ```
+ * const newConfig = await configManager.reload();
  */
 export class ConfigManager {
   /**
-   * Merges two configuration objects, with updates taking precedence over current.
-   * This method performs a shallow merge of the configuration objects.
+   * Merges two configuration objects.
    *
-   * @param current - The current parsed configuration
-   * @param updates - The partial configuration updates to apply
-   * @returns The merged configuration object
+   * @param current - Current parsed configuration
+   * @param updates - Partial configuration updates to apply
+   * @returns Merged configuration object
    * @internal
    */
   protected mergeConfig(
@@ -55,28 +46,20 @@ export class ConfigManager {
   }
 
   /**
-   * Reloads the configuration from Redis storage.
-   * This method fetches the latest configuration from Redis and updates the
-   * internal configuration state. Useful when manual refresh is needed or when
-   * recovering from certain error conditions.
+   * Reloads configuration from Redis storage.
    *
-   * @param cb - Optional callback function for error-first pattern
-   * @returns Promise with the reloaded configuration if callback not provided
+   * @param cb - (err, config) => void. Returns IRedisSMQParsedConfig
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Using async/await
+   * // Promise
    * const config = await configManager.reload();
    *
-   * // Using callback
+   * // Callback
    * configManager.reload((err, config) => {
-   *   if (err) {
-   *     console.error('Failed to reload config:', err);
-   *     return;
-   *   }
-   *   console.log('Config reloaded:', config);
+   *   if (err) throw err;
+   *   console.log(config);
    * });
-   * ```
    */
   reload(): Promise<IRedisSMQParsedConfig>;
   reload(cb: ICallback<IRedisSMQParsedConfig>): void;
@@ -91,37 +74,20 @@ export class ConfigManager {
   }
 
   /**
-   * Updates the configuration with the provided changes.
-   * This method merges the updates with the current configuration, validates the
-   * resulting configuration, and persists it to Redis. If the updated configuration
-   * is identical to the current configuration, no operation is performed.
+   * Updates configuration with provided changes.
    *
-   * The update operation is atomic and uses optimistic locking with version checking.
-   * If a version mismatch occurs (another instance updated the config concurrently),
-   * the operation will fail and the caller should retry after reloading.
-   *
-   * @param updates - Partial configuration object containing the changes to apply
-   * @param cb - Optional callback function for error-first pattern
-   * @returns Promise that resolves when update is complete if callback not provided
-   * @throws {InvalidConfigurationError} If the updated configuration fails validation
+   * @param updates - Partial configuration to apply
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Update multiple settings
-   * await configManager.updateConfig({
-   *   redis: { host: 'redis.example.com', port: 6379 },
-   *   logger: { level: 'debug' }
-   * });
+   * // Promise
+   * await configManager.updateConfig({ messageAudit: true });
    *
-   * // Using callback
-   * configManager.updateConfig({ redis: { host: 'new-host' } }, (err) => {
-   *   if (err) {
-   *     console.error('Update failed:', err);
-   *     return;
-   *   }
-   *   console.log('Configuration updated successfully');
+   * // Callback
+   * configManager.updateConfig({ messageAudit: true }, (err) => {
+   *   if (err) throw err;
    * });
-   * ```
    */
   updateConfig(updates: IRedisSMQConfig): Promise<void>;
   updateConfig(updates: IRedisSMQConfig, cb: ICallback): void;
@@ -147,16 +113,12 @@ export class ConfigManager {
 
   /**
    * Gets the current configuration version number.
-   * The version number increments with each successful configuration update
-   * and is used for optimistic locking to prevent concurrent modification conflicts.
    *
-   * @returns The current configuration version number
+   * @returns Version number (increments on each update)
    *
    * @example
-   * ```typescript
    * const version = configManager.getConfigVersion();
-   * console.log(`Configuration version: ${version}`);
-   * ```
+   * console.log(version);
    */
   getConfigVersion(): number {
     return Configuration.getInstance().getConfig().version;
@@ -164,19 +126,12 @@ export class ConfigManager {
 
   /**
    * Gets the current parsed configuration object.
-   * This method returns a frozen copy of the configuration to prevent
-   * accidental modifications. All configuration properties are fully parsed
-   * and validated.
    *
-   * @returns The current parsed configuration object (read-only)
+   * @returns Read-only parsed configuration
    *
    * @example
-   * ```typescript
    * const config = configManager.getConfig();
-   *
-   * // The returned object is frozen and cannot be modified
-   * // config.namespace = 'new-ns'; // This will fail in strict mode
-   * ```
+   * console.log(config.namespace);
    */
   getConfig(): IRedisSMQParsedConfig {
     return Configuration.getConfig();

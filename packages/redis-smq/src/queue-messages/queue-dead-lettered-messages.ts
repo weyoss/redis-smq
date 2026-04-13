@@ -16,14 +16,25 @@ import { Configuration } from '../config-manager/configuration.js';
 import { DeadLetterAuditDisabledError } from '../errors/index.js';
 
 /**
- * Manages audited dead-lettered messages in a queue.
+ * Handles dead-lettered message operations for a queue.
  *
- * Dead-lettered messages are those that have failed processing multiple times
- * and exceeded their retry limits. When the system is configured to audit them,
- * these messages are moved to a dead-letter queue for later inspection,
- * troubleshooting, or manual reprocessing.
+ * Dead-lettered messages are those that failed processing and exceeded retry limits.
+ * Requires message audit to be enabled in configuration.
  *
- * @see /packages/redis-smq/docs/configuration.md#message-audit
+ * @example
+ * const deadLettered = new QueueDeadLetteredMessages();
+ *
+ * // Count dead-lettered messages
+ * const count = await deadLettered.countMessages('orders');
+ *
+ * // Get first page of dead-lettered messages
+ * const page = await deadLettered.getMessages('orders', 1, 20);
+ * page.items.forEach(msg => {
+ *   console.log(`Failed message: ${msg.getId()}`);
+ * });
+ *
+ * // Purge all dead-lettered messages
+ * const jobId = await deadLettered.purge('orders');
  */
 export class QueueDeadLetteredMessages extends QueueMessagesAbstract {
   public readonly messageType = EQueueMessageType.DEAD_LETTERED;

@@ -14,17 +14,7 @@ export class RateLimitFactory extends FactoryAbstract {
   /**
    * Creates a QueueRateLimit instance.
    *
-   * @returns A new QueueRateLimit instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const queueRateLimit = RedisSMQ.createQueueRateLimit();
-   * queueRateLimit.set('my-queue', { interval: 1000, limit: 10 }, (err) => {
-   *   if (err) return console.error('Failed to set rate limit:', err);
-   *   console.log('Rate limit set');
-   * });
-   * ```
+   * @returns {QueueRateLimit} A new QueueRateLimit instance
    */
   static create = (): QueueRateLimit => {
     this.ensureInitialized();

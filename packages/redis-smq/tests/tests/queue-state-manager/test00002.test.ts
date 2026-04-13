@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, test, describe, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import {
   createQueue,
   getDefaultQueue,
@@ -16,8 +16,8 @@ import {
 import {
   Consumer,
   EQueueOperationalState,
-  EStateTransitionReason,
   EQueueType,
+  EStateTransitionReason,
   QueueManager,
   QueueStateManager,
 } from '../../../src/index.js';

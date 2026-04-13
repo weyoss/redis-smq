@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `RedisSMQError`\<\{ `from`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); \}\>
+- `RedisSMQError`\<\{ `from`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); \}\>
 
 ## Constructors
 
@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `from`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `from`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); \}\>\]
 
 #### Returns
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `from`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); \} \| `null`
+> **getMetadata**(): \{ `from`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); \} \| `null`
 
 #### Returns
 
-\{ `from`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../../enumerations/EQueueOperationalState.md); \} \| `null`
+\{ `from`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); \} \| `null`
 
 #### Inherited from
 

@@ -14,17 +14,7 @@ export class PublishedMessagesFactory extends FactoryAbstract {
   /**
    * Creates a QueuePublishedMessages instance.
    *
-   * @returns A new QueuePublishedMessages instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const publishedMessages = RedisSMQ.createQueuePublishedMessages();
-   * publishedMessages.countMessagesByStatus('my-queue', (err, count) => {
-   *   if (err) return console.error('Failed to count messages:', err);
-   *   console.log('Counts:', count);
-   * });
-   * ```
+   * @returns {QueuePublishedMessages} A new QueuePublishedMessages instance
    */
   static create = (): QueuePublishedMessages => {
     this.ensureInitialized();

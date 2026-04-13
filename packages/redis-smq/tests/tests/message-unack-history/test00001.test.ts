@@ -10,8 +10,8 @@
 import { expect, test } from 'vitest';
 import {
   EMessageDeadLetterCause,
-  EMessageUnacknowledgementCause,
   EMessageUnacknowledgementAction,
+  EMessageUnacknowledgementCause,
   MessageManager,
   ProducibleMessage,
 } from '../../../index.js';

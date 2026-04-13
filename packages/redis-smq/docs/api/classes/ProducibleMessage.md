@@ -2,18 +2,18 @@
 
 # Class: ProducibleMessage
 
-The ProducibleMessage class is a core component of the Redis Simple Message Queue (RedisSMQ) library, designed to
-encapsulate the properties and behaviors of a message that can be produced and consumed within the messaging system.
-This class provides methods to set and retrieve various message attributes, such as TTL, retry policies, scheduling
-options, and more.
+Configures a message for production to queues or exchanges.
+
+Provides methods to set message properties: TTL, retry policies,
+scheduling, priority, and routing (direct queue or exchange-based).
 
 ## Example
 
-```typescript
+```ts
 const message = new ProducibleMessage()
-  .setBody({ userId: 123, action: 'process' })
+  .setBody({ userId: 123 })
+  .setQueue('orders')
   .setTTL(60000)
-  .setRetryThreshold(5)
   .setPriority(EMessagePriority.HIGH);
 ```
 
@@ -23,19 +23,9 @@ const message = new ProducibleMessage()
 
 > **new ProducibleMessage**(): `ProducibleMessage`
 
-Constructs a new ProducibleMessage instance with default consume options.
-
 #### Returns
 
 `ProducibleMessage`
-
-#### Example
-
-```typescript
-const message = new ProducibleMessage();
-console.log(message.getTTL()); // 0
-console.log(message.getRetryThreshold()); // 3
-```
 
 ## Methods
 
@@ -49,22 +39,11 @@ Removes the priority setting from the message.
 
 `ProducibleMessage`
 
-This instance for method chaining
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setPriority(EMessagePriority.HIGH)
-  .disablePriority();
-
-console.log(message.hasPriority()); // false
+```ts
+msg.disablePriority();
 ```
-
-#### See
-
-- [setPriority](#setpriority)
-- [hasPriority](#haspriority)
 
 ---
 
@@ -78,18 +57,11 @@ Gets the message payload.
 
 `unknown`
 
-The message payload
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setBody({ userId: 123 });
-console.log(message.getBody()); // { userId: 123 }
+```ts
+const body = msg.getBody();
 ```
-
-#### See
-
-[setBody](#setbody)
 
 ---
 
@@ -97,24 +69,17 @@ console.log(message.getBody()); // { userId: 123 }
 
 > **getConsumeTimeout**(): `number`
 
-Gets the consumption timeout for the message.
+Gets the consumption timeout.
 
 #### Returns
 
 `number`
 
-Timeout in milliseconds (0 means no timeout)
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setConsumeTimeout(120000);
-console.log(message.getConsumeTimeout()); // 120000
+```ts
+const timeout = msg.getConsumeTimeout();
 ```
-
-#### See
-
-[setConsumeTimeout](#setconsumetimeout)
 
 ---
 
@@ -128,14 +93,11 @@ Gets the timestamp when the message was created.
 
 `number`
 
-Unix timestamp in milliseconds when the message was created
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage();
-const createdTime = message.getCreatedAt();
-console.log(new Date(createdTime)); // Current date/time
+```ts
+const msg = new ProducibleMessage();
+console.log(msg.getCreatedAt());
 ```
 
 ---
@@ -150,22 +112,12 @@ Gets the current exchange configuration.
 
 [`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md) \| `null`
 
-Exchange parameters, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setTopicExchange('events');
-const exchange = message.getExchange();
-console.log(exchange?.name); // 'events'
-console.log(exchange?.type); // EExchangeType.TOPIC
+```ts
+const exchange = msg.getExchange();
+console.log(exchange?.type);
 ```
-
-#### See
-
-- [setTopicExchange](#settopicexchange)
-- [setDirectExchange](#setdirectexchange)
-- [setFanoutExchange](#setfanoutexchange)
 
 ---
 
@@ -179,21 +131,11 @@ Gets the current exchange routing key.
 
 `string` \| `null`
 
-The routing key, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setTopicExchange('events')
-  .setExchangeRoutingKey('user.created');
-
-console.log(message.getExchangeRoutingKey()); // 'user.created'
+```ts
+const key = msg.getExchangeRoutingKey();
 ```
-
-#### See
-
-[setExchangeRoutingKey](#setexchangeroutingkey)
 
 ---
 
@@ -207,18 +149,11 @@ Gets the priority level of the message.
 
 [`EMessagePriority`](../enumerations/EMessagePriority.md) \| `null`
 
-Priority level, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setPriority(EMessagePriority.HIGH);
-console.log(message.getPriority()); // EMessagePriority.HIGH
+```ts
+const priority = msg.getPriority();
 ```
-
-#### See
-
-[setPriority](#setpriority)
 
 ---
 
@@ -232,19 +167,12 @@ Gets the current target queue configuration.
 
 [`IQueueParams`](../interfaces/IQueueParams.md) \| `null`
 
-Queue parameters, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setQueue('my-queue');
-const queue = message.getQueue();
-console.log(queue?.name); // 'my-queue'
+```ts
+const queue = msg.getQueue();
+console.log(queue?.name);
 ```
-
-#### See
-
-[setQueue](#setqueue)
 
 ---
 
@@ -252,24 +180,17 @@ console.log(queue?.name); // 'my-queue'
 
 > **getRetryDelay**(): `number`
 
-Gets the retry delay for the message.
+Gets the retry delay.
 
 #### Returns
 
 `number`
 
-Delay between retry attempts in milliseconds
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setRetryDelay(30000);
-console.log(message.getRetryDelay()); // 30000
+```ts
+const delay = msg.getRetryDelay();
 ```
-
-#### See
-
-[setRetryDelay](#setretrydelay)
 
 ---
 
@@ -277,24 +198,17 @@ console.log(message.getRetryDelay()); // 30000
 
 > **getRetryThreshold**(): `number`
 
-Gets the retry threshold for the message.
+Gets the retry threshold.
 
 #### Returns
 
 `number`
 
-Maximum number of retry attempts
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setRetryThreshold(5);
-console.log(message.getRetryThreshold()); // 5
+```ts
+const threshold = msg.getRetryThreshold();
 ```
-
-#### See
-
-[setRetryThreshold](#setretrythreshold)
 
 ---
 
@@ -302,24 +216,17 @@ console.log(message.getRetryThreshold()); // 5
 
 > **getScheduledCRON**(): `string` \| `null`
 
-Gets the CRON expression for scheduled message delivery.
+Gets the CRON expression for scheduled delivery.
 
 #### Returns
 
 `string` \| `null`
 
-CRON expression, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setScheduledCRON('0 0 10 * * *');
-console.log(message.getScheduledCRON()); // '0 0 10 * * *'
+```ts
+const cron = msg.getScheduledCRON();
 ```
-
-#### See
-
-[setScheduledCRON](#setscheduledcron)
 
 ---
 
@@ -333,18 +240,11 @@ Gets the scheduled delay for message delivery.
 
 `number` \| `null`
 
-The scheduled delay in milliseconds, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setScheduledDelay(5000);
-console.log(message.getScheduledDelay()); // 5000
+```ts
+const delay = msg.getScheduledDelay();
 ```
-
-#### See
-
-[setScheduledDelay](#setscheduleddelay)
 
 ---
 
@@ -358,18 +258,11 @@ Gets the number of times the message is scheduled to repeat.
 
 `number`
 
-Number of repetitions (0 means no repetition)
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setScheduledRepeat(3);
-console.log(message.getScheduledRepeat()); // 3
+```ts
+const repeat = msg.getScheduledRepeat();
 ```
-
-#### See
-
-[setScheduledRepeat](#setscheduledrepeat)
 
 ---
 
@@ -377,24 +270,17 @@ console.log(message.getScheduledRepeat()); // 3
 
 > **getScheduledRepeatPeriod**(): `number` \| `null`
 
-Gets the scheduled repeat period for the message.
+Gets the scheduled repeat period.
 
 #### Returns
 
 `number` \| `null`
 
-Repeat period in milliseconds, or null if not set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setScheduledRepeatPeriod(60000);
-console.log(message.getScheduledRepeatPeriod()); // 60000
+```ts
+const period = msg.getScheduledRepeatPeriod();
 ```
-
-#### See
-
-[setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
 ---
 
@@ -402,24 +288,17 @@ console.log(message.getScheduledRepeatPeriod()); // 60000
 
 > **getTTL**(): `number`
 
-Gets the Time-To-Live (TTL) value for the message.
+Gets the Time-To-Live (TTL) value.
 
 #### Returns
 
 `number`
 
-TTL in milliseconds (0 means no expiration)
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setTTL(300000);
-console.log(message.getTTL()); // 300000
+```ts
+const ttl = msg.getTTL();
 ```
-
-#### See
-
-[setTTL](#setttl)
 
 ---
 
@@ -427,27 +306,19 @@ console.log(message.getTTL()); // 300000
 
 > **hasPriority**(): `boolean`
 
-Checks if a priority level has been set for the message.
+Checks if a priority level has been set.
 
 #### Returns
 
 `boolean`
 
-True if priority is set, false otherwise
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage();
-console.log(message.hasPriority()); // false
-
-message.setPriority(EMessagePriority.HIGH);
-console.log(message.hasPriority()); // true
+```ts
+if (msg.hasPriority()) {
+  console.log(msg.getPriority());
+}
 ```
-
-#### See
-
-[setPriority](#setpriority)
 
 ---
 
@@ -455,26 +326,16 @@ console.log(message.hasPriority()); // true
 
 > **resetScheduledParams**(): `ProducibleMessage`
 
-Resets all scheduled parameters to their default values.
-
-Clears CRON expression, delay, repeat period, and repeat count.
+Resets all scheduled parameters to defaults.
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setScheduledCRON('0 0 10 * * *')
-  .setScheduledRepeat(5)
-  .resetScheduledParams(); // All scheduling cleared
-
-console.log(message.getScheduledCRON()); // null
-console.log(message.getScheduledRepeat()); // 0
+```ts
+msg.resetScheduledParams();
 ```
 
 ---
@@ -485,35 +346,23 @@ console.log(message.getScheduledRepeat()); // 0
 
 Sets the message payload.
 
-The payload will be JSON-serialized when the message is sent.
-
 #### Parameters
 
 ##### body
 
 `unknown`
 
-The message payload (any JSON-serializable value)
+Any JSON-serializable value
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage().setBody({
-  userId: 123,
-  action: 'send-email',
-  data: { email: 'user@example.com' },
-});
+```ts
+msg.setBody({ userId: 123, action: 'process' });
 ```
-
-#### See
-
-[getBody](#getbody)
 
 ---
 
@@ -523,38 +372,23 @@ const message = new ProducibleMessage().setBody({
 
 Sets the consumption timeout for the message.
 
-If a consumer takes longer than this timeout to process the message,
-the message will be considered failed and may be retried.
-
 #### Parameters
 
 ##### timeout
 
 `number`
 
-Timeout in milliseconds (0 means no timeout)
+Timeout in milliseconds (0 = no timeout)
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the timeout is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setConsumeTimeout(30000) // 30 second timeout
-  .setBody({ complexTask: true });
+```ts
+msg.setConsumeTimeout(30000); // 30 second timeout
 ```
-
-#### See
-
-[getConsumeTimeout](#getconsumetimeout)
 
 ---
 
@@ -563,8 +397,6 @@ const message = new ProducibleMessage()
 > **setDirectExchange**(`exchange`): `ProducibleMessage`
 
 Sets a direct exchange for message routing.
-
-Direct exchanges route messages to queues with matching routing keys.
 
 #### Parameters
 
@@ -578,26 +410,11 @@ Exchange name or parameters
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-Error When exchange parameters are invalid
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setDirectExchange('tasks')
-  .setExchangeRoutingKey('high-priority')
-  .setBody({ task: 'urgent-task' });
+```ts
+msg.setDirectExchange('tasks').setExchangeRoutingKey('high');
 ```
-
-#### See
-
-- [setExchangeRoutingKey](#setexchangeroutingkey)
-- [setFanoutExchange](#setfanoutexchange)
-- [setTopicExchange](#settopicexchange)
 
 ---
 
@@ -613,31 +430,17 @@ Sets the routing key for exchange-based message delivery.
 
 `string`
 
-The routing key for message routing
+Routing key
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessageError When no exchange has been set
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setTopicExchange('events')
-  .setExchangeRoutingKey('user.login.success');
+```ts
+msg.setTopicExchange('events').setExchangeRoutingKey('user.login');
 ```
-
-#### See
-
-- [getExchangeRoutingKey](#getexchangeroutingkey)
-- [setTopicExchange](#settopicexchange)
-- [setDirectExchange](#setdirectexchange)
 
 ---
 
@@ -646,8 +449,6 @@ const message = new ProducibleMessage()
 > **setFanoutExchange**(`exchange`): `ProducibleMessage`
 
 Sets a fanout exchange for message routing.
-
-Fanout exchanges deliver messages to all bound queues, ignoring routing keys.
 
 #### Parameters
 
@@ -661,24 +462,11 @@ Exchange name or parameters
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-Error When exchange parameters are invalid
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setFanoutExchange('notifications')
-  .setBody({ type: 'broadcast' });
+```ts
+msg.setFanoutExchange('notifications');
 ```
-
-#### See
-
-- [setTopicExchange](#settopicexchange)
-- [setDirectExchange](#setdirectexchange)
 
 ---
 
@@ -688,36 +476,23 @@ const message = new ProducibleMessage()
 
 Sets the priority level for the message.
 
-Only effective when producing to a priority queue. Higher priority messages
-are processed before lower priority ones.
-
 #### Parameters
 
 ##### priority
 
 [`EMessagePriority`](../enumerations/EMessagePriority.md)
 
-The priority level from EMessagePriority enum
+Priority from EMessagePriority enum
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setPriority(EMessagePriority.HIGH)
-  .setBody({ urgent: true });
+```ts
+msg.setPriority(EMessagePriority.HIGH);
 ```
-
-#### See
-
-- [getPriority](#getpriority)
-- [hasPriority](#haspriority)
-- [disablePriority](#disablepriority)
 
 ---
 
@@ -726,8 +501,6 @@ const message = new ProducibleMessage()
 > **setQueue**(`queue`): `ProducibleMessage`
 
 Sets the target queue for direct message delivery.
-
-Setting a queue clears any previously set exchange configuration.
 
 #### Parameters
 
@@ -741,23 +514,11 @@ Queue name or parameters
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-Error When queue parameters are invalid
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setQueue('user-tasks')
-  .setBody({ userId: 123, task: 'process' });
+```ts
+msg.setQueue('orders');
 ```
-
-#### See
-
-[getQueue](#getqueue)
 
 ---
 
@@ -765,10 +526,7 @@ const message = new ProducibleMessage()
 
 > **setRetryDelay**(`delay`): `ProducibleMessage`
 
-Sets the delay between retry attempts for failed messages.
-
-Helps prevent overwhelming the system with immediate retries and allows
-temporary issues to resolve.
+Sets the delay between retry attempts.
 
 #### Parameters
 
@@ -776,30 +534,17 @@ temporary issues to resolve.
 
 `number`
 
-Delay in milliseconds (0 means no delay)
+Delay in milliseconds
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the delay is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setRetryDelay(30000) // Wait 30 seconds between retries
-  .setRetryThreshold(3); // Retry up to 3 times
+```ts
+msg.setRetryDelay(30000); // Wait 30 seconds between retries
 ```
-
-#### See
-
-- [setRetryThreshold](#setretrythreshold)
-- [getRetryDelay](#getretrydelay)
 
 ---
 
@@ -809,38 +554,23 @@ const message = new ProducibleMessage()
 
 Sets the maximum number of retry attempts for failed messages.
 
-After exceeding this threshold, messages may be moved to a dead-letter queue.
-
 #### Parameters
 
 ##### threshold
 
 `number`
 
-Maximum retry attempts (0 means no retries)
+Maximum retry attempts (0 = no retries)
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the threshold is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setRetryThreshold(5) // Retry up to 5 times
-  .setRetryDelay(10000); // Wait 10 seconds between retries
+```ts
+msg.setRetryThreshold(5);
 ```
-
-#### See
-
-- [setRetryDelay](#setretrydelay)
-- [getRetryThreshold](#getretrythreshold)
 
 ---
 
@@ -850,40 +580,23 @@ const message = new ProducibleMessage()
 
 Sets a CRON expression for scheduled message delivery.
 
-Can be combined with [setScheduledRepeat](#setscheduledrepeat) and [setScheduledRepeatPeriod](#setscheduledrepeatperiod) for complex scheduling.
-
 #### Parameters
 
 ##### cron
 
 `string`
 
-Valid CRON expression (e.g., '0 0 10 \* \* \*' for daily at 10 AM)
+Valid CRON expression (e.g., '0 0 10 \* \* \*')
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-Error When the CRON expression is invalid
-
 #### Example
 
-```typescript
-// Daily at 10 AM, then repeat 3 times with 10-minute intervals
-const message = new ProducibleMessage()
-  .setScheduledCRON('0 0 10 * * *')
-  .setScheduledRepeat(3)
-  .setScheduledRepeatPeriod(600000); // 10 minutes
+```ts
+msg.setScheduledCRON('0 0 10 * * *'); // Daily at 10 AM
 ```
-
-#### See
-
-- [setScheduledRepeat](#setscheduledrepeat)
-- [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
 ---
 
@@ -899,29 +612,17 @@ Sets a delay before the message's initial delivery.
 
 `number`
 
-The delay in milliseconds (must be non-negative)
+Delay in milliseconds
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the delay is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setScheduledDelay(30000) // Deliver after 30 seconds
-  .setBody({ task: 'delayed-task' });
+```ts
+msg.setScheduledDelay(30000); // Deliver after 30 seconds
 ```
-
-#### See
-
-[getScheduledDelay](#getscheduleddelay)
 
 ---
 
@@ -937,29 +638,17 @@ Sets the number of times a message should repeat after initial delivery.
 
 `number`
 
-Number of repetitions (must be non-negative)
+Number of repetitions
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the repeat value is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setScheduledRepeat(3) // Repeat 3 times after initial delivery
-  .setScheduledRepeatPeriod(60000); // Every minute
+```ts
+msg.setScheduledRepeat(3); // Repeat 3 times
 ```
-
-#### See
-
-[setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
 ---
 
@@ -969,37 +658,23 @@ const message = new ProducibleMessage()
 
 Sets the repeat period for scheduled message delivery.
 
-Used with [setScheduledRepeat](#setscheduledrepeat) to create recurring messages with a fixed interval.
-
 #### Parameters
 
 ##### period
 
 `number`
 
-The repeat period in milliseconds (must be non-negative)
+Repeat period in milliseconds
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the period is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setScheduledRepeatPeriod(60000) // Repeat every minute
-  .setScheduledRepeat(5); // Repeat 5 times
+```ts
+msg.setScheduledRepeatPeriod(60000); // Every minute
 ```
-
-#### See
-
-[setScheduledRepeat](#setscheduledrepeat)
 
 ---
 
@@ -1008,8 +683,6 @@ const message = new ProducibleMessage()
 > **setTopicExchange**(`exchange`): `ProducibleMessage`
 
 Sets a topic exchange for message routing.
-
-Topic exchanges route messages based on routing key patterns.
 
 #### Parameters
 
@@ -1023,26 +696,11 @@ Exchange name or parameters
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-Error When exchange parameters are invalid
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setTopicExchange('events')
-  .setExchangeRoutingKey('user.created')
-  .setBody({ userId: 123 });
+```ts
+msg.setTopicExchange('events').setExchangeRoutingKey('user.created');
 ```
-
-#### See
-
-- [setExchangeRoutingKey](#setexchangeroutingkey)
-- [setFanoutExchange](#setfanoutexchange)
-- [setDirectExchange](#setdirectexchange)
 
 ---
 
@@ -1052,37 +710,23 @@ const message = new ProducibleMessage()
 
 Sets the Time-To-Live (TTL) for the message.
 
-Messages with expired TTL will be automatically removed from the queue.
-
 #### Parameters
 
 ##### ttl
 
 `number`
 
-TTL in milliseconds (0 means no expiration)
+TTL in milliseconds (0 = no expiration)
 
 #### Returns
 
 `ProducibleMessage`
 
-This instance for method chaining
-
-#### Throws
-
-MessagePropertyInvalidValueError When the TTL is not a valid non-negative number
-
 #### Example
 
-```typescript
-const message = new ProducibleMessage()
-  .setTTL(300000) // Expire after 5 minutes
-  .setBody({ urgent: true });
+```ts
+msg.setTTL(300000); // Expire after 5 minutes
 ```
-
-#### See
-
-[getTTL](#getttl)
 
 ---
 
@@ -1090,7 +734,7 @@ const message = new ProducibleMessage()
 
 > `static` **setDefaultConsumeOptions**(`consumeOptions`): `void`
 
-Sets default consume options for all future ProducibleMessage instances.
+Sets default consume options for all future instances.
 
 #### Parameters
 
@@ -1098,31 +742,18 @@ Sets default consume options for all future ProducibleMessage instances.
 
 `Partial`\<[`TMessageConsumeOptions`](../type-aliases/TMessageConsumeOptions.md)\>
 
-Partial consume options to override defaults
+Partial options to override defaults
 
 #### Returns
 
 `void`
 
-#### Static
-
-#### Throws
-
-MessagePropertyInvalidValueError When any provided value is invalid
-
 #### Example
 
-```typescript
-// Set new defaults
+```ts
 ProducibleMessage.setDefaultConsumeOptions({
   ttl: 60000,
   retryThreshold: 5,
   retryDelay: 30000,
-  consumeTimeout: 120000,
 });
-
-// New instances will use these defaults
-const message = new ProducibleMessage();
-console.log(message.getTTL()); // 60000
-console.log(message.getRetryThreshold()); // 5
 ```

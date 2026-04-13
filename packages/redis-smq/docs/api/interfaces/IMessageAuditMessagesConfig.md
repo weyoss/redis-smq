@@ -61,7 +61,7 @@ Set to `0` to disable time-based eviction, keeping messages indefinitely.
 #### Default
 
 ```ts
-0(unlimited);
+0;
 ```
 
 ---
@@ -81,5 +81,5 @@ Set to `0` to disable size-based eviction, allowing unlimited storage.
 #### Default
 
 ```ts
-0(unlimited);
+0;
 ```

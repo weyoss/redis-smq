@@ -9,8 +9,8 @@
 
 import {
   EMessageDeadLetterCause,
-  EMessageUnacknowledgementCause,
   EMessageUnacknowledgementAction,
+  EMessageUnacknowledgementCause,
 } from './message-unacknowledgement.js';
 import { IQueueParsedParams } from '../../../../queue-manager/index.js';
 

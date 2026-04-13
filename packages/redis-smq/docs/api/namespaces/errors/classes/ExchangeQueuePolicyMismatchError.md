@@ -7,7 +7,7 @@ type is incompatible with the exchange's queue policy.
 
 ## Extends
 
-- `RedisSMQError`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \}\>
+- `RedisSMQError`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../enumerations/EExchangeQueuePolicy.md); \}\>
 
 ## Constructors
 
@@ -19,7 +19,7 @@ type is incompatible with the exchange's queue policy.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../enumerations/EExchangeQueuePolicy.md); \}\>\]
 
 #### Returns
 
@@ -119,11 +119,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \} \| `null`
+> **getMetadata**(): \{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../enumerations/EExchangeQueuePolicy.md); \} \| `null`
 
 #### Returns
 
-\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../../enumerations/EExchangeQueuePolicy.md); \} \| `null`
+\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../enumerations/EExchangeQueuePolicy.md); \} \| `null`
 
 #### Inherited from
 

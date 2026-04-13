@@ -52,7 +52,7 @@ export interface IMessageAuditMessagesConfig {
    *
    * Set to `0` to disable size-based eviction, allowing unlimited storage.
    *
-   * @default 0 (unlimited)
+   * @default 0
    */
   queueSize: number;
 
@@ -64,7 +64,7 @@ export interface IMessageAuditMessagesConfig {
    *
    * Set to `0` to disable time-based eviction, keeping messages indefinitely.
    *
-   * @default 0 (unlimited)
+   * @default 0
    */
   expire: number;
 }
@@ -130,14 +130,14 @@ export interface IMessageAuditHistoryConfig {
  * @example
  * ```typescript
  * // Minimal configuration - enable all with defaults
- * const config: IMessageAuditConfig = {
+ * let config: IMessageAuditConfig = {
  *   acknowledgedMessages: true,
  *   deadLetteredMessages: true,
  *   unacknowledgementHistory: true
  * };
  *
  * // Custom configuration with size limits and expiration
- * const config: IMessageAuditConfig = {
+ * config = {
  *   acknowledgedMessages: {
  *     enabled: true,
  *     queueSize: 10000,

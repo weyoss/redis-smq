@@ -27,31 +27,19 @@ import { _getNamespaceQueues } from './_/_get-namespace-queues.js';
 import { validateRedisKey } from '../common/redis/redis-keys/validator.js';
 
 /**
- * NamespaceManager class for managing message queue namespaces in Redis.
- * This class provides methods to get, create, and delete namespaces, as well as retrieve
- * associated queues.
+ * Manages message queue namespaces.
  *
- * Namespaces provide logical isolation for queues, allowing you to group related queues
- * and avoid naming conflicts. Each queue belongs to a namespace, with the default
- * namespace being "default" if not specified.
+ * Provides methods to get namespaces, retrieve queues in a namespace,
+ * and delete namespaces with all their queues.
  *
  * @example
- * ```typescript
  * const namespaceManager = new NamespaceManager();
  *
- * // Using callback
- * namespaceManager.getNamespaces((err, namespaces) => {
- *   if (err) {
- *     console.error('Failed to get namespaces:', err);
- *   } else {
- *     console.log('Namespaces:', namespaces);
- *   }
- * });
- *
- * // Using promise
+ * // Get all namespaces
  * const namespaces = await namespaceManager.getNamespaces();
- * console.log('Namespaces:', namespaces);
- * ```
+ *
+ * // Get queues in a namespace
+ * const queues = await namespaceManager.getNamespaceQueues('production');
  */
 export class NamespaceManager {
   protected logger;
@@ -64,48 +52,21 @@ export class NamespaceManager {
   }
 
   /**
-   * Retrieves all namespaces from Redis.
+   * Gets all namespaces.
    *
-   * This method returns a list of all namespaces that have been created in the system.
-   * Namespaces are stored as a Redis set, making this operation efficient even with
-   * a large number of namespaces.
-   *
-   * @param cb - Optional callback function to handle the result.
-   *             - On success: `cb(null, namespaces)` where namespaces is an array of namespace strings.
-   *             - On error: `cb(error)` with any Redis or system errors.
-   *             - If not provided, the method returns a Promise that resolves with the namespaces.
-   * @returns {Promise<string[]> | void} - Returns a Promise if no callback is provided,
-   *          otherwise returns void.
+   * @param cb - (err, namespaces) => void. Returns string[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * const namespaceManager = new NamespaceManager();
+   * // Promise
+   * const namespaces = await namespaceManager.getNamespaces();
+   * console.log(namespaces);
    *
-   * // Callback pattern
+   * // Callback
    * namespaceManager.getNamespaces((err, namespaces) => {
-   *   if (err) {
-   *     console.error('Failed to get namespaces:', err);
-   *   } else {
-   *     console.log(`Found ${namespaces.length} namespaces:`);
-   *     namespaces.forEach(ns => console.log(`  - ${ns}`));
-   *   }
+   *   if (err) throw err;
+   *   console.log(namespaces);
    * });
-   *
-   * // Promise pattern - list namespaces with queue counts
-   * async function listNamespacesWithQueueCounts() {
-   *   try {
-   *     const namespaces = await namespaceManager.getNamespaces();
-   *     console.log(`Total namespaces: ${namespaces.length}`);
-   *
-   *     for (const ns of namespaces) {
-   *       const queues = await namespaceManager.getNamespaceQueues(ns);
-   *       console.log(`Namespace '${ns}': ${queues.length} queues`);
-   *     }
-   *   } catch (err) {
-   *     console.error('Failed to list namespaces:', err);
-   *   }
-   * }
-   * ```
    */
   getNamespaces(): Promise<string[]>;
   getNamespaces(cb: ICallback<string[]>): void;
@@ -138,69 +99,22 @@ export class NamespaceManager {
   }
 
   /**
-   * Retrieves all queues associated with a given namespace.
+   * Gets all queues in a namespace.
    *
-   * This method returns detailed queue information for all queues within a specific
-   * namespace. Each queue is represented with its name and namespace, allowing you
-   * to inspect and manage queues in a particular namespace.
-   *
-   * @param namespace - The namespace to retrieve queues for (must be a valid Redis key)
-   * @param cb - Optional callback function to handle the result.
-   *             - On success: `cb(null, queues)` where queues is an array of queue parameters.
-   *             - On error: `cb(error)` with one of the errors listed below.
-   *             - If not provided, the method returns a Promise that resolves with the queues.
-   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided,
-   *          otherwise returns void.
-   *
-   * @throws {InvalidNamespaceError} When the namespace parameter is invalid (empty or contains invalid characters).
-   * @throws {NamespaceNotFoundError} When the specified namespace doesn't exist.
+   * @param namespace - Namespace name
+   * @param cb - (err, queues) => void. Returns IQueueParams[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * const namespaceManager = new NamespaceManager();
+   * // Promise
+   * const queues = await namespaceManager.getNamespaceQueues('production');
+   * queues.forEach(q => console.log(q.name));
    *
-   * // Callback pattern
+   * // Callback
    * namespaceManager.getNamespaceQueues('production', (err, queues) => {
-   *   if (err) {
-   *     if (err instanceof NamespaceNotFoundError) {
-   *       console.error('Namespace does not exist');
-   *     } else {
-   *       console.error('Failed to get queues:', err);
-   *     }
-   *   } else {
-   *     console.log(`Found ${queues.length} queues in production namespace:`);
-   *     queues.forEach(queue => {
-   *       console.log(`  - ${queue.name}@${queue.ns}`);
-   *     });
-   *   }
+   *   if (err) throw err;
+   *   console.log(queues);
    * });
-   *
-   * // Promise pattern
-   * async function getNamespaceMetrics(namespace: string) {
-   *   try {
-   *     const queues = await namespaceManager.getNamespaceQueues(namespace);
-   *     const queueManager = new QueueManager();
-   *
-   *     let totalMessages = 0;
-   *     let totalPending = 0;
-   *
-   *     for (const queue of queues) {
-   *       const props = await queueManager.getProperties(queue);
-   *       totalMessages += props.messagesCount;
-   *       totalPending += props.pendingMessagesCount;
-   *     }
-   *
-   *     console.log(`Namespace '${namespace}' metrics:`);
-   *     console.log(`  Total queues: ${queues.length}`);
-   *     console.log(`  Total messages: ${totalMessages}`);
-   *     console.log(`  Total pending: ${totalPending}`);
-   *
-   *     return { queues, totalMessages, totalPending };
-   *   } catch (err) {
-   *     console.error('Failed to get namespace metrics:', err);
-   *   }
-   * }
-   * ```
    */
   getNamespaceQueues(namespace: string): Promise<IQueueParams[]>;
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void;
@@ -280,64 +194,20 @@ export class NamespaceManager {
   }
 
   /**
-   * Deletes a namespace and its associated queues from Redis.
+   * Deletes a namespace and all its queues.
    *
-   * This method performs a complete deletion of a namespace and all queues within it.
-   * The operation is comprehensive and includes validation checks to ensure the
-   * namespace can be safely deleted.
-   *
-   * @param namespace - The namespace to delete (must be a valid Redis key)
-   * @param cb - Optional callback function to handle the result.
-   *             - On success: `cb(null)`
-   *             - On error: `cb(error)` with one of the errors listed below.
-   *             - If not provided, the method returns a Promise that resolves when deleted.
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided,
-   *          otherwise returns void.
-   *
-   * @throws {InvalidNamespaceError} When the namespace parameter is invalid.
-   * @throws {NamespaceNotFoundError} When the specified namespace doesn't exist.
-   * @throws {QueueNotFoundError} When a queue in the namespace doesn't exist (should not happen).
-   * @throws {QueueNotEmptyError} When a queue in the namespace has messages.
-   * @throws {QueueHasActiveConsumersError} When a queue has active consumers.
-   * @throws {QueueHasBoundExchangesError} When a queue has bound exchanges.
-   * @throws {ConsumerSetMismatchError} When consumer set is inconsistent.
-   * @throws {UnexpectedScriptReplyError} When Redis returns an unexpected response.
-   * @throws {QueueLockedError} When a queue is locked.
-   * @throws {InvalidQueueStateError} When a queue is in an invalid state.
+   * @param namespace - Namespace name
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * const namespaceManager = new NamespaceManager();
+   * // Promise
+   * await namespaceManager.delete('staging');
    *
-   * // Callback pattern
+   * // Callback
    * namespaceManager.delete('staging', (err) => {
-   *   if (err) {
-   *       console.error('Failed to delete namespace:', err);
-   *   } else {
-   *     console.log('Namespace and all its queues deleted successfully');
-   *   }
+   *   if (err) throw err;
    * });
-   *
-   * // Promise pattern
-   * async function safeDeleteNamespace(namespace: string) {
-   *   try {
-   *     // First, check if namespace exists
-   *     const namespaces = await namespaceManager.getNamespaces();
-   *     if (!namespaces.includes(namespace)) {
-   *       console.log(`Namespace '${namespace}' does not exist`);
-   *       return false;
-   *     }
-   *
-   *     // Delete the namespace
-   *     await namespaceManager.delete(namespace);
-   *     console.log(`Namespace '${namespace}' deleted successfully`);
-   *     return true;
-   *   } catch (err) {
-   *     console.error('Failed to delete namespace:', err);
-   *     return false;
-   *   }
-   * }
-   * ```
    */
   delete(namespace: string): Promise<void>;
   delete(namespace: string, cb: ICallback<void>): void;

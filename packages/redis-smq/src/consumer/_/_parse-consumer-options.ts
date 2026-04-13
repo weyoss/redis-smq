@@ -8,9 +8,9 @@
  */
 
 import {
+  IConsumerBatchConfig,
   IConsumerOptions,
   IConsumerParsedOptions,
-  IConsumerBatchConfig,
 } from '../types/index.js';
 
 function parseBatchConfig(

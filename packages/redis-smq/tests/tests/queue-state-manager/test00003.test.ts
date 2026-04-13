@@ -7,15 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { expect, test, describe, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import {
   Consumer,
-  EStateTransitionReason,
   EQueueType,
+  EStateTransitionReason,
   QueueStateManager,
 } from '../../../src/index.js';
 import bluebird from 'bluebird';

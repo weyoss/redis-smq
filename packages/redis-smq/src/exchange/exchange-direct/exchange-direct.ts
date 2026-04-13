@@ -20,8 +20,8 @@ import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config-manager/configuration.js';
 import {
   ExchangeHasBoundQueuesError,
-  InvalidExchangeRoutingKeyError,
   InvalidDirectExchangeParametersError,
+  InvalidExchangeRoutingKeyError,
   NamespaceMismatchError,
   QueueAlreadyBound,
   QueueNotBoundError,
@@ -45,36 +45,20 @@ import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
 
 /**
- * Direct Exchange implementation for RedisSMQ.
+ * Direct exchange for exact routing key matching.
  *
- * A direct exchange routes messages to queues based on exact routing key matches.
- * Messages published with a specific routing key are delivered only to queues
- * bound to that exact routing key. This provides precise message routing control
- * and is ideal for point-to-point messaging patterns.
- *
- * Key Features:
- * - Exact routing key matching for precise message delivery
- * - Multiple queues can be bound to the same routing key
- * - Atomic binding and unbinding operations with Redis transactions
- * - Concurrent modification detection using Redis WATCH
- * - Namespace isolation for multi-tenant applications
- * - Automatic cleanup of empty routing keys and reverse indexes
- * - Comprehensive validation and error handling
+ * Routes messages to queues based on exact routing key matches.
+ * Messages published with a specific routing key are delivered only to
+ * queues bound to that exact routing key.
  *
  * @example
- * ```typescript
  * const directExchange = new ExchangeDirect();
  *
- * // Callback pattern
- * directExchange.bindQueue('order-processor', 'order-events', 'order.created', (err) => {
- *   if (err) console.error('Failed to bind:', err);
- *   else console.log('Queue bound');
- * });
+ * // Bind a queue
+ * await directExchange.bindQueue('order-processor', 'events', 'order.created');
  *
- * // Promise pattern
- * await directExchange.bindQueue('order-processor', 'order-events', 'order.created');
- * console.log('Queue bound');
- * ```
+ * // Match queues for a routing key
+ * const queues = await directExchange.matchQueues('events', 'order.created');
  */
 export class ExchangeDirect {
   protected readonly type = EExchangeType.DIRECT;
@@ -89,33 +73,21 @@ export class ExchangeDirect {
   }
 
   /**
-   * Retrieve all routing keys currently bound to a direct exchange.
+   * Gets all routing keys bound to a direct exchange.
    *
-   * @param exchange - Exchange identifier (string name or object with ns/name)
-   * @param cb - Optional callback invoked with the list of routing keys
-   * @returns {Promise<string[]> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err, keys) => void. Returns string[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.getRoutingKeys('order-events', (err, keys) => {
-   *   if (err) {
-   *     console.error('Failed to get routing keys:', err);
-   *   } else {
-   *     console.log('Routing keys:', keys);
-   *   }
-   * });
+   * // Promise
+   * const keys = await directExchange.getRoutingKeys('events');
    *
-   * // Promise pattern
-   * try {
-   *   const keys = await directExchange.getRoutingKeys('order-events');
-   *   console.log('Routing keys:', keys);
-   * } catch (err) {
-   *   console.error('Failed to get routing keys:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.getRoutingKeys('events', (err, keys) => {
+   *   if (err) throw err;
+   *   console.log(keys);
+   * });
    */
   getRoutingKeys(exchange: string | IExchangeParams): Promise<string[]>;
   getRoutingKeys(
@@ -140,35 +112,22 @@ export class ExchangeDirect {
   }
 
   /**
-   * Retrieves all queues bound to a specific routing key for a direct exchange.
+   * Gets all queues bound to a specific routing key.
    *
-   * @param exchange - Exchange identifier (string name or object with ns/name)
-   * @param routingKey - Routing key to resolve
-   * @param cb - Optional callback invoked with the list of bound queues
-   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
-   * @throws InvalidDirectExchangeParametersError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param routingKey - Routing key
+   * @param cb - (err, queues) => void. Returns IQueueParams[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.getRoutingKeyBoundQueues('order-events', 'order.created', (err, queues) => {
-   *   if (err) {
-   *     console.error('Failed to get bound queues:', err);
-   *   } else {
-   *     console.log('Bound queues:', queues);
-   *   }
-   * });
+   * // Promise
+   * const queues = await directExchange.getRoutingKeyBoundQueues('events', 'order.created');
    *
-   * // Promise pattern
-   * try {
-   *   const queues = await directExchange.getRoutingKeyBoundQueues('order-events', 'order.created');
-   *   console.log('Bound queues:', queues);
-   * } catch (err) {
-   *   console.error('Failed to get bound queues:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.getRoutingKeyBoundQueues('events', 'order.created', (err, queues) => {
+   *   if (err) throw err;
+   *   console.log(queues);
+   * });
    */
   getRoutingKeyBoundQueues(
     exchange: string | IExchangeParams,
@@ -207,41 +166,22 @@ export class ExchangeDirect {
   }
 
   /**
-   * Retrieves all queues bound to the specified routing key in a direct exchange.
+   * Matches queues for a routing key (for message production).
    *
-   * This method performs an exact match lookup for the given routing key and returns
-   * all queues that are bound to it. In direct exchanges, only queues with exact
-   * routing key matches will receive messages.
-   *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param routingKey - The routing key to match against
-   * @param cb - Optional callback invoked with the list of matching queues
-   * @returns {Promise<IQueueParams[]> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
-   * @throws InvalidExchangeRoutingKeyError
-   * @throws ExchangeNotFoundError
-   * @throws ExchangeTypeMismatchError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param routingKey - Routing key
+   * @param cb - (err, queues) => void. Returns IQueueParams[]
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.matchQueues('order-events', 'order.created', (err, queues) => {
-   *   if (err) {
-   *     console.error('Failed to match queues:', err);
-   *   } else {
-   *     console.log(`Found ${queues.length} queues`);
-   *   }
-   * });
+   * // Promise
+   * const queues = await directExchange.matchQueues('events', 'order.created');
    *
-   * // Promise pattern
-   * try {
-   *   const queues = await directExchange.matchQueues('order-events', 'order.created');
-   *   console.log(`Found ${queues.length} queues`);
-   * } catch (err) {
-   *   console.error('Failed to match queues:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.matchQueues('events', 'order.created', (err, queues) => {
+   *   if (err) throw err;
+   *   console.log(queues);
+   * });
    */
   matchQueues(
     exchange: string | IExchangeParams,
@@ -314,27 +254,19 @@ export class ExchangeDirect {
   /**
    * Creates a direct exchange.
    *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param queuePolicy - The queue policy for this exchange (STANDARD or PRIORITY)
-   * @param cb - Optional callback invoked when creation completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param queuePolicy - STANDARD or PRIORITY
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.create('order-events', EExchangeQueuePolicy.STANDARD, (err) => {
-   *   if (err) console.error('Failed to create exchange:', err);
-   *   else console.log('Exchange created');
-   * });
+   * // Promise
+   * await directExchange.create('events', EExchangeQueuePolicy.STANDARD);
    *
-   * // Promise pattern
-   * try {
-   *   await directExchange.create('order-events', EExchangeQueuePolicy.STANDARD);
-   *   console.log('Exchange created');
-   * } catch (err) {
-   *   console.error('Failed to create exchange:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.create('events', EExchangeQueuePolicy.STANDARD, (err) => {
+   *   if (err) throw err;
+   * });
    */
   create(
     exchange: string | IExchangeParams,
@@ -362,43 +294,22 @@ export class ExchangeDirect {
   }
 
   /**
-   * Binds a queue to a direct exchange with a specific routing key.
+   * Binds a queue to a direct exchange with a routing key.
    *
-   * This method creates a binding between a queue and a direct exchange for a specific
-   * routing key. Messages published to the exchange with this routing key will be
-   * delivered to the bound queue.
-   *
-   * @param queue - The queue to bind (string name or object with ns/name)
-   * @param exchange - The exchange to bind to (string name or object with ns/name)
-   * @param routingKey - The routing key for message routing
-   * @param cb - Optional callback invoked when binding completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidQueueParametersError
-   * @throws InvalidExchangeParametersError
-   * @throws QueueNotFoundError
-   * @throws ExchangeNotFoundError
-   * @throws NamespaceMismatchError
+   * @param queue - Queue name (string) or { name, ns }
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param routingKey - Routing key for matching
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.bindQueue('order-processor', 'order-events', 'order.created', (err) => {
-   *   if (err) {
-   *     console.error('Failed to bind:', err);
-   *   } else {
-   *     console.log('Queue bound successfully');
-   *   }
-   * });
+   * // Promise
+   * await directExchange.bindQueue('order-processor', 'events', 'order.created');
    *
-   * // Promise pattern
-   * try {
-   *   await directExchange.bindQueue('order-processor', 'order-events', 'order.created');
-   *   console.log('Queue bound successfully');
-   * } catch (err) {
-   *   console.error('Failed to bind:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.bindQueue('order-processor', 'events', 'order.created', (err) => {
+   *   if (err) throw err;
+   * });
    */
   bindQueue(
     queue: string | IQueueParams,
@@ -588,42 +499,22 @@ export class ExchangeDirect {
   }
 
   /**
-   * Unbinds a queue from a direct exchange for a specific routing key.
+   * Unbinds a queue from a direct exchange.
    *
-   * This method removes the binding between a queue and a direct exchange for the
-   * specified routing key. After unbinding, messages with this routing key will no
-   * longer be delivered to the unbound queue.
-   *
-   * @param queue - The queue to unbind (string name or object with ns/name)
-   * @param exchange - The exchange to unbind from (string name or object with ns/name)
-   * @param routingKey - The routing key to unbind from
-   * @param cb - Optional callback invoked when unbinding completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidQueueParametersError
-   * @throws InvalidExchangeParametersError
-   * @throws NamespaceMismatchError
-   * @throws QueueNotBoundError
+   * @param queue - Queue name (string) or { name, ns }
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param routingKey - Routing key to unbind
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.unbindQueue('order-processor', 'order-events', 'order.created', (err) => {
-   *   if (err) {
-   *     console.error('Failed to unbind:', err);
-   *   } else {
-   *     console.log('Queue unbound successfully');
-   *   }
-   * });
+   * // Promise
+   * await directExchange.unbindQueue('order-processor', 'events', 'order.created');
    *
-   * // Promise pattern
-   * try {
-   *   await directExchange.unbindQueue('order-processor', 'order-events', 'order.created');
-   *   console.log('Queue unbound successfully');
-   * } catch (err) {
-   *   console.error('Failed to unbind:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.unbindQueue('order-processor', 'events', 'order.created', (err) => {
+   *   if (err) throw err;
+   * });
    */
   unbindQueue(
     queue: string | IQueueParams,
@@ -833,39 +724,20 @@ export class ExchangeDirect {
   }
 
   /**
-   * Deletes a direct exchange from the system.
+   * Deletes a direct exchange.
    *
-   * This method performs a comprehensive and safe deletion of a direct exchange with
-   * extensive validation and cleanup. The deletion process ensures data integrity
-   * and prevents orphaned data structures in Redis.
-   *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param cb - Optional callback invoked when deletion completes
-   * @returns {Promise<void> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
-   * @throws ExchangeHasBoundQueuesError
-   * @throws ExchangeNotFoundError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.delete('old-order-events', (err) => {
-   *   if (err) {
-   *     console.error('Failed to delete exchange:', err);
-   *   } else {
-   *     console.log('Exchange deleted successfully');
-   *   }
-   * });
+   * // Promise
+   * await directExchange.delete('old-events');
    *
-   * // Promise pattern
-   * try {
-   *   await directExchange.delete('old-order-events');
-   *   console.log('Exchange deleted successfully');
-   * } catch (err) {
-   *   console.error('Failed to delete exchange:', err);
-   * }
-   * ```
+   * // Callback
+   * directExchange.delete('old-events', (err) => {
+   *   if (err) throw err;
+   * });
    */
   delete(exchange: string | IExchangeParams): Promise<void>;
   delete(exchange: string | IExchangeParams, cb: ICallback): void;
@@ -1028,40 +900,24 @@ export class ExchangeDirect {
   }
 
   /**
-   * Retrieves all bindings for a direct exchange.
+   * Gets all bindings for a direct exchange.
    *
-   * This method returns a complete mapping of routing keys to the queues bound to them.
-   *
-   * @param exchange - The exchange identifier (string name or object with ns/name)
-   * @param cb - Optional callback invoked with the bindings mapping
-   * @returns {Promise<Record<string, IQueueParams[]>> | void} - Returns a Promise if no callback is provided
-   *
-   * @throws InvalidExchangeParametersError
+   * @param exchange - Exchange name (string) or { name, ns }
+   * @param cb - (err, bindings) => void. Returns Record<string, IQueueParams[]>
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Callback pattern
-   * directExchange.getBindings('order-events', (err, bindings) => {
-   *   if (err) {
-   *     console.error('Failed to get bindings:', err);
-   *   } else {
-   *     console.log('Bindings:', bindings);
-   *     for (const [key, queues] of Object.entries(bindings)) {
-   *       console.log(`Routing key "${key}": ${queues.length} queues`);
-   *     }
-   *   }
-   * });
-   *
-   * // Promise pattern
-   * try {
-   *   const bindings = await directExchange.getBindings('order-events');
-   *   for (const [key, queues] of Object.entries(bindings)) {
-   *     console.log(`Routing key "${key}": ${queues.length} queues`);
-   *   }
-   * } catch (err) {
-   *   console.error('Failed to get bindings:', err);
+   * // Promise
+   * const bindings = await directExchange.getBindings('events');
+   * for (const [key, queues] of Object.entries(bindings)) {
+   *   console.log(`${key}: ${queues.length} queues`);
    * }
-   * ```
+   *
+   * // Callback
+   * directExchange.getBindings('events', (err, bindings) => {
+   *   if (err) throw err;
+   *   console.log(bindings);
+   * });
    */
   getBindings(
     exchange: string | IExchangeParams,

@@ -14,17 +14,7 @@ export class ScheduledMessagesFactory extends FactoryAbstract {
   /**
    * Creates a QueueScheduledMessages instance.
    *
-   * @returns A new QueueScheduledMessages instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
-   * scheduledMessages.countMessages('my-queue', (err, count) => {
-   *   if (err) return console.error('Failed to count scheduled:', err);
-   *   console.log('Scheduled count:', count);
-   * });
-   * ```
+   * @returns {QueueScheduledMessages} A new QueueScheduledMessages instance
    */
   static create = (): QueueScheduledMessages => {
     this.ensureInitialized();

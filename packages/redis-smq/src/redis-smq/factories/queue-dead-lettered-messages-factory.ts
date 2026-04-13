@@ -14,17 +14,7 @@ export class DeadLetteredMessagesFactory extends FactoryAbstract {
   /**
    * Creates a QueueDeadLetteredMessages instance.
    *
-   * @returns A new QueueDeadLetteredMessages instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
-   * deadLetteredMessages.countMessages('my-queue', (err, count) => {
-   *   if (err) return console.error('Failed to count DLQ:', err);
-   *   console.log('Dead-lettered count:', count);
-   * });
-   * ```
+   * @returns {QueueDeadLetteredMessages} A new QueueDeadLetteredMessages instance
    */
   static create = (): QueueDeadLetteredMessages => {
     this.ensureInitialized();

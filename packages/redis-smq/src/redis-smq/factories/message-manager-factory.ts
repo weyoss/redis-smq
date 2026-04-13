@@ -14,17 +14,7 @@ export class MessageManagerFactory extends FactoryAbstract {
   /**
    * Creates a MessageManager instance.
    *
-   * @returns A new MessageManager instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const messageManager = RedisSMQ.createMessageManager();
-   * messageManager.getMessageById('message-id', (err, message) => {
-   *   if (err) return console.error('Failed to get message:', err);
-   *   console.log('Message:', message);
-   * });
-   * ```
+   * @returns {MessageManager} A new MessageManager instance
    */
   static create = (): MessageManager => {
     this.ensureInitialized();

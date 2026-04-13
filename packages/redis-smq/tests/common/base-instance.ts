@@ -19,7 +19,6 @@ export async function shutDownBaseInstance(
     });
   }
   if (i.isOperational()) {
-    // eslint-disable-next-line no-await-in-loop
     await new Promise<void>((resolve) => {
       i.shutdown(() => resolve());
     });

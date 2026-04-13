@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `RedisSMQError`\<\{ `exchange`: [`IExchangeParams`](../../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \}\>
+- `RedisSMQError`\<\{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \}\>
 
 ## Constructors
 
@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `exchange`: [`IExchangeParams`](../../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \}\>\]
 
 #### Returns
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `exchange`: [`IExchangeParams`](../../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
+> **getMetadata**(): \{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
 
 #### Returns
 
-\{ `exchange`: [`IExchangeParams`](../../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
+\{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
 
 #### Inherited from
 

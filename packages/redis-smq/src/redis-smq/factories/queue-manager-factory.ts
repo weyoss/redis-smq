@@ -14,24 +14,7 @@ export class QueueManagerFactory extends FactoryAbstract {
   /**
    * Creates a QueueManager instance.
    *
-   * @returns A new QueueManager instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * import { EQueueType, EQueueDeliveryModel } from 'redis-smq';
-   *
-   * const queueManager = RedisSMQ.createQueueManager();
-   * queueManager.save(
-   *   'my-queue',
-   *   EQueueType.LIFO_QUEUE,
-   *   EQueueDeliveryModel.POINT_TO_POINT,
-   *   (err, result) => {
-   *     if (err) return console.error('Failed to create queue:', err);
-   *     console.log('Queue created:', result);
-   *   }
-   * );
-   * ```
+   * @returns {QueueManager} A new QueueManager instance
    */
   static create = (): QueueManager => {
     this.ensureInitialized();

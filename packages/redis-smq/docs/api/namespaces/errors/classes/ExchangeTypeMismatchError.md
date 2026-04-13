@@ -7,7 +7,7 @@ exchange type does not match the existing exchange's type.
 
 ## Extends
 
-- `RedisSMQError`\<\{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \}\>
+- `RedisSMQError`\<\{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \}\>
 
 ## Constructors
 
@@ -19,7 +19,7 @@ exchange type does not match the existing exchange's type.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \}\>\]
 
 #### Returns
 
@@ -119,11 +119,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \} \| `null`
+> **getMetadata**(): \{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \} \| `null`
 
 #### Returns
 
-\{ `actual`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../../enumerations/EExchangeType.md); \} \| `null`
+\{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \} \| `null`
 
 #### Inherited from
 

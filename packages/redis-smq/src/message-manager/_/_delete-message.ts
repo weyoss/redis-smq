@@ -29,9 +29,9 @@ import {
 import { _getMessage } from './_get-message.js';
 import {
   MessageNotFoundError,
-  UnexpectedScriptReplyError,
   QueueLockedError,
   QueueNotFoundError,
+  UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 import { IMessageManagerDeleteResponse } from '../types/index.js';
 

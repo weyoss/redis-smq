@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, test, describe, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import {
   createQueue,
   getDefaultQueue,
@@ -17,16 +17,16 @@ import {
   Consumer,
   EQueueDeliveryModel,
   EQueueOperationalState,
-  EStateTransitionReason,
   EQueueType,
+  EStateTransitionReason,
   QueueManager,
   QueueStateManager,
   TQueueStateTransitionUserOptions,
 } from '../../../src/index.js';
 import bluebird from 'bluebird';
 import {
-  QueuePausedError,
   QueueNotFoundError,
+  QueuePausedError,
   QueueStateTransitionError,
 } from '../../../src/errors/index.js';
 

@@ -14,14 +14,14 @@ Each audit category can be configured in three ways:
 
 ```typescript
 // Minimal configuration - enable all with defaults
-const config: IMessageAuditConfig = {
+let config: IMessageAuditConfig = {
   acknowledgedMessages: true,
   deadLetteredMessages: true,
   unacknowledgementHistory: true,
 };
 
 // Custom configuration with size limits and expiration
-const config: IMessageAuditConfig = {
+config = {
   acknowledgedMessages: {
     enabled: true,
     queueSize: 10000,

@@ -17,9 +17,9 @@ import {
 } from '../../../../message/index.js';
 import { MessageEnvelope } from '../../../../message/message-envelope.js';
 import {
+  EQueueOperationalState,
   EQueueProperty,
   EQueueType,
-  EQueueOperationalState,
 } from '../../../../queue-manager/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { UnexpectedScriptReplyError } from '../../../../errors/index.js';

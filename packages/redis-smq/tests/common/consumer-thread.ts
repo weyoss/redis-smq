@@ -9,13 +9,13 @@
 
 import {
   Consumer,
+  IConsumerParsedOptions,
   IMessageTransferable,
   Producer,
   ProducibleMessage,
   RedisSMQ,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
-import { IConsumerParsedOptions } from '../../src/index.js';
 import { ICallback, IRedisConfig } from 'redis-smq-common';
 
 process.on('message', function (payload: unknown) {

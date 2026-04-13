@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `RedisSMQError`\<\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>
+- `RedisSMQError`\<\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>
 
 ## Constructors
 
@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
+> **getMetadata**(): \{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Returns
 
-\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
+\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Inherited from
 

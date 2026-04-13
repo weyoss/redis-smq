@@ -21,8 +21,8 @@ import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
   EMessageDeadLetterCause,
-  EMessageUnacknowledgementCause,
   EMessageUnacknowledgementAction,
+  EMessageUnacknowledgementCause,
   TUnacknowledgementBatch,
   TUnacknowledgementResolution,
   TUnacknowledgementResult,

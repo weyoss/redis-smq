@@ -16,9 +16,9 @@ import {
 import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import {
+  EQueueOperationalState,
   EQueueProperty,
   EQueueType,
-  EQueueOperationalState,
 } from '../../queue-manager/index.js';
 import {
   MessageNotFoundError,

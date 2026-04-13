@@ -10,8 +10,8 @@
 import { EQueueOperationalState } from '../../queue-manager/index.js';
 import {
   EQueueStateTransitionReason,
-  ESystemStateTransitionReason,
   EStateTransitionReason,
+  ESystemStateTransitionReason,
   IQueueStateTransition,
   TQueueStateTransitionOptions,
 } from '../types/index.js';

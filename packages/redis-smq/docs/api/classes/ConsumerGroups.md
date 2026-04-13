@@ -2,30 +2,21 @@
 
 # Class: ConsumerGroups
 
-The `ConsumerGroups` class is responsible for managing consumer groups within RedisSMQ.
-It provides functionality to save, delete, and retrieve consumer groups associated with specific queues.
-The class uses Redis as a backend and employs an event bus for managing events related to consumer groups.
+Manages consumer groups for PUB/SUB queues.
 
-Consumer groups are essential for PUB/SUB queues, allowing multiple consumers to process
-messages from the same queue with each message delivered to all groups.
+Consumer groups allow multiple consumers to process messages from the same queue,
+with each message delivered to all groups.
 
 ## Example
 
-```typescript
+```ts
 const consumerGroups = new ConsumerGroups();
 
-// Using callback
-consumerGroups.saveConsumerGroup('notifications', 'group-1', (err, result) => {
-  if (err) console.error('Failed to save:', err);
-  else console.log('Consumer group saved:', result);
-});
+// Save a consumer group
+await consumerGroups.saveConsumerGroup('notifications', 'email-group');
 
-// Using promise
-const result = await consumerGroups.saveConsumerGroup(
-  'notifications',
-  'group-1',
-);
-console.log('Consumer group saved:', result);
+// Get all consumer groups
+const groups = await consumerGroups.getConsumerGroups('notifications');
 ```
 
 ## Constructors
@@ -46,16 +37,13 @@ console.log('Consumer group saved:', result);
 
 > **deleteConsumerGroup**(`queue`, `groupId`): `Promise`\<`void`\>
 
-Delete Consumer Group
-
-Deletes a consumer group from a specific queue. This removes the consumer group
-and prevents further message delivery to consumers in that group.
+Deletes a consumer group from a queue.
 
 ##### Parameters
 
 ###### queue
 
-The queue from which to delete the consumer group (string or IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -63,80 +51,37 @@ The queue from which to delete the consumer group (string or IQueueParams)
 
 `string`
 
-The ID of the consumer group to delete
+Consumer group ID
 
 ##### Returns
 
 `Promise`\<`void`\>
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid
-
-##### Throws
-
-When the specified queue doesn't exist
-
-##### Throws
-
-When the consumer group still has pending messages
-
-##### Throws
-
-When the queue doesn't support consumer groups
-
-##### Throws
-
-When the queue is locked
-
-##### Throws
-
-When the queue is in an invalid state
-
-##### Throws
-
-When Redis returns an unexpected response
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - delete consumer group
-consumerGroups.deleteConsumerGroup('notifications', 'email-group', (err) => {
-  if (err) {
-    console.error('Failed to delete consumer group:', err);
-  } else {
-    console.log('Consumer group deleted successfully');
-  }
-});
+```ts
+// Promise
+await consumerGroups.deleteConsumerGroup('notifications', 'email-group');
 
-// Promise pattern - delete consumer group
-try {
-  await consumerGroups.deleteConsumerGroup(
-    { name: 'events', ns: 'production' },
-    'analytics-group',
-  );
-  console.log('Consumer group deleted successfully');
-} catch (err) {
-  console.error('Failed to delete consumer group:', err);
-}
+// Callback
+consumerGroups.deleteConsumerGroup('notifications', 'email-group', (err) => {
+  if (err) throw err;
+});
 ```
 
 #### Call Signature
 
 > **deleteConsumerGroup**(`queue`, `groupId`, `cb`): `void`
 
-Delete Consumer Group
-
-Deletes a consumer group from a specific queue. This removes the consumer group
-and prevents further message delivery to consumers in that group.
+Deletes a consumer group from a queue.
 
 ##### Parameters
 
 ###### queue
 
-The queue from which to delete the consumer group (string or IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -144,70 +89,30 @@ The queue from which to delete the consumer group (string or IQueueParams)
 
 `string`
 
-The ID of the consumer group to delete
+Consumer group ID
 
 ###### cb
 
 `ICallback`\<`void`\>
 
-Optional callback function to handle the result or error
+(err) => void
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid
-
-##### Throws
-
-When the specified queue doesn't exist
-
-##### Throws
-
-When the consumer group still has pending messages
-
-##### Throws
-
-When the queue doesn't support consumer groups
-
-##### Throws
-
-When the queue is locked
-
-##### Throws
-
-When the queue is in an invalid state
-
-##### Throws
-
-When Redis returns an unexpected response
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - delete consumer group
-consumerGroups.deleteConsumerGroup('notifications', 'email-group', (err) => {
-  if (err) {
-    console.error('Failed to delete consumer group:', err);
-  } else {
-    console.log('Consumer group deleted successfully');
-  }
-});
+```ts
+// Promise
+await consumerGroups.deleteConsumerGroup('notifications', 'email-group');
 
-// Promise pattern - delete consumer group
-try {
-  await consumerGroups.deleteConsumerGroup(
-    { name: 'events', ns: 'production' },
-    'analytics-group',
-  );
-  console.log('Consumer group deleted successfully');
-} catch (err) {
-  console.error('Failed to delete consumer group:', err);
-}
+// Callback
+consumerGroups.deleteConsumerGroup('notifications', 'email-group', (err) => {
+  if (err) throw err;
+});
 ```
 
 ---
@@ -218,16 +123,13 @@ try {
 
 > **getConsumerGroups**(`queue`): `Promise`\<`string`[]\>
 
-Get Consumer Groups
-
-Retrieves a list of consumer group IDs associated with a specific queue.
-This method returns all consumer groups that have been created for the queue.
+Gets all consumer groups for a queue.
 
 ##### Parameters
 
 ###### queue
 
-The queue from which to retrieve consumer groups (string or IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -235,56 +137,33 @@ The queue from which to retrieve consumer groups (string or IQueueParams)
 
 `Promise`\<`string`[]\>
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - get all consumer groups
+```ts
+// Promise
+const groups = await consumerGroups.getConsumerGroups('notifications');
+console.log(groups);
+
+// Callback
 consumerGroups.getConsumerGroups('notifications', (err, groups) => {
-  if (err) {
-    console.error('Failed to get consumer groups:', err);
-  } else {
-    console.log(`Found ${groups.length} consumer groups:`);
-    groups.forEach((group) => console.log(`  - ${group}`));
-  }
+  if (err) throw err;
+  console.log(groups);
 });
-
-// Promise pattern - check if group exists
-try {
-  const groups = await consumerGroups.getConsumerGroups({
-    name: 'events',
-    ns: 'production',
-  });
-
-  if (groups.includes('analytics-group')) {
-    console.log('Analytics consumer group exists');
-  } else {
-    console.log('Analytics consumer group not found');
-  }
-} catch (err) {
-  console.error('Failed to get consumer groups:', err);
-}
 ```
 
 #### Call Signature
 
 > **getConsumerGroups**(`queue`, `cb`): `void`
 
-Get Consumer Groups
-
-Retrieves a list of consumer group IDs associated with a specific queue.
-This method returns all consumer groups that have been created for the queue.
+Gets all consumer groups for a queue.
 
 ##### Parameters
 
 ###### queue
 
-The queue from which to retrieve consumer groups (string or IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -292,46 +171,26 @@ The queue from which to retrieve consumer groups (string or IQueueParams)
 
 `ICallback`\<`string`[]\>
 
-Optional callback function to handle the result or error
+(err, groups) => void. Returns string[]
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - get all consumer groups
+```ts
+// Promise
+const groups = await consumerGroups.getConsumerGroups('notifications');
+console.log(groups);
+
+// Callback
 consumerGroups.getConsumerGroups('notifications', (err, groups) => {
-  if (err) {
-    console.error('Failed to get consumer groups:', err);
-  } else {
-    console.log(`Found ${groups.length} consumer groups:`);
-    groups.forEach((group) => console.log(`  - ${group}`));
-  }
+  if (err) throw err;
+  console.log(groups);
 });
-
-// Promise pattern - check if group exists
-try {
-  const groups = await consumerGroups.getConsumerGroups({
-    name: 'events',
-    ns: 'production',
-  });
-
-  if (groups.includes('analytics-group')) {
-    console.log('Analytics consumer group exists');
-  } else {
-    console.log('Analytics consumer group not found');
-  }
-} catch (err) {
-  console.error('Failed to get consumer groups:', err);
-}
 ```
 
 ---
@@ -342,24 +201,13 @@ try {
 
 > **saveConsumerGroup**(`queue`, `groupId`): `Promise`\<`number`\>
 
-Save Consumer Group
-
-Saves a consumer group to a specific queue. This creates a new consumer group
-for PUB/SUB queues, allowing multiple consumer groups to receive copies of
-each message published to the queue.
-
-**Important Notes:**
-
-- Consumer groups are only supported on PUB/SUB queues
-- Each consumer group ID must be unique within the queue
-- Saving an existing consumer group returns 0 (already exists)
-- Creating a new consumer group returns 1
+Saves a consumer group to a queue.
 
 ##### Parameters
 
 ###### queue
 
-The queue to which the consumer group belongs (string or IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -367,90 +215,46 @@ The queue to which the consumer group belongs (string or IQueueParams)
 
 `string`
 
-The ID of the consumer group to save
+Consumer group ID
 
 ##### Returns
 
 `Promise`\<`number`\>
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid
-
-##### Throws
-
-When the specified queue doesn't exist
-
-##### Throws
-
-When the group ID is invalid
-
-##### Throws
-
-When the queue doesn't support consumer groups
-
-##### Throws
-
-When the queue is locked
-
-##### Throws
-
-When the queue is in an invalid state
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - create a new consumer group
+```ts
+// Promise
+const result = await consumerGroups.saveConsumerGroup(
+  'notifications',
+  'email-group',
+);
+console.log(result === 1 ? 'Created' : 'Already exists');
+
+// Callback
 consumerGroups.saveConsumerGroup(
-  { name: 'notifications', ns: 'default' },
+  'notifications',
   'email-group',
   (err, result) => {
-    if (err) {
-      console.error('Failed to save consumer group:', err);
-    } else if (result === 1) {
-      console.log('Consumer group created successfully');
-    } else {
-      console.log('Consumer group already exists');
-    }
+    if (err) throw err;
+    console.log(result);
   },
 );
-
-// Promise pattern - save consumer group
-try {
-  const result = await consumerGroups.saveConsumerGroup(
-    'events',
-    'analytics-group',
-  );
-  console.log(result === 1 ? 'Group created' : 'Group already exists');
-} catch (err) {
-  console.error('Failed to save consumer group:', err);
-}
 ```
 
 #### Call Signature
 
 > **saveConsumerGroup**(`queue`, `groupId`, `cb`): `void`
 
-Save Consumer Group
-
-Saves a consumer group to a specific queue. This creates a new consumer group
-for PUB/SUB queues, allowing multiple consumer groups to receive copies of
-each message published to the queue.
-
-**Important Notes:**
-
-- Consumer groups are only supported on PUB/SUB queues
-- Each consumer group ID must be unique within the queue
-- Saving an existing consumer group returns 0 (already exists)
-- Creating a new consumer group returns 1
+Saves a consumer group to a queue.
 
 ##### Parameters
 
 ###### queue
 
-The queue to which the consumer group belongs (string or IQueueParams)
+Queue name (string) or { name, ns }
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -458,70 +262,37 @@ The queue to which the consumer group belongs (string or IQueueParams)
 
 `string`
 
-The ID of the consumer group to save
+Consumer group ID
 
 ###### cb
 
 `ICallback`\<`number`\>
 
-Optional callback function to handle the result or error
+(err, result) => void. Returns 1 if created, 0 if already exists
 
 ##### Returns
 
 `void`
 
-- Returns a Promise if no callback is provided
-
-##### Throws
-
-When the queue parameters are invalid
-
-##### Throws
-
-When the specified queue doesn't exist
-
-##### Throws
-
-When the group ID is invalid
-
-##### Throws
-
-When the queue doesn't support consumer groups
-
-##### Throws
-
-When the queue is locked
-
-##### Throws
-
-When the queue is in an invalid state
+Promise if no callback, otherwise void
 
 ##### Example
 
-```typescript
-// Callback pattern - create a new consumer group
+```ts
+// Promise
+const result = await consumerGroups.saveConsumerGroup(
+  'notifications',
+  'email-group',
+);
+console.log(result === 1 ? 'Created' : 'Already exists');
+
+// Callback
 consumerGroups.saveConsumerGroup(
-  { name: 'notifications', ns: 'default' },
+  'notifications',
   'email-group',
   (err, result) => {
-    if (err) {
-      console.error('Failed to save consumer group:', err);
-    } else if (result === 1) {
-      console.log('Consumer group created successfully');
-    } else {
-      console.log('Consumer group already exists');
-    }
+    if (err) throw err;
+    console.log(result);
   },
 );
-
-// Promise pattern - save consumer group
-try {
-  const result = await consumerGroups.saveConsumerGroup(
-    'events',
-    'analytics-group',
-  );
-  console.log(result === 1 ? 'Group created' : 'Group already exists');
-} catch (err) {
-  console.error('Failed to save consumer group:', err);
-}
 ```

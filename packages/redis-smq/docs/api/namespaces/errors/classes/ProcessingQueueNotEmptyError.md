@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `RedisSMQError`\<\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>
+- `RedisSMQError`\<\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>
 
 ## Constructors
 
@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \}\>\]
+...\[`IRedisSMQErrorOptions`\<\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 
@@ -116,11 +116,11 @@ not capture any frames.
 
 ### getMetadata()
 
-> **getMetadata**(): \{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
+> **getMetadata**(): \{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Returns
 
-\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../../interfaces/IQueueParams.md); \} \| `null`
+\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \} \| `null`
 
 #### Inherited from
 

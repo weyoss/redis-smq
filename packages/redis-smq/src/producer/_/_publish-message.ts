@@ -22,15 +22,15 @@ import {
 } from '../../queue-manager/index.js';
 import {
   ConsumerGroupNotFoundError,
+  InvalidQueueStateError,
   InvalidQueueTypeError,
   MessageAlreadyExistsError,
   MessagePriorityRequiredError,
   PriorityQueuingNotEnabledError,
-  QueueNotFoundError,
-  UnexpectedScriptReplyError,
-  InvalidQueueStateError,
-  QueueStoppedError,
   QueueLockedError,
+  QueueNotFoundError,
+  QueueStoppedError,
+  UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 
 /**

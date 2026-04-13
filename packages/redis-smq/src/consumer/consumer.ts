@@ -40,27 +40,33 @@ import {
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
-import { TConsumerEvent } from '../event-bus/types/index.js';
+import { TConsumerEvent } from '../event-bus/index.js';
 
 /**
- * Consumer class responsible for receiving and processing messages from message queues.
+ * Consumer for processing messages from queues.
+ *
+ * Manages message handlers, heartbeats, and consumption lifecycle.
+ * Supports multiplexing for multiple queues and batch acknowledgments.
  *
  * @example
- * ```typescript
  * const consumer = new Consumer();
- * consumer.run((err) => {
- *   if (err) {
- *     console.error('Failed to start consumer:', err);
- *     return;
- *   }
- *   console.log('Consumer is running');
+ * await consumer.run();
+ *
+ * // Callback-style handler
+ * await consumer.consume('orders', (message, done) => {
+ *   console.log(message.getBody());
+ *   done();
  * });
- * ```
+ *
+ * // Promise-style handler
+ * await consumer.consume('orders', async (message) => {
+ *   await processMessage(message);
+ * });
  */
 export class Consumer extends Runnable<TConsumerEvent> {
   private static defaultOptions: IConsumerParsedOptions = {
     enableMultiplexing: false,
-    heartbeatTTL: 60_000, // 1 min
+    heartbeatTTL: 60_000,
     batchAcks: {
       enabled: true,
       batchSize: 100,
@@ -73,102 +79,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
     },
   };
 
-  /** Internal context containing consumer configuration and dependencies */
   protected readonly consumerContext: IConsumerContext;
-
-  /**
-   * Instance responsible for running message handlers.
-   * Can be either a multiplexed or standard message handler runner based on configuration.
-   */
   protected messageHandlerRunner;
-
-  /** Logger instance for consumer events and errors */
   protected logger;
-
-  /**
-   * Heartbeat instance for ensuring consumer remains alive and responsive.
-   */
   protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
-
-  /** Parsed consumer configuration options */
   protected consumerOptions: IConsumerParsedOptions;
-
-  /**
-   *
-   */
   protected redisClient: IRedisClient | null = null;
 
-  /**
-   * Creates a new Consumer instance with the specified options.
-   *
-   * @param {IConsumerOptions} [consumerOptions] - Configuration options for the consumer.
-   *
-   * The configuration object supports the following properties:
-   *
-   * - `enableMultiplexing` (boolean): When true, enables handling multiple queues with a single connection. Default: false.
-   *
-   * - `heartbeatTTL` (number): Consumer heartbeat TTL in milliseconds. Default: 60000 (1 minute).
-   *
-   * - `batchAcks` (boolean | IConsumerBatchConfig): Configuration for acknowledgment batching.
-   *   - If `true`: Enables batch acknowledgments with default settings.
-   *   - If `false`: Disables batch acknowledgments.
-   *   - If object: Custom configuration with:
-   *     - `enabled?`: boolean - Enable/disable (default: true)
-   *     - `batchSize?`: number - Max messages per batch (default: 100)
-   *     - `batchTimeoutMs?`: number - Max wait time in ms (default: 10000)
-   *
-   * - `batchUnacks` (boolean | IConsumerBatchConfig): Configuration for unacknowledgment batching.
-   *   - If `true`: Enables batch unacknowledgments with default settings.
-   *   - If `false`: Disables batch unacknowledgments.
-   *   - If object: Same configuration options as `batchAcks`.
-   *
-   * @throws {Error} If RedisSMQ has not been initialized via `RedisSMQ.init()`.
-   *
-   * @example
-   * ```typescript
-   * // Create consumer with default settings
-   * const consumer = new Consumer();
-   *
-   * // Enable multiplexing, keep other defaults
-   * const consumer = new Consumer({
-   *   enableMultiplexing: true
-   * });
-   *
-   * // Custom heartbeat and disable acknowledgment batching
-   * const consumer = new Consumer({
-   *   heartbeatTTL: 60000,
-   *   batchAcks: false
-   * });
-   *
-   * // Custom batch configuration for unacknowledgments
-   * const consumer = new Consumer({
-   *   batchUnacks: {
-   *     batchSize: 500,
-   *     batchTimeoutMs: 5000
-   *   }
-   * });
-   *
-   * // Disable both types of batching
-   * const consumer = new Consumer({
-   *   batchAcks: false,
-   *   batchUnacks: false
-   * });
-   *
-   * // Full custom configuration
-   * const consumer = new Consumer({
-   *   enableMultiplexing: true,
-   *   heartbeatTTL: 30000,
-   *   batchAcks: {
-   *     enabled: true,
-   *     batchSize: 200,
-   *     batchTimeoutMs: 2000
-   *   },
-   *   batchUnacks: {
-   *     enabled: false  // Disable unack batching
-   *   }
-   * });
-   * ```
-   */
   constructor(consumerOptions?: IConsumerOptions) {
     super();
     this.consumerOptions = _parseConsumerOptions(
@@ -227,11 +144,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     cb();
   };
 
-  /**
-   * Sets up the consumer's heartbeat mechanism to monitor its health.
-   *
-   * @param {ICallback<void>} cb - Callback invoked when heartbeat setup completes or fails.
-   */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
     if (!this.redisClient)
       return cb(
@@ -274,12 +186,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     }
   };
 
-  /**
-   * Shuts down the consumer's heartbeat process.
-   * Stops the heartbeat updates and cleans up resources.
-   *
-   * @param {ICallback<void>} cb - Callback invoked when heartbeat shutdown completes.
-   */
   protected shutdownHeartbeat = (cb: ICallback<void>): void => {
     if (this.heartbeat) {
       this.logger.debug('Shutting down heartbeat');
@@ -297,12 +203,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     }
   };
 
-  /**
-   * Starts all registered message handlers.
-   * This method initializes the message processing pipeline for all configured queues.
-   *
-   * @param {ICallback<void>} cb - Callback invoked when message handlers start or fail.
-   */
   protected runMessageHandlers = (cb: ICallback<void>): void => {
     this.logger.debug('Starting message handlers');
     this.messageHandlerRunner.run((err) => {
@@ -316,12 +216,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     });
   };
 
-  /**
-   * Shuts down all registered message handlers.
-   * Stops message processing and cleans up resources.
-   *
-   * @param {ICallback<void>} cb - Callback invoked when message handlers shutdown completes.
-   */
   protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
     this.logger.debug('Shutting down message handlers');
     this.messageHandlerRunner.shutdown((err) => {
@@ -335,11 +229,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     });
   };
 
-  /**
-   * Defines the startup sequence for the consumer.
-   *
-   * @returns {Array<(cb: ICallback<void>) => void>} Array of functions to execute in sequence during startup.
-   */
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
       (cb) => {
@@ -355,11 +244,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     ]);
   }
 
-  /**
-   * Defines the shutdown sequence for the consumer.
-   *
-   * @returns {Array<(cb: ICallback<void>) => void>} Array of functions to execute in sequence during shutdown.
-   */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.emit('consumer.goingDown', this.id);
     return [
@@ -369,28 +253,16 @@ export class Consumer extends Runnable<TConsumerEvent> {
     ].concat(super.goingDown());
   }
 
-  /**
-   * Handles completion of the startup process.
-   * Emits the 'consumer.up' event to indicate the consumer is fully operational.
-   */
   protected override finalizeUp() {
     super.finalizeUp();
     this.emit('consumer.up', this.id);
   }
 
-  /**
-   * Handles completion of the shutdown process.
-   * Emits the 'consumer.down' event to indicate the consumer has fully shut down.
-   */
   protected override finalizeDown() {
     super.finalizeDown();
     this.emit('consumer.down', this.id);
   }
 
-  /**
-   * Handles errors encountered by the consumer.
-   * Logs the error and emits the 'consumer.error' event with error details.
-   */
   protected override handleError(err: Error) {
     if (!this.isOperational()) return;
 
@@ -401,67 +273,39 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Configures the consumer to process messages from a specified queue.
+   * Registers a message handler for a queue.
    *
-   * This method registers a message handler for the given queue. The handler function
-   * will be called for each message received from the queue. Before consuming messages,
-   * ensure the queue exists in the system.
+   * The handler can be either:
+   * - A callback function: `(message, done) => void`
+   * - A promise function: `async (message) => Promise<void>`
+   * - A string path to a module exporting a handler
    *
-   * @param {TQueueExtendedParams} queue - Queue to consume messages from. Can be:
-   *   - A string representing the queue name (uses default namespace)
-   *   - An object with `{ ns: string, name: string }` for custom namespace
-   *   - An object with `{ ns: string, name: string, groupId: string }` for consumer groups
-   * @param {TConsumerMessageHandler} messageHandler - Function that processes each message.
-   *   Receives the message and a `done` callback that must be called to acknowledge processing.
-   * @param {ICallback<void>} [cb] - Optional callback invoked after consumption setup completes.
-   *   If not provided, returns a Promise.
-   * @returns {Promise<void> | void} Promise if no callback provided, otherwise void.
-   *
-   * @throws {InvalidQueueParametersError} When queue parameters are invalid.
-   * @throws {MessageHandlerAlreadyExistsError} When a handler for this queue already exists.
-   * @throws {ConsumerGroupsNotSupportedError} When consumer groups are not supported with the specified queue.
-   * @throws {QueueNotFoundError} When the specified queue doesn't exist.
-   * @throws {MessageHandlerFileError} When there are issues with message handler file.
-   * @throws {MessageHandlerFilenameExtensionError} When message handler file has invalid extension.
-   * @throws {QueuePausedError} When the queue is paused.
-   * @throws {QueueStoppedError} When the queue is stopped.
-   * @throws {QueueLockedError} When the queue is locked.
-   * @throws {InvalidQueueStateError} When the queue is in an invalid state.
-   * @throws {UnexpectedScriptReplyError} When Redis returns unexpected response.
+   * @param queue - Queue identifier: string name, IQueueParams, or IQueueParsedParams
+   * @param messageHandler - Handler function or module path
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Using callback
-   * consumer.consume('my-queue', (message, done) => {
-   *   console.log('Processing message:', message);
+   * // Callback handler
+   * await consumer.consume('orders', (message, done) => {
+   *   console.log(message.getBody());
+   *   done();
+   * });
+   *
+   * // Promise handler
+   * await consumer.consume('orders', async (message) => {
+   *   await processMessage(message);
+   * });
+   *
+   * // Module path handler
+   * await consumer.consume('orders', './handlers/order-handler.js');
+   *
+   * // Callback
+   * consumer.consume('orders', (message, done) => {
    *   done();
    * }, (err) => {
-   *   if (err) console.error('Failed to setup consumption:', err);
+   *   if (err) throw err;
    * });
-   *
-   * // Using promise
-   * await consumer.consume('my-queue', (message, done) => {
-   *   console.log('Processing message:', message);
-   *   done();
-   * });
-   *
-   * // Consume from queue with custom namespace
-   * await consumer.consume(
-   *   { ns: 'orders', name: 'incoming' },
-   *   (message, done) => {
-   *     // Process order...
-   *     done();
-   *   }
-   * );
-   *
-   * // Consume from consumer group
-   * await consumer.consume(
-   *   { ns: 'chat', name: 'messages', groupId: 'group-1' },
-   *   messageHandler
-   * );
-   * ```
-   *
-   * @see /packages/redis-smq/docs/consuming-messages.md
    */
   consume(
     queue: TQueueExtendedParams,
@@ -512,37 +356,20 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Stops message consumption from a specified queue.
+   * Stops message consumption from a queue.
    *
-   * This method removes the message handler associated with the given queue,
-   * stopping any further message processing from that queue.
-   *
-   * @param {TQueueExtendedParams} queue - Queue to stop consuming from.
-   *   Accepts the same formats as the `consume` method.
-   * @param {ICallback<void>} [cb] - Optional callback invoked after cancellation completes.
-   *   If not provided, returns a Promise.
-   * @returns {Promise<void> | void} Promise if no callback provided, otherwise void.
-   *
-   * @throws {InvalidQueueParametersError} When queue parameters are invalid.
-   * @throws {QueueNotFoundError} When the specified queue doesn't exist.
+   * @param queue - Queue name (string) or { name, ns } or { name, ns, groupId }
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    *
    * @example
-   * ```typescript
-   * // Using callback
-   * consumer.cancel('my-queue', (err) => {
-   *   if (err) {
-   *     console.error('Error canceling consumption:', err);
-   *   } else {
-   *     console.log('Consumption cancelled successfully');
-   *   }
+   * // Promise
+   * await consumer.cancel('orders');
+   *
+   * // Callback
+   * consumer.cancel('orders', (err) => {
+   *   if (err) throw err;
    * });
-   *
-   * // Using promise
-   * await consumer.cancel('my-queue');
-   *
-   * // Cancel consumption from a consumer group
-   * await consumer.cancel({ ns: 'chat', name: 'messages', groupId: 'group-1' });
-   * ```
    */
   cancel(queue: TQueueExtendedParams): Promise<void>;
   cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void;
@@ -577,7 +404,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
             callback(err);
           } else {
             this.logger.info(
-              `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+              `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''}`,
             );
             callback();
           }
@@ -587,24 +414,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Retrieves the list of queues the consumer is currently configured to handle.
+   * Gets all queues the consumer is handling.
    *
-   * @returns {IQueueParsedParams[]} Array of parsed queue parameters for all queues
-   *   currently being consumed. Each entry includes the queue name, namespace, and
-   *   optional group ID.
+   * @returns Array of queue parameters
    *
    * @example
-   * ```typescript
-   * consumer.consume('queue-1', handler1);
-   * consumer.consume({ ns: 'custom', name: 'queue-2' }, handler2);
-   *
    * const queues = consumer.getQueues();
    * console.log(queues);
-   * // Output: [
-   * //   { queueParams: { name: 'queue-1', ns: 'default' }, groupId: null },
-   * //   { queueParams: { name: 'queue-2', ns: 'custom' }, groupId: null }
-   * // ]
-   * ```
    */
   getQueues(): IQueueParsedParams[] {
     this.logger.debug('Getting list of queues being consumed');
@@ -616,45 +432,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Retrieves the list of queues the consumer is currently configured to handle,
-   * along with their current consumption status.
+   * Gets all queues with their consumption status.
    *
-   * This method provides detailed information about each queue's consumption state,
-   * including whether the queue is actively being processed or message consumption
-   * is stopped. Upon stopping, pausing, or locking a queue, all queue consumers
-   * immediately stop consuming messages from that queue. However, the queue
-   * configuration remains registered in the consumer. When the queue is resumed,
-   * message consumption automatically resumes without requiring the consumer to
-   * reconfigure the queue. This is useful for monitoring and debugging consumer
-   * behavior and queue state transitions.
-   *
-   * @returns {IConsumerQueuesWithStatus[]} Array of queue status objects, each containing:
-   *   - Queue identification details (name, namespace, optional group ID)
-   *   - Current consumption status (active, stopped)
+   * @returns Array of queue objects with status ('active' or 'stopped')
    *
    * @example
-   * ```typescript
-   * consumer.consume({ ns: 'orders', name: 'pending' }, handler, callback);
-   *
-   * const queuesWithStatus = consumer.getQueuesWithStatus();
-   * console.log(queuesWithStatus);
-   * // Output: [
-   * //   {
-   * //       queue: {
-   * //           queueParams: { ns: 'orders', name: 'pending' },
-   * //           groupId: null,
-   * //       },
-   * //       status: 'active'
-   * //   },
-   * // ]
-   *
-   * // After queue is paused/stopped/locked, status changes but configuration persists
-   * // When queue is resumed, status returns to 'active' and consumption continues
-   * ```
-   *
-   * @see {@link getQueues} For retrieving queue information without status details.
-   * @see {@link consume} For setting up queue consumption.
-   * @see {@link cancel} For stopping queue consumption.
+   * const queues = consumer.getQueuesWithStatus();
+   * console.log(queues[0].status);
    */
   getQueuesWithStatus(): IConsumerQueuesWithStatus[] {
     this.logger.debug(
@@ -669,27 +453,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
 
   /**
    * Sets default options for all future Consumer instances.
-   * These options will be used when no options are provided to the constructor.
    *
-   * @param {IConsumerOptions} options - Default consumer options to set.
-   * @static
+   * @param options - Default consumer options
    *
    * @example
-   * ```typescript
-   * // Set global defaults
    * Consumer.setDefaultOptions({
    *   enableMultiplexing: true,
-   *   heartbeatTTL: 60000,
-   *   batchAcks: {
-   *     batchSize: 500,
-   *     batchTimeoutMs: 5000
-   *   },
-   *   batchUnacks: false
+   *   heartbeatTTL: 60000
    * });
-   *
-   * // This consumer will use the defaults above
-   * const consumer = new Consumer();
-   * ```
    */
   static setDefaultOptions(options: IConsumerOptions): void {
     this.defaultOptions = _parseConsumerOptions(
@@ -699,21 +470,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Retrieves the current default options for Consumer instances.
+   * Gets current default options for Consumer instances.
    *
-   * @returns {IConsumerParsedOptions} A copy of the current default options.
+   * @returns Copy of default options
    *
    * @example
-   * ```typescript
    * const defaults = Consumer.getDefaultOptions();
    * console.log(defaults);
-   * // Output: {
-   * //   enableMultiplexing: false,
-   * //   heartbeatTTL: 120000,
-   * //   batchAcks: { enabled: true, batchSize: 100, batchTimeoutMs: 10000 },
-   * //   batchUnacks: { enabled: true, batchSize: 100, batchTimeoutMs: 10000 }
-   * // }
-   * ```
    */
   static getDefaultOptions(): IConsumerParsedOptions {
     return {

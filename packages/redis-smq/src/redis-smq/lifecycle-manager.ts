@@ -20,139 +20,33 @@ import { ConfigSync } from '../config-manager/config-sync.js';
 import { RedisConfig } from '../common/redis/redis-config.js';
 
 /**
- * Manages the lifecycle (initialization and shutdown) of the RedisSMQ system.
+ * Manages RedisSMQ system lifecycle (initialization and shutdown).
  *
- * This class provides a singleton-style interface to control the global state
- * of RedisSMQ, handling resource initialization, connection pooling, event bus
- * setup, and graceful shutdown of all components.
- *
- * The lifecycle state machine includes:
- * - **DOWN**: Not initialized or fully shut down
- * - **GOING_UP**: Initialization in progress
- * - **UP**: Fully initialized and running
- * - **GOING_DOWN**: Shutdown in progress
- *
- * All methods are static to ensure a single, globally accessible lifecycle manager.
- *
- * @example
- * ```typescript
- * import { LifecycleManager } from './lifecycle-manager.js';
- * import { ERedisConfigClient } from 'redis-smq-common';
- *
- * // Initialize with Promise pattern
- * try {
- *   await LifecycleManager.initialize({
- *     client: ERedisConfigClient.IOREDIS,
- *     options: { host: 'localhost', port: 6379 }
- *   });
- *   console.log('RedisSMQ initialized successfully');
- * } catch (err) {
- *   console.error('Initialization failed:', err);
- * }
- *
- * // Shutdown with Promise pattern
- * try {
- *   await LifecycleManager.shutdown();
- *   console.log('RedisSMQ shut down successfully');
- * } catch (err) {
- *   console.error('Shutdown failed:', err);
- * }
- * ```
- *
- * @public
+ * Handles resource initialization, connection pooling, event bus setup,
+ * and graceful shutdown of all components.
  */
 export class LifecycleManager {
-  /**
-   * Queue of callbacks waiting for shutdown to complete.
-   * Used when multiple shutdown calls are made concurrently.
-   *
-   * @internal
-   */
+  /** @internal */
   static shutdownWaiters: ICallback[] = [];
 
-  /**
-   * Queue of callbacks waiting for initialization to complete.
-   * Used when multiple initialize calls are made concurrently.
-   *
-   * @internal
-   */
+  /** @internal */
   static initWaiters: ICallback[] = [];
 
   /**
-   * Checks whether RedisSMQ is currently running.
+   * Checks if RedisSMQ is currently running.
    *
-   * A running state means the system has been successfully initialized
-   * and is ready to handle operations (e.g., producing/consuming messages).
-   *
-   * @returns `true` if RedisSMQ is fully initialized and running, otherwise `false`
-   *
-   * @example
-   * ```typescript
-   * if (LifecycleManager.isRunning()) {
-   *   console.log('RedisSMQ is ready');
-   * } else {
-   *   console.log('RedisSMQ is not initialized');
-   * }
-   * ```
+   * @returns true if initialized and running
    */
   static isRunning = (): boolean => {
     return StateManager.isRunning();
   };
 
   /**
-   * Initializes RedisSMQ with optional Redis connection settings.
+   * Initializes RedisSMQ.
    *
-   * @param redisConfig - Optional Redis connection configuration.
-   *                      If not provided, uses default configuration.
-   * @param cb - Optional callback function invoked when initialization completes.
-   *             The callback receives an error if initialization fails.
-   *
-   * @returns A Promise that resolves when initialization completes (if no callback provided),
-   *          or `void` if a callback is provided
-   *
-   * @throws {PanicError} Thrown when attempting to initialize while shutting down
-   *
-   * @example
-   * ```typescript
-   * // Callback pattern with Redis configuration
-   * LifecycleManager.initialize(
-   *   {
-   *     client: ERedisConfigClient.IOREDIS,
-   *     options: {
-   *       host: 'localhost',
-   *       port: 6379,
-   *       db: 0,
-   *       password: 'secret'
-   *     }
-   *   },
-   *   (err) => {
-   *     if (err) {
-   *       console.error('Failed to initialize:', err);
-   *       return;
-   *     }
-   *     console.log('RedisSMQ initialized successfully');
-   *   }
-   * );
-   *
-   * // Callback pattern without configuration (uses defaults)
-   * LifecycleManager.initialize((err) => {
-   *   if (err) console.error(err);
-   * });
-   *
-   * // Promise pattern with configuration
-   * try {
-   *   await LifecycleManager.initialize({
-   *     client: ERedisConfigClient.IOREDIS,
-   *     options: { host: 'localhost', port: 6379 }
-   *   });
-   *   console.log('RedisSMQ initialized successfully');
-   * } catch (err) {
-   *   console.error('Failed to initialize:', err);
-   * }
-   *
-   * // Promise pattern without configuration
-   * await LifecycleManager.initialize();
-   * ```
+   * @param redisConfig - Optional Redis configuration
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    */
   static initialize(): Promise<void>;
   static initialize(cb: ICallback): void;
@@ -164,7 +58,6 @@ export class LifecycleManager {
     let cb: ICallback | undefined = undefined;
     let redisConfig: IRedisConfig | undefined = undefined;
 
-    // Parse overloaded arguments
     if (args.length === 1) {
       if (typeof args[0] === 'function') cb = args[0];
       else redisConfig = args[0];
@@ -176,31 +69,25 @@ export class LifecycleManager {
     }
 
     return async.withOptionalCallback(cb, (callback) => {
-      // Fast path: already running
       if (StateManager.isUp()) {
         return callback();
       }
 
-      // Fast path: initialization in progress, queue this callback
       if (StateManager.isGoingUp()) {
         LifecycleManager.initWaiters.push(callback);
         return;
       }
 
-      // Error path: shutdown in progress
       if (StateManager.isGoingDown()) {
         return callback(
           new PanicError({ message: 'RedisSMQ is shutting down' }),
         );
       }
 
-      // Begin initialization
       StateManager.goingUp();
 
-      // Store the configuration (only first call matters)
       RedisConfig.initialize(redisConfig);
 
-      // Initialize all components in sequence
       async.series(
         [
           (cb) => {
@@ -221,15 +108,12 @@ export class LifecycleManager {
           },
         ],
         (err) => {
-          // Rollback on error, commit on success
           if (err) StateManager.rollback();
           else StateManager.commit();
 
-          // Notify all waiting callbacks
           const waiters = LifecycleManager.initWaiters.splice(0);
           waiters.forEach((w) => w(err));
 
-          // Notify the current callback
           callback(err);
         },
       );
@@ -237,52 +121,10 @@ export class LifecycleManager {
   }
 
   /**
-   * Gracefully shuts down RedisSMQ and releases all shared resources.
+   * Gracefully shuts down RedisSMQ.
    *
-   * **Important:**
-   * - You should manually shutdown any created components (Producer, Consumer,
-   *   QueueManager, MessageManager, etc.) **before** calling this method to ensure
-   *   all in-flight operations complete and connections are properly released
-   * - If shutdown is already in progress, additional calls are queued
-   * - If initialization is in progress, shutdown will fail with an error
-   * - If the system is already down and no components are registered, shutdown
-   *   completes immediately
-   * - Errors during shutdown of individual components are collected but do not
-   *   prevent other components from shutting down
-   *
-   * @param cb - Optional callback function invoked when shutdown completes.
-   *             The callback receives the first error encountered during shutdown,
-   *             or `null` if shutdown completed successfully.
-   *
-   * @returns A Promise that resolves when shutdown completes (if no callback provided),
-   *          or `void` if a callback is provided
-   *
-   * @throws {PanicError} Thrown when attempting to shutdown while initialization is in progress
-   *
-   * @example
-   * ```typescript
-   * // Callback pattern
-   * LifecycleManager.shutdown((err) => {
-   *   if (err) {
-   *     console.error('Shutdown failed:', err);
-   *   } else {
-   *     console.log('RedisSMQ shut down successfully');
-   *   }
-   * });
-   *
-   * // Promise pattern
-   * try {
-   *   await LifecycleManager.shutdown();
-   *   console.log('RedisSMQ shut down successfully');
-   * } catch (err) {
-   *   console.error('Shutdown failed:', err);
-   * }
-   *
-   * // Graceful shutdown with component cleanup
-   * const producer = await Producer.getInstance();
-   * await producer.shutdown(); // Shutdown producer first
-   * await LifecycleManager.shutdown(); // Then shutdown the system
-   * ```
+   * @param cb - (err) => void
+   * @returns Promise if no callback, otherwise void
    */
   static shutdown(): Promise<void>;
   static shutdown(cb: ICallback): void;

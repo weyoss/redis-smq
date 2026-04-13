@@ -14,17 +14,7 @@ export class AcknowledgedMessagesFactory extends FactoryAbstract {
   /**
    * Creates a QueueAcknowledgedMessages instance.
    *
-   * @returns A new QueueAcknowledgedMessages instance
-   * @throws Error if RedisSMQ is not initialized
-   *
-   * @example
-   * ```typescript
-   * const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
-   * acknowledgedMessages.countMessages('my-queue', (err, count) => {
-   *   if (err) return console.error('Failed to count acknowledged:', err);
-   *   console.log('Acknowledged count:', count);
-   * });
-   * ```
+   * @returns {QueueAcknowledgedMessages} A new QueueAcknowledgedMessages instance
    */
   static create = (): QueueAcknowledgedMessages => {
     this.ensureInitialized();
