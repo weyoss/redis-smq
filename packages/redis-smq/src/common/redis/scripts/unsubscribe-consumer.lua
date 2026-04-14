@@ -22,12 +22,15 @@
 --   5. Removes the consumer from the queue's consumer registry
 --   6. Removes the queue from the consumer's subscribed queues set
 --   7. Cleans up the consumer's queues set if it becomes empty
+--   8. (Optional) Removes the consumer from the consumers set of the consumer group.
+
 --
 -- KEYS[1]: keyQueueProperties - Hash key storing queue properties and operational state
 -- KEYS[2]: keyQueueConsumers - Hash mapping consumer IDs to their metadata for this queue
 -- KEYS[3]: keyConsumerQueues - Set of queue identifiers that this consumer is subscribed to
 -- KEYS[4]: keyQueueProcessingQueues - Hash mapping processing queue keys to consumer IDs
 -- KEYS[5]: keyQueueProcessing - The consumer's dedicated processing queue (list)
+-- KEYS[6]: keyQueueConsumerGroupConsumers (OPTIONAL - a set of consumers in the consumer group)
 --
 -- ARGV[1]: consumerId - Unique identifier of the consumer to unsubscribe
 -- ARGV[2]: queue - String representation of the queue (e.g., "my-queue@my-ns")
@@ -43,6 +46,7 @@ local keyQueueConsumers = KEYS[2]
 local keyConsumerQueues = KEYS[3]
 local keyQueueProcessingQueues = KEYS[4]
 local keyQueueProcessing = KEYS[5]
+local keyQueueConsumerGroupConsumers = KEYS[6]  -- Optional key
 
 -- Arguments
 local consumerId = ARGV[1]
@@ -73,6 +77,11 @@ redis.call("SREM", keyConsumerQueues, queue)
 local size = redis.call("SCARD", keyConsumerQueues)
 if size == 0 then
     redis.call("DEL", keyConsumerQueues)
+end
+
+-- Remove consumer to the consumer group set if the key is provided
+if keyQueueConsumerGroupConsumers and keyQueueConsumerGroupConsumers ~= "" then
+    redis.call("SREM", keyQueueConsumerGroupConsumers, consumerId)
 end
 
 return 'OK'

@@ -67,6 +67,13 @@ export function _subscribeConsumer(
       keyQueueProcessingQueues,
       keyQueueProcessing,
     ];
+
+    if (groupId) {
+      const { keyQueueConsumerGroupConsumers } =
+        redisKeys.getQueueConsumerGroupKeys(queue, groupId);
+      keys.push(keyQueueConsumerGroupConsumers);
+    }
+
     const args = [
       consumerId,
       JSON.stringify(consumerInfo),

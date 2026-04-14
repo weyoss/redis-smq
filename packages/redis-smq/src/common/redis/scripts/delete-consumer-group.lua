@@ -15,6 +15,7 @@
 -- KEYS[2]: keyQueuePending (the consumer group's pending list for LIFO/FIFO)
 -- KEYS[3]: keyQueuePendingPriority (the consumer group's pending sorted set for Priority)
 -- KEYS[4]: keyQueueProperties (the properties hash of the main queue)
+-- KEYS[5]: keyQueueConsumerGroupConsumers (the set of consumers for a consumer group)
 --
 -- ARGV:
 --   ARGV[1]: EQueuePropertyQueueType (the name of the queue type field)
@@ -40,6 +41,7 @@ local keyQueueConsumerGroups = KEYS[1]
 local keyQueuePending = KEYS[2]
 local keyQueuePendingPriority = KEYS[3]
 local keyQueueProperties = KEYS[4]
+local keyQueueConsumerGroupConsumers = KEYS[5]
 
 -- Arguments
 local EQueuePropertyQueueType = ARGV[1]
@@ -88,6 +90,12 @@ if queueDeliveryModel ~= EQueueDeliveryModelPubSub then
     return 'CONSUMER_GROUPS_NOT_SUPPORTED'
 end
 
+-- Check if the consumer group has active consumers
+local consumersCount = redis.call("SCARD", keyQueueConsumerGroupConsumers)
+if consumersCount > 0 then
+    return 'CONSUMER_GROUP_HAS_ACTIVE_CONSUMERS'
+end
+
 -- Check if the pending queue is empty using the appropriate command
 local count = 0
 if queueType == EQueueTypePriority then
@@ -107,5 +115,8 @@ redis.call("SREM", keyQueueConsumerGroups, groupId)
 -- Atomically delete BOTH possible pending queues to ensure a complete cleanup.
 -- DEL on a non-existent key is a safe no-op.
 redis.call("DEL", keyQueuePending, keyQueuePendingPriority)
+
+-- Delete consumers set of the consumer group
+redis.call("DEL", keyQueueConsumerGroupConsumers)
 
 return 'OK'

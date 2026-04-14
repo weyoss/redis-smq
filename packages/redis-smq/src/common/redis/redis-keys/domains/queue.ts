@@ -64,4 +64,13 @@ export const queue = {
       ),
     };
   },
+
+  getQueueConsumerGroupKeys(queue: IQueueParams, consumerGroupId: string) {
+    return {
+      keyQueueConsumerGroupConsumers: key(
+        ...consumerGroupPath(queue.ns, queue.name, consumerGroupId),
+        'cons',
+      ),
+    };
+  },
 };

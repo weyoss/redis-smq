@@ -95,3 +95,4 @@ export * from './invalid-message-handler-signature.error.js';
 export * from './invalid-message-handler-type.error.js';
 export * from './unacknowledgment-history-disabled.error.js';
 export * from './invalid-message-audit-history-size.error.js';
+export * from './consumer-group-has-active-consumers.error.js';

@@ -18,6 +18,7 @@ import {
   IQueueParams,
 } from '../../queue-manager/index.js';
 import {
+  ConsumerGroupHasActiveConsumersError,
   ConsumerGroupNotEmptyError,
   ConsumerGroupsNotSupportedError,
   QueueLockedError,
@@ -39,6 +40,9 @@ export function _deleteConsumerGroup(
     keyQueueProperties,
   } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
 
+  const { keyQueueConsumerGroupConsumers } =
+    redisKeys.getQueueConsumerGroupKeys(queueParams, groupId);
+
   const argv: (string | number)[] = [
     EQueueProperty.QUEUE_TYPE,
     EQueueType.PRIORITY_QUEUE,
@@ -58,6 +62,7 @@ export function _deleteConsumerGroup(
       keyQueuePending,
       keyQueuePriority,
       keyQueueProperties,
+      keyQueueConsumerGroupConsumers,
     ],
     argv,
     (err, reply) => {
@@ -93,6 +98,17 @@ export function _deleteConsumerGroup(
 
       if (replyStr === 'CONSUMER_GROUP_NOT_EMPTY') {
         return cb(new ConsumerGroupNotEmptyError());
+      }
+
+      if (replyStr === 'CONSUMER_GROUP_HAS_ACTIVE_CONSUMERS') {
+        return cb(
+          new ConsumerGroupHasActiveConsumersError({
+            metadata: {
+              queue: queueParams,
+              consumerGroupId: groupId,
+            },
+          }),
+        );
       }
 
       if (replyStr !== 'OK') {

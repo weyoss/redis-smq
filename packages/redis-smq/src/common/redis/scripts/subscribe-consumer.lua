@@ -12,6 +12,7 @@
 -- 2. Checks if the consumer is already registered to prevent redundant operations.
 -- 3. Associates the consumer with the queue.
 -- 4. Registers the consumer's dedicated processing queue.
+-- 5. (Optional) Adds the consumer to a consumer group set.
 -- Consumers are only allowed to subscribe when queue operational state is ACTIVE.
 --
 -- KEYS[1]: keyQueueProperties (the hash key where queue properties are stored)
@@ -19,6 +20,7 @@
 -- KEYS[3]: keyConsumerQueues (a set of queues that a given consumer is subscribed to)
 -- KEYS[4]: keyQueueProcessingQueues (a hash mapping processing queue keys to consumer IDs for a given queue)
 -- KEYS[5]: keyQueueProcessing (the consumer's dedicated processing queue)
+-- KEYS[6]: keyQueueConsumerGroupConsumers (OPTIONAL - a set of consumers in the consumer group)
 --
 -- ARGV[1]: consumerId
 -- ARGV[2]: consumerInfo (a string, typically JSON, with consumer details)
@@ -37,12 +39,13 @@ local keyQueueConsumers = KEYS[2]
 local keyConsumerQueues = KEYS[3]
 local keyQueueProcessingQueues = KEYS[4]
 local keyQueueProcessing = KEYS[5]
+local keyQueueConsumerGroupConsumers = KEYS[6]  -- Optional key
 
 -- Arguments
 local consumerId = ARGV[1]
 local consumerInfo = ARGV[2]
 local queue = ARGV[3]
--- Operational state constants (new)
+-- Operational state constants
 local EQueuePropertyOperationalState = ARGV[4]
 local EQueueOperationalStateActive = ARGV[5]
 
@@ -75,5 +78,10 @@ redis.call("SADD", keyConsumerQueues, queue)
 -- Register the consumer with the queue and its processing queue.
 redis.call("HSET", keyQueueConsumers, consumerId, consumerInfo)
 redis.call("HSET", keyQueueProcessingQueues, keyQueueProcessing, consumerId)
+
+-- Add consumer to the consumer group set if the key is provided
+if keyQueueConsumerGroupConsumers and keyQueueConsumerGroupConsumers ~= "" then
+    redis.call("SADD", keyQueueConsumerGroupConsumers, consumerId)
+end
 
 return 'OK'
