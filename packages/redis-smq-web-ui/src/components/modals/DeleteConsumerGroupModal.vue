@@ -72,11 +72,12 @@ function onClose() {
               <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
             </div>
             <div class="warning-text">
-              <h4 class="warning-title">Warning</h4>
+              <h4 class="warning-title">
+                Before deleting this consumer group, make sure:
+              </h4>
               <ul class="warning-list">
-                <li>All consumers in this group will be disconnected</li>
-                <li>Message processing for this group will stop immediately</li>
-                <li>This action cannot be reversed</li>
+                <li>The consumer group has no pending messages</li>
+                <li>All consumers in this group are disconnected</li>
               </ul>
             </div>
           </div>
