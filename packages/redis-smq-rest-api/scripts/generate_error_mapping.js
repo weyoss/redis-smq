@@ -22,21 +22,70 @@ const TEMPLATE_FILE = path.resolve(
 const OUTPUT_FILE = path.resolve(__dirname, '../src/errors/errors.ts');
 const PLACEHOLDER = '/* __ERRORS__ */';
 
+const errorStatusMap = {
+  // 409 Conflict
+  QueueAlreadyExistsError: 409,
+  ExchangeAlreadyExistsError: 409,
+  MessageAlreadyExistsError: 409,
+  QueueAlreadyBoundError: 409,
+  ExchangeHasBoundQueuesError: 409,
+  QueueHasBoundExchangesError: 409,
+  BackgroundJobAlreadyExistsError: 409,
+  QueueAlreadyBeingPurgedError: 409,
+  MessageHandlerAlreadyExistsError: 409,
+  ConsumerGroupHasActiveConsumersError: 409,
+
+  // 403 Forbidden
+  QueueOperationForbiddenError: 403,
+  QueueLockedError: 403,
+  QueueStoppedError: 403,
+  QueuePausedError: 403,
+  QueueNotActiveError: 403,
+  QueueNotLockedError: 403,
+  QueueLockOwnerMismatchError: 403,
+  BackgroundJobTargetLockedError: 403,
+  BackgroundJobNotCancellableError: 403,
+  BackgroundJobNotCompletableError: 403,
+  BackgroundJobNotFailableError: 403,
+  BackgroundJobNotStartableError: 403,
+  BackgroundJobCanceledError: 403,
+  NamespaceMismatchError: 403,
+  ConsumerSetMismatchError: 403,
+
+  // 412 Precondition Failed
+  QueueNotBoundError: 412,
+  QueueNotEmptyError: 412,
+  QueueHasActiveConsumersError: 412,
+  ConsumerGroupNotEmptyError: 412,
+  ProcessingQueueNotEmptyError: 412,
+  ConsumerGroupRequiredError: 412,
+  MessageDestinationQueueRequiredError: 412,
+  MessageDestinationQueueAlreadySetError: 412,
+  MessageNotRequeuableError: 412,
+  PriorityQueuingNotEnabledError: 412,
+  AcknowledgmentAuditDisabledError: 412,
+  DeadLetterAuditDisabledError: 412,
+  UnacknowledgmentHistoryDisabledError: 412,
+
+  // 422 Unprocessable Entity
+  InvalidQueueTypeError: 422,
+  NoMatchingQueuesError: 422,
+  ExchangeTypeMismatchError: 422,
+  ExchangeQueuePolicyMismatchError: 422,
+  UnexpectedScriptReplyError: 422,
+  RequeueMessageScriptError: 422,
+  ScriptResultMismatchError: 422,
+  QueueStateTransitionError: 422,
+  ConfigurationUpdateError: 422,
+  ConfigurationMessageAuditExpireError: 422,
+  ConfigurationNamespaceError: 422,
+  ConsumerGroupsNotSupportedError: 422,
+};
+
 // Status code mapping rules. Keep in sync with StatusFor<> in the template.
 const getStatusCodeForError = (errorName) => {
-  if (errorName.includes('NotFound')) return 404;
-  if (errorName.includes('AlreadyExists')) return 409;
-  if (errorName.includes('NotEmpty')) return 409;
-  if (errorName.includes('RateLimit')) return 429;
-  if (
-    errorName.includes('Configuration') ||
-    errorName.includes('Invalid') ||
-    errorName.includes('Required') ||
-    errorName.includes('NotSupported')
-  ) {
-    return 400;
-  }
-  return 500;
+  if (errorStatusMap[errorName]) return errorStatusMap[errorName];
+  return 400;
 };
 
 function renderMappingLines(map) {
