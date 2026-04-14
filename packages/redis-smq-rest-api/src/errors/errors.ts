@@ -31,6 +31,10 @@ export const errors = {
   ],
   ConfigurationNamespaceError: [400, 'ConfigurationNamespaceError'],
   ConfigurationUpdateError: [400, 'ConfigurationUpdateError'],
+  ConsumerGroupHasActiveConsumersError: [
+    400,
+    'ConsumerGroupHasActiveConsumersError',
+  ],
   ConsumerGroupNotEmptyError: [409, 'ConsumerGroupNotEmptyError'],
   ConsumerGroupNotFoundError: [404, 'ConsumerGroupNotFoundError'],
   ConsumerGroupRequiredError: [400, 'ConsumerGroupRequiredError'],
