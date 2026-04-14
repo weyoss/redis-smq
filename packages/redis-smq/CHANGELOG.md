@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.2-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.1...v10.1.2-next.0) (2026-04-14)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** do not delete consumer groups with active consumers ([bf8cc6a](https://github.com/weyoss/redis-smq/commit/bf8cc6a5b669d4a1d288a681c7e5f702f27719d0))
+
+### 📝 Documentation
+
+- **redis-smq:** streamline and standardize JSDoc documentation ([b525567](https://github.com/weyoss/redis-smq/commit/b52556773c5e4e84e7b6a221fdc353596ec19ce8))
+- update READMEs (v10.1.1 → next) ([bf5244f](https://github.com/weyoss/redis-smq/commit/bf5244f2647945abd9dbf73f11b4746ba653e20e))
+
 ## [10.1.1](https://github.com/weyoss/redis-smq/compare/v10.1.1-next.0...v10.1.1) (2026-04-11)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.1.1](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.1.md)

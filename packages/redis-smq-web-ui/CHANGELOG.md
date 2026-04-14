@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.2-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.1...v10.1.2-next.0) (2026-04-14)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** redirect to queue page after successful creation ([2abaaab](https://github.com/weyoss/redis-smq/commit/2abaaabb65e0a7fa7c4f9f48e60a037ce6d24a0a))
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** update home page screenshot for UI updates ([5e59457](https://github.com/weyoss/redis-smq/commit/5e59457f619b5a67ff770d52a3ce4b47e4dc206d))
+- update READMEs (v10.1.1 → next) ([bf5244f](https://github.com/weyoss/redis-smq/commit/bf5244f2647945abd9dbf73f11b4746ba653e20e))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** clean up DeleteConsumerGroupModal ([6112645](https://github.com/weyoss/redis-smq/commit/61126455a02827911316a5e3d2625c29400870a0))
+
 ## [10.1.1](https://github.com/weyoss/redis-smq/compare/v10.1.1-next.0...v10.1.1) (2026-04-11)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.1.1](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.1.md)
