@@ -1,12 +1,14 @@
-[![RedisSMQ](./logo.png)](https://github.com/weyoss/redis-smq)
+<div align="center" style="text-align: center">
+<p><a href="https://github.com/weyoss/redis-smq"><img src="logo.png" alt="RedisSMQ" width="500px" /></a></p>
+<p>A high-performance Redis message queue for Node.js — simple to use, built for scale.</p>
 
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/weyoss/redis-smq/releases)
 [![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
 [![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
 
-> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master).
+</div>
 
-A high-performance Redis message queue for Node.js — simple to use, built for scale.
+> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master).
 
 ## ✨ Features
 
