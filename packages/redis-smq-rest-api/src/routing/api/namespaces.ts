@@ -7,10 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import {
-  ERequestMethod,
-  ERequestPayload,
-} from '../../lib/controller/types/index.js';
+import { ERequestMethod, ERequestPayload } from '../../lib/types/controller.js';
 import { TRouterResourceMap } from '../../lib/router/types/index.js';
 
 import { countConsumerGroupPendingMessagesController } from '../../controllers/namespaces/namespace/queues/queue/consumer-groups/countConsumerGroupPendingMessagesController.js';

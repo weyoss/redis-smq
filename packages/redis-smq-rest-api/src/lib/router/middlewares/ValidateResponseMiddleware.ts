@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { TApplicationMiddleware } from '../../application/types/index.js';
+import { TApplicationMiddleware } from '../../types/application.js';
 import { ResponseValidatorNotFoundError } from '../errors/ResponseValidatorNotFoundError.js';
 
 export function ValidateResponseMiddleware(

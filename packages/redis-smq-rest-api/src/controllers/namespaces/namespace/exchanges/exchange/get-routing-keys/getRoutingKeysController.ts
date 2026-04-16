@@ -10,7 +10,7 @@
 import {
   TControllerRequestHandler,
   TControllerRequestPayloadEmpty,
-} from '../../../../../../lib/controller/types/index.js';
+} from '../../../../../../lib/types/controller.js';
 import { Container } from '../../../../../../container/Container.js';
 import { GetRoutingKeysControllerResponseDTO } from './GetRoutingKeysControllerResponseDTO.js';
 import { GetRoutingKeysControllerRequestPathDTO } from './GetRoutingKeysControllerRequestPathDTO.js';

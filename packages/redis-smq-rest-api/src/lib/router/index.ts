@@ -12,12 +12,12 @@ import { Container } from '../../container/Container.js';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
-} from '../application/types/index.js';
+} from '../types/application.js';
 import {
   ERequestMethod,
   ERequestPayload,
   TControllerRequestHandlerGeneric,
-} from '../controller/types/index.js';
+} from '../types/controller.js';
 import { SchemaGenerator } from '../validator/schema-generator.js';
 import { ValidateRequestMiddleware } from './middlewares/ValidateRequestMiddleware.js';
 import { ValidateResponseMiddleware } from './middlewares/ValidateResponseMiddleware.js';

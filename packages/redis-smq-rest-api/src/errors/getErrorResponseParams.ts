@@ -9,7 +9,13 @@
 
 import { errors } from './errors.js';
 
-export function getErrorResponseParams(className: string) {
-  const errs: Record<string, readonly [number, string]> = errors;
-  return errs[className] ?? [500, 'InternalServerError'];
+/**
+ * Get HTTP status code and error message for a given error name
+ * Falls back to 500 Internal Server Error for unknown errors
+ */
+export function getErrorResponseParams(
+  errorName: string,
+): readonly [number, string] {
+  const mapping = errors[errorName as keyof typeof errors];
+  return mapping ?? [500, 'InternalServerError'];
 }

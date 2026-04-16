@@ -12,7 +12,7 @@ import {
   ERequestMethod,
   ERequestPayload,
   TControllerRequestHandlerGeneric,
-} from '../controller/types/index.js';
+} from '../types/controller.js';
 import { parseRoutingMap } from '../router/parser.js';
 import { TRouterResourceMap } from '../router/types/index.js';
 import { SchemaGenerator } from '../validator/schema-generator.js';

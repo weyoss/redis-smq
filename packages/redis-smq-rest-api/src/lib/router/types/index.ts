@@ -11,12 +11,12 @@ import KoaRouter from '@koa/router';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
-} from '../../application/types/index.js';
+} from '../../types/application.js';
 import {
   ERequestMethod,
   ERequestPayload,
   TControllerRequestHandlerGeneric,
-} from '../../controller/types/index.js';
+} from '../../types/controller.js';
 
 export type TRouter = KoaRouter<
   IApplicationMiddlewareState,

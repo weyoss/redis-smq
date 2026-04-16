@@ -11,4 +11,5 @@ import { TErrors } from '../../../../../../errors/errors.js';
 
 export type CheckQueueExistenceControllerResponseDTO =
   | readonly [200, null]
+  | TErrors['QueueNotFoundError']
   | TErrors['InvalidQueueParametersError'];

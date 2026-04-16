@@ -8,8 +8,8 @@
  */
 
 import { asValue } from 'awilix';
-import { TApplicationMiddleware } from '../../application/types/index.js';
-import { ERequestPayload } from '../../controller/types/index.js';
+import { TApplicationMiddleware } from '../../types/application.js';
+import { ERequestPayload } from '../../types/controller.js';
 
 export function ValidateRequestMiddleware(
   requestValidationFn: Map<ERequestPayload, (data: unknown) => void>,

@@ -12,7 +12,7 @@ import { GetQueueExchangesControllerRequestPathDTO } from './GetQueueExchangesCo
 import {
   TControllerRequestHandler,
   TControllerRequestPayloadEmpty,
-} from '../../../../../../lib/controller/types/index.js';
+} from '../../../../../../lib/types/controller.js';
 import { Container } from '../../../../../../container/Container.js';
 
 export const getQueueExchangesController: TControllerRequestHandler<

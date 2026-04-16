@@ -29,7 +29,7 @@ import { buildSwaggerUiHtml } from './helpers/swagger-ui.js';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
-} from './lib/application/types/index.js';
+} from './lib/types/application.js';
 import { errorHandlerMiddleware } from './lib/errors/middlewares/errorHandlerMiddleware.js';
 import { registerResources } from './lib/router/index.js';
 import { routing } from './routing/routing.js';

@@ -22,8 +22,9 @@ const TEMPLATE_FILE = path.resolve(
 const OUTPUT_FILE = path.resolve(__dirname, '../src/errors/errors.ts');
 const PLACEHOLDER = '/* __ERRORS__ */';
 
-const errorStatusMap = {
-  // 409 Conflict
+// Status code mapping configuration
+const errorStatusCodeMap = {
+  // 409 Conflict - Resource already exists or conflict
   QueueAlreadyExistsError: 409,
   ExchangeAlreadyExistsError: 409,
   MessageAlreadyExistsError: 409,
@@ -35,7 +36,7 @@ const errorStatusMap = {
   MessageHandlerAlreadyExistsError: 409,
   ConsumerGroupHasActiveConsumersError: 409,
 
-  // 403 Forbidden
+  // 403 Forbidden - Operation not allowed in current state
   QueueOperationForbiddenError: 403,
   QueueLockedError: 403,
   QueueStoppedError: 403,
@@ -52,7 +53,7 @@ const errorStatusMap = {
   NamespaceMismatchError: 403,
   ConsumerSetMismatchError: 403,
 
-  // 412 Precondition Failed
+  // 412 Precondition Failed - Prerequisites not met
   QueueNotBoundError: 412,
   QueueNotEmptyError: 412,
   QueueHasActiveConsumersError: 412,
@@ -67,12 +68,11 @@ const errorStatusMap = {
   DeadLetterAuditDisabledError: 412,
   UnacknowledgmentHistoryDisabledError: 412,
 
-  // 422 Unprocessable Entity
+  // 422 Unprocessable Entity - Valid request but semantic errors
   InvalidQueueTypeError: 422,
   NoMatchingQueuesError: 422,
   ExchangeTypeMismatchError: 422,
   ExchangeQueuePolicyMismatchError: 422,
-  UnexpectedScriptReplyError: 422,
   RequeueMessageScriptError: 422,
   ScriptResultMismatchError: 422,
   QueueStateTransitionError: 422,
@@ -80,56 +80,66 @@ const errorStatusMap = {
   ConfigurationMessageAuditExpireError: 422,
   ConfigurationNamespaceError: 422,
   ConsumerGroupsNotSupportedError: 422,
+
+  // 500
+  UnexpectedScriptReplyError: 500,
 };
 
-// Status code mapping rules. Keep in sync with StatusFor<> in the template.
-const getStatusCodeForError = (errorName) => {
-  if (errorStatusMap[errorName]) return errorStatusMap[errorName];
-  return 400;
-};
-
-function renderMappingLines(map) {
-  // map is Record<string, [number, string]>
-  const lines = [];
-  for (const [key, [code, name]] of Object.entries(map)) {
-    lines.push(`${key}: [${code}, '${name}'],`);
-  }
-  return lines.join('\n');
+/**
+ * Get HTTP status code for a RedisSMQ error
+ */
+function getStatusCodeForError(errorName) {
+  return errorStatusCodeMap[errorName] || 400;
 }
 
-async function buildMappings() {
+/**
+ * Format error mapping entry
+ */
+function formatErrorMapping(errorName, statusCode) {
+  return `  ${errorName}: [${statusCode}, '${errorName}'] as const,`;
+}
+
+/**
+ * Generate error mappings from RedisSMQ errors
+ */
+async function generateErrorMappings() {
   const { errors } = await import('redis-smq');
-  const result = {};
-  for (const name of Object.keys(errors)) {
-    result[name] = [getStatusCodeForError(name), name];
-  }
-  return Object.keys(result)
+
+  return Object.keys(errors)
     .sort((a, b) => a.localeCompare(b))
-    .reduce((acc, k) => {
-      acc[k] = result[k];
-      return acc;
-    }, {});
+    .map((errorName) => {
+      const statusCode = getStatusCodeForError(errorName);
+      return formatErrorMapping(errorName, statusCode);
+    })
+    .join('\n');
 }
 
-function replacePlaceholder(templateContent, mappingText) {
+/**
+ * Replace placeholder in template with generated mappings
+ */
+function replacePlaceholder(templateContent, mappings) {
   if (!templateContent.includes(PLACEHOLDER)) {
     throw new Error(
       `Template placeholder not found. Expected: ${PLACEHOLDER}. File: ${TEMPLATE_FILE}`,
     );
   }
-  return templateContent.replace(PLACEHOLDER, mappingText);
+  return templateContent.replace(PLACEHOLDER, mappings);
 }
 
 try {
   const templateContent = fs.readFileSync(TEMPLATE_FILE, 'utf8');
-  const mappings = await buildMappings();
-  const mappingText = renderMappingLines(mappings);
-  const output = replacePlaceholder(templateContent, mappingText);
+  const mappings = await generateErrorMappings();
+  const output = replacePlaceholder(templateContent, mappings);
+
   fs.writeFileSync(OUTPUT_FILE, output, 'utf8');
+
+  const mappingCount = mappings
+    .split('\n')
+    .filter((line) => line.includes('[')).length;
   console.log(
-    `Generated ${OUTPUT_FILE} with ${Object.keys(mappings).length} error mappings`,
+    `✅ Generated ${OUTPUT_FILE} with ${mappingCount} error mappings`,
   );
-} catch (e) {
-  console.error('Failed to generate error mappings:', e);
+} catch (error) {
+  console.error('❌ Failed to generate error mappings:', error);
   process.exit(1);
 }

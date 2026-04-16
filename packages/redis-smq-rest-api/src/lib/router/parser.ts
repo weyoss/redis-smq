@@ -12,7 +12,7 @@ import {
   ERequestMethod,
   ERequestPayload,
   TControllerRequestHandlerGeneric,
-} from '../controller/types/index.js';
+} from '../types/controller.js';
 import {
   IRouterResourceDescription,
   TRouterResource,
@@ -75,47 +75,41 @@ export async function parseRoutingMap(
   accumulatedPath: string[] = [],
   accumulatedTags: string[][] = [],
 ): Promise<void> {
-  try {
-    if (Array.isArray(routingDefinition)) {
-      for (const routeItem of routingDefinition) {
-        await parseRoutingMap(
-          routeItem,
-          callbackFn,
-          accumulatedPath,
-          accumulatedTags,
-        );
-      }
-    } else if (isRouterResourceDescription(routingDefinition)) {
-      const { handler, description, method, payload } = routingDefinition;
-      const { controller, controllerName, controllerRoutePath } =
-        extractControllerMetadata(handler, accumulatedPath);
-
-      // Get the most recent non-empty tags array
-      const applicableTags = accumulatedTags
-        .filter((tagSet) => tagSet.length)
-        .at(-1);
-
-      await callbackFn(
-        controller,
-        controllerName,
-        method,
-        payload,
-        controllerRoutePath,
-        description,
-        applicableTags,
+  if (Array.isArray(routingDefinition)) {
+    for (const routeItem of routingDefinition) {
+      await parseRoutingMap(
+        routeItem,
+        callbackFn,
+        accumulatedPath,
+        accumulatedTags,
       );
-    } else {
-      const { path: routePathSegment, tags = [], resource } = routingDefinition;
-
-      // Create new arrays to avoid mutating the original ones
-      const updatedPath = [...accumulatedPath, routePathSegment];
-      const updatedTags = [...accumulatedTags, tags];
-
-      await parseRoutingMap(resource, callbackFn, updatedPath, updatedTags);
     }
-  } catch (error) {
-    // Rethrow with more context
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Error parsing routing map: ${errorMessage}`);
+  } else if (isRouterResourceDescription(routingDefinition)) {
+    const { handler, description, method, payload } = routingDefinition;
+    const { controller, controllerName, controllerRoutePath } =
+      extractControllerMetadata(handler, accumulatedPath);
+
+    // Get the most recent non-empty tags array
+    const applicableTags = accumulatedTags
+      .filter((tagSet) => tagSet.length)
+      .at(-1);
+
+    await callbackFn(
+      controller,
+      controllerName,
+      method,
+      payload,
+      controllerRoutePath,
+      description,
+      applicableTags,
+    );
+  } else {
+    const { path: routePathSegment, tags = [], resource } = routingDefinition;
+
+    // Create new arrays to avoid mutating the original ones
+    const updatedPath = [...accumulatedPath, routePathSegment];
+    const updatedTags = [...accumulatedTags, tags];
+
+    await parseRoutingMap(resource, callbackFn, updatedPath, updatedTags);
   }
 }

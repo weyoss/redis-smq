@@ -14,7 +14,7 @@ import type { OpenAPIV3_1 } from '@scalar/openapi-types';
 import { join, resolve } from 'path';
 import { env } from 'redis-smq-common';
 import { constants } from '../../config/constants.js';
-import { ERequestPayload } from '../controller/types/index.js';
+import { ERequestPayload } from '../types/controller.js';
 import { TRouterResourceMap } from '../router/types/index.js';
 import { SchemaGenerator } from '../validator/schema-generator.js';
 import { getOpenApiRoutes } from './adaptor.js';

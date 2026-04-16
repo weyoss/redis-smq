@@ -8,10 +8,7 @@
  */
 
 import { JSONSchema7 } from 'json-schema';
-import {
-  ERequestMethod,
-  ERequestPayload,
-} from '../../controller/types/index.js';
+import { ERequestMethod, ERequestPayload } from '../../types/controller.js';
 
 export interface IOpenApiRouteParams {
   path: string;

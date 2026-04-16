@@ -10,7 +10,7 @@
 import { readFileSync } from 'fs';
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { constants } from '../../config/constants.js';
-import { ERequestPayload } from '../controller/types/index.js';
+import { ERequestPayload } from '../types/controller.js';
 import { RequestValidationError } from '../router/errors/RequestValidationError.js';
 import { ResponseValidationError } from '../router/errors/ResponseValidationError.js';
 import { TResponseSchemaMap, TResponseSchemaMapItem } from './types/index.js';
