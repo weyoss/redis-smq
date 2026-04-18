@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.2-next.1](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.0...v10.1.2-next.1) (2026-04-18)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** map error classes to appropriate HTTP status codes ([2f25043](https://github.com/weyoss/redis-smq/commit/2f25043ea050d01eafee4157745703d44265a639))
+- **redis-smq-rest-api:** restructure router, validation, and error handling ([41cba5f](https://github.com/weyoss/redis-smq/commit/41cba5f6eaf4263e2c4b6a2969ec784598fe1c45))
+
 ## [10.1.2-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.1...v10.1.2-next.0) (2026-04-14)
 
 ### 📝 Documentation
