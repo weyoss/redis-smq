@@ -8,7 +8,7 @@
 
 </div>
 
-> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master).
+> 💡 **Note:** You are on the stable `master` branch. For the latest features (including breaking changes), check the [`next` branch](https://github.com/weyoss/redis-smq/tree/next).
 
 ## ✨ Features
 
@@ -51,7 +51,7 @@
 
 ```bash
 # Core packages
-npm install redis-smq@next redis-smq-common@next --save
+npm install redis-smq redis-smq-common --save
 
 # Pick a Redis client
 npm install ioredis --save

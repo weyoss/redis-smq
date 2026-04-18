@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [10.1.2](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.1...v10.1.2) (2026-04-18)
+
+> 📖 **Detailed Release Notes**: [RedisSMQ v10.1.2](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.2.md)
+
+**Note:** Version bump only for package redis-smq-web-server
+
 ## [10.1.2-next.1](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.0...v10.1.2-next.1) (2026-04-18)
 
 **Note:** Version bump only for package redis-smq-web-server
