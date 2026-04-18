@@ -11,8 +11,7 @@
 import BreadcrumbsBar from '@/components/BreadcrumbsPanel.vue';
 import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
 import packageJson from '../package.json';
-import logoImageSmall from '@/assets/images/redis-smq-logo-small.png';
-import logoImageBig from '@/assets/images/redis-smq-logo-big.png';
+import redisSMQLogo from '@/assets/images/redis-smq-logo.png';
 import { getMainNavRoutes } from '@/router/getMainNavRoutes.ts';
 import { useTypedRouter } from '@/router/useTypeRouter.ts';
 import type { RouteName } from '@/router/types.ts';
@@ -144,7 +143,7 @@ onBeforeUnmount(() => {
         <div class="loading-content">
           <div class="brand-section">
             <div class="brand-logo loading-logo">
-              <img :src="logoImageBig" alt="RedisSMQ Logo" class="logo-image" />
+              <img :src="redisSMQLogo" alt="RedisSMQ Logo" class="logo-image" />
             </div>
           </div>
           <div class="loading-animation">
@@ -182,15 +181,7 @@ onBeforeUnmount(() => {
           <div class="header-content">
             <div class="brand-section">
               <div class="brand-logo">
-                <img
-                  :src="logoImageSmall"
-                  alt="RedisSMQ Logo"
-                  class="logo-image"
-                />
-              </div>
-              <div class="brand-info">
-                <h1 class="brand-title">RedisSMQ</h1>
-                <span class="brand-subtitle">Web UI</span>
+                <img :src="redisSMQLogo" alt="RedisSMQ" class="logo-image" />
               </div>
             </div>
 
@@ -430,29 +421,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-}
-
-.brand-logo::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  animation: shimmer 2s infinite;
+  padding: 0.75rem;
 }
 
 .brand-logo:hover {
@@ -625,11 +597,9 @@ onBeforeUnmount(() => {
 
 /* Loading Screen Specific Styles */
 .loading-screen {
-  --loading-logo-min: 120px;
-  --loading-logo-fluid: 60vw;
-  --loading-logo-max: 240px;
-  --loading-img-max: 220px;
-  --loading-img-percent: 82%;
+  --loading-logo-min: 240px;
+  --loading-logo-fluid: 40vw;
+  --loading-logo-max: 400px;
 
   position: fixed;
   inset: 0;
@@ -664,9 +634,10 @@ onBeforeUnmount(() => {
     var(--loading-logo-fluid),
     var(--loading-logo-max)
   );
-  aspect-ratio: 465 / 315;
   height: auto;
+  aspect-ratio: 400 / 150;
   border-radius: 20px;
+  padding: 1.5rem;
 }
 
 .loading-screen .brand-logo.loading-logo {
@@ -674,8 +645,9 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .logo-image {
-  width: min(var(--loading-img-percent), var(--loading-img-max));
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .loading-screen .brand-info {
@@ -823,15 +795,17 @@ onBeforeUnmount(() => {
 }
 
 .app-header .brand-logo {
-  width: 121px;
-  height: 84px;
-  border-radius: 16px;
+  width: 240px;
+  height: auto;
+  aspect-ratio: 400 / 150;
+  border-radius: 12px;
+  padding: 0.5rem;
 }
 
 .app-header .logo-image {
-  width: 91px;
-  height: 54px;
-  filter: brightness(1.2) contrast(1.1);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .app-header .brand-title {
@@ -1270,13 +1244,8 @@ onBeforeUnmount(() => {
   }
 
   .app-header .brand-logo {
-    width: 48px;
-    height: 48px;
-  }
-
-  .app-header .logo-image {
-    width: 28px;
-    height: 28px;
+    width: 180px;
+    padding: 0.35rem;
   }
 
   .app-header .brand-title {
@@ -1301,13 +1270,8 @@ onBeforeUnmount(() => {
   }
 
   .app-header .brand-logo {
-    width: 40px;
-    height: 40px;
-  }
-
-  .app-header .logo-image {
-    width: 24px;
-    height: 24px;
+    width: 140px;
+    padding: 0.25rem;
   }
 
   .app-header .brand-title {
@@ -1322,6 +1286,12 @@ onBeforeUnmount(() => {
   .loading-screen .brand-section {
     margin-bottom: 2rem;
     gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .loading-screen .brand-logo {
+    width: 80%;
+    padding: 1rem;
   }
 
   .loading-screen .brand-title {
