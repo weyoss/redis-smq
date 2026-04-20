@@ -1,5 +1,5 @@
 <div align="center" style="text-align: center">
-<p><a href="https://github.com/weyoss/redis-smq"><img src="logo.png" alt="RedisSMQ" width="500px" /></a></p>
+<p><a href="https://github.com/weyoss/redis-smq/tree/next"><img src="logo.png" alt="RedisSMQ" width="500px" /></a></p>
 <p>A high-performance Redis message queue for Node.js — simple to use, built for scale.</p>
 
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/weyoss/redis-smq/releases)
