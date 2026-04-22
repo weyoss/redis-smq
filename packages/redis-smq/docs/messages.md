@@ -173,5 +173,6 @@ scheduled.purge('my-queue', (err) => {
 **Related Documentation**:
 
 - [ProducibleMessage API](api/classes/ProducibleMessage.md) - All message options
+- [MessageManager API](api/classes/MessageManager.md) - Manage individual message operations
 - [Producing Messages](producing-messages.md) - How to send messages
 - [Consuming Messages](consuming-messages.md) - How to receive messages
