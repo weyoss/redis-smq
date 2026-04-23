@@ -206,7 +206,7 @@ export class MessageState {
    * @returns The timestamp (in milliseconds) when the message was last processed, or `null` if not processed.
    */
   getLastProcessedAt(): number | null {
-    return this.lastUnacknowledgedAt;
+    return this.lastProcessedAt;
   }
 
   /**
