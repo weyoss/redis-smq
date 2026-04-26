@@ -8,7 +8,6 @@
  */
 
 import {
-  THeartbeatDataFn,
   IHeartbeatConfig,
   IHeartbeatPayload,
   THeartbeatEvent,
@@ -17,14 +16,11 @@ import { Runnable } from '../runnable/index.js';
 import { IRedisClient } from '../redis-client/index.js';
 import { ILogger } from '../logger/index.js';
 import { ICallback } from '../async/index.js';
-import { CallbackEmptyReplyError } from '../errors/index.js';
 import { Backoff } from '../backoff/backoff.js';
 import { ExponentialBackoff } from '../backoff/index.js';
 import { Timer } from '../timer/index.js';
 
-export class Heartbeat<T = Record<string, unknown>> extends Runnable<
-  THeartbeatEvent<T>
-> {
+export class Heartbeat extends Runnable<THeartbeatEvent> {
   protected static readonly MIN_HEARTBEAT_TTL = 3_000;
   protected static readonly DEFAULT_HEARTBEAT_TTL =
     Heartbeat.MIN_HEARTBEAT_TTL * 20; // 60 secs
@@ -36,7 +32,6 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
   protected readonly heartbeatTTL: number;
   protected readonly heartbeatInterval: number;
   protected readonly logger: ILogger;
-  protected readonly dataFn: THeartbeatDataFn<T>;
 
   protected timer: Timer;
   protected backoff: Backoff;
@@ -45,7 +40,6 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     redisClient: IRedisClient,
     logger: ILogger,
     config: IHeartbeatConfig,
-    dataFn: THeartbeatDataFn<T>,
   ) {
     super();
 
@@ -75,8 +69,6 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
 
     this.backoff = new ExponentialBackoff(this.logger, { maxAttempts: 3 });
     this.timer = new Timer(this.logger);
-
-    this.dataFn = dataFn;
 
     this.logger.debug(
       `Heartbeat initialized for ${this.componentType}:${this.componentId} (interval: ${this.heartbeatInterval}ms, TTL: ${this.heartbeatTTL}ms)`,
@@ -112,29 +104,6 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     });
   }
 
-  private getPayload(cb: ICallback<IHeartbeatPayload<T>>): void {
-    const timestamp = Date.now();
-
-    this.dataFn((err, data) => {
-      if (err) return cb(err);
-      // Allow falsy values (0, false, '', etc.); reject only explicit null/undefined
-      if (data == null) {
-        return cb(
-          new CallbackEmptyReplyError({
-            message: 'dataFn returned null/undefined',
-          }),
-        );
-      }
-
-      cb(null, {
-        timestamp,
-        componentId: this.componentId,
-        componentType: this.componentType,
-        data,
-      });
-    });
-  }
-
   private scheduleNextBeat(): void {
     if (!this.isOperational()) {
       this.logger.debug('Not scheduling next beat – component not operational');
@@ -151,7 +120,6 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
             this.componentId,
             this.componentType,
             payload.timestamp,
-            payload,
           );
           this.scheduleNextBeat();
         }
@@ -159,42 +127,26 @@ export class Heartbeat<T = Record<string, unknown>> extends Runnable<
     }, this.heartbeatInterval);
   }
 
-  protected beat = (cb: ICallback<IHeartbeatPayload<T>>): void => {
+  protected beat = (cb: ICallback<IHeartbeatPayload>): void => {
     if (!this.isOperational()) {
       this.logger.debug('Skipping heartbeat – component not operational');
       return;
     }
-
-    this.getPayload((err, payload) => {
-      if (err || !payload) {
-        cb(err || new CallbackEmptyReplyError());
-        return;
-      }
-
-      // Shutdown race protection
-      if (!this.isOperational()) {
-        this.logger.debug('Skipping Redis SET – shutdown in progress');
-        return;
-      }
-
-      let payloadStr: string;
-      try {
-        payloadStr = JSON.stringify(payload);
-      } catch (serializeErr) {
-        cb(new Error(`Failed to serialize payload: ${serializeErr}`));
-        return;
-      }
-
-      this.redisClient.set(
-        this.heartbeatKey,
-        payloadStr,
-        { expire: { mode: 'PX', value: this.heartbeatTTL } },
-        (err) => {
-          if (err) return cb(err);
-          cb(null, payload);
-        },
-      );
-    });
+    const payload: IHeartbeatPayload = {
+      timestamp: Date.now(),
+      componentId: this.componentId,
+      componentType: this.componentType,
+    };
+    const payloadStr = JSON.stringify(payload);
+    this.redisClient.set(
+      this.heartbeatKey,
+      payloadStr,
+      { expire: { mode: 'PX', value: this.heartbeatTTL } },
+      (err) => {
+        if (err) return cb(err);
+        cb(null, payload);
+      },
+    );
   };
 
   protected override handleError(err: Error) {

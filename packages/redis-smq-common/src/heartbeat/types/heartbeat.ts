@@ -7,13 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../../async/index.js';
-
-export interface IHeartbeatPayload<T = unknown> {
+export interface IHeartbeatPayload {
   timestamp: number;
   componentId: string;
   componentType: string;
-  data: T;
 }
 
 export interface IHeartbeatConfig {
@@ -23,14 +20,11 @@ export interface IHeartbeatConfig {
   heartbeatTTL?: number;
 }
 
-export type THeartbeatDataFn<T> = (cb: ICallback<T>) => void;
-
-export type THeartbeatEvent<T> = {
+export type THeartbeatEvent = {
   'heartbeat.beat': (
     componentId: string,
     componentType: string,
     timestamp: number,
-    payload: IHeartbeatPayload<T>,
   ) => void;
   'heartbeat.error': (
     err: Error,
