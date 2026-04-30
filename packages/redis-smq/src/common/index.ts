@@ -9,4 +9,3 @@
 
 export * from './abstract/background-job/types/index.js';
 export * from '../queue-messages/message-browser/types/index.js';
-export * from './heartbeat/types/index.js';

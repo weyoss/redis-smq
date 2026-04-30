@@ -17,7 +17,6 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { IHeartbeatPayload } from '../common/index.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import {
@@ -30,8 +29,6 @@ import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
-import { HeartbeatFactory } from '../common/heartbeat/heartbeat.js';
-import { heartbeatEventPublisher } from './heartbeat-event-publisher.js';
 import {
   IConsumerOptions,
   IConsumerParsedOptions,
@@ -82,7 +79,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected readonly consumerContext: IConsumerContext;
   protected messageHandlerRunner;
   protected logger;
-  protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
+  protected heartbeat: Heartbeat | null = null;
   protected consumerOptions: IConsumerParsedOptions;
   protected redisClient: IRedisClient | null = null;
 
@@ -155,17 +152,12 @@ export class Consumer extends Runnable<TConsumerEvent> {
     this.logger.debug('Setting up consumer heartbeat');
     const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(this.id);
     try {
-      this.heartbeat = HeartbeatFactory(
-        this.redisClient,
-        this.logger,
-        {
-          heartbeatKey: keyConsumerHeartbeat,
-          componentId: this.id,
-          componentType: this.constructor.name,
-          heartbeatTTL: this.consumerOptions.heartbeatTTL,
-        },
-        heartbeatEventPublisher,
-      );
+      this.heartbeat = new Heartbeat(this.redisClient, this.logger, {
+        heartbeatKey: keyConsumerHeartbeat,
+        componentId: this.id,
+        componentType: this.constructor.name,
+        heartbeatTTL: this.consumerOptions.heartbeatTTL,
+      });
       this.heartbeat.on('heartbeat.error', (err) => {
         this.logger.error(`Heartbeat error: ${err.message}`);
         this.handleError(err);

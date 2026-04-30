@@ -8,7 +8,6 @@
  */
 
 import {
-  IHeartbeatPayload,
   IQueueParams,
   IQueueParsedParams,
   IQueueProperties,
@@ -25,15 +24,6 @@ export type TConfigurationEvent = {
     config: IRedisSMQParsedConfig,
     version: number,
   ) => void;
-};
-
-export type TConsumerHeartbeatEvent = {
-  'consumerHeartbeat.heartbeat': (
-    consumerId: string,
-    timestamp: number,
-    heartbeatPayload: IHeartbeatPayload,
-  ) => void;
-  'consumerHeartbeat.error': (err: Error, consumerId: string) => void;
 };
 
 export type TConsumerConsumeMessageEvent = {
@@ -148,7 +138,6 @@ export type TEventBusEvent = {
 export type TRedisSMQEvent = TEventBusEvent &
   TConfigurationEvent &
   TConsumerEvent &
-  TConsumerHeartbeatEvent &
   TConsumerMessageHandlerRunnerEvent &
   TConsumerMessageHandlerEvent &
   TConsumerConsumeMessageEvent &

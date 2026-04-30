@@ -20,14 +20,12 @@ import { WorkerAbstract } from '../worker/worker-abstract.js';
 import { RedisConnectionPool } from '../../redis/redis-connection-pool/redis-connection-pool.js';
 import { ERedisConnectionAcquisitionMode } from '../../redis/redis-connection-pool/types/connection-pool.js';
 import { redisKeys } from '../../redis/redis-keys/redis-keys.js';
-import { HeartbeatFactory } from '../../heartbeat/heartbeat.js';
-import { IHeartbeatPayload } from '../../heartbeat/types/index.js';
 import { IWorkerPayload } from '../worker/types/worker.js';
 
 export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
   protected override logger: ILogger;
   protected redisClient: IRedisClient | null = null;
-  protected heartbeat: Heartbeat<IHeartbeatPayload> | null = null;
+  protected heartbeat: Heartbeat | null = null;
 
   protected constructor(payload: IWorkerPayload) {
     super(payload);
@@ -48,7 +46,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
 
     try {
       const { keyWorkerHeartbeat } = redisKeys.getWorkerKeys(this.id);
-      this.heartbeat = HeartbeatFactory(this.redisClient, this.logger, {
+      this.heartbeat = new Heartbeat(this.redisClient, this.logger, {
         heartbeatKey: keyWorkerHeartbeat,
         componentId: this.id,
         componentType: this.constructor.name,
