@@ -1,9 +1,6 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Consuming Messages
-
 # Consuming Messages
 
-A Consumer processes messages from queues. You provide a handler function to process each message and must explicitly
-acknowledge or reject it.
+A Consumer processes messages from queues. You provide a handler function that receives each message and must explicitly acknowledge or reject it.
 
 ## Quick Start
 
@@ -11,62 +8,102 @@ acknowledge or reject it.
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
+
 const consumer = RedisSMQ.createConsumer();
 
-// Start the consumer
-consumer.run((err, started) => {
-  if (err) console.error('Start failed:', err);
-  else console.log('Consumer is running: ', started);
+consumer.run((err) => {
+  if (err) console.error('Failed to start consumer:', err);
+  else console.log('Consumer running');
 });
 ```
 
 ### 2. Consume a Queue
 
 ```javascript
-// Define a message handler
-const handler = (msg, done) => {
-  console.log('Processing:', msg.body);
-  // Your business logic here
-
-  // Acknowledge success
-  done();
-
-  // Or reject with error (triggers retry)
-  // done(new Error('Processing failed'));
-};
-
-// Register handler
-consumer.consume('orders', handler, (err) => {
-  if (err) console.error('Registration failed:', err);
-});
-```
-
-#### 2.1. Pub/Sub Queues with Consumer Groups
-
-For [Pub/Sub Queues](queue-delivery-models.md#pubsub-broadcast-to-groups), use consumer groups. Messages broadcast to all
-groups, but within a group only one consumer receives each message.
-
-```javascript
 consumer.consume(
-  { queue: 'notifications', groupId: 'email-service' },
-  (msg, done) => {
-    console.log('Sending email:', msg.body);
-    done();
+  'orders',
+  (message, done) => {
+    console.log('Processing:', message.body);
+
+    // Your business logic here
+
+    done(); // Acknowledge success
+    // done(new Error('Failed')); // Reject — triggers retry
   },
   (err) => {
-    if (err) console.error('Registration failed:', err);
+    if (err) console.error('Consume failed:', err);
+    else console.log('Listening on orders');
   },
 );
 ```
 
-## Key Concepts
+### 3. Shutdown
 
-### Message Acknowledgement
+```javascript
+consumer.shutdown((err) => {
+  if (err) console.error('Shutdown failed:', err);
+});
+```
 
-Every message must be acknowledged:
+## Message Handler
 
-- **Success**: `done()` - Message processed successfully
-- **Failure**: `done(error)` - Processing failed, triggers retry
+The handler receives two arguments:
+
+- **`message`** — the message object with `body`, `id`, `ttl`, `priority`, and metadata
+- **`done(err)`** — callback to acknowledge or reject
+
+```javascript
+consumer.consume(
+  'orders',
+  (message, done) => {
+    try {
+      // Process the message
+      const result = processOrder(message.body);
+
+      // Acknowledge success
+      done();
+    } catch (err) {
+      // Reject — message will be retried or dead-lettered
+      done(err);
+    }
+  },
+  callback,
+);
+```
+
+### Message Object
+
+The `message` object provides:
+
+| Property           | Description                  |
+| ------------------ | ---------------------------- |
+| `body`             | The message payload          |
+| `id`               | Unique message identifier    |
+| `ttl`              | Time-to-live in milliseconds |
+| `retryThreshold`   | Max retry attempts           |
+| `retryDelay`       | Delay between retries in ms  |
+| `consumeTimeout`   | Max processing time in ms    |
+| `priority`         | Priority level (if set)      |
+| `status`           | Current message status       |
+| `createdAt`        | Creation timestamp           |
+| `destinationQueue` | The target queue             |
+
+## Pub/Sub with Consumer Groups
+
+For Pub/Sub queues, specify a group ID:
+
+```javascript
+consumer.consume(
+  { queue: 'notifications', groupId: 'email-service' },
+  (message, done) => {
+    console.log('Email service processing:', message.body);
+    done();
+  },
+  callback,
+);
+```
+
+Each consumer group receives a copy of every message. Within a group, messages are load-balanced across consumers. See [Consumer Groups](https://github.com/weyoss/redis-smq-docs) for details.
 
 ## Managing Consumption
 
@@ -75,42 +112,148 @@ Every message must be acknowledged:
 ```javascript
 consumer.cancel('orders', (err) => {
   if (err) console.error('Cancel failed:', err);
-  else console.log('No longer consuming from orders queue');
+  else console.log('No longer consuming from orders');
 });
 ```
 
-### Stop the Entire Consumer
+### Check Registered Queues
 
 ```javascript
-consumer.shutdown((err) => {
-  if (err) console.error('Shutdown failed:', err);
-  else console.log('Consumer stopped');
-});
+const queues = consumer.getQueues();
+console.log('Registered queues:', queues);
 ```
 
-### Application Shutdown
+### Shutdown
 
 ```javascript
-// Clean up all RedisSMQ components
-RedisSMQ.shutdown((err) => {
-  if (err) console.error('Cleanup failed:', err);
-  else console.log('All components stopped');
+// Stop this consumer
+consumer.shutdown(callback);
+
+// Or stop everything
+RedisSMQ.shutdown(callback);
+```
+
+## Configuration
+
+### Heartbeat TTL
+
+```javascript
+const consumer = new Consumer({
+  heartbeatTTL: 30000, // Heartbeat expires after 30 seconds
 });
 ```
+
+### Batch Acknowledgments
+
+```javascript
+const consumer = new Consumer({
+  batchAcks: {
+    batchSize: 100, // Acknowledge in batches of 100
+    batchTimeoutMs: 5000, // Or every 5 seconds
+  },
+});
+```
+
+### Batch Unacknowledgments
+
+```javascript
+const consumer = new Consumer({
+  batchUnacks: {
+    batchSize: 50,
+    batchTimeoutMs: 5000,
+  },
+});
+```
+
+### Multiplexing
+
+```javascript
+// Share one Redis connection across multiple queues
+const consumer = RedisSMQ.createConsumer(true);
+
+consumer.consume('queue1', handler1, callback);
+consumer.consume('queue2', handler2, callback);
+consumer.consume('queue3', handler3, callback);
+```
+
+See [Multiplexing](multiplexing.md) and [Batch Acknowledgments](message-batch-acknowledgements.md) for details.
+
+## Worker Threads
+
+For CPU-intensive handlers, run the handler in a separate thread:
+
+```javascript
+const path = require('path');
+
+consumer.consume(
+  'image-processing',
+  path.resolve(__dirname, 'handlers/image-processor.js'),
+  callback,
+);
+```
+
+See [Worker Threads](message-handler-worker-threads.md) for details.
 
 ## Message Lifecycle
 
-### Retry Behavior
+Messages follow a lifecycle through the consumer:
 
-- Failed messages (`done(error)`) are retried based on the message's retry configuration
-- After exceeding retry threshold, messages go to Dead Letter Queue (DLQ) when message audit configuration allows to do so.
-- Configure retry settings when [producing messages](producing-messages.md)
+```
+Consumer dequeues message
+  → Message moves from pending to processing
+  → Handler processes the message
+  → Success: done() → message acknowledged
+  → Failure: done(err) → message retried or dead-lettered
+```
 
-### Message Auditing
+See [Message Lifecycle](message-lifecycle.md) for the full walkthrough.
 
-- By default, RedisSMQ doesn't store acknowledged or dead-lettered messages
-- Enable in [configuration](configuration.md) for debugging or compliance
+## Error Handling
 
----
+### Callback Style
 
-For complete API details, see the [Consumer Class documentation](api/classes/Consumer.md).
+```javascript
+consumer.consume(
+  'orders',
+  (message, done) => {
+    try {
+      processOrder(message.body);
+      done();
+    } catch (err) {
+      console.error('Processing failed:', err);
+      done(err); // Triggers retry
+    }
+  },
+  (err) => {
+    if (err) console.error('Consume registration failed:', err);
+  },
+);
+```
+
+### Promise Style
+
+```javascript
+await consumer.consume('orders', async (message) => {
+  await processOrder(message.body);
+  // Successful return = acknowledge
+  // Thrown error = unacknowledge
+});
+```
+
+## Best Practices
+
+- **Make handlers idempotent** — messages can be delivered more than once
+- **Keep handlers fast** — slow handlers block other messages on multiplexed consumers
+- **Use retry delays** for transient failures (network, rate limits)
+- **Set consume timeouts** to prevent stuck handlers from holding messages
+- **Monitor dead-letter queues** for messages that fail repeatedly
+- **Use batch acknowledgments** in high-throughput scenarios
+- **Handle shutdown gracefully** — let in-flight messages complete
+
+## Related
+
+- [Message Reliability](https://github.com/weyoss/redis-smq-docs) — Delivery guarantees
+- [Consumer Groups](https://github.com/weyoss/redis-smq-docs) — Pub/Sub with groups
+- [Batch Acknowledgments](message-batch-acknowledgements.md) — Performance optimization
+- [Multiplexing](multiplexing.md) — Shared connections
+- [Worker Threads](message-handler-worker-threads.md) — CPU-heavy handlers

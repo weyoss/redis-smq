@@ -1,91 +1,72 @@
-[RedisSMQ](../README.md) / Documentation
+# TypeScript Documentation
 
-# RedisSMQ Documentation
+Node.js implementation of RedisSMQ. For concepts that apply to all implementations, see the [shared documentation](https://github.com/weyoss/redis-smq-docs).
 
-**RedisSMQ** is a high-performance, Redis-backed message queue library for Node.js. It offers a clean,
-process-wide API with support for multiple queue types (FIFO/LIFO/Priority), flexible routing via exchanges
-(Direct/Topic/Fanout), Point-to-Point and Pub/Sub delivery models, built-in scheduling, rate limiting, optional
-message auditing, worker threads, and more — all while keeping operations atomic and reliable.
+## Getting Started
 
-> **Recommended reading order**
->
-> 1. [Simplified RedisSMQ API](simplified-redis-smq-api.md)
-> 2. [Configuration](configuration.md)
-> 3. [Producing Messages](producing-messages.md) & [Consuming Messages](consuming-messages.md)
-> 4. [Queues](queues.md) & [Message Exchanges](message-exchanges.md)
+- [Quick Start](quick-start.md) — Install, initialize, send and receive your first message
+- [Installation](installation.md) — Package installation and Redis client setup
+- [Simplified API](simplified-redis-smq-api.md) — One initialization, factory methods, automatic cleanup
+- [Configuration](configuration.md) — System initialization and behavior configuration
 
----
+## Core Operations
 
-## Table of Contents
+- [Producing Messages](producing-messages.md) — How to publish messages
+- [Consuming Messages](consuming-messages.md) — How to subscribe and process messages
+- [Exchanges and Delivery Models](exchanges-and-delivery-models.md) — Routing and delivery patterns
+- [Queue Management](queue-management.md) — Create, inspect, and delete queues
+- [Message Management](message-management.md) — Retrieve, delete, and requeue messages
+- [Scheduling Messages](scheduling-messages.md) — Delays, CRON, and repeating delivery
+- [Queue Rate Limiting](queue-rate-limiting.md) — Control message throughput
 
-### 🚀 Getting Started
+## State and Monitoring
 
-- [Simplified RedisSMQ API](simplified-redis-smq-api.md) — _One initialization, factory methods, automatic cleanup_
-- [Configuration](configuration.md) — _Redis connection, persisted settings, optional features_
-- [ESM & CJS Modules](esm-cjs-modules.md) — _Both module systems fully supported_
-- [Version Compatibility](version-compatibility.md) — _Keep all RedisSMQ packages aligned_
-- [Graceful Shutdown](graceful-shutdown.md) — _Recommended shutdown patterns_
+- [Queue State Management](queue-state-management.md) — Pause, resume, stop queues
+- [Message Audit](message-audit.md) — Browse processed and failed messages
+- [Consumer Groups](consumer-groups.md) — Manage Pub/Sub consumer groups
+- [Namespaces](namespaces.md) — Isolate queues and exchanges
+- [Event Bus](event-bus.md) — Monitor system events in real time
 
-### 📚 Core Concepts
+## Advanced Features
 
-- [RedisSMQ Architecture Overview](redis-smq-architecture.md) — _High-level design, message flow, lifecycle_
-- [Dual Callback & Promise Support](dual-callback-and-promise-support.md) — _Performance-first callbacks with optional promise wrappers_
-- [Queues](queues.md) — _FIFO, LIFO, Priority queues_
-- [Messages](messages.md) — _ProducibleMessage, TTL, priority, retries_
-- [Message Lifecycle](message-lifecycle.md) — _Complete walkthrough of a message's journey through RedisSMQ_
-- [Message Reliability](message-reliability.md) — _How RedisSMQ guarantees at-least-once delivery_
-- [Producing Messages](producing-messages.md) — _Direct queues vs exchanges_
-- [Consuming Messages](consuming-messages.md) — _Handlers, acknowledgments, consumer groups_
-- [Message Exchanges](message-exchanges.md) — _Direct, Topic, Fanout routing_
-- [Queue Delivery Models](queue-delivery-models.md) — _Point-to-Point vs Pub/Sub_
-- [Exchanges and Delivery Models](exchanges-and-delivery-models.md) — _How they work together_
+- [Worker Threads](message-handler-worker-threads.md) — Run handlers in separate threads
+- [Multiplexing](multiplexing.md) — Share connections across queues
+- [Batch Acknowledgments](message-batch-acknowledgements.md) — High-throughput ack batching
+- [Batch Unacknowledgments](message-batch-unacknowledgements.md) — High-throughput nack batching
+- [Validating Queue Operations](validating-queue-operations.md) — Check if operations are allowed
 
-### ⚡ Advanced Features
+## Operations
 
-- [Scheduling Messages](scheduling-messages.md) — _Delay, CRON, repeating messages_
-- [Queue Rate Limiting](queue-rate-limiting.md) — _Throttle consumption per queue_
-- [Message Audit](message-audit.md) — _Track acknowledged & dead-lettered messages_
-- [EventBus](event-bus.md) — _Real-time observability of internal events_
-- [Queue State Management System](queue-state-management-system.md) — _Pause, stop, resume queues with audit trail_
-- [Validating Queue Operations](validating-queue-operations.md) — _State-based operation guards_
+- [Graceful Shutdown](graceful-shutdown.md) — Clean shutdown procedures
 
-### 🔧 Reliability & Performance
+## Node.js Specifics
 
-- [Message Batch Acknowledgments](message-batch-acknowledgements.md) — _Improve throughput by batching message acknowledgments_
-- [Message Batch Unacknowledgments](message-batch-unacknowledgements.md) — _Efficiently handle failed messages in batches_
-- [Message Handler Worker Threads](message-handler-worker-threads.md) — _Run heavy handlers in isolated threads_
-- [Multiplexing](multiplexing.md) — _Share one Redis connection across many queues_
-- [Performance](performance.md) — _Tuning tips, throughput benchmarks, fast paths_
+- [Dual Callback & Promise Support](dual-callback-and-promise-support.md) — Use callbacks or async/await
+- [ESM & CJS Modules](esm-cjs-modules.md) — Import styles
+- [Version Compatibility](version-compatibility.md) — Package version alignment
 
-### 🛠️ Tools & Interfaces
+## API Reference
 
-Manage RedisSMQ through various interfaces:
+- [API Reference](api/README.md) — Complete class and interface documentation
 
-- **[HTTP REST API](../../redis-smq-rest-api/README.md)** — _Integrate RedisSMQ with other applications via HTTP API_
-- **[Web UI](../../redis-smq-web-ui/README.md)** — _Use the web interface for easy queue and message management_
-- **[Redis Server Helper](../../redis-smq-common/docs/redis-server.md)** — _Start a Redis server instance for development and testing._
+## Shared Concepts
 
-### 📖 Reference
+For language-agnostic documentation on queues, exchanges, scheduling, rate limiting, and more, see:
 
-- **[API Reference](api/README.md)** — _Complete API documentation_
-- **[FAQs](faqs/README.md)** — _Frequently asked questions and troubleshooting_
-
-### 🆘 Need Help?
-
-- **[GitHub Repository](/README.md)** — _Browse the source code_
-- **[Issue Tracker](https://github.com/weyoss/redis-smq/issues)** — _Report bugs or request features_
-- **[Changelog](/CHANGELOG.md)** — _Stay updated with the latest changes_
-
----
-
-## Navigation Tips
-
-- New to RedisSMQ? → Start with Simplified RedisSMQ API and Configuration.
-- Need maximum speed? → Read Performance and prefer direct queue publishing + FIFO/LIFO + no audit/EventBus.
-- Building a microservices event bus? → See Exchanges and Delivery Models + Pub/Sub.
-- Debugging? → Enable EventBus and Message Audit.
-- **Want both performance and clean syntax?** → Read Dual Callback & Promise Support.
-
----
-
-Happy queuing! 🚀
+- [Architecture](https://github.com/weyoss/redis-smq-docs)
+- [Queues](https://github.com/weyoss/redis-smq-docs)
+- [Queue Delivery Models](https://github.com/weyoss/redis-smq-docs)
+- [Message Exchanges](https://github.com/weyoss/redis-smq-docs)
+- [Messages](https://github.com/weyoss/redis-smq-docs)
+- [Scheduling Messages](https://github.com/weyoss/redis-smq-docs)
+- [Queue Rate Limiting](https://github.com/weyoss/redis-smq-docs)
+- [Queue State Management](https://github.com/weyoss/redis-smq-docs)
+- [Message Reliability](https://github.com/weyoss/redis-smq-docs)
+- [Consumer Groups](https://github.com/weyoss/redis-smq-docs)
+- [Message Audit](https://github.com/weyoss/redis-smq-docs)
+- [Configuration](https://github.com/weyoss/redis-smq-docs)
+- [Graceful Shutdown](https://github.com/weyoss/redis-smq-docs)
+- [Event Bus](https://github.com/weyoss/redis-smq-docs)
+- [Performance](https://github.com/weyoss/redis-smq-docs)
+- [Interoperability](https://github.com/weyoss/redis-smq-docs)
+- [Glossary](https://github.com/weyoss/redis-smq-docs)

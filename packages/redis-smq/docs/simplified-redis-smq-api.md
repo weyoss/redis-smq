@@ -1,81 +1,93 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Simplified RedisSMQ API
-
 # Simplified RedisSMQ API
 
-The easiest way to use RedisSMQ. One initialization, simple factory methods, automatic cleanup.
+The `RedisSMQ` class provides a simplified API: initialize once, create components via factory methods, and shut down everything with a single call. Components created this way are automatically tracked and cleaned up.
 
-## Quick Start
-
-### 1. Initialize Once
+## Overview
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
 
-// Do this once when your app starts
+// 1. Initialize once
+RedisSMQ.initialize(redisConfig, callback);
+
+// 2. Create components via factory methods
+const producer = RedisSMQ.createProducer();
+const consumer = RedisSMQ.createConsumer();
+
+// 3. Single shutdown for everything
+RedisSMQ.shutdown(callback);
+```
+
+## Initialization
+
+Call once when your application starts:
+
+```javascript
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
+
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
+    options: { host: '127.0.0.1', port: 6379 },
   },
   (err) => {
-    if (err) console.error('Failed to start:', err);
-    else console.log('RedisSMQ ready');
+    if (err) console.error('Failed:', err);
   },
 );
 ```
 
-### 2. Create and Start Components
-
-```javascript
-// Producer (send messages)
-const producer = RedisSMQ.startProducer((err) => {
-  if (err) console.error('Failed:', err);
-  else console.log('Producer running');
-});
-
-// Consumer (receive messages)
-const consumer = RedisSMQ.startConsumer((err) => {
-  if (err) console.error('Failed:', err);
-  else console.log('Consumer running');
-});
-```
-
-### 3. Shutdown Everything
-
-```javascript
-// Clean up when app exits
-RedisSMQ.shutdown((err) => {
-  if (err) console.error('Shutdown error:', err);
-  else console.log('All connections closed');
-});
-```
-
 ## Factory Methods
 
-Create components with one line:
+All components can be created through the `RedisSMQ` class:
 
 ### Producers
 
 ```javascript
+// Create
 const producer = RedisSMQ.createProducer();
-// or create and start
-const producer = RedisSMQ.startProducer(callback);
+
+// Create and start
+const producer = RedisSMQ.startProducer((err) => {
+  if (err) console.error('Start failed:', err);
+});
 ```
 
 ### Consumers
 
 ```javascript
+// Create
 const consumer = RedisSMQ.createConsumer();
-// or create and start
-const consumer = RedisSMQ.startConsumer(callback);
+
+// Create multiplexed consumer (shared connection)
+const consumer = RedisSMQ.createConsumer(true);
+
+// Create and start
+const consumer = RedisSMQ.startConsumer((err) => {
+  if (err) console.error('Start failed:', err);
+});
 ```
 
-### Managers
+### Queue Management
 
 ```javascript
 const queueManager = RedisSMQ.createQueueManager();
-const messageManager = RedisSMQ.createMessageManager();
+const stateManager = RedisSMQ.createQueueStateManager();
 const rateLimitManager = RedisSMQ.createQueueRateLimit();
+const consumerGroups = RedisSMQ.createConsumerGroups();
+```
+
+### Messages
+
+```javascript
+const messageManager = RedisSMQ.createMessageManager();
+
+// Message browsing
+const publishedMessages = RedisSMQ.createQueuePublishedMessages();
+const pendingMessages = RedisSMQ.createQueuePendingMessages();
+const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
+const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
+const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
 ```
 
 ### Exchanges
@@ -86,109 +98,119 @@ const topicExchange = RedisSMQ.createTopicExchange();
 const fanoutExchange = RedisSMQ.createFanoutExchange();
 ```
 
-## Full Example
+### Configuration
+
+```javascript
+const configManager = RedisSMQ.createConfigManager();
+```
+
+## Automatic Cleanup
+
+Components created via factory methods are tracked by `RedisSMQ`. Calling `RedisSMQ.shutdown()` automatically shuts them all down:
+
+```javascript
+// Create components
+const producer = RedisSMQ.createProducer();
+const consumer = RedisSMQ.createConsumer();
+const queueManager = RedisSMQ.createQueueManager();
+
+// ... use them ...
+
+// One call shuts down everything
+RedisSMQ.shutdown((err) => {
+  if (err) console.error('Shutdown error:', err);
+  else console.log('All components stopped');
+});
+```
+
+## Individual Shutdown
+
+You can still shut down components individually if needed:
+
+```javascript
+// Stop a specific consumer early
+consumer.shutdown((err) => {
+  if (err) console.error('Consumer shutdown failed:', err);
+});
+
+// Other components keep running
+```
+
+Components shut down individually are removed from tracking. They will not be shut down again by `RedisSMQ.shutdown()`.
+
+## Start Methods
+
+`startProducer()` and `startConsumer()` create and start in one call:
+
+```javascript
+// Create and start
+const producer = RedisSMQ.startProducer((err) => {
+  if (err) return console.error(err);
+  console.log('Producer ready, ID:', producer.getId());
+});
+
+// Equivalent to:
+const producer = RedisSMQ.createProducer();
+producer.run((err) => {
+  if (err) return console.error(err);
+  console.log('Producer ready');
+});
+```
+
+## Complete Example
 
 ```javascript
 const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-// 1. Initialize
+// Initialize
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
+    options: { host: '127.0.0.1', port: 6379 },
   },
   (err) => {
     if (err) throw err;
 
-    // 2. Create producer and consumer
+    // Create and start a producer
     const producer = RedisSMQ.startProducer((err) => {
       if (err) throw err;
 
       // Send a message
       const msg = new ProducibleMessage()
-        .setQueue('test')
+        .setQueue('orders')
         .setBody({ hello: 'world' });
 
-      producer.produce(msg, (err, messageIds) => {
+      producer.produce(msg, (err, ids) => {
         if (err) console.error('Send failed:', err);
-        else console.log('Sent:', messageIds[0]);
+        else console.log('Sent:', ids[0]);
       });
     });
 
+    // Create and start a consumer
     const consumer = RedisSMQ.startConsumer((err) => {
       if (err) throw err;
 
-      // Receive messages
-      consumer.consume('test', (msg, done) => {
+      consumer.consume('orders', (msg, done) => {
         console.log('Received:', msg.body);
         done();
       });
     });
 
-    // 3. Handle shutdown
+    // Graceful shutdown
     process.on('SIGINT', () => {
-      RedisSMQ.shutdown(() => {
-        console.log('Clean exit');
-        process.exit(0);
+      RedisSMQ.shutdown((err) => {
+        process.exit(err ? 1 : 0);
       });
     });
   },
 );
 ```
 
-## Configuration Options
-
-### Initialize
-
-```javascript
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
-  callback,
-);
-```
-
 ## Best Practices
 
-### 1. Initialize Once
-
-```javascript
-// ✅ Do this in your main file
-RedisSMQ.initialize(config, callback);
-
-// ❌ Don't initialize multiple times
-// RedisSMQ.initialize(...); // Multiple times
-```
-
-### 2. Use Factory Methods
-
-```javascript
-// ✅ Let RedisSMQ manage components
-const producer = RedisSMQ.createProducer();
-
-// ❌ Avoid direct instantiation
-// const producer = new Producer(); // Not tracked
-```
-
-### 3. Single Shutdown
-
-```javascript
-// ✅ Clean up everything
-RedisSMQ.shutdown(callback);
-
-// ❌ Avoid shutting down components individually
-// producer.shutdown();
-// consumer.shutdown();
-// queueManager.shutdown();
-```
-
----
-
-**Related**:
-
-- [Configuration](configuration.md) - Setup options
-- [Producing Messages](producing-messages.md) - How to send messages
-- [Consuming Messages](consuming-messages.md) - How to receive messages
-- [EventBus](event-bus.md) - Monitoring events
+- **Initialize once** at application startup
+- **Use factory methods** so components are tracked for cleanup
+- **Use a single `RedisSMQ.shutdown()`** at application exit
+- **Handle shutdown signals** (SIGINT, SIGTERM) for clean exit
+- **Avoid mixing** tracked and untracked components — if you create a component directly (not via factory), shut it down yourself

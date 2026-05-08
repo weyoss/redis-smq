@@ -1,57 +1,50 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Version Compatibility
-
 # Version Compatibility
 
-For optimal performance and stability, keep all RedisSMQ packages aligned to the same version number.
+All RedisSMQ packages must use the same version. Mismatched versions can cause API errors, type errors, and unexpected behavior.
 
 ## Required Packages
 
-Make sure these packages share the same version:
+Keep these packages at the same version:
 
 - `redis-smq`
 - `redis-smq-common`
 - `redis-smq-rest-api`
 - `redis-smq-web-ui`
 - `redis-smq-web-server`
-- `redis-smq-benchmarks`
 
-## How to Install
+## Installation
 
-### Install Latest Versions (Recommended)
-
-```bash
-npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest redis-smq-web-server@latest redis-smq-web-ui@latest redis-smq-benchmarks@latest
-```
-
-### Install Specific Version
+### Latest Versions (Recommended)
 
 ```bash
-npm install redis-smq@9.0.12 redis-smq-common@9.0.12 redis-smq-rest-api@9.0.12 redis-smq-web-server@9.0.12 redis-smq-web-ui@9.0.12 redis-smq-benchmarks@9.0.12
+npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next
 ```
 
-## Check Your Versions
-
-Run this command to see installed versions:
+### Specific Version
 
 ```bash
-npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-server redis-smq-web-ui redis-smq-benchmarks
+npm install redis-smq@9.0.12 redis-smq-common@9.0.12 redis-smq-rest-api@9.0.12 redis-smq-web-ui@9.0.12 redis-smq-web-server@9.0.12
 ```
 
-## Solving Version Issues
+## Checking Versions
 
-### Common Problems
+```bash
+npm list redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui redis-smq-web-server
+```
 
-If versions don’t match, you might encounter:
+## Troubleshooting
+
+### Version Mismatch
+
+If versions don't match, you may see:
 
 - API errors
-- Type errors
-- Unexpected crashes
+- TypeScript type errors
+- Unexpected runtime behavior
 
-### How to Fix
+### Fix
 
-1. Check current versions with `npm list`
+1. Check installed versions: `npm list redis-smq redis-smq-common`
 2. Update all packages to the same version
-3. Clear npm cache if problems persist:
-   ```bash
-   npm cache clean --force
-   ```
+3. Clear npm cache if issues persist: `npm cache clean --force`
+4. Delete `node_modules` and `package-lock.json`, then reinstall

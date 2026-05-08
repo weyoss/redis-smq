@@ -1,111 +1,91 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Multiplexing
-
 # Multiplexing
 
-Multiplexing lets multiple message handlers share one Redis connection. This reduces connection usage but processes
-messages sequentially instead of in parallel.
+Multiplexing lets multiple message handlers share a single Redis connection. It reduces connection usage at the cost of processing messages sequentially instead of in parallel.
 
-## Default vs. Multiplexed
+## How It Works
 
-|                 | Default (One Connection Per Handler) | Multiplexed (Shared Connection) |
-| --------------- | ------------------------------------ | ------------------------------- |
-| **Connections** | Many                                 | One                             |
-| **Processing**  | Parallel                             | Sequential                      |
-| **Best For**    | High throughput                      | Many low-traffic queues         |
+Without multiplexing, each message handler gets its own Redis connection and processes messages independently:
 
-## When to Use Multiplexing
+```
+Consumer
+├── Handler for queue "orders"    → Redis connection 1 → parallel
+├── Handler for queue "emails"    → Redis connection 2 → parallel
+└── Handler for queue "reports"   → Redis connection 3 → parallel
+```
 
-### ✅ Use Multiplexing When:
+With multiplexing, all handlers share one Redis connection:
+
+```
+Consumer (multiplexed)
+├── Handler for queue "orders"    ┐
+├── Handler for queue "emails"    ├── Redis connection 1 → sequential
+└── Handler for queue "reports"   ┘
+```
+
+Messages are dequeued and processed one at a time across all queues sharing the connection. A slow handler blocks other queues.
+
+## When to Use
+
+### Use Multiplexing When
 
 - You have many queues with low traffic
-- You need to minimize Redis connections (serverless, PaaS limits)
-- Connection management is more important than speed
+- You need to minimize Redis connections (serverless, PaaS with connection limits)
+- Connection management overhead matters more than throughput
 
-### ⚠️ Avoid Multiplexing When:
+### Avoid Multiplexing When
 
 - You need maximum throughput
 - Queues have high traffic
 - Handlers do slow processing (blocks other queues)
+- You want parallel processing across queues
 
-## How to Enable
+## Enabling Multiplexing
 
-### Create a Multiplexed Consumer
+Pass `true` when creating a consumer:
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
 
-// Pass `true` to enable multiplexing
-const consumer = RedisSMQ.createConsumer(true);
+const consumer = RedisSMQ.createConsumer(true); // Multiplexed
 
-// Add multiple queues - all share the same connection
-consumer.consume(
-  'queue1',
-  (msg, done) => {
-    console.log('Queue 1:', msg.body);
-    done();
-  },
-  callback,
-);
+// Add multiple queues — all share one connection
+consumer.consume('queue1', handler1, callback);
+consumer.consume('queue2', handler2, callback);
+consumer.consume('queue3', handler3, callback);
 
-consumer.consume(
-  'queue2',
-  (msg, done) => {
-    console.log('Queue 2:', msg.body);
-    done();
-  },
-  callback,
-);
-
-consumer.consume(
-  'queue3',
-  (msg, done) => {
-    console.log('Queue 3:', msg.body);
-    done();
-  },
-  callback,
-);
-
-// Start once
 consumer.run((err) => {
   if (err) console.error('Failed to start:', err);
-  else console.log('Multiplexed consumer running');
 });
 ```
 
-### Default (Non-Multiplexed) Consumer
+Non-multiplexed (default):
 
 ```javascript
-// No parameter = separate connection per handler
-const consumer = RedisSMQ.createConsumer();
-
-// Each handler gets its own Redis connection
-consumer.consume('queue1', handler1, callback);
-consumer.consume('queue2', handler2, callback);
+const consumer = RedisSMQ.createConsumer(); // No multiplexing
+// Each handler gets its own connection
 ```
 
-## Best Practices
+## Performance Implications
 
-### 1. Keep Handlers Fast
-
-Since processing is sequential, slow handlers block other queues:
+Since processing is sequential, slow handlers block all other queues on the same multiplexed consumer:
 
 ```javascript
-// ✅ Fast
+// Fast — minimal impact on other queues
 consumer.consume(
   'fast-queue',
   (msg, done) => {
-    process(msg.body); // Quick operation
+    processQuickly(msg.body);
     done();
   },
   callback,
 );
 
-// ⚠️ Slow - blocks other queues
+// Slow — blocks all other queues sharing this connection
 consumer.consume(
   'slow-queue',
   (msg, done) => {
     setTimeout(() => {
-      // Long operation
+      processSlowly(msg.body);
       done();
     }, 10000);
   },
@@ -113,98 +93,83 @@ consumer.consume(
 );
 ```
 
-### 2. Group Queues by Traffic
+## Grouping Strategies
+
+### Low-Traffic Queues Together
+
+Group queues with similar, low traffic patterns on one multiplexed consumer:
 
 ```javascript
-// Low-traffic queues together
 const lowTrafficConsumer = RedisSMQ.createConsumer(true);
 lowTrafficConsumer.consume('logs', handler, callback);
 lowTrafficConsumer.consume('metrics', handler, callback);
 lowTrafficConsumer.consume('alerts', handler, callback);
-
-// High-traffic queues separate
-const highTrafficConsumer = RedisSMQ.createConsumer(); // No multiplexing
-highTrafficConsumer.consume('orders', handler, callback);
-highTrafficConsumer.consume('payments', handler, callback);
 ```
 
-### 3. Monitor Queue Performance
+### High-Traffic Queues Separate
+
+Give high-traffic queues their own non-multiplexed consumers for maximum throughput:
 
 ```javascript
-// Check which queues are multiplexed
-const queues = consumer.getQueues();
-console.log('Multiplexed queues:', queues);
+const ordersConsumer = RedisSMQ.createConsumer(); // Dedicated
+ordersConsumer.consume('orders', handler, callback);
 
-// Stop consuming from a queue
+const paymentsConsumer = RedisSMQ.createConsumer(); // Dedicated
+paymentsConsumer.consume('payments', handler, callback);
+```
+
+### Mixed Approach
+
+Use multiplexing for low-traffic queues and dedicated consumers for high-traffic ones:
+
+```javascript
+// Low-traffic — multiplexed
+const utilityConsumer = RedisSMQ.createConsumer(true);
+utilityConsumer.consume('logs', logHandler, callback);
+utilityConsumer.consume('emails', emailHandler, callback);
+
+// High-traffic — dedicated
+const ordersConsumer = RedisSMQ.createConsumer();
+ordersConsumer.consume('orders', orderHandler, callback);
+```
+
+## Managing Multiplexed Consumers
+
+### Stopping Individual Queues
+
+Cancel a specific queue while keeping others running:
+
+```javascript
 consumer.cancel('slow-queue', (err) => {
   if (err) console.error('Cancel failed:', err);
   else console.log('Stopped consuming from slow-queue');
 });
 ```
 
-### 4. Scale with Multiple Consumers
+### Checking Registered Queues
 
 ```javascript
-// Spread queues across multiple multiplexed consumers
-const consumer1 = RedisSMQ.createConsumer(true);
-consumer1.consume('queue1', handler, callback);
-consumer1.consume('queue2', handler, callback);
-
-const consumer2 = RedisSMQ.createConsumer(true);
-consumer2.consume('queue3', handler, callback);
-consumer2.consume('queue4', handler, callback);
+const queues = consumer.getQueues();
+console.log('Multiplexed queues:', queues);
 ```
 
-## Connection Management
+## Shutdown
 
-### Application Shutdown
+Multiplexed consumers shut down the same way as regular consumers. All handlers are stopped and the shared connection is released:
 
 ```javascript
-// Clean shutdown (recommended)
-RedisSMQ.shutdown((err) => {
-  if (err) console.error('Shutdown error:', err);
-  else console.log('All connections closed');
-});
-
-// Or shutdown individual consumer
 consumer.shutdown((err) => {
-  if (err) console.error('Consumer shutdown error:', err);
+  if (err) console.error('Shutdown error:', err);
 });
+
+// Or use system shutdown for all components
+RedisSMQ.shutdown(callback);
 ```
 
-## Real-World Example
+## Best Practices
 
-### Serverless Environment
-
-```javascript
-// Serverless function with connection limits
-exports.handler = async () => {
-  const consumer = bluebird.promisifyAll(RedisSMQ.createConsumer(true)); // One shared connection between message handlers
-
-  // Handle multiple event types
-  await consumer.consumeAsync('user-events', userHandler, callback);
-  await consumer.consumeAsync('order-events', orderHandler, callback);
-  await consumer.consumeAsync('log-events', logHandler, callback);
-
-  await consumer.runAsync();
-
-  // Process for duration of function...
-
-  // Clean up
-  await RedisSMQ.shutdownAsync();
-};
-```
-
-## Summary
-
-- **Multiplexing = Shared connection, sequential processing**
-- **Default = Separate connections, parallel processing**
-- Choose based on your needs: connection limits vs. processing speed
-
----
-
-**Related**:
-
-- [Consumer API](api/classes/Consumer.md) - Complete consumer options
-- [Configuration](configuration.md) - Connection settings
-- [Consuming Messages](consuming-messages.md) - Message handling basics
+- **Keep handlers fast** — sequential processing means slow handlers block everyone
+- **Group similar queues** — similar traffic patterns work well together
+- **Isolate hot queues** — high-traffic queues deserve their own connection
+- **Monitor queue depth** — multiplexed queues can fall behind if a slow handler blocks them
+- **Use multiple multiplexed consumers** — spread queues across several consumers for better parallelism

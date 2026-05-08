@@ -1,10 +1,8 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Validating Queue Operations
-
 # Validating Queue Operations
 
-RedisSMQ provides `QueueOperationValidator` to check if operations are allowed on a queue based on its current state. This ensures operations are only performed when the queue is in an appropriate state.
+`QueueOperationValidator` checks if an operation is allowed on a queue based on its current state. Use it to avoid errors before attempting operations that may be rejected.
 
-## Queue States & Allowed Operations
+## Queue States and Allowed Operations
 
 | State       | Description        | Allowed Operations                                                       |
 | ----------- | ------------------ | ------------------------------------------------------------------------ |
@@ -15,63 +13,145 @@ RedisSMQ provides `QueueOperationValidator` to check if operations are allowed o
 
 ## Methods
 
-### Check single operations
+### Consumption and Production
 
-| Method                     | Description                               | Allowed In        |
-| -------------------------- | ----------------------------------------- | ----------------- |
-| `canConsume()`             | Check if messages can be consumed         | ACTIVE only       |
-| `canProduce()`             | Check if messages can be published        | ACTIVE, PAUSED    |
-| `canDelete()`              | Check if queue can be deleted             | All except LOCKED |
-| `canDeleteMessage()`       | Check if specific messages can be deleted | All except LOCKED |
-| `canPurge()`               | Check if all messages can be removed      | All except LOCKED |
-| `canRequeue()`             | Check if messages can be reprocessed      | All except LOCKED |
-| `canSetRateLimit()`        | Check if rate limiting can be added       | All except LOCKED |
-| `canClearRateLimit()`      | Check if rate limiting can be removed     | All except LOCKED |
-| `canCreateConsumerGroup()` | Check if consumer group can be created    | All except LOCKED |
-| `canDeleteConsumerGroup()` | Check if consumer group can be deleted    | All except LOCKED |
-| `canBindExchange()`        | Check if exchange can be bound            | All except LOCKED |
-| `canUnbindExchange()`      | Check if exchange can be unbound          | All except LOCKED |
+```javascript
+const { QueueOperationValidator } = require('redis-smq');
 
-## Usage Examples
-
-### Check if you can consume
-
-```typescript
-QueueOperationValidator.canConsume('orders-queue', (err, canConsume) => {
+// Check if messages can be consumed
+QueueOperationValidator.canConsume('orders', (err, canConsume) => {
   if (err) return console.error(err);
   if (canConsume) startConsumer();
   else console.log('Queue is not available for consumption');
 });
-```
 
-### Check if you can produce
-
-```typescript
-QueueOperationValidator.canProduce('notifications-queue', (err, canProduce) => {
+// Check if messages can be published
+QueueOperationValidator.canProduce('notifications', (err, canProduce) => {
   if (err) return console.error(err);
   if (canProduce) producer.send(message);
   else console.log('Queue is not accepting messages');
 });
 ```
 
-### Check if you can delete a queue
+### Queue Management
 
-```typescript
+```javascript
+// Check if queue can be deleted
 QueueOperationValidator.canDelete('temp-queue', (err, canDelete) => {
-  if (err) return console.error(err);
-  if (canDelete) queueManager.deleteQueue('temp-queue');
+  if (canDelete) queueManager.delete('temp-queue', callback);
 });
-```
 
-### Check if you can purge a queue
-
-```typescript
+// Check if messages can be purged
 QueueOperationValidator.canPurge('test-queue', (err, canPurge) => {
-  if (err) return console.error(err);
-  if (canPurge) queueManager.purgeQueue('test-queue');
+  if (canPurge) queueManager.purge('test-queue', callback);
+});
+
+// Check if messages can be requeued
+QueueOperationValidator.canRequeue('orders', (err, canRequeue) => {
+  if (canRequeue) messageManager.requeueMessageById(messageId, callback);
 });
 ```
 
-## API Reference
+### Rate Limits
 
-For complete method signatures, see [QueueOperationValidator API Reference](api/classes/QueueOperationValidator.md).
+```javascript
+QueueOperationValidator.canSetRateLimit('orders', (err, canSet) => {
+  if (canSet)
+    rateLimitManager.set('orders', { limit: 100, interval: 60000 }, callback);
+});
+
+QueueOperationValidator.canClearRateLimit('orders', (err, canClear) => {
+  if (canClear) rateLimitManager.clear('orders', callback);
+});
+```
+
+### Consumer Groups
+
+```javascript
+QueueOperationValidator.canCreateConsumerGroup(
+  'notifications',
+  (err, canCreate) => {
+    if (canCreate)
+      consumerGroups.saveConsumerGroup(
+        'notifications',
+        'email-service',
+        callback,
+      );
+  },
+);
+
+QueueOperationValidator.canDeleteConsumerGroup(
+  'notifications',
+  (err, canDelete) => {
+    if (canDelete)
+      consumerGroups.deleteConsumerGroup(
+        'notifications',
+        'email-service',
+        callback,
+      );
+  },
+);
+```
+
+### Exchange Bindings
+
+```javascript
+QueueOperationValidator.canBindExchange('orders', (err, canBind) => {
+  if (canBind)
+    directExchange.bindQueue('orders', 'app', 'order.created', callback);
+});
+
+QueueOperationValidator.canUnbindExchange('orders', (err, canUnbind) => {
+  if (canUnbind)
+    directExchange.unbindQueue('orders', 'app', 'order.created', callback);
+});
+```
+
+## All Methods
+
+| Method                     | Description                      | Active | Paused | Stopped | Locked |
+| -------------------------- | -------------------------------- | ------ | ------ | ------- | ------ |
+| `canConsume()`             | Messages can be consumed         | ✓      | ✗      | ✗       | ✗      |
+| `canProduce()`             | Messages can be published        | ✓      | ✓      | ✗       | ✗      |
+| `canDelete()`              | Queue can be deleted             | ✓      | ✓      | ✓       | ✗      |
+| `canDeleteMessage()`       | Specific messages can be deleted | ✓      | ✓      | ✓       | ✗      |
+| `canPurge()`               | All messages can be removed      | ✓      | ✓      | ✓       | ✗      |
+| `canRequeue()`             | Messages can be reprocessed      | ✓      | ✓      | ✓       | ✗      |
+| `canSetRateLimit()`        | Rate limiting can be added       | ✓      | ✓      | ✓       | ✗      |
+| `canClearRateLimit()`      | Rate limiting can be removed     | ✓      | ✓      | ✓       | ✗      |
+| `canCreateConsumerGroup()` | Consumer group can be created    | ✓      | ✓      | ✓       | ✗      |
+| `canDeleteConsumerGroup()` | Consumer group can be deleted    | ✓      | ✓      | ✓       | ✗      |
+| `canBindExchange()`        | Exchange can be bound            | ✓      | ✓      | ✓       | ✗      |
+| `canUnbindExchange()`      | Exchange can be unbound          | ✓      | ✓      | ✓       | ✗      |
+
+## Using with Namespaces
+
+```javascript
+// Check by queue params object
+QueueOperationValidator.canConsume(
+  { ns: 'production', name: 'orders' },
+  (err, canConsume) => {
+    // ...
+  },
+);
+
+// Check by queue name string (uses default namespace)
+QueueOperationValidator.canConsume('orders', (err, canConsume) => {
+  // ...
+});
+```
+
+## Promise Style
+
+```javascript
+const canConsume = await QueueOperationValidator.canConsume('orders');
+if (canConsume) {
+  // Start consumer
+}
+```
+
+## Best Practices
+
+- **Check before acting** — validate state before attempting operations that may fail
+- **Handle state changes** — a queue's state can change between validation and operation
+- **Use with state events** — subscribe to state change events to react dynamically

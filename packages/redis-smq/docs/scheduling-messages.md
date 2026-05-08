@@ -1,34 +1,21 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Scheduling Messages
-
 # Scheduling Messages
 
-Schedule messages to be delivered once or repeatedly. RedisSMQ supports delayed delivery, CRON schedules, and recurring patterns.
+Schedule messages for future delivery using delays, CRON expressions, or repeating patterns.
 
 ## Quick Start
-
-### Schedule a Delayed Message
 
 ```javascript
 const { ProducibleMessage } = require('redis-smq');
 
+// Delay delivery by 30 seconds
 const msg = new ProducibleMessage()
-  .setQueue('notifications') // Direct to queue
+  .setQueue('notifications')
   .setBody({ alert: 'Reminder' })
-  .setScheduledDelay(30000); // Deliver after 30 seconds
+  .setScheduledDelay(30000);
 
-producer.produce(msg, (err, messageIds) => {
-  if (err) console.error('Failed:', err);
-  else console.log('Scheduled ID:', messageIds[0]);
+producer.produce(msg, (err, ids) => {
+  console.log('Scheduled:', ids[0]);
 });
-```
-
-### Set Up a CRON Schedule
-
-```javascript
-const msg = new ProducibleMessage()
-  .setQueue('reports')
-  .setBody({ report: 'daily' })
-  .setScheduledCRON('0 0 10 * * *'); // Daily at 10:00 AM
 ```
 
 ## Scheduling Options
@@ -45,12 +32,35 @@ msg.setScheduledDelay(5000); // Deliver after 5 seconds
 msg.setScheduledCRON('0 30 9 * * 1-5'); // Weekdays at 9:30 AM
 ```
 
-### Recurring Delivery
+CRON expressions use the standard 5-field format:
+
+```
+┌─────────── minute (0–59)
+│ ┌─────────── hour (0–23)
+│ │ ┌─────────── day of month (1–31)
+│ │ │ ┌─────────── month (1–12)
+│ │ │ │ ┌─────────── day of week (0–6, Sunday=0)
+│ │ │ │ │
+* * * * *
+```
+
+### Repeating Delivery
 
 ```javascript
 msg.setScheduledDelay(10000); // First delivery after 10s
 msg.setScheduledRepeat(5); // Repeat 5 times
 msg.setScheduledRepeatPeriod(60000); // Every 60 seconds
+```
+
+A repeat count of `0` means repeat indefinitely.
+
+### Combining Options
+
+```javascript
+// CRON + Repeat: deliver on schedule, repeat between CRON ticks
+msg.setScheduledCRON('0 0 * * *'); // Every hour
+msg.setScheduledRepeat(3); // Repeat 3 times
+msg.setScheduledRepeatPeriod(60000); // Every minute between hours
 ```
 
 ### Clear Scheduling
@@ -61,30 +71,16 @@ msg.resetScheduledParams(); // Remove all scheduling
 
 ## Destination
 
-Each scheduled message needs one destination:
-
-### Option 1: Direct to Queue (Fastest)
+Scheduled messages need a destination, same as regular messages:
 
 ```javascript
-msg.setQueue('orders'); // No routing key needed
-```
+// Direct to queue
+msg.setQueue('orders');
 
-### Option 2: Through an Exchange (Requires Routing Key)
-
-```javascript
-// Direct Exchange - exact routing key match
+// Via exchange
 msg.setDirectExchange('tasks');
-msg.setExchangeRoutingKey('high-priority'); // REQUIRED
-
-// Topic Exchange - pattern matching
-msg.setTopicExchange('events');
-msg.setExchangeRoutingKey('order.created'); // REQUIRED
-
-// Fanout Exchange - broadcast (no routing key)
-msg.setFanoutExchange('notifications'); // Routing key ignored
+msg.setExchangeRoutingKey('high-priority');
 ```
-
-**Important**: When using `setDirectExchange()` or `setTopicExchange()`, you must also call `setExchangeRoutingKey()` before producing.
 
 ## Managing Scheduled Messages
 
@@ -93,92 +89,75 @@ msg.setFanoutExchange('notifications'); // Routing key ignored
 ```javascript
 const scheduled = RedisSMQ.createQueueScheduledMessages();
 
-// Count scheduled messages
-scheduled.countMessages('my_queue', (err, count) => {
-  console.log(`Scheduled: ${count} messages`);
+// Count
+scheduled.countMessages('orders', (err, count) => {
+  console.log(`Scheduled: ${count}`);
 });
 
-// List messages (page 1, 50 per page)
-scheduled.getMessages('my_queue', 1, 50, (err, page) => {
-  console.log(page.items); // Array of scheduled messages
+// Browse with pagination
+scheduled.getMessages('orders', 1, 50, (err, page) => {
+  console.log('Scheduled messages:', page.items);
 });
 ```
 
-### Remove Scheduled Messages
-
-#### Purge All Scheduled Messages for a Queue
+### Delete Scheduled Messages
 
 ```javascript
-const scheduled = RedisSMQ.createQueueScheduledMessages();
-scheduled.purge('my_queue', (err) => {
+const messageManager = RedisSMQ.createMessageManager();
+
+// Delete by ID
+messageManager.deleteMessageById(messageId, (err) => {
+  if (!err) console.log('Scheduled message cancelled');
+});
+
+// Delete multiple
+messageManager.deleteMessagesByIds([id1, id2], (err) => {
+  if (!err) console.log('Messages cancelled');
+});
+```
+
+### Purge All Scheduled
+
+```javascript
+scheduled.purge('orders', (err) => {
   if (!err) console.log('All scheduled messages removed');
-});
-```
-
-#### Delete Specific Messages by ID
-
-```javascript
-const mm = RedisSMQ.createMessageManager();
-
-// Delete single message
-mm.deleteMessageById('message-id-123', (err) => {
-  if (!err) console.log('Message deleted');
-});
-
-// Delete multiple messages
-mm.deleteMessagesByIds(['id-1', 'id-2', 'id-3'], (err) => {
-  if (!err) console.log('Messages deleted');
 });
 ```
 
 ## Important Notes
 
-1. **Scheduled messages cannot be requeued** - The `requeueMessageById()` method is not available for scheduled messages
-2. **Use delete instead** - To cancel a scheduled delivery, delete the message by ID
-3. **Check message status** - Use `getMessageStatus()` or `getMessageById()` to verify a message is still scheduled before deletion
-
-## Best Practices
-
-1. **Use Direct Queues** when possible for better performance
-2. **Always Set Routing Key** when using direct or topic exchanges
-3. **Set Appropriate TTL** to ensure messages don't expire before delivery
-4. **Validate CRON Expressions** before scheduling
-5. **Monitor Scheduled Counts** to prevent queue buildup
-6. **Delete, Don't Requeue** - Remove unwanted scheduled messages instead of trying to requeue them
+- **Scheduled messages cannot be requeued** — use `deleteMessageById()` to cancel
+- **CRON expressions are validated** — invalid expressions are silently ignored
+- **Scheduled messages use a sorted set** — ordered by delivery timestamp
+- **A background worker moves due messages** to the pending queue every 5 seconds
 
 ## Common Patterns
 
-### Daily Digest via Direct Queue
+### Daily Report
 
 ```javascript
-msg.setQueue('email-digests');
+msg.setQueue('reports');
 msg.setScheduledCRON('0 0 18 * * *'); // 6 PM daily
 msg.setBody({ type: 'daily-summary' });
 ```
 
-### Event Notification via Topic Exchange
+### Delayed Retry Notification
 
 ```javascript
-msg.setTopicExchange('user-events');
-msg.setExchangeRoutingKey('profile.updated'); // Routing key required!
-msg.setScheduledDelay(5000);
-msg.setBody({ userId: 123, action: 'update' });
+msg.setQueue('emails');
+msg.setScheduledDelay(3600000); // Reminder in 1 hour
+msg.setBody({ type: 'abandoned-cart' });
 ```
 
 ### Periodic Health Check
 
 ```javascript
 msg.setQueue('health-checks');
-msg.setScheduledDelay(0);
-msg.setScheduledRepeat(999); // Repeat indefinitely
+msg.setScheduledRepeat(0); // Repeat indefinitely
 msg.setScheduledRepeatPeriod(60000); // Every minute
 ```
 
----
+## Related
 
-**Related Documentation**:
-
-- [ProducibleMessage API](api/classes/ProducibleMessage.md) - All scheduling methods
-- [Producer Guide](producing-messages.md) - Basic message production
-- [Message Exchanges](message-exchanges.md) - Exchange types and routing
-- [MessageManager API](api/classes/MessageManager.md) - Message deletion methods
+- [Scheduling Messages Concepts](https://github.com/weyoss/redis-smq-docs) — How scheduling works
+- [Producing Messages](producing-messages.md) — How to publish messages

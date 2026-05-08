@@ -1,51 +1,122 @@
-[RedisSMQ](../README.md) / [Documentation](README.md) / Dual Callback & Promise Support
-
 # Dual Callback & Promise Support
 
-## Core Philosophy
+RedisSMQ supports both traditional Node.js callbacks and modern Promises/async-await. Every asynchronous method can be used either way.
 
-RedisSMQ is built on a **pure callback-based core**, designed to prioritize performance and efficient resource utilization. The library leverages Node.js native asynchronous patterns without introducing unnecessary abstraction layers that could impact throughput.
+## How It Works
 
-To offer flexibility without compromise, RedisSMQ provides a **dual API** that supports both:
+Every async method follows this pattern:
 
-- **Traditional Node.js callbacks** — for performance-critical paths
-- **Modern Promises and `async/await`** — for cleaner, more maintainable code
-
-You get the best of both worlds.
-
-## Performance-First Architecture
-
-### Pure Callback Foundation
-
-All internal RedisSMQ operations are implemented using pure callbacks to:
-
-- **Minimize overhead** — stay close to native Node.js performance
-- **Optimize memory usage** — avoid the additional allocations of promise chains
-- **Enable fine-grained control** — provide direct access to the event loop and execution flow
-- **Maximize throughput** — essential for high-volume message processing
-
-### Dual API Layer
-
-The public API wraps this foundation to deliver both callback and promise interfaces. This design:
-
-- **Preserves performance** — when using callbacks, there is zero additional overhead
-- **Adds promise support** — enables modern `async/await` workflows without refactoring
-- **Maintains consistency** — identical behavior regardless of the pattern you choose
-- **Supports gradual migration** — mix and match patterns within the same codebase
-
-## API Pattern
-
-Every asynchronous method follows a consistent signature:
-
-```text
-method(params, callback?) => Promise<T> | void
+```
+method(params, callback?) → Promise | void
 ```
 
-- **With a callback** — the method executes with zero overhead and invokes the callback upon completion
-- **Without a callback** — the method returns a `Promise<T>`, allowing use of `async/await` or promise chaining
+- **With a callback** — executes with zero overhead, invokes the callback on completion
+- **Without a callback** — returns a Promise, enabling `async/await` or `.then()` chains
 
----
+## Callback Style
 
-**Related**:
+```javascript
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
 
-- [Callback vs Promise vs Async/Await](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821) — a deeper look at asynchronous pattern benchmarks
+RedisSMQ.initialize(redisConfig, (err) => {
+  if (err) return console.error(err);
+
+  const producer = RedisSMQ.createProducer();
+  producer.run((err) => {
+    if (err) return console.error(err);
+
+    const msg = new ProducibleMessage()
+      .setQueue('orders')
+      .setBody({ orderId: 123 });
+
+    producer.produce(msg, (err, ids) => {
+      if (err) return console.error(err);
+      console.log('Sent:', ids[0]);
+    });
+  });
+});
+```
+
+## Promise Style
+
+```javascript
+import { RedisSMQ, ProducibleMessage } from 'redis-smq';
+
+try {
+  await RedisSMQ.initialize(redisConfig);
+
+  const producer = RedisSMQ.createProducer();
+  await producer.run();
+
+  const msg = new ProducibleMessage()
+    .setQueue('orders')
+    .setBody({ orderId: 123 });
+
+  const ids = await producer.produce(msg);
+  console.log('Sent:', ids[0]);
+} catch (err) {
+  console.error(err);
+}
+```
+
+## Mixing Styles
+
+Callbacks and promises can be mixed freely. Omit the callback to get a promise, or provide one for callback style:
+
+```javascript
+// Promise style
+const ids = await producer.produce(msg);
+
+// Callback style
+producer.produce(msg, (err, ids) => {
+  // ...
+});
+
+// Both work identically
+```
+
+## Error Handling
+
+### Callback Style
+
+Errors are passed as the first argument to the callback:
+
+```javascript
+producer.produce(msg, (err, ids) => {
+  if (err) {
+    console.error('Failed:', err);
+    return;
+  }
+  console.log('Success:', ids);
+});
+```
+
+### Promise Style
+
+Errors are thrown and can be caught with `try/catch` or `.catch()`:
+
+```javascript
+try {
+  const ids = await producer.produce(msg);
+} catch (err) {
+  console.error('Failed:', err);
+}
+```
+
+## Performance Considerations
+
+The callback API is the underlying implementation. The promise API is a thin wrapper that adds minimal overhead. For high-throughput scenarios where every microsecond counts, callbacks avoid the additional promise allocation. For most applications, the difference is negligible — choose the style that fits your codebase.
+
+## All Async Methods
+
+Every method that involves I/O supports both styles:
+
+- `RedisSMQ.initialize()`
+- `RedisSMQ.shutdown()`
+- `producer.run()` / `producer.shutdown()` / `producer.produce()`
+- `consumer.run()` / `consumer.shutdown()` / `consumer.consume()` / `consumer.cancel()`
+- `queueManager.save()` / `queueManager.delete()` / `queueManager.exists()`
+- `messageManager.getMessageById()` / `messageManager.deleteMessageById()`
+- All exchange, rate limit, state manager, and consumer group methods
+
+The pattern is consistent across the entire API.
