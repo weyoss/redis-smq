@@ -1,7 +1,5 @@
 # RedisSMQ CI
 
-> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-ci).
-
 CLI tools for RedisSMQ - Utilities for continuous integration and release management.
 
 ## Commands
@@ -220,4 +218,4 @@ git commit -m "docs: update commit hashes after history rewrite"
 
 ## License
 
-RedisSMQ CI Library is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
+RedisSMQ CI Library is released under the [MIT License](../../LICENSE).

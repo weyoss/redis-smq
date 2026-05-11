@@ -1,12 +1,20 @@
 # RedisSMQ Benchmarks
 
-[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-benchmarks/next?style=flat-square&label=redis-smq-benchmarks%40next)](https://github.com/weyoss/redis-smq/releases)
-[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-benchmarks&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-benchmarks)
-
-> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-benchmarks).
-
-A comprehensive benchmarking suite for RedisSMQ message queue system, measuring throughput, latency, and end-to-end 
+`redis-smq-benchmarks` - A comprehensive benchmarking suite for RedisSMQ message queue system, measuring throughput, latency, and end-to-end 
 performance under various workloads.
+
+This package is part of the [RedisSMQ monorepo](https://github.com/weyoss/redis-smq), which contains the full TypeScript implementation.
+
+## Release Status & Code Coverage
+
+The table below tracks the latest available npm versions and test coverage for our active branches.
+
+| Branch   | Latest Release                                                                                                                                                                    | Code Coverage                                                                                                                                                                                                                      |
+|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `master` | [![npm (latest)](https://img.shields.io/npm/v/redis-smq-benchmarks/latest?style=flat-square&label=latest)](https://www.npmjs.com/package/redis-smq-benchmarks/v/latest)           | [![Code Coverage (master)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/master?flag=redis-smq-benchmarks&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-benchmarks) |
+| `next`   | [![npm (next)](https://img.shields.io/npm/v/redis-smq-benchmarks/next?style=flat-square&label=next)](https://www.npmjs.com/package/redis-smq-benchmarks/v/next)                   | [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-benchmarks&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-benchmarks)       |
+
+> **📌 Note:** The `master` branch always points to the latest **stable, production-ready** release. The `next` branch contains **bleeding-edge development**—new features, fixes, and experimental changes that are not yet considered stable.
 
 ## 📊 Overview
 
@@ -185,4 +193,4 @@ End-to-End:
 
 ## License
 
-RedisSMQ Benchmarks is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
+RedisSMQ Benchmarks is released under the [MIT License](../../LICENSE).

@@ -9,4 +9,3 @@
 #
 
 lint-staged
-scripts/update_readme_files.sh

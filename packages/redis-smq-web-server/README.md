@@ -1,15 +1,21 @@
 # RedisSMQ Web Server
 
-[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-web-server/next?style=flat-square&label=redis-smq-web-server%40next)](https://github.com/weyoss/redis-smq/releases)
-[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-web-server&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-web-server)
-
-> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server).
-
-A lightweight server that brings the RedisSMQ management ecosystem to life. It serves the official Web UI and provides
-the REST API through two flexible modes of operation:
+`redis-smq-web-server` - A lightweight server that brings the RedisSMQ management ecosystem to life. It serves the 
+official Web UI and provides the REST API through two flexible modes of operation:
 
 - **Standalone Mode:** Run the Web UI and REST API in a single process for an all-in-one setup.
 - **Proxy Mode:** Serve the Web UI and proxy API requests to a separate redis-smq-rest-api instance for distributed deployments.
+
+This package is part of the [RedisSMQ monorepo](https://github.com/weyoss/redis-smq), which contains the full TypeScript implementation.
+
+## Release Status & Code Coverage
+
+| Branch    | Latest Release                                                                                                                                                          | Code Coverage                                                                                                                                                                                                                      |                                                                                                                                                                                                           
+|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `master`  | [![npm (latest)](https://img.shields.io/npm/v/redis-smq-web-server/latest?style=flat-square&label=latest)](https://www.npmjs.com/package/redis-smq-web-server/v/latest) | [![Code Coverage (master)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/master?flag=redis-smq-web-server&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-web-server) |
+| `next`    | [![npm (next)](https://img.shields.io/npm/v/redis-smq-web-server/next?style=flat-square&label=next)](https://www.npmjs.com/package/redis-smq-web-server/v/next)         | [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-web-server&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-web-server)       |
+
+> **📌 Note:** The `master` branch always points to the latest **stable, production-ready** release. The `next` branch contains **bleeding-edge development**—new features, fixes, and experimental changes that are not yet considered stable.
 
 ## Features
 
@@ -34,19 +40,12 @@ npm install ioredis --save
 
 ## Version Compatibility
 
-Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/docs/version-compatibility.md) for details.
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](../redis-smq/docs/version-compatibility.md) for details.
 
 ## Documentation
 
-For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/docs/README.md).
-
-## Related packages
-
-- [redis-smq](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/README.md): Core message queue
-- [redis-smq-common](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/README.md): Shared components/utilities
-- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
-- [redis-smq-web-ui](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
+For in-depth guides and API references, see [the documentation page](docs/README.md).
 
 ## License
 
-RedisSMQ Web Server is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
+RedisSMQ Web Server is released under the [MIT License](../../LICENSE).

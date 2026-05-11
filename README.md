@@ -1,14 +1,17 @@
 <div align="center" style="text-align: center">
-<p><a href="https://github.com/weyoss/redis-smq/tree/next"><img src="logo.png" alt="RedisSMQ" width="500px" /></a></p>
-<p>A high-performance Redis message queue for Node.js — simple to use, built for scale.</p>
-
-[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/weyoss/redis-smq/releases)
-[![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
-[![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
-
+<p><a href="https://github.com/weyoss/redis-smq"><img src="logo.png" alt="RedisSMQ" width="500px" /></a></p>
+<p>A high‑performance Redis message queue for Node.js — simple to use, built for scale.</p>
 </div>
 
-> 💡 **Note:** You are viewing the `next` branch with upcoming features. For stable releases, check the [`master` branch](https://github.com/weyoss/redis-smq/tree/master).
+---
+
+RedisSMQ is a high‑performance message queue built on Redis. This monorepo contains the **TypeScript/Node.js** 
+implementation, including the core library, REST API, Web UI, and benchmarks.
+
+For the **Go** implementation, see **[go-redis-smq](https://github.com/weyoss/go-redis-smq)**.  
+Shared, language‑agnostic concepts are documented in **[redis-smq-docs](https://github.com/weyoss/redis-smq-docs)**.
+
+> 📊 See [BUILD.md](BUILD.md) for the latest build and quality status across all branches.
 
 ## ✨ Features
 
@@ -25,12 +28,14 @@
 - 🧵 [Worker threads](packages/redis-smq/docs/message-handler-worker-threads.md) for CPU-heavy handlers
 - 🔄 [Multi-queue producers & consumers](packages/redis-smq/docs/consuming-messages.md) with [multiplexing](packages/redis-smq/docs/multiplexing.md) support
 - 📡 [Event bus](packages/redis-smq/docs/event-bus.md) for real-time internal events
-- 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI + Swagger
-- 📊 [Web UI](packages/redis-smq-web-ui/README.md) for live management
+- 🌐 [REST API](packages/redis-smq-rest-api/README.md) with OpenAPI + Swagger — **compatible with Go**
+- 📊 [Web UI](packages/redis-smq-web-ui/README.md) for live management — **compatible with Go**
 - 🎯 [Process-wide API](packages/redis-smq/docs/simplified-redis-smq-api.md) — initialize once, factory methods, single shutdown
 - 🔄 [Dual callback & promise support](packages/redis-smq/docs/dual-callback-and-promise-support.md)
 - 📦 [ESM + CJS](packages/redis-smq/docs/esm-cjs-modules.md) module support
 - 📖 [TypeScript-first](packages/redis-smq/docs/api/README.md) with rich docs
+
+> ✅ The REST API and Web UI work with queues created by **any language implementation**, including Go.
 
 ## 🎯 Use Cases
 
@@ -198,9 +203,10 @@ See [Dual Callback & Promise Support](packages/redis-smq/docs/dual-callback-and-
 
 ## 📚 Documentation
 
-- **[Full Documentation](packages/redis-smq/docs/README.md)** - Complete API reference and guides
-- **[REST API](packages/redis-smq-rest-api/README.md)** - API endpoints and usage
-- **[Web UI](packages/redis-smq-web-ui/README.md)** - Dashboard setup and features
+- **[TypeScript Documentation](packages/redis-smq/docs/README.md)** — Complete API reference and guides
+- **[REST API](packages/redis-smq-rest-api/README.md)** — API endpoints and usage
+- **[Web UI](packages/redis-smq-web-ui/README.md)** — Dashboard setup and features
+- **[Shared Concepts](https://github.com/weyoss/redis-smq-docs)** — Language‑agnostic architecture, queues, exchanges, and more
 
 ## 🤝 Contributing
 
