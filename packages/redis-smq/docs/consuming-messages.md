@@ -206,7 +206,7 @@ Consumer dequeues message
   → Failure: done(err) → message retried or dead-lettered
 ```
 
-See [Message Lifecycle](message-lifecycle.md) for the full walkthrough.
+See [Message Lifecycle](https://github.com/weyoss/redis-smq-docs) for the full walkthrough.
 
 ## Error Handling
 
