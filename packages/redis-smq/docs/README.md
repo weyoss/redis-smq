@@ -51,22 +51,4 @@ Node.js implementation of RedisSMQ. For concepts that apply to all implementatio
 
 ## Shared Concepts
 
-For language-agnostic documentation on queues, exchanges, scheduling, rate limiting, and more, see:
-
-- [Architecture](https://github.com/weyoss/redis-smq-docs)
-- [Queues](https://github.com/weyoss/redis-smq-docs)
-- [Queue Delivery Models](https://github.com/weyoss/redis-smq-docs)
-- [Message Exchanges](https://github.com/weyoss/redis-smq-docs)
-- [Messages](https://github.com/weyoss/redis-smq-docs)
-- [Scheduling Messages](https://github.com/weyoss/redis-smq-docs)
-- [Queue Rate Limiting](https://github.com/weyoss/redis-smq-docs)
-- [Queue State Management](https://github.com/weyoss/redis-smq-docs)
-- [Message Reliability](https://github.com/weyoss/redis-smq-docs)
-- [Consumer Groups](https://github.com/weyoss/redis-smq-docs)
-- [Message Audit](https://github.com/weyoss/redis-smq-docs)
-- [Configuration](https://github.com/weyoss/redis-smq-docs)
-- [Graceful Shutdown](https://github.com/weyoss/redis-smq-docs)
-- [Event Bus](https://github.com/weyoss/redis-smq-docs)
-- [Performance](https://github.com/weyoss/redis-smq-docs)
-- [Interoperability](https://github.com/weyoss/redis-smq-docs)
-- [Glossary](https://github.com/weyoss/redis-smq-docs)
+For language-agnostic documentation on queues, exchanges, scheduling, rate limiting, and more, see [redis-smq-docs](https://github.com/weyoss/redis-smq-docs).
