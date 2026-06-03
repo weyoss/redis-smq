@@ -45,7 +45,7 @@ test('Consume message from different queues using a single consumer instance: ca
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   await consumer.consume('test0', (msg, cb) => void 0);
 
-  eventBus.once('consumer.dequeueMessage.messageReceived', () => {
+  eventBus.once('consumer.messageReceived', () => {
     setTimeout(() => {
       // cancelling a queue when a message handler is active
       consumer.cancel('test0').catch((e: unknown) => {

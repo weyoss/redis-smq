@@ -108,13 +108,10 @@ export class Consumer extends Runnable<TConsumerEvent> {
       ? new MultiplexedMessageHandlerRunner(this.consumerContext)
       : new MessageHandlerRunner(this.consumerContext);
 
-    this.messageHandlerRunner.on(
-      'consumer.messageHandlerRunner.error',
-      (err) => {
-        this.logger.error(`Message handler runner error: ${err.message}`);
-        this.handleError(err);
-      },
-    );
+    this.messageHandlerRunner.on('error', (err) => {
+      this.logger.error(`Message handler runner error: ${err.message}`);
+      this.handleError(err);
+    });
 
     this.logger.info(
       `Consumer initialized${this.consumerOptions.enableMultiplexing ? ' with multiplexing enabled' : ''}`,
@@ -260,7 +257,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
 
     this.logger.error(`Consumer error: ${err.message}`, err);
     this.logger.debug(`Emitting consumer.error event for consumer ${this.id}`);
-    this.emit('consumer.error', err, this.id);
     super.handleError(err);
   }
 

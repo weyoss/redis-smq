@@ -73,7 +73,7 @@ test('ConsumeMessageWorker: case 3', async () => {
     'test6',
   ]);
 
-  eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+  eventBus.on('consumer.messageAcknowledged', (...args) => {
     if (['test3', 'test6'].includes(args[1].queueParams.name)) {
       messages.push(args[1].queueParams.name);
     }

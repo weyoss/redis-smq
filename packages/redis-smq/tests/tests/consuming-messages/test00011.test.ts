@@ -34,10 +34,10 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   let unacks1 = 0;
   let acks1 = 0;
   eventBus
-    .on('consumer.consumeMessage.messageUnacknowledged', (...args) => {
+    .on('consumer.messageUnacknowledged', (...args) => {
       if (args[3] === consumer1.getId()) unacks1 += 1;
     })
-    .on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+    .on('consumer.messageAcknowledged', (...args) => {
       if (args[3] === consumer1.getId()) acks1 += 1;
     });
 
@@ -54,10 +54,10 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   let unacks2 = 0;
   let acks2 = 0;
   eventBus
-    .on('consumer.consumeMessage.messageUnacknowledged', (...args) => {
+    .on('consumer.messageUnacknowledged', (...args) => {
       if (args[3] === consumer2.getId()) unacks2 += 1;
     })
-    .on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+    .on('consumer.messageAcknowledged', (...args) => {
       if (args[3] === consumer2.getId()) acks2 += 1;
     });
 

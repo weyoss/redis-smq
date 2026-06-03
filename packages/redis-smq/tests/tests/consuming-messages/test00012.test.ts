@@ -44,12 +44,12 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
   });
 
   let unacks = 0;
-  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
+  eventBus.on('consumer.messageUnacknowledged', () => {
     unacks += 1;
   });
 
   let acks = 0;
-  eventBus.on('consumer.consumeMessage.messageAcknowledged', () => {
+  eventBus.on('consumer.messageAcknowledged', () => {
     acks += 1;
   });
 

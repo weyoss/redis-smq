@@ -15,7 +15,6 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { TConsumerDequeueMessageEvent } from '../../../event-bus/index.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../../config-manager/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
@@ -30,7 +29,17 @@ import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-con
 import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
 
-export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
+export type TDequeueMessageEvent = {
+  messageReceived: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+  ) => void;
+  nextMessage: () => void;
+  error: (err: Error, consumerId: string, queue: IQueueParsedParams) => void;
+};
+
+export class DequeueMessage extends Runnable<TDequeueMessageEvent> {
   protected readonly consumerContext: IConsumerContext;
   protected readonly config: IRedisSMQParsedConfig;
 
@@ -108,7 +117,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           if (err) this.handleError(err);
           else if (isExceeded) {
             // Rate limit exceeded, let the controller handle the delay
-            this.emit('consumer.dequeueMessage.nextMessage');
+            this.emit('nextMessage');
           } else {
             // Rate limit not exceeded, proceed with dequeue
             this.performDequeue(redisClient);
@@ -159,12 +168,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     if (!this.isOperational()) return;
 
     this.logger.error(`DequeueMessage error: ${err.message}`, err);
-    this.emit(
-      'consumer.dequeueMessage.error',
-      err,
-      this.consumerContext.consumerId,
-      this.queue,
-    );
+    this.emit('error', err, this.consumerContext.consumerId, this.queue);
     super.handleError(err);
   }
 
@@ -231,14 +235,14 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       this.handleError(err);
     } else if (typeof messageId === 'string') {
       this.emit(
-        'consumer.dequeueMessage.messageReceived',
+        'messageReceived',
         messageId,
         this.queue,
         this.consumerContext.consumerId,
       );
     } else {
       // No message received. Emit an event to let the controller (MessageHandler) decide what to do.
-      this.emit('consumer.dequeueMessage.nextMessage');
+      this.emit('nextMessage');
     }
   };
 

@@ -26,95 +26,62 @@ export type TConfigurationEvent = {
   ) => void;
 };
 
-export type TConsumerConsumeMessageEvent = {
-  'consumer.consumeMessage.messageAcknowledged': (
+export type TConsumerEvent = {
+  'consumer.up': (consumerId: string) => void;
+  'consumer.goingDown': (consumerId: string) => void;
+  'consumer.down': (consumerId: string) => void;
+  'consumer.goingUp': (consumerId: string) => void;
+
+  'consumer.messageReceived': (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+  ) => void;
+  'consumer.messageAcknowledged': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
   ) => void;
-  'consumer.consumeMessage.messageUnacknowledged': (
+  'consumer.messageUnacknowledged': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
     unacknowledgmentCause: EMessageUnacknowledgementCause,
   ) => void;
-  'consumer.consumeMessage.messageDeadLettered': (
+  'consumer.messageDeadLettered': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
     deadLetterCause: EMessageDeadLetterCause,
   ) => void;
-  'consumer.consumeMessage.messageRequeued': (
+  'consumer.messageRequeued': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
   ) => void;
-  'consumer.consumeMessage.messageDelayed': (
+  'consumer.messageDelayed': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
   ) => void;
-  'consumer.consumeMessage.next': () => void;
-  'consumer.consumeMessage.error': (
-    err: Error,
-    consumerId: string,
-    queue: IQueueParsedParams,
-  ) => void;
-};
-
-export type TConsumerDequeueMessageEvent = {
-  'consumer.dequeueMessage.messageReceived': (
-    messageId: string,
-    queue: IQueueParsedParams,
-    consumerId: string,
-  ) => void;
-  'consumer.dequeueMessage.nextMessage': () => void;
-  'consumer.dequeueMessage.error': (
-    err: Error,
-    consumerId: string,
-    queue: IQueueParsedParams,
-  ) => void;
-};
-
-export type TConsumerMessageHandlerEvent = {
-  'consumer.messageHandler.error': (
-    err: Error,
-    consumerId: string,
-    queue: IQueueParsedParams,
-  ) => void;
-};
-
-export type TConsumerMessageHandlerRunnerEvent = {
-  'consumer.messageHandlerRunner.error': (
-    err: Error,
-    consumerId: string,
-  ) => void;
-};
-
-export type TConsumerEvent = {
-  'consumer.up': (consumerId: string) => void;
-  'consumer.goingDown': (consumerId: string) => void;
-  'consumer.down': (consumerId: string) => void;
-  'consumer.goingUp': (consumerId: string) => void;
-  'consumer.error': (err: Error, consumerId: string) => void;
 };
 
 export type TProducerEvent = {
+  'producer.up': (producerId: string) => void;
+  'producer.goingDown': (producerId: string) => void;
+  'producer.down': (producerId: string) => void;
+  'producer.goingUp': (producerId: string) => void;
+
   'producer.messagePublished': (
     messageId: string,
     queue: IQueueParsedParams,
     producerId: string,
   ) => void;
-  'producer.up': (producerId: string) => void;
-  'producer.goingDown': (producerId: string) => void;
-  'producer.down': (producerId: string) => void;
-  'producer.goingUp': (producerId: string) => void;
-  'producer.error': (err: Error, producerId: string) => void;
 };
 
 export type TQueueEvent = {
@@ -131,16 +98,7 @@ export type TQueueEvent = {
   ) => void;
 };
 
-export type TEventBusEvent = {
-  error: (err: Error) => void;
-};
-
-export type TRedisSMQEvent = TEventBusEvent &
-  TConfigurationEvent &
+export type TRedisSMQEvent = TConfigurationEvent &
   TConsumerEvent &
-  TConsumerMessageHandlerRunnerEvent &
-  TConsumerMessageHandlerEvent &
-  TConsumerConsumeMessageEvent &
-  TConsumerDequeueMessageEvent &
   TProducerEvent &
   TQueueEvent;

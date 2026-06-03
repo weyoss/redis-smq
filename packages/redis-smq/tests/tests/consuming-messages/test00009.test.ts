@@ -35,7 +35,7 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
   });
 
   let unacknowledged = 0;
-  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
+  eventBus.on('consumer.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 

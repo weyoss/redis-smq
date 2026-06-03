@@ -20,10 +20,6 @@ import {
   Timer,
   WorkerCluster,
 } from 'redis-smq-common';
-import {
-  TConsumerMessageHandlerEvent,
-  TRedisSMQEvent,
-} from '../../event-bus/index.js';
 import { ERedisScriptName } from '../../common/redis/scripts.js';
 import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../config-manager/index.js';
@@ -38,8 +34,10 @@ import {
   IQueueParsedParams,
 } from '../../queue-manager/index.js';
 import { ConsumeMessage } from './consume-message/consume-message.js';
-import { DequeueMessage } from './dequeue-message/dequeue-message.js';
-import { eventPublisher } from './event-publisher.js';
+import {
+  DequeueMessage,
+  TDequeueMessageEvent,
+} from './dequeue-message/dequeue-message.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
@@ -51,12 +49,16 @@ import { _subscribeConsumer } from './_/_subscribe-consumer.js';
 import { _unsubscribeConsumer } from './_/_unsubscribe-consumer.js';
 import { RedisConfig } from '../../common/redis/redis-config.js';
 
+export type TMessageHandlerEvent = {
+  error: (err: Error, consumerId: string, queue: IQueueParsedParams) => void;
+};
+
 const WORKERS_DIR = path.resolve(
   env.getCurrentDir(),
   './queue-workers/workers',
 );
 
-export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
+export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   protected readonly consumerContext: IConsumerContext;
   protected readonly config: IRedisSMQParsedConfig;
 
@@ -88,7 +90,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.messageHandler = messageHandler;
     this.autoDequeue = autoDequeue;
     this.timer = new Timer(this.logger);
-    eventPublisher(this);
   }
 
   protected getRedisClient(): IRedisClient | PanicError {
@@ -97,28 +98,23 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     return this.redisClient;
   }
 
-  protected onMessageReceived: TRedisSMQEvent['consumer.dequeueMessage.messageReceived'] =
-    (messageId) => {
-      // A message has been received, so process it
-      this.processMessage(messageId);
-    };
+  protected onMessageReceived: TDequeueMessageEvent['messageReceived'] = (
+    messageId,
+  ) => {
+    // A message has been received, so process it
+    this.processMessage(messageId);
+  };
 
-  protected onMessageNext: TRedisSMQEvent['consumer.dequeueMessage.nextMessage'] =
-    () => {
-      // This event means the queue is empty or rate-limited.
-      this.timer.schedule(() => this.next(), 1000);
-    };
+  protected onMessageNext: TDequeueMessageEvent['nextMessage'] = () => {
+    // This event means the queue is empty or rate-limited.
+    this.timer.schedule(() => this.next(), 1000);
+  };
 
   protected override handleError(err: Error) {
     if (!this.isOperational()) return;
 
     this.logger.error(`MessageHandler error: ${err.message}`, err);
-    this.emit(
-      'consumer.messageHandler.error',
-      err,
-      this.consumerContext.consumerId,
-      this.queue,
-    );
+    this.emit('error', err, this.consumerContext.consumerId, this.queue);
     super.handleError(err);
   }
 
@@ -219,27 +215,17 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           this.getId(),
           this.messageHandler,
         );
-        this.consumeMessage.on('consumer.consumeMessage.error', (err) =>
-          this.handleError(err),
-        );
-        this.consumeMessage.on('consumer.consumeMessage.next', () => {
+        this.consumeMessage.on('error', (err) => this.handleError(err));
+        this.consumeMessage.on('next', () => {
           this.next();
         });
         this.consumeMessage.run(cb);
       },
       (cb: ICallback) => {
         this.dequeueMessage = this.createDequeueMessageInstance();
-        this.dequeueMessage.on('consumer.dequeueMessage.error', (err) =>
-          this.handleError(err),
-        );
-        this.dequeueMessage.on(
-          'consumer.dequeueMessage.messageReceived',
-          this.onMessageReceived,
-        );
-        this.dequeueMessage.on(
-          'consumer.dequeueMessage.nextMessage',
-          this.onMessageNext,
-        );
+        this.dequeueMessage.on('error', (err) => this.handleError(err));
+        this.dequeueMessage.on('messageReceived', this.onMessageReceived);
+        this.dequeueMessage.on('nextMessage', this.onMessageNext);
         this.dequeueMessage.run(cb);
       },
       this.runWorkerCluster,
@@ -279,16 +265,15 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       (cb: ICallback) => {
         if (this.dequeueMessage) {
           this.dequeueMessage.shutdown(() => {
-            this.dequeueMessage?.removeListener(
-              'consumer.dequeueMessage.error',
-              (err) => this.handleError(err),
+            this.dequeueMessage?.removeListener('error', (err) =>
+              this.handleError(err),
             );
             this.dequeueMessage?.removeListener(
-              'consumer.dequeueMessage.messageReceived',
+              'messageReceived',
               this.onMessageReceived,
             );
             this.dequeueMessage?.removeListener(
-              'consumer.dequeueMessage.nextMessage',
+              'nextMessage',
               this.onMessageNext,
             );
             this.dequeueMessage = null;
@@ -301,9 +286,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       (cb: ICallback) => {
         if (this.consumeMessage) {
           this.consumeMessage.shutdown(() => {
-            this.consumeMessage?.removeListener(
-              'consumer.consumeMessage.error',
-              (err) => this.handleError(err),
+            this.consumeMessage?.removeListener('error', (err) =>
+              this.handleError(err),
             );
             this.consumeMessage = null;
             cb();

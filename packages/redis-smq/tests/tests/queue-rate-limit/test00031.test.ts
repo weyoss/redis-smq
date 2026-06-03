@@ -37,12 +37,9 @@ test('Set a rate limit for a queue and consume message using many consumers', as
   });
 
   const messages: { ts: number; messageId: string }[] = [];
-  eventBus.on(
-    'consumer.consumeMessage.messageAcknowledged',
-    (messageId: string) => {
-      messages.push({ ts: Date.now(), messageId });
-    },
-  );
+  eventBus.on('consumer.messageAcknowledged', (messageId: string) => {
+    messages.push({ ts: Date.now(), messageId });
+  });
 
   for (let i = 0; i < 6; i += 1) {
     const consumer = getConsumer();

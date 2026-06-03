@@ -23,7 +23,4 @@ export function eventPublisher(consumer: Consumer): void {
   consumer.on('consumer.down', (...args) =>
     EventMultiplexer.publish('consumer.down', ...args),
   );
-  consumer.on('consumer.error', (...args) =>
-    EventMultiplexer.publish('consumer.error', ...args),
-  );
 }

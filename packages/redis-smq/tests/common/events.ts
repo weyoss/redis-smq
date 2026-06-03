@@ -20,7 +20,7 @@ export async function untilMessageAcknowledged(
 ): Promise<void> {
   const eventBus = await getEventBus();
   await new Promise<void>((resolve) => {
-    eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+    eventBus.on('consumer.messageAcknowledged', (...args) => {
       if (args[3] === consumer.getId()) {
         if (messageId) {
           if (messageId === args[0]) resolve();
@@ -60,13 +60,10 @@ export async function untilMessageUnacknowledged(
       }
 
       // All conditions met - resolve the promise
-      eventBus.removeListener(
-        'consumer.consumeMessage.messageUnacknowledged',
-        handler,
-      );
+      eventBus.removeListener('consumer.messageUnacknowledged', handler);
       resolve();
     };
-    eventBus.on('consumer.consumeMessage.messageUnacknowledged', handler);
+    eventBus.on('consumer.messageUnacknowledged', handler);
   });
 }
 
@@ -76,7 +73,7 @@ export async function untilMessageDeadLettered(
 ): Promise<void> {
   const eventBus = await getEventBus();
   await new Promise<void>((resolve) => {
-    eventBus.on('consumer.consumeMessage.messageDeadLettered', (...args) => {
+    eventBus.on('consumer.messageDeadLettered', (...args) => {
       if (args[3] === consumer.getId()) {
         if (messageId) {
           if (messageId === args[0]) resolve();

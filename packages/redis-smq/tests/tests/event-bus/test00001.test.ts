@@ -40,7 +40,7 @@ test('Event bus: case 1', async () => {
 
   eventBus
     .on(
-      'consumer.consumeMessage.messageAcknowledged',
+      'consumer.messageAcknowledged',
       (
         messageId: string,
         queue: IQueueParsedParams,
@@ -50,13 +50,13 @@ test('Event bus: case 1', async () => {
         consumerStats[consumerId] = consumerStats[consumerId] ?? [];
         consumerStats[consumerId].push({
           queue: queue.queueParams,
-          event: 'consumer.consumeMessage.messageAcknowledged',
+          event: 'consumer.messageAcknowledged',
           messageId,
         });
       },
     )
     .on(
-      'consumer.consumeMessage.messageDeadLettered',
+      'consumer.messageDeadLettered',
       (
         messageId: string,
         queue: IQueueParsedParams,
@@ -66,7 +66,7 @@ test('Event bus: case 1', async () => {
         consumerStats[consumerId] = consumerStats[consumerId] ?? [];
         consumerStats[consumerId].push({
           queue: queue.queueParams,
-          event: 'consumer.consumeMessage.messageDeadLettered',
+          event: 'consumer.messageDeadLettered',
           messageId,
         });
       },
@@ -117,30 +117,30 @@ test('Event bus: case 1', async () => {
   ]);
   expect(consumerStats[c0.getId()][0]).toEqual({
     queue: defaultQueue,
-    event: 'consumer.consumeMessage.messageAcknowledged',
+    event: 'consumer.messageAcknowledged',
     messageId: m0,
   });
   expect(consumerStats[c1.getId()][0]).toEqual({
     queue: defaultQueue,
-    event: 'consumer.consumeMessage.messageAcknowledged',
+    event: 'consumer.messageAcknowledged',
     messageId: m1,
   });
   expect(consumerStats[c2.getId()].length).toEqual(1);
   expect(consumerStats[c2.getId()][0].queue).toEqual(anotherQueue);
   expect(consumerStats[c2.getId()][0].event).toEqual(
-    'consumer.consumeMessage.messageDeadLettered',
+    'consumer.messageDeadLettered',
   );
   expect(consumerStats[c2.getId()][0].messageId).toEqual(m2);
 
   expect(consumerStats[c3.getId()].length).toEqual(2);
   expect(consumerStats[c3.getId()][0]).toEqual({
     queue: anotherQueue,
-    event: 'consumer.consumeMessage.messageAcknowledged',
+    event: 'consumer.messageAcknowledged',
     messageId: id3,
   });
   expect(consumerStats[c3.getId()][1]).toEqual({
     queue: anotherQueue,
-    event: 'consumer.consumeMessage.messageAcknowledged',
+    event: 'consumer.messageAcknowledged',
     messageId: id4,
   });
 

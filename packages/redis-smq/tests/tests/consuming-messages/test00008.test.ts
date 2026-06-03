@@ -43,12 +43,12 @@ test('Async exceptions are caught when consuming a message', async () => {
   });
 
   let unacknowledged = 0;
-  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
+  eventBus.on('consumer.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
   let acknowledged = 0;
-  eventBus.on('consumer.consumeMessage.messageAcknowledged', () => {
+  eventBus.on('consumer.messageAcknowledged', () => {
     acknowledged += 1;
   });
 

@@ -12,7 +12,7 @@ import { ILoggerConfig } from '../../logger/index.js';
 import { IRedisConfig } from '../../redis-client/index.js';
 
 export type TEventBusEvent = TEventEmitterEvent & {
-  error: (err: Error) => void;
+  error?: (err: Error) => void;
 };
 
 export interface IEventBusConfig {

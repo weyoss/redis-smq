@@ -8,11 +8,9 @@
  */
 
 import { async, ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
-import { TConsumerMessageHandlerRunnerEvent } from '../../event-bus/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
-import { eventPublisher } from './event-publisher.js';
 import {
   IConsumerMessageHandlerParams,
   TConsumerMessageHandler,
@@ -24,13 +22,17 @@ import { withSharedPoolConnection } from '../../common/redis/redis-connection-po
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { IConsumerQueuesWithStatus } from '../types/index.js';
 
+export type TMessageHandlerRunnerEvent = {
+  error: (err: Error, consumerId: string) => void;
+};
+
 /**
  * Manages the lifecycle of message handlers for a consumer, including
  * adding, removing, starting, and shutting down handlers for specific queues.
  * It also includes a supervisor mechanism to automatically restart handlers
  * that fail during runtime.
  */
-export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
+export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected readonly handlerReconciliationInterval = 5000; // todo: make it configurable: config.consumer.handlerReconciliationInterval
   protected readonly consumerContext: IConsumerContext;
   protected readonly supervisorTimer: Timer;
@@ -50,7 +52,6 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       this,
       this.logger,
     );
-    eventPublisher(this);
     this.supervisorTimer = new Timer(this.logger);
     this.logger.debug(`MessageHandlerRunner with ID: ${this.id} initialized.`);
   }
@@ -210,7 +211,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       handlerParams,
       true,
     );
-    instance.on('consumer.messageHandler.error', (err) => {
+    instance.on('error', (err) => {
       this.logger.error(
         `MessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
       );
@@ -334,11 +335,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     if (!this.isOperational()) return;
 
     this.logger.error(`MessageHandlerRunner error: ${err.message}`, err);
-    this.emit(
-      'consumer.messageHandlerRunner.error',
-      err,
-      this.consumerContext.consumerId,
-    );
+    this.emit('error', err, this.consumerContext.consumerId);
     super.handleError(err);
   }
 

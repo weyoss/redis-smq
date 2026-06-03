@@ -12,37 +12,19 @@ import { EventMultiplexer } from '../../../event-bus/event-multiplexer.js';
 
 export function eventPublisher(consumeMessage: ConsumeMessage): void {
   consumeMessage
-    .on('consumer.consumeMessage.error', (...args) =>
-      EventMultiplexer.publish('consumer.consumeMessage.error', ...args),
+    .on('messageUnacknowledged', (...args) =>
+      EventMultiplexer.publish('consumer.messageUnacknowledged', ...args),
     )
-    .on('consumer.consumeMessage.messageUnacknowledged', (...args) =>
-      EventMultiplexer.publish(
-        'consumer.consumeMessage.messageUnacknowledged',
-        ...args,
-      ),
+    .on('messageAcknowledged', (...args) =>
+      EventMultiplexer.publish('consumer.messageAcknowledged', ...args),
     )
-    .on('consumer.consumeMessage.messageAcknowledged', (...args) =>
-      EventMultiplexer.publish(
-        'consumer.consumeMessage.messageAcknowledged',
-        ...args,
-      ),
+    .on('messageDeadLettered', (...args) =>
+      EventMultiplexer.publish('consumer.messageDeadLettered', ...args),
     )
-    .on('consumer.consumeMessage.messageDeadLettered', (...args) =>
-      EventMultiplexer.publish(
-        'consumer.consumeMessage.messageDeadLettered',
-        ...args,
-      ),
+    .on('messageRequeued', (...args) =>
+      EventMultiplexer.publish('consumer.messageRequeued', ...args),
     )
-    .on('consumer.consumeMessage.messageRequeued', (...args) =>
-      EventMultiplexer.publish(
-        'consumer.consumeMessage.messageRequeued',
-        ...args,
-      ),
-    )
-    .on('consumer.consumeMessage.messageDelayed', (...args) =>
-      EventMultiplexer.publish(
-        'consumer.consumeMessage.messageDelayed',
-        ...args,
-      ),
+    .on('messageDelayed', (...args) =>
+      EventMultiplexer.publish('consumer.messageDelayed', ...args),
     );
 }

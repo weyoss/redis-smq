@@ -57,12 +57,9 @@ test('Rate limit a queue without priority and check message rate', async () => {
   const messages: { ts: number; messageId: string }[] = [];
   const consumer = await getConsumer();
 
-  eventBus.on(
-    'consumer.consumeMessage.messageAcknowledged',
-    (messageId: string) => {
-      messages.push({ ts: Date.now(), messageId });
-    },
-  );
+  eventBus.on('consumer.messageAcknowledged', (messageId: string) => {
+    messages.push({ ts: Date.now(), messageId });
+  });
 
   await consumer.run();
   await bluebird.delay(25000);

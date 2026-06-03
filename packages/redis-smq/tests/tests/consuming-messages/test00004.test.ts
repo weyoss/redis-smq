@@ -32,7 +32,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   const consume = vitest.spyOn(consumer, 'consume');
 
   let unacknowledged = 0;
-  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
+  eventBus.on('consumer.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 

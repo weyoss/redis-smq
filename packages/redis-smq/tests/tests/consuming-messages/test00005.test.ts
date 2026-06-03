@@ -33,7 +33,7 @@ test('Setting default message TTL from configuration', async () => {
   const consume = vitest.spyOn(consumer, 'consume');
 
   let unacks = 0;
-  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
+  eventBus.on('consumer.messageUnacknowledged', () => {
     unacks += 1;
   });
   const msg = new ProducibleMessage();

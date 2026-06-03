@@ -19,13 +19,13 @@ import {
   IRedisClient,
   Runnable,
 } from 'redis-smq-common';
-import { TConsumerConsumeMessageEvent } from '../../../event-bus/index.js';
 import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../../config-manager/index.js';
 import { IMessageTransferable } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import {
+  EMessageDeadLetterCause,
   EMessageUnacknowledgementAction,
   EMessageUnacknowledgementCause,
   TUnacknowledgementResult,
@@ -49,6 +49,43 @@ import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool
 import { IConsumerContext } from '../../types/consumer-context.js';
 import { MessageAcknowledger } from './message-acknowledger.js';
 import { IConsumerParsedOptions } from '../../types/index.js';
+
+export type TConsumerConsumeMessageEvent = {
+  messageAcknowledged: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    messageHandlerId: string,
+    consumerId: string,
+  ) => void;
+  messageUnacknowledged: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    messageHandlerId: string,
+    consumerId: string,
+    unacknowledgmentCause: EMessageUnacknowledgementCause,
+  ) => void;
+  messageDeadLettered: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    messageHandlerId: string,
+    consumerId: string,
+    deadLetterCause: EMessageDeadLetterCause,
+  ) => void;
+  messageRequeued: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    messageHandlerId: string,
+    consumerId: string,
+  ) => void;
+  messageDelayed: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    messageHandlerId: string,
+    consumerId: string,
+  ) => void;
+  next: () => void;
+  error: (err: Error, consumerId: string, queue: IQueueParsedParams) => void;
+};
 
 // Type guard to check if handler is callback-based
 const isCallbackHandler = (
@@ -198,7 +235,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     } else {
       this.logger.error('MessageAcknowledger not initialized');
     }
-    this.emit('consumer.consumeMessage.next');
+    this.emit('next');
   }
 
   protected unacknowledgeMessage(
@@ -206,14 +243,14 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     cause: EMessageUnacknowledgementCause,
   ): void {
     this.messageUnacknowledger.add(message, cause);
-    this.emit('consumer.consumeMessage.next');
+    this.emit('next');
   }
 
   private onMessageAcknowledged(message: MessageEnvelope): void {
     const messageId = message.getId();
     this.logger.info(`Message ${messageId} acknowledged successfully`);
     this.emit(
-      'consumer.consumeMessage.messageAcknowledged',
+      'messageAcknowledged',
       messageId,
       this.queue,
       this.messageHandlerId,
@@ -237,7 +274,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       );
 
       this.emit(
-        'consumer.consumeMessage.messageUnacknowledged',
+        'messageUnacknowledged',
         messageId,
         this.queue,
         this.messageHandlerId,
@@ -248,7 +285,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       if (details.action === EMessageUnacknowledgementAction.DEAD_LETTER) {
         this.logger.info(`Message ${messageId} moved to dead letter queue`);
         this.emit(
-          'consumer.consumeMessage.messageDeadLettered',
+          'messageDeadLettered',
           messageId,
           this.queue,
           this.messageHandlerId,
@@ -258,7 +295,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       } else if (details.action === EMessageUnacknowledgementAction.DELAY) {
         this.logger.info(`Message ${messageId} delayed for retry`);
         this.emit(
-          'consumer.consumeMessage.messageDelayed',
+          'messageDelayed',
           messageId,
           this.queue,
           this.messageHandlerId,
@@ -267,7 +304,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       } else {
         this.logger.info(`Message ${messageId} re-queued for retry`);
         this.emit(
-          'consumer.consumeMessage.messageRequeued',
+          'messageRequeued',
           messageId,
           this.queue,
           this.messageHandlerId,
@@ -335,7 +372,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         message,
         EMessageUnacknowledgementCause.CONSUME_ERROR,
       );
-      this.emit('consumer.consumeMessage.next');
+      this.emit('next');
     }
   }
 
@@ -574,12 +611,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     if (!this.isOperational()) return;
 
     const error = err instanceof Error ? err : new Error(String(err));
-    this.emit(
-      'consumer.consumeMessage.error',
-      error,
-      this.consumerId,
-      this.queue,
-    );
+    this.emit('error', error, this.consumerId, this.queue);
     super.handleError(err);
   }
 }

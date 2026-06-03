@@ -104,7 +104,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       handlerParams,
       this.scheduleNextTick,
     );
-    instance.on('consumer.messageHandler.error', (err) => {
+    instance.on('error', (err) => {
       this.logger.error(
         `MultiplexedMessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
       );

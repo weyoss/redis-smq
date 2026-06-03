@@ -11,17 +11,7 @@ import { DequeueMessage } from './dequeue-message.js';
 import { EventMultiplexer } from '../../../event-bus/event-multiplexer.js';
 
 export function eventPublisher(dequeueMessage: DequeueMessage): void {
-  dequeueMessage
-    .on('consumer.dequeueMessage.messageReceived', (...args) =>
-      EventMultiplexer.publish(
-        'consumer.dequeueMessage.messageReceived',
-        ...args,
-      ),
-    )
-    .on('consumer.dequeueMessage.nextMessage', (...args) =>
-      EventMultiplexer.publish('consumer.dequeueMessage.nextMessage', ...args),
-    )
-    .on('consumer.dequeueMessage.error', (...args) =>
-      EventMultiplexer.publish('consumer.dequeueMessage.error', ...args),
-    );
+  dequeueMessage.on('messageReceived', (...args) =>
+    EventMultiplexer.publish('consumer.messageReceived', ...args),
+  );
 }
