@@ -150,17 +150,22 @@ local function publish_message(keys, args)
         end
     end
 
+    -- Validate queue type and priority before handling status
+    if queueType == EQueuePropertyQueueTypePriorityQueue then
+        if messagePriority == nil or messagePriority == '' then
+            return 'MESSAGE_PRIORITY_REQUIRED'
+        end
+    else
+        if not (messagePriority == nil or messagePriority == '') then
+            return 'PRIORITY_QUEUING_NOT_ENABLED'
+        end
+    end
+
     if messageStatus == EMessagePropertyStatusPending then
-        -- Handle different queue types
+        -- Handle different queue types (priority check already done)
         if queueType == EQueuePropertyQueueTypePriorityQueue then
-            if messagePriority == nil or messagePriority == '' then
-                return 'MESSAGE_PRIORITY_REQUIRED'
-            end
             redis.call("ZADD", keyPriorityQueue, messagePriority, messageId)
         else
-            if not (messagePriority == nil or messagePriority == '') then
-                return 'PRIORITY_QUEUING_NOT_ENABLED'
-            end
             if queueType == EQueuePropertyQueueTypeLIFOQueue then
                 redis.call("RPUSH", keyQueuePending, messageId)
             elseif queueType == EQueuePropertyQueueTypeFIFOQueue then
@@ -171,7 +176,6 @@ local function publish_message(keys, args)
         end
         redis.call("HINCRBY", keyQueueProperties, EQueuePropertyPendingMessagesCount, 1)
     else
-        -- Add to scheduled queue
         redis.call("ZADD", keyQueueScheduled, scheduledTimestamp, messageId)
         redis.call("HINCRBY", keyQueueProperties, EQueuePropertyScheduledMessagesCount, 1)
     end
