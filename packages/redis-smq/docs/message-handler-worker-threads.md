@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Message Handler Worker Threads
+
 # Message Handler Worker Threads
 
 Run CPU-intensive message handlers in separate Node.js worker threads to keep the main event loop responsive.

@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Namespaces
+
 # Namespaces
 
 Namespaces isolate queues and exchanges. Use them to separate environments or applications within the same Redis instance.
@@ -55,7 +57,8 @@ RedisSMQ supports any number of namespaces simultaneously. The configured defaul
 // All in the same Redis instance
 queueManager.save('orders', ...);                          // default namespace
 queueManager.save({ ns: 'analytics', name: 'orders' }, ...); // analytics namespace
-queueManager.save({ ns: 'staging', name: 'orders' }, ...);   // staging namespace
+queueManager.save({ ns: 'staging', name: 'orders' }, ...
+);   // staging namespace
 ```
 
 ## Valid Names

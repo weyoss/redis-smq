@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Multiplexing
+
 # Multiplexing
 
 Multiplexing lets multiple message handlers share a single Redis connection. It reduces connection usage at the cost of processing messages sequentially instead of in parallel.

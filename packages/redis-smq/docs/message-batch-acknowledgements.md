@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Message Batch Acknowledgments
+
 # Message Batch Acknowledgments
 
 Batch acknowledgment groups multiple acknowledgments into a single Redis operation. This reduces network overhead and Redis load in high-throughput systems.

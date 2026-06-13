@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Graceful Shutdown
+
 # Graceful Shutdown
 
 RedisSMQ is designed to handle shutdowns without losing messages. Core operations are atomic, and proper shutdown ensures all in-flight messages are recovered.

@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Installation
+
 # Installation
 
 ## Requirements

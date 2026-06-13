@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Consuming Messages
+
 # Consuming Messages
 
 A Consumer processes messages from queues. You provide a handler function that receives each message and must explicitly acknowledge or reject it.

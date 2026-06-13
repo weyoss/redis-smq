@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Message Audit
+
 # Message Audit
 
 Browse tracked messages for monitoring and debugging. Requires audit to be enabled in [configuration](configuration.md).

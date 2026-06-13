@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Message Batch Unacknowledgments
+
 # Message Batch Unacknowledgments
 
 Batch unacknowledgment groups failed message handling into a single Redis operation. Like batch acknowledgments, it reduces network overhead for failure scenarios.

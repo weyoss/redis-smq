@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Simplified RedisSMQ API
+
 # Simplified RedisSMQ API
 
 The `RedisSMQ` class provides a simplified API: initialize once, create components via factory methods, and shut down everything with a single call. Components created this way are automatically tracked and cleaned up.

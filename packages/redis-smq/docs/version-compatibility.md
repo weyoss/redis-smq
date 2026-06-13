@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Version Compatibility
+
 # Version Compatibility
 
 All RedisSMQ packages must use the same version. Mismatched versions can cause API errors, type errors, and unexpected behavior.

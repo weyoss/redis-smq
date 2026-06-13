@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Consumer Groups
+
 # Consumer Groups
 
 Manage consumer groups for Pub/Sub queues. Groups enable multiple services to each receive a copy of every message.

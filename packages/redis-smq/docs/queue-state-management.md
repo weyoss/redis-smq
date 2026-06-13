@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Queue State Management
+
 # Queue State Management
 
 Control and track the operational state of queues. Pause processing, stop queues entirely, resume normal operation, and view state history.

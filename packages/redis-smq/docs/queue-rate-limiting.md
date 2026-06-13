@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Queue Rate Limiting
+
 # Queue Rate Limiting
 
 Control how fast messages are consumed from a queue. Useful for protecting downstream services, staying within API limits, or managing resource usage.

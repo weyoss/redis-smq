@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Scheduling Messages
+
 # Scheduling Messages
 
 Schedule messages for future delivery using delays, CRON expressions, or repeating patterns.

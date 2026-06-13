@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Event Bus
+
 # Event Bus
 
 Monitor RedisSMQ's internal activity by subscribing to system events. Track message flow, consumer status, and system health in real time.

@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Exchanges and Delivery Models
+
 # Exchanges and Delivery Models
 
 Exchanges route messages to queues. Delivery models control how queues deliver messages to consumers. Together, they give you flexible messaging patterns.

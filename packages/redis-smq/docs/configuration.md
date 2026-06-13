@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Configuring RedisSMQ
+
 # Configuring RedisSMQ
 
 RedisSMQ splits system startup from behavior configuration into two separate APIs.

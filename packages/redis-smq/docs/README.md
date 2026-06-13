@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / TypeScript Documentation
+
 # TypeScript Documentation
 
 Node.js implementation of RedisSMQ. For concepts that apply to all implementations, see the [shared documentation](https://github.com/weyoss/redis-smq-docs).

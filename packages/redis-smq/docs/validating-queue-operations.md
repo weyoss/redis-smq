@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Validating Queue Operations
+
 # Validating Queue Operations
 
 `QueueOperationValidator` checks if an operation is allowed on a queue based on its current state. Use it to avoid errors before attempting operations that may be rejected.

@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Documentation](README.md) / Quick Start
+
 # Quick Start
 
 Get RedisSMQ running in your Node.js application in minutes.
