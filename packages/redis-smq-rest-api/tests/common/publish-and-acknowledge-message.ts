@@ -34,12 +34,9 @@ export async function publishAndAcknowledgeMessage(
 
   const acknowledgedMessages: string[] = [];
   const eventBusInstance = EventBus.getInstance();
-  eventBusInstance.on(
-    'consumer.consumeMessage.messageAcknowledged',
-    (messageId) => {
-      acknowledgedMessages.push(messageId);
-    },
-  );
+  eventBusInstance.on('consumer.messageAcknowledged', (messageId) => {
+    acknowledgedMessages.push(messageId);
+  });
 
   await consumer.consumeAsync(queue, (msg, cb: ICallback<void>) => {
     cb();

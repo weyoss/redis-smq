@@ -34,12 +34,9 @@ export async function publishAndDeadLetterMessage(
 
   const deadLetteredMessages: string[] = [];
   const eventBusInstance = EventBus.getInstance();
-  eventBusInstance.on(
-    'consumer.consumeMessage.messageDeadLettered',
-    (messageId) => {
-      deadLetteredMessages.push(messageId);
-    },
-  );
+  eventBusInstance.on('consumer.messageDeadLettered', (messageId) => {
+    deadLetteredMessages.push(messageId);
+  });
 
   await consumer.consumeAsync(queue, (msg, cb: ICallback<void>) => {
     cb(new Error());
