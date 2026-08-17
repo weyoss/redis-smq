@@ -19,8 +19,6 @@
 - **Administration included** – REST API (Swagger) and Web UI for monitoring and management.
 - **Production‑ready** – Battle‑tested in high‑throughput environments.
 
-> 📊 See [BUILD.md](BUILD.md) for the latest build, quality, and release status across all branches.
-
 ## 📋 Requirements
 
 - **Node.js** ≥ 20
@@ -29,10 +27,12 @@
   - [`ioredis`](https://github.com/redis/ioredis) (recommended)
   - [`@redis/client`](https://github.com/redis/node-redis)
 
+> 📊 See [BUILD.md](BUILD.md) for the latest build, quality, and release status across all branches.
+
 ## 📦 Packages
 
 | Package                                                             | Description                              |
-|---------------------------------------------------------------------|------------------------------------------|
+| ------------------------------------------------------------------- | ---------------------------------------- |
 | **[redis-smq](packages/redis-smq/README.md)**                       | Core message queue library               |
 | **[redis-smq-common](packages/redis-smq-common/README.md)**         | Shared utilities and configuration       |
 | **[redis-smq-rest-api](packages/redis-smq-rest-api/README.md)**     | REST API with Swagger for administration |
@@ -69,12 +69,12 @@ import { ERedisConfigClient } from 'redis-smq-common';
 RedisSMQ.initialize(
   {
     client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 }
+    options: { host: '127.0.0.1', port: 6379 },
   },
   (err) => {
     if (err) console.error('RedisSMQ init failed:', err);
     else console.log('✅ RedisSMQ initialized');
-  }
+  },
 );
 ```
 
@@ -86,12 +86,12 @@ import { RedisSMQ, EQueueType, EQueueDeliveryModel } from 'redis-smq';
 const queueManager = RedisSMQ.createQueueManager();
 queueManager.save(
   'my_queue',
-  EQueueType.LIFO_QUEUE,              // LIFO, FIFO, or PRIORITY
+  EQueueType.LIFO_QUEUE, // LIFO, FIFO, or PRIORITY
   EQueueDeliveryModel.POINT_TO_POINT, // or PUB_SUB
   (err) => {
     if (err) console.error('Queue creation failed:', err);
     else console.log('✅ Queue created');
-  }
+  },
 );
 ```
 
@@ -103,12 +103,12 @@ import { RedisSMQ, ProducibleMessage } from 'redis-smq';
 const producer = RedisSMQ.createProducer();
 producer.run((err) => {
   if (err) return console.error('Producer failed:', err);
-  
+
   const msg = new ProducibleMessage()
     .setQueue('my_queue')
     .setBody({ hello: 'world' })
     .setRetryThreshold(3); // optional
-  
+
   producer.produce(msg, (err, ids) => {
     if (err) console.error('Send failed:', err);
     else console.log(`📨 Sent message(s): ${ids.join(', ')}`);
@@ -124,13 +124,13 @@ import { RedisSMQ } from 'redis-smq';
 const consumer = RedisSMQ.createConsumer();
 consumer.run((err) => {
   if (err) return console.error('Consumer failed:', err);
-  
+
   const handler = (message, done) => {
     console.log('📥 Received:', message.getBody());
     // Process message...
     done(); // Acknowledge (or done(err) to reject)
   };
-  
+
   consumer.consume('my_queue', handler, (err) => {
     if (err) console.error('Consume failed:', err);
     else console.log('👂 Listening on my_queue...');
