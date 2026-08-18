@@ -48,7 +48,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
     },
   });
   eventBus.on('consumer.messageAcknowledged', (...args) => {
-    if (args[3] === queueAConsumer.getId()) defaultQueueMetrics.acks += 1;
+    if (args[2] === queueAConsumer.getId()) defaultQueueMetrics.acks += 1;
   });
   await queueAConsumer.run();
 
@@ -60,7 +60,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
     },
   });
   eventBus.on('consumer.messageAcknowledged', (...args) => {
-    if (args[3] === queueBConsumer.getId()) queueBMetrics.acks += 1;
+    if (args[2] === queueBConsumer.getId()) queueBMetrics.acks += 1;
   });
   await queueBConsumer.run();
 

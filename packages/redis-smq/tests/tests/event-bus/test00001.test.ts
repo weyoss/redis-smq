@@ -41,12 +41,7 @@ test('Event bus: case 1', async () => {
   eventBus
     .on(
       'consumer.messageAcknowledged',
-      (
-        messageId: string,
-        queue: IQueueParsedParams,
-        messageHandlerId,
-        consumerId,
-      ) => {
+      (messageId: string, queue: IQueueParsedParams, consumerId) => {
         consumerStats[consumerId] = consumerStats[consumerId] ?? [];
         consumerStats[consumerId].push({
           queue: queue.queueParams,
@@ -57,12 +52,7 @@ test('Event bus: case 1', async () => {
     )
     .on(
       'consumer.messageDeadLettered',
-      (
-        messageId: string,
-        queue: IQueueParsedParams,
-        messageHandlerId,
-        consumerId,
-      ) => {
+      (messageId: string, queue: IQueueParsedParams, consumerId) => {
         consumerStats[consumerId] = consumerStats[consumerId] ?? [];
         consumerStats[consumerId].push({
           queue: queue.queueParams,

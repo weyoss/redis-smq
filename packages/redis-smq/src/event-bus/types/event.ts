@@ -40,33 +40,28 @@ export type TConsumerEvent = {
   'consumer.messageAcknowledged': (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
   ) => void;
   'consumer.messageUnacknowledged': (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
     unacknowledgmentCause: EMessageUnacknowledgementCause,
   ) => void;
   'consumer.messageDeadLettered': (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
     deadLetterCause: EMessageDeadLetterCause,
   ) => void;
   'consumer.messageRequeued': (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
   ) => void;
   'consumer.messageDelayed': (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
   ) => void;
 };

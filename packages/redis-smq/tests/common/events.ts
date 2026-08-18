@@ -21,7 +21,7 @@ export async function untilMessageAcknowledged(
   const eventBus = await getEventBus();
   await new Promise<void>((resolve) => {
     eventBus.on('consumer.messageAcknowledged', (...args) => {
-      if (args[3] === consumer.getId()) {
+      if (args[2] === consumer.getId()) {
         if (messageId) {
           if (messageId === args[0]) resolve();
         } else resolve();
@@ -40,7 +40,6 @@ export async function untilMessageUnacknowledged(
     const handler = (
       eventMessageId: string,
       eventQueue: IQueueParsedParams,
-      eventMessageHandlerId: string,
       eventConsumerId: string,
       eventCause: EMessageUnacknowledgementCause,
     ) => {
@@ -74,7 +73,7 @@ export async function untilMessageDeadLettered(
   const eventBus = await getEventBus();
   await new Promise<void>((resolve) => {
     eventBus.on('consumer.messageDeadLettered', (...args) => {
-      if (args[3] === consumer.getId()) {
+      if (args[2] === consumer.getId()) {
         if (messageId) {
           if (messageId === args[0]) resolve();
         } else resolve();

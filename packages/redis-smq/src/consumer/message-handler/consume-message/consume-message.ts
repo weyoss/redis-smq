@@ -54,33 +54,28 @@ export type TConsumerConsumeMessageEvent = {
   messageAcknowledged: (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
   ) => void;
   messageUnacknowledged: (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
     unacknowledgmentCause: EMessageUnacknowledgementCause,
   ) => void;
   messageDeadLettered: (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
     deadLetterCause: EMessageDeadLetterCause,
   ) => void;
   messageRequeued: (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
   ) => void;
   messageDelayed: (
     messageId: string,
     queue: IQueueParsedParams,
-    messageHandlerId: string,
     consumerId: string,
   ) => void;
   next: () => void;
@@ -249,13 +244,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   private onMessageAcknowledged(message: MessageEnvelope): void {
     const messageId = message.getId();
     this.logger.info(`Message ${messageId} acknowledged successfully`);
-    this.emit(
-      'messageAcknowledged',
-      messageId,
-      this.queue,
-      this.messageHandlerId,
-      this.consumerId,
-    );
+    this.emit('messageAcknowledged', messageId, this.queue, this.consumerId);
   }
 
   private handleUnacknowledgementResult(
@@ -277,7 +266,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         'messageUnacknowledged',
         messageId,
         this.queue,
-        this.messageHandlerId,
         this.consumerId,
         details.cause,
       );
@@ -288,28 +276,15 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           'messageDeadLettered',
           messageId,
           this.queue,
-          this.messageHandlerId,
           this.consumerId,
           details.deadLetterCause,
         );
       } else if (details.action === EMessageUnacknowledgementAction.DELAY) {
         this.logger.info(`Message ${messageId} delayed for retry`);
-        this.emit(
-          'messageDelayed',
-          messageId,
-          this.queue,
-          this.messageHandlerId,
-          this.consumerId,
-        );
+        this.emit('messageDelayed', messageId, this.queue, this.consumerId);
       } else {
         this.logger.info(`Message ${messageId} re-queued for retry`);
-        this.emit(
-          'messageRequeued',
-          messageId,
-          this.queue,
-          this.messageHandlerId,
-          this.consumerId,
-        );
+        this.emit('messageRequeued', messageId, this.queue, this.consumerId);
       }
     }
   }
