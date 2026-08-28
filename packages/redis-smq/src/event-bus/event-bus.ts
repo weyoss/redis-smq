@@ -42,7 +42,10 @@ export class EventBus {
   static getInstance() {
     if (!EventBus.instance) {
       const redis = RedisConfig.getConfig();
-      EventBus.instance = new EventBusRedis<TRedisSMQEvent>({ redis }, 'user');
+      EventBus.instance = new EventBusRedis<TRedisSMQEvent>(
+        { redis },
+        'redis-smq:events:user',
+      );
     }
     return EventBus.instance;
   }

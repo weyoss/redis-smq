@@ -33,7 +33,7 @@ export class InternalEventBus {
       };
       InternalEventBus.instance = new EventBusRedis<TRedisSMQEvent>(
         cfg,
-        'system',
+        'redis-smq:events:system',
       );
     }
     return InternalEventBus.instance;
