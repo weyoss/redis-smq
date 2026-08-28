@@ -184,14 +184,6 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                     redis.call("LTRIM", keyMessageHistory, 0, maxHistorySize - 1)
                 end
 
-                -- Set expiration on history key to match message expiration if applicable
-                if expireStoredMessages ~= '0' then
-                    local ttl = redis.call("PTTL", keyMessage)
-                    if ttl > 0 then
-                        redis.call("PEXPIRE", keyMessageHistory, ttl)
-                    end
-                end
-
                 -- Set expiration on history key if dead‑letter audit expiry is configured.
                 if expireStoredMessages ~= '0' then
                     redis.call("PEXPIRE", keyMessageHistory, expireStoredMessages)
