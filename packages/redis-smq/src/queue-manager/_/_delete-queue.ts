@@ -107,6 +107,7 @@ export function _deleteQueue(
         keyQueueConsumerGroups,
         keyQueueWorkersLock,
         keyQueueExchangeBindings,
+        keyQueueStateHistory,
       } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
 
       // Keys for consumer heartbeats
@@ -141,6 +142,7 @@ export function _deleteQueue(
         keyQueueConsumerGroups,
         keyQueueWorkersLock,
         keyQueueExchangeBindings,
+        keyQueueStateHistory,
         ...consumerGroupKeys,
         ...processingQueues,
       ]);
