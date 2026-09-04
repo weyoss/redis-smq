@@ -80,6 +80,10 @@ end
 
 -- 2. Check operational state for LOCKED queue
 local currentState = queueProperties[EQueuePropertyOperationalState]
+if currentState == false or currentState == nil then
+    -- Default to ACTIVE if operational state is not set
+    currentState = EQueueOperationalStateActive
+end
 local currentLockId = queueProperties[EQueuePropertyLockId] or ''
 
 if currentState == EQueueOperationalStateLocked then
