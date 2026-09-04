@@ -19,12 +19,9 @@ eventBus.run((err) => {
 });
 
 // Subscribe to events
-eventBus.on(
-  'consumer.consumeMessage.messageAcknowledged',
-  (messageId, queue, messageHandlerId, consumerId) => {
-    console.log(`Message ${messageId} acknowledged`);
-  },
-);
+eventBus.on('consumer.messageAcknowledged', (messageId, queue, consumerId) => {
+  console.log(`Message ${messageId} acknowledged`);
+});
 ```
 
 ## Available Events
@@ -54,17 +51,14 @@ eventBus.on('consumer.up', (consumerId) => { ... });
 eventBus.on('consumer.down', (consumerId) => { ... });
 
 // Message processing
-eventBus.on('consumer.consumeMessage.messageAcknowledged', (messageId, queue, handlerId, consumerId) => { ... });
-eventBus.on('consumer.consumeMessage.messageUnacknowledged', (messageId, queue, handlerId, consumerId, cause) => { ... });
-eventBus.on('consumer.consumeMessage.messageDeadLettered', (messageId, queue, handlerId, consumerId, cause) => { ... });
-eventBus.on('consumer.consumeMessage.messageRequeued', (messageId, queue, handlerId, consumerId) => { ... });
-eventBus.on('consumer.consumeMessage.messageDelayed', (messageId, queue, handlerId, consumerId) => { ... });
+eventBus.on('consumer.messageAcknowledged', (messageId, queue, consumerId) => { ... });
+eventBus.on('consumer.messageUnacknowledged', (messageId, queue, consumerId, cause) => { ... });
+eventBus.on('consumer.messageDeadLettered', (messageId, queue, consumerId, cause) => { ... });
+eventBus.on('consumer.messageRequeued', (messageId, queue, consumerId) => { ... });
+eventBus.on('consumer.messageDelayed', (messageId, queue, consumerId) => { ... });
 
-// Dequeue
-eventBus.on('consumer.dequeueMessage.messageReceived', (messageId, queue, consumerId) => { ... });
-
-// Heartbeat
-eventBus.on('consumerHeartbeat.heartbeat', (consumerId, timestamp) => { ... });
+// Message received (dequeued)
+eventBus.on('consumer.messageReceived', (messageId, queue, consumerId) => { ... });
 ```
 
 ### Configuration Events
@@ -77,10 +71,10 @@ eventBus.on('configuration.updated', (config, version) => { ... });
 
 ```javascript
 const handler = (messageId) => console.log(messageId);
-eventBus.on('consumer.consumeMessage.messageAcknowledged', handler);
+eventBus.on('consumer.messageAcknowledged', handler);
 
 // Later, remove the handler
-eventBus.removeListener('consumer.consumeMessage.messageAcknowledged', handler);
+eventBus.removeListener('consumer.messageAcknowledged', handler);
 ```
 
 ## Shutdown
