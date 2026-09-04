@@ -20,7 +20,7 @@ import {
 import { ICallback, ILogger } from 'redis-smq-common';
 import { _transitQueueTo } from './_transit-queue-to.js';
 
-export function _lockQueuelock(
+export function _lockQueue(
   queue: string | IQueueParams,
   lockOwner: EQueueStateLockOwner,
   lockId: string,

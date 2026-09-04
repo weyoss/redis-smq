@@ -23,7 +23,7 @@ import { IQueueParams } from '../../../../queue-manager/index.js';
 import { EBackgroundJobStatus } from '../../../index.js';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobNotFoundError } from '../../../../errors/index.js';
-import { _lockQueuelock } from '../../../../queue-state-manager/_/_lock-queue.js';
+import { _lockQueue } from '../../../../queue-state-manager/_/_lock-queue.js';
 import { _unlockQueue } from '../../../../queue-state-manager/_/_unlock-queue.js';
 
 export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<
@@ -211,7 +211,7 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<
     jobId: string,
     cb: ICallback,
   ): void {
-    _lockQueuelock(
+    _lockQueue(
       queueParams,
       EQueueStateLockOwner.PURGE_JOB,
       jobId,
