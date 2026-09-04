@@ -713,6 +713,7 @@ export class MessageState {
     this.scheduledTimes = 0;
     this.scheduledMessageParentId = null;
     this.requeuedMessageParentId = null;
+    this.lastProcessedAt = null;
     return this;
   }
 
