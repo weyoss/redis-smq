@@ -24,6 +24,7 @@ import { PendingMessagesFactory } from './factories/queue-pending-messages-facto
 import { RateLimitFactory } from './factories/queue-rate-limit-factory.js';
 import { LifecycleManager } from './lifecycle-manager.js';
 import { ConfigManagerFactory } from './factories/config-manager-factory.js';
+import { QueueStateManagerFactory } from './factories/queue-state-manager-factory.js';
 
 /**
  * Main RedisSMQ class providing a simplified API for Redis-based message queue operations.
@@ -37,6 +38,7 @@ export class RedisSMQ {
   static createProducer = ProducerFactory.create;
   static createMessageManager = MessageManagerFactory.create;
   static createQueueManager = QueueManagerFactory.create;
+  static createQueueStateManager = QueueStateManagerFactory.create;
   static createNamespaceManager = NamespaceManagerFactory.create;
   static createConfigManager = ConfigManagerFactory.create;
   static createQueuePublishedMessages = PublishedMessagesFactory.create;
