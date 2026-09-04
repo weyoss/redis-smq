@@ -188,9 +188,6 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 if expireStoredMessages ~= '0' then
                     redis.call("PEXPIRE", keyMessageHistory, expireStoredMessages)
                 end
-
-                -- Increment unacknowledged count on the message
-                redis.call("HINCRBY", keyMessage, "unacknowledgedCount", 1)
             end
 
             -- Update message properties
