@@ -249,9 +249,11 @@ export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<
   }
 
   updateProgress(jobId: string, totalPurged: number, totalItems: number) {
-    // Update progress every 10% of total items
-    const progressInterval = Math.max(1, Math.floor(totalItems / 10));
-    if (totalItems > 0 && totalPurged % progressInterval === 0) {
+    // Update progress every 10%
+    if (
+      totalItems > 0 &&
+      totalPurged % Math.max(1, Math.floor(totalPurged / 10)) === 0
+    ) {
       this.update(jobId, { meta: { purged: totalPurged } }, (updateErr) => {
         if (updateErr) {
           this.logger.error(
