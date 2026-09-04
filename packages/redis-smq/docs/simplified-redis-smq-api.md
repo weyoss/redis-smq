@@ -138,8 +138,6 @@ consumer.shutdown((err) => {
 // Other components keep running
 ```
 
-Components shut down individually are removed from tracking. They will not be shut down again by `RedisSMQ.shutdown()`.
-
 ## Start Methods
 
 `startProducer()` and `startConsumer()` create and start in one call:
