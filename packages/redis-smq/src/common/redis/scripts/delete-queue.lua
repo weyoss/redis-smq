@@ -79,13 +79,8 @@ for i = 1, #props, 2 do
 end
 
 -- 2. Check operational state for LOCKED queue
-local currentState = queueProperties[EQueuePropertyOperationalState]
-if currentState == false or currentState == nil then
-    -- Default to ACTIVE if operational state is not set
-    currentState = EQueueOperationalStateActive
-end
+local currentState = queueProperties[EQueuePropertyOperationalState] or ''
 local currentLockId = queueProperties[EQueuePropertyLockId] or ''
-
 if currentState == EQueueOperationalStateLocked then
     -- Queue is locked, need valid lock ID to proceed with deletion
     if not operationLockId or operationLockId == '' then
