@@ -8,7 +8,7 @@ Namespaces isolate queues and exchanges. Use them to separate environments or ap
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
-const queueManager = RedisSMQ.createQueueManager();
+const namespaceManager = RedisSMQ.createNamespaceManager();
 ```
 
 ## Default Namespace
@@ -32,7 +32,7 @@ queueManager.save({ ns: 'staging', name: 'orders' }, ...);
 ## Listing Namespaces
 
 ```javascript
-queueManager.getNamespaces((err, namespaces) => {
+namespaceManager.getNamespaces((err, namespaces) => {
   console.log('Namespaces:', namespaces);
   // ['production', 'staging', 'analytics']
 });
@@ -43,7 +43,7 @@ queueManager.getNamespaces((err, namespaces) => {
 Deleting a namespace removes all queues and exchanges within it:
 
 ```javascript
-queueManager.deleteNamespace('staging', (err) => {
+namespaceManager.delete('staging', (err) => {
   if (err) console.error('Failed:', err);
   else console.log('Namespace deleted');
 });
@@ -55,10 +55,9 @@ RedisSMQ supports any number of namespaces simultaneously. The configured defaul
 
 ```javascript
 // All in the same Redis instance
-queueManager.save('orders', ...);                          // default namespace
+queueManager.save('orders', ...);                            // default namespace
 queueManager.save({ ns: 'analytics', name: 'orders' }, ...); // analytics namespace
-queueManager.save({ ns: 'staging', name: 'orders' }, ...
-);   // staging namespace
+queueManager.save({ ns: 'staging', name: 'orders' }, ...);   // staging namespace
 ```
 
 ## Valid Names
@@ -82,8 +81,8 @@ Namespace names follow the same rules as queue names:
 ## Promise Style
 
 ```javascript
-const namespaces = await queueManager.getNamespaces();
-await queueManager.deleteNamespace('staging');
+const namespaces = await namespaceManager.getNamespaces();
+await namespaceManager.delete('staging');
 ```
 
 ## Related
