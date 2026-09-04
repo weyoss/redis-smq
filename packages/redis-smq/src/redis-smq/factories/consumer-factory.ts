@@ -39,7 +39,7 @@ export class ConsumerFactory extends FactoryAbstract {
     consumerOptions?: IConsumerOptions,
     cb?: ICallback<void>,
   ): Promise<Consumer> | Consumer {
-    const consumer = new Consumer(consumerOptions);
+    const consumer = ConsumerFactory.create(consumerOptions);
 
     if (cb) {
       consumer.run((err) => {
