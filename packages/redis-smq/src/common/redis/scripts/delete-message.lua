@@ -154,7 +154,7 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
             redis.call("ZREM", keyQueueScheduled, messageId)
             counterToDecrement = EQueuePropertyScheduledMessagesCount
         elseif messageStatus == EMessageStatusDelayed then
-            redis.call("LREM", keyQueueDelayed, 1, messageId)
+            redis.call("ZREM", keyQueueDelayed, messageId)
             counterToDecrement = EQueuePropertyDelayedMessagesCount
         elseif messageStatus == EMessageStatusRequeued then
             redis.call("LREM", keyQueueRequeued, 1, messageId)
