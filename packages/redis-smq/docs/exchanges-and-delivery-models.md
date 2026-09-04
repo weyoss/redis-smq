@@ -133,11 +133,17 @@ Use this when you know the destination queue and don't need routing flexibility.
 
 ```javascript
 // Exchanges are created automatically when first bound
-// But can be created explicitly:
+// But can be created explicitly with a queue policy
 const directExchange = RedisSMQ.createDirectExchange();
-directExchange.create('orders', (err) => { ... });
-directExchange.delete('orders', (err) => { ... });
+directExchange.create('orders', EExchangeQueuePolicy.STANDARD, (err) => {
+  if (err) console.error('Failed:', err);
+});
+directExchange.delete('orders', (err) => {
+  if (err) console.error('Failed:', err);
+});
 ```
+
+The `queuePolicy` argument can be `EExchangeQueuePolicy.STANDARD` (for FIFO/LIFO queues) or `EExchangeQueuePolicy.PRIORITY` (for priority queues).
 
 ### List Bindings
 
@@ -148,12 +154,16 @@ directExchange.getRoutingKeys('orders', (err, keys) => {
 });
 
 // Get queues bound to a routing key
-directExchange.getQueues('orders', 'order.created', (err, queues) => {
-  console.log('Bound queues:', queues);
-});
+directExchange.getRoutingKeyBoundQueues(
+  'orders',
+  'order.created',
+  (err, queues) => {
+    console.log('Bound queues:', queues);
+  },
+);
 
-// Get all bindings
-directExchange.getAllBindings('orders', (err, bindings) => {
+// Get all bindings (routing key → queues)
+directExchange.getBindings('orders', (err, bindings) => {
   console.log('All bindings:', bindings);
 });
 ```
