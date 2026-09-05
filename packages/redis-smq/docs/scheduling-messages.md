@@ -34,16 +34,17 @@ msg.setScheduledDelay(5000); // Deliver after 5 seconds
 msg.setScheduledCRON('0 30 9 * * 1-5'); // Weekdays at 9:30 AM
 ```
 
-CRON expressions use the standard 5-field format:
+CRON expressions use a 6‑field format (seconds first):
 
 ```
-┌─────────── minute (0–59)
-│ ┌─────────── hour (0–23)
-│ │ ┌─────────── day of month (1–31)
-│ │ │ ┌─────────── month (1–12)
-│ │ │ │ ┌─────────── day of week (0–6, Sunday=0)
-│ │ │ │ │
-* * * * *
+┌──────────── second (0–59)
+│ ┌──────────── minute (0–59)
+│ │ ┌──────────── hour (0–23)
+│ │ │ ┌──────────── day of month (1–31)
+│ │ │ │ ┌──────────── month (1–12)
+│ │ │ │ │ ┌──────────── day of week (0–6, Sunday=0)
+│ │ │ │ │ │
+* * * * * *
 ```
 
 ### Repeating Delivery
@@ -53,8 +54,6 @@ msg.setScheduledDelay(10000); // First delivery after 10s
 msg.setScheduledRepeat(5); // Repeat 5 times
 msg.setScheduledRepeatPeriod(60000); // Every 60 seconds
 ```
-
-A repeat count of `0` means repeat indefinitely.
 
 ### Combining Options
 
