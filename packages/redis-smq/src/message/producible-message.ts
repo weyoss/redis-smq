@@ -224,19 +224,29 @@ export class ProducibleMessage {
 
   /**
    * Sets a CRON expression for scheduled message delivery.
+   * Accepts both 5‑field (standard Unix) and 6‑field (with seconds) formats.
+   * 5‑field expressions are automatically converted to 6‑field by prefixing
+   * `0` for the seconds component.
    *
-   * @param cron - Valid CRON expression (e.g., '0 0 10 * * *')
+   * @param cron - CRON expression (e.g., '0 30 9 * * 1-5' or '30 9 * * 1-5')
    *
    * @example
-   * msg.setScheduledCRON('0 0 10 * * *'); // Daily at 10 AM
+   * msg.setScheduledCRON('0 30 9 * * 1-5'); // 6‑field (seconds, minutes, hours, ...)
+   * msg.setScheduledCRON('30 9 * * 1-5');   // 5‑field (minutes, hours, ...)
    */
   setScheduledCRON(cron: string): ProducibleMessage {
-    try {
-      CronExpressionParser.parse(cron);
-    } catch {
-      throw new InvalidCronExpressionError({ metadata: { expression: cron } });
+    const expr = cron.trim();
+    const fields = expr.split(/\s+/);
+    const fieldCount = fields.length;
+    if (fieldCount !== 5 && fieldCount !== 6) {
+      throw new InvalidCronExpressionError({ metadata: { expression: expr } });
     }
-    this.scheduledCron = cron;
+    try {
+      CronExpressionParser.parse(expr);
+    } catch {
+      throw new InvalidCronExpressionError({ metadata: { expression: expr } });
+    }
+    this.scheduledCron = expr;
     return this;
   }
 

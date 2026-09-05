@@ -31,10 +31,12 @@ msg.setScheduledDelay(5000); // Deliver after 5 seconds
 ### CRON Schedule
 
 ```javascript
-msg.setScheduledCRON('0 30 9 * * 1-5'); // Weekdays at 9:30 AM
+msg.setScheduledCRON('0 30 9 * * 1-5'); // Weekdays at 9:30:00 AM
 ```
 
-CRON expressions use a 6‑field format (seconds first):
+CRON expressions can be specified in either the standard 5‑field format (minute, hour, day‑of‑month, month, day‑of‑week) or a 6‑field format that includes seconds as the first component. When using 5 fields, RedisSMQ automatically interprets the seconds as `0`.
+
+The 6‑field format is shown below:
 
 ```
 ┌──────────── second (0–59)
@@ -47,6 +49,16 @@ CRON expressions use a 6‑field format (seconds first):
 * * * * * *
 ```
 
+Examples:
+
+```javascript
+// 5‑field (seconds assumed 0)
+msg.setScheduledCRON('30 9 * * 1-5'); // Weekdays at 9:30:00 AM
+
+// 6‑field (explicit seconds)
+msg.setScheduledCRON('0 30 9 * * 1-5'); // Weekdays at 9:30:00 AM
+```
+
 ### Repeating Delivery
 
 ```javascript
@@ -54,6 +66,8 @@ msg.setScheduledDelay(10000); // First delivery after 10s
 msg.setScheduledRepeat(5); // Repeat 5 times
 msg.setScheduledRepeatPeriod(60000); // Every 60 seconds
 ```
+
+A repeat count of `0` means repeat indefinitely.
 
 ### Combining Options
 
