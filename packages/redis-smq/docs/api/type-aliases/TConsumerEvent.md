@@ -22,26 +22,6 @@
 
 ---
 
-### consumer.error()
-
-> **consumer.error**: (`err`, `consumerId`) => `void`
-
-#### Parameters
-
-##### err
-
-`Error`
-
-##### consumerId
-
-`string`
-
-#### Returns
-
-`void`
-
----
-
 ### consumer.goingDown()
 
 > **consumer.goingDown**: (`consumerId`) => `void`
@@ -67,6 +47,158 @@
 ##### consumerId
 
 `string`
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.messageAcknowledged()
+
+> **consumer.messageAcknowledged**: (`messageId`, `queue`, `consumerId`) => `void`
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+##### queue
+
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)
+
+##### consumerId
+
+`string`
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.messageDeadLettered()
+
+> **consumer.messageDeadLettered**: (`messageId`, `queue`, `consumerId`, `deadLetterCause`) => `void`
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+##### queue
+
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)
+
+##### consumerId
+
+`string`
+
+##### deadLetterCause
+
+[`EMessageDeadLetterCause`](../enumerations/EMessageDeadLetterCause.md)
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.messageDelayed()
+
+> **consumer.messageDelayed**: (`messageId`, `queue`, `consumerId`) => `void`
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+##### queue
+
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)
+
+##### consumerId
+
+`string`
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.messageReceived()
+
+> **consumer.messageReceived**: (`messageId`, `queue`, `consumerId`) => `void`
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+##### queue
+
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)
+
+##### consumerId
+
+`string`
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.messageRequeued()
+
+> **consumer.messageRequeued**: (`messageId`, `queue`, `consumerId`) => `void`
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+##### queue
+
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)
+
+##### consumerId
+
+`string`
+
+#### Returns
+
+`void`
+
+---
+
+### consumer.messageUnacknowledged()
+
+> **consumer.messageUnacknowledged**: (`messageId`, `queue`, `consumerId`, `unacknowledgmentCause`) => `void`
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+##### queue
+
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)
+
+##### consumerId
+
+`string`
+
+##### unacknowledgmentCause
+
+[`EMessageUnacknowledgementCause`](../enumerations/EMessageUnacknowledgementCause.md)
 
 #### Returns
 

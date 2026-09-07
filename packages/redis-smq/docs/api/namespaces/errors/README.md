@@ -17,6 +17,7 @@
 - [ConfigurationMessageAuditExpireError](classes/ConfigurationMessageAuditExpireError.md)
 - [ConfigurationNamespaceError](classes/ConfigurationNamespaceError.md)
 - [ConfigurationUpdateError](classes/ConfigurationUpdateError.md)
+- [ConsumerGroupHasActiveConsumersError](classes/ConsumerGroupHasActiveConsumersError.md)
 - [ConsumerGroupNotEmptyError](classes/ConsumerGroupNotEmptyError.md)
 - [ConsumerGroupNotFoundError](classes/ConsumerGroupNotFoundError.md)
 - [ConsumerGroupRequiredError](classes/ConsumerGroupRequiredError.md)

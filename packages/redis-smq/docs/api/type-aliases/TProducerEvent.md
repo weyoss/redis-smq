@@ -22,26 +22,6 @@
 
 ---
 
-### producer.error()
-
-> **producer.error**: (`err`, `producerId`) => `void`
-
-#### Parameters
-
-##### err
-
-`Error`
-
-##### producerId
-
-`string`
-
-#### Returns
-
-`void`
-
----
-
 ### producer.goingDown()
 
 > **producer.goingDown**: (`producerId`) => `void`

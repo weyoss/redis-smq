@@ -237,6 +237,20 @@ A new QueueScheduledMessages instance
 
 ---
 
+### createQueueStateManager()
+
+> `static` **createQueueStateManager**: () => [`QueueStateManager`](QueueStateManager.md) = `QueueStateManagerFactory.create`
+
+Creates a QueueStateManager instance.
+
+#### Returns
+
+[`QueueStateManager`](QueueStateManager.md)
+
+A new QueueStateManager instance
+
+---
+
 ### createTopicExchange()
 
 > `static` **createTopicExchange**: () => [`ExchangeTopic`](ExchangeTopic.md) = `TopicExchangeFactory.create`

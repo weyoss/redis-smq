@@ -579,6 +579,9 @@ msg.setRetryThreshold(5);
 > **setScheduledCRON**(`cron`): `ProducibleMessage`
 
 Sets a CRON expression for scheduled message delivery.
+Accepts both 5‑field (standard Unix) and 6‑field (with seconds) formats.
+5‑field expressions are automatically converted to 6‑field by prefixing
+`0` for the seconds component.
 
 #### Parameters
 
@@ -586,7 +589,7 @@ Sets a CRON expression for scheduled message delivery.
 
 `string`
 
-Valid CRON expression (e.g., '0 0 10 \* \* \*')
+CRON expression (e.g., '0 30 9 \* _ 1-5' or '30 9 _ \* 1-5')
 
 #### Returns
 
@@ -595,7 +598,8 @@ Valid CRON expression (e.g., '0 0 10 \* \* \*')
 #### Example
 
 ```ts
-msg.setScheduledCRON('0 0 10 * * *'); // Daily at 10 AM
+msg.setScheduledCRON('0 30 9 * * 1-5'); // 6‑field (seconds, minutes, hours, ...)
+msg.setScheduledCRON('30 9 * * 1-5'); // 5‑field (minutes, hours, ...)
 ```
 
 ---
