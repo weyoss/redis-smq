@@ -19,15 +19,16 @@ export class NodeRedisClient extends RedisClientAbstract {
   constructor(config: RedisClientOptions = {}) {
     super();
     this.client = createClient(config);
-    this.client.once('ready', () => {
-      this.connectionClosed = false;
-      this.init();
-    });
-    this.client.once('end', () => {
-      this.connectionClosed = true;
-      this.emit('end');
-    });
-    this.client.connect();
+
+    // Wire the raw client's lifecycle (error/ready/end) to this wrapper.
+    this.attachRawClient(this.client);
+
+    // node-redis is lazy: createClient() builds the object but does not open
+    // the socket. connect() starts the connection attempt. It returns a
+    // Promise that rejects if the reconnect strategy gives up — the 'error'
+    // event (forwarded by attachRawClient) is the authoritative failure
+    // signal, so we swallow the rejection to avoid an unhandled promise.
+    this.client.connect().catch(() => void 0);
   }
 
   exists(key: string, cb: ICallback<boolean>) {
@@ -573,6 +574,7 @@ export class NodeRedisClient extends RedisClientAbstract {
       .then((reply) => cb(null, reply))
       .catch(cb);
   }
+
   ttl(key: string, cb: ICallback<number>): void {
     this.client
       .ttl(key)
@@ -633,6 +635,4 @@ export class NodeRedisClient extends RedisClientAbstract {
       .then((reply) => cb(null, reply !== null ? String(reply) : null))
       .catch(cb);
   }
-
-  // -- end new methods
 }

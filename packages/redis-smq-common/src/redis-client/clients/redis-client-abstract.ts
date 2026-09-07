@@ -39,6 +39,36 @@ const luaScriptMap = {
 
 const minimalSupportedVersion: [number, number, number] = [4, 0, 0];
 
+/**
+ * The subset of raw-client events `attachRawClient` wires up.
+ * Event name → listener argument tuple.
+ *
+ * Keep this in sync with attachRawClient(). Adding a new event here without
+ * a corresponding listener in attachRawClient() is a silent no-op; adding a
+ * listener in attachRawClient() for an event not listed here is a compile
+ * error, which is the intent.
+ */
+type RawRedisClientEvents = {
+  error: [err: Error];
+  ready: [];
+  end: [];
+};
+
+/**
+ * Minimal structural interface for the raw Redis client a subclass wraps.
+ * Only the events listed in RawRedisClientEvents are addressable.
+ */
+type RawRedisClient = {
+  on<E extends keyof RawRedisClientEvents>(
+    event: E,
+    listener: (...args: RawRedisClientEvents[E]) => void,
+  ): unknown;
+  once<E extends keyof RawRedisClientEvents>(
+    event: E,
+    listener: (...args: RawRedisClientEvents[E]) => void,
+  ): unknown;
+};
+
 export abstract class RedisClientAbstract
   extends EventEmitter<TRedisClientEvent>
   implements IRedisClient
@@ -47,6 +77,72 @@ export abstract class RedisClientAbstract
   protected static redisServerVersion: number[] | null = null;
   protected connectionClosed = true;
 
+  /**
+   * Emit an event, except for 'error' where emission is suppressed when no
+   * listener is attached.
+   *
+   * Why: raw Redis clients (ioredis, node-redis) retry the connection
+   * indefinitely and emit 'error' on every failed attempt. When the wrapper
+   * re-emits during a retry window with no consumer attached — e.g., between
+   * construction and the first external `.once('error', ...)` — the base
+   * EventEmitter's default behavior for 'error' is to throw, crashing the
+   * process. Suppressing the emit lets the retry loop continue quietly until
+   * a consumer attaches.
+   */
+  protected safeEmit<E extends keyof TRedisClientEvent>(
+    event: E,
+    ...args: Parameters<TRedisClientEvent[E]>
+  ): boolean {
+    if (event === 'error' && this.eventEmitter.listenerCount('error') === 0) {
+      return false;
+    }
+    return this.emit(event, ...args);
+  }
+
+  /**
+   * Wire a raw Redis client's lifecycle events to this wrapper.
+   *
+   * Subclasses MUST call this exactly once, immediately after creating the
+   * raw client in their constructor. It centralizes:
+   *
+   *  - Forwarding raw 'error' events to the wrapper (guarded so unhandled
+   *    retry errors don't crash the process).
+   *  - Tracking the connection's open/closed state across reconnects.
+   *  - Firing init() on the first 'ready' (version check + script load).
+   *    The wrapper emits its own 'ready' only after init() succeeds —
+   *    not on the raw 'ready' — so consumers can treat 'ready' as
+   *    "wrapper fully initialized".
+   *  - Emitting 'end' on the wrapper whenever the raw connection drops.
+   */
+  protected attachRawClient(rawClient: RawRedisClient): void {
+    // Forward every raw error. safeEmit handles the "no listener" case.
+    rawClient.on('error', (err: Error) => {
+      this.safeEmit('error', err);
+    });
+
+    // Track connection state on every ready (not just the first), so that
+    // a reconnect after a drop correctly flips connectionClosed back to
+    // false. Separate from init() below, which must run only once.
+    rawClient.on('ready', () => {
+      this.connectionClosed = false;
+    });
+
+    // Run the wrapper's init() exactly once, on the first ready. Subsequent
+    // ready events (reconnects) do not re-run init: server version and
+    // script SHAs are cached in static state on this class and remain valid
+    // for the lifetime of the process.
+    rawClient.once('ready', () => {
+      this.init();
+    });
+
+    // Emit 'end' on every drop. Also update connectionClosed so halt() and
+    // shutdown() can short-circuit correctly.
+    rawClient.on('end', () => {
+      this.connectionClosed = true;
+      this.emit('end');
+    });
+  }
+
   protected init(): void {
     async.series(
       [
@@ -54,7 +150,7 @@ export abstract class RedisClientAbstract
         (cb: ICallback) => this.loadBuiltInScriptFiles(cb),
       ],
       (err) => {
-        if (err) this.emit('error', err);
+        if (err) this.safeEmit('error', err);
         else this.emit('ready');
       },
     );
@@ -62,7 +158,7 @@ export abstract class RedisClientAbstract
 
   validateRedisVersion(major: number, feature = 0, minor = 0): boolean {
     if (!RedisClientAbstract.redisServerVersion) {
-      this.emit('error', new UnknownRedisServerVersionError());
+      this.safeEmit('error', new UnknownRedisServerVersionError());
       return false;
     }
     return (

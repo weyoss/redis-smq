@@ -24,14 +24,9 @@ export class IoredisClient extends RedisClientAbstract {
   constructor(config: RedisOptions = {}) {
     super();
     this.client = new Redis(config);
-    this.client.once('ready', () => {
-      this.connectionClosed = false;
-      this.init();
-    });
-    this.client.once('end', () => {
-      this.connectionClosed = true;
-      this.emit('end');
-    });
+
+    // Wire the raw client's lifecycle (error/ready/end) to this wrapper.
+    this.attachRawClient(this.client);
   }
 
   ping(cb: ICallback<string>): void {
@@ -511,6 +506,20 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.info(cb);
   }
 
+  /**
+   * Forward listener registration to the raw ioredis client.
+   *
+   * Rationale: the raw client is what emits pub/sub events ('message',
+   * 'pmessage', 'messageBuffer', 'pmessageBuffer'), so consumers that call
+   * `wrapper.on('message', handler)` after `wrapper.subscribe(...)` need
+   * their listener attached to the raw client, not the wrapper.
+   *
+   * Note on asymmetry: `once()` and `removeListener()` are NOT overridden
+   * and continue to operate on the wrapper's own emitter. This is what the
+   * factory relies on for lifecycle detection — it uses `once('ready')` and
+   * `once('error')` to observe the wrapper's own `init()` outcome, which is
+   * decoupled from the raw client's `'ready'`/`'error'`.
+   */
   override on(event: string, listener: (...args: unknown[]) => unknown): this {
     this.client.on(event, listener);
     return this;
