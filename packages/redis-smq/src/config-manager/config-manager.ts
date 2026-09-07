@@ -7,6 +7,7 @@
  * in the root directory of this source tree.
  */
 
+import _ from 'lodash';
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { async, ICallback } from 'redis-smq-common';
 import { parseConfig } from './parse-config.js';
@@ -28,7 +29,15 @@ import { Configuration } from './configuration.js';
  */
 export class ConfigManager {
   /**
-   * Merges two configuration objects.
+   * Merges two configuration objects, recursing into nested sections.
+   *
+   * - Scalar fields (`namespace`) are replaced.
+   * - Object fields (`messageAudit`, `logger`) are deep-merged so a caller
+   *   updating one sub-key does not clobber the others.
+   * - Union fields (`boolean | object`) respect the caller's intent: passing
+   *   a boolean replaces the object, passing an object merges into it.
+   *
+   * `current` is not mutated; a fresh object is returned.
    *
    * @param current - Current parsed configuration
    * @param updates - Partial configuration updates to apply
@@ -39,10 +48,7 @@ export class ConfigManager {
     current: IRedisSMQParsedConfig,
     updates: IRedisSMQConfig,
   ): IRedisSMQConfig {
-    return {
-      ...current,
-      ...updates,
-    };
+    return _.merge({}, current, updates);
   }
 
   /**
