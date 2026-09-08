@@ -38,6 +38,7 @@ import {
   DequeueMessage,
   TDequeueMessageEvent,
 } from './dequeue-message/dequeue-message.js';
+import { EMessageUnacknowledgementCause } from './consume-message/types/index.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
@@ -51,6 +52,11 @@ import { RedisConfig } from '../../common/redis/redis-config.js';
 
 export type TMessageHandlerEvent = {
   error: (err: Error, consumerId: string, queue: IQueueParsedParams) => void;
+  shutdownRequired: (
+    cause: EMessageUnacknowledgementCause,
+    consumerId: string,
+    queue: IQueueParsedParams,
+  ) => void;
 };
 
 const WORKERS_DIR = path.resolve(
@@ -352,43 +358,47 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       (err, reply: unknown) => {
         if (err) return this.handleError(err);
 
-        // Handle queue state specific errors
+        // Handle queue state specific errors. In each case, signal the runner
+        // that this handler must be stopped, but do NOT call this.shutdown()
+        // directly: the runner owns the instance's lifecycle and needs to
+        // remove it from its registry so that a fresh handler can be created
+        // when the queue returns to ACTIVE (see MessageHandlerRunner).
         if (reply === 'QUEUE_STOPPED') {
           this.logger.warn(
-            `Cannot checkout message ${messageId}: Queue is in STOPPED state. Consumer will stop processing from this queue.`,
+            `Cannot checkout message ${messageId}: Queue is in STOPPED state. Requesting shutdown of this message handler.`,
           );
-          // Shutdown this message handler as queue is stopped
-          this.shutdown(() => {
-            this.logger.debug(
-              `MessageHandler for queue ${this.queue.queueParams.name} shut down due to STOPPED state`,
-            );
-          });
+          this.emit(
+            'shutdownRequired',
+            EMessageUnacknowledgementCause.QUEUE_STOPPED,
+            this.consumerContext.consumerId,
+            this.queue,
+          );
           return;
         }
 
         if (reply === 'QUEUE_LOCKED') {
           this.logger.warn(
-            `Cannot checkout message ${messageId}: Queue is in LOCKED state. Consumer will stop processing from this queue.`,
+            `Cannot checkout message ${messageId}: Queue is in LOCKED state. Requesting shutdown of this message handler.`,
           );
-          // Shutdown this message handler as queue is locked
-          this.shutdown(() => {
-            this.logger.debug(
-              `MessageHandler for queue ${this.queue.queueParams.name} shut down due to LOCKED state`,
-            );
-          });
+          this.emit(
+            'shutdownRequired',
+            EMessageUnacknowledgementCause.QUEUE_LOCKED,
+            this.consumerContext.consumerId,
+            this.queue,
+          );
           return;
         }
 
         if (reply === 'QUEUE_INVALID_STATE') {
           this.logger.warn(
-            `Cannot checkout message ${messageId}: Queue is in invalid state. Consumer will stop processing from this queue.`,
+            `Cannot checkout message ${messageId}: Queue is in invalid state. Requesting shutdown of this message handler.`,
           );
-          // Shutdown this message handler as queue is in invalid state
-          this.shutdown(() => {
-            this.logger.debug(
-              `MessageHandler for queue ${this.queue.queueParams.name} shut down due to invalid state`,
-            );
-          });
+          this.emit(
+            'shutdownRequired',
+            EMessageUnacknowledgementCause.QUEUE_INVALID_STATE,
+            this.consumerContext.consumerId,
+            this.queue,
+          );
           return;
         }
 

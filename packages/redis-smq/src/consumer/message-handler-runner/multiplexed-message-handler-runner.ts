@@ -93,6 +93,13 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
 
   /**
    * Creates a new MultiplexedMessageHandler instance for the given queue.
+   *
+   * Lifecycle listeners are attached via the base class's
+   * attachHandlerListeners(), which wires both 'error' and 'shutdownRequired'.
+   * The base implementation relies on `this.shutdownMessageHandler` being
+   * dynamically dispatched, so the override below (which clears
+   * `activeMessageHandler` and schedules the next tick) still runs when a
+   * multiplexed handler requests shutdown.
    */
   protected override createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
@@ -104,18 +111,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       handlerParams,
       this.scheduleNextTick,
     );
-    instance.on('error', (err) => {
-      this.logger.error(
-        `MultiplexedMessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
-      );
-      this.shutdownMessageHandler(instance, (err) => {
-        if (err) {
-          this.logger.error(
-            `Failed to shutdown handler ${instance.getId()}: ${err.message}`,
-          );
-        }
-      });
-    });
+    this.attachHandlerListeners(instance);
     this.messageHandlerInstances.push(instance);
     this.logger.debug(
       `Created MultiplexedMessageHandler (ID: ${instance.getId()}) for queue: ${

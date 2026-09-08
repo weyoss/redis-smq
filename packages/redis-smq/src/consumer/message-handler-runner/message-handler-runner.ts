@@ -15,6 +15,7 @@ import {
   IConsumerMessageHandlerParams,
   TConsumerMessageHandler,
 } from '../message-handler/types/index.js';
+import { EMessageUnacknowledgementCause } from '../message-handler/consume-message/types/index.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { QueueStateChangeHandler } from './queue-state-change-handler.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
@@ -102,6 +103,58 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   }
 
   /**
+   * Attach lifecycle listeners to a freshly created handler instance.
+   *
+   * Both the base runner and the multiplexed runner create handlers; the
+   * wiring is identical, so it lives here. Subclasses call this from their
+   * own createMessageHandlerInstance().
+   *
+   * Two events are wired:
+   *
+   * - 'error': the handler hit a runtime error. Log, then shut it down.
+   *   The supervisor will recreate it on the next reconciliation tick
+   *   if the queue is still active.
+   *
+   * - 'shutdownRequired': the handler cannot continue (queue is STOPPED,
+   *   LOCKED, or otherwise non-runnable). Remove the instance from
+   *   `messageHandlerInstances` so that when the queue returns to ACTIVE,
+   *   a fresh handler can be created. Without this, a stopped instance
+   *   remains in the array and blocks restart via the "already running"
+   *   guard in startMessageHandler().
+   *
+   * `shutdownMessageHandler` is dynamically dispatched, so the multiplexed
+   * override (which also clears `activeMessageHandler` and schedules the
+   * next tick) still runs.
+   */
+  protected attachHandlerListeners(instance: MessageHandler): void {
+    instance.on('error', (err) => {
+      this.logger.error(
+        `MessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
+      );
+      this.shutdownMessageHandler(instance, (shutdownErr) => {
+        if (shutdownErr) {
+          this.logger.error(
+            `Failed to shutdown handler ${instance.getId()}: ${shutdownErr.message}`,
+          );
+        }
+      });
+    });
+
+    instance.on('shutdownRequired', (cause) => {
+      this.logger.debug(
+        `MessageHandler [${instance.getId()}] requested shutdown: ${EMessageUnacknowledgementCause[cause]}`,
+      );
+      this.shutdownMessageHandler(instance, (shutdownErr) => {
+        if (shutdownErr) {
+          this.logger.error(
+            `Failed to shutdown handler ${instance.getId()}: ${shutdownErr.message}`,
+          );
+        }
+      });
+    });
+  }
+
+  /**
    * Schedules the next reconciliation check.
    */
   protected scheduleReconciliation = (): void => {
@@ -120,11 +173,12 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected reconcileHandlers = (): void => {
     if (!this.isOperational()) return;
 
-    //this.logger.debug('Running handler reconciliation...');
+    // Only count OPERATIONAL instances as "running". A stopped instance
+    // that lingers in messageHandlerInstances must not mask a zombie.
     const runningQueues = new Set(
-      this.messageHandlerInstances.map((i) =>
-        this.getQueueIdentifier(i.getQueue()),
-      ),
+      this.messageHandlerInstances
+        .filter((i) => i.isOperational())
+        .map((i) => this.getQueueIdentifier(i.getQueue())),
     );
 
     const zombieHandlers = this.messageHandlers.filter(
@@ -175,13 +229,16 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
         this.scheduleReconciliation();
       });
     } else {
-      // this.logger.debug('No zombie handlers found.');
       this.scheduleReconciliation();
     }
   };
 
   /**
    * Finds a running message handler instance for the given queue.
+   *
+   * Note: this returns the instance regardless of whether it is currently
+   * operational. Callers that need an operational instance must check
+   * `instance.isOperational()` themselves.
    */
   protected getMessageHandlerInstance(
     queue: IQueueParsedParams,
@@ -211,18 +268,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       handlerParams,
       true,
     );
-    instance.on('error', (err) => {
-      this.logger.error(
-        `MessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
-      );
-      this.shutdownMessageHandler(instance, (err) => {
-        if (err) {
-          this.logger.error(
-            `Failed to shutdown handler ${instance.getId()}: ${err.message}`,
-          );
-        }
-      });
-    });
+    this.attachHandlerListeners(instance);
     this.messageHandlerInstances.push(instance);
     return instance;
   }
@@ -242,13 +288,18 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       return cb();
     }
 
-    // Avoid creating a duplicate instance if one already exists
-    if (this.getMessageHandlerInstance(handlerParams.queue)) {
+    // Avoid creating a duplicate instance if an OPERATIONAL one exists.
+    // A stopped instance may still be in the array between a shutdown
+    // event firing and the shutdown completion callback running; in that
+    // window we should not block, but the shutdown will remove it shortly.
+    const existing = this.getMessageHandlerInstance(handlerParams.queue);
+    if (existing && existing.isOperational()) {
       this.logger.warn(
         `A message handler instance for queue ${handlerParams.queue.queueParams.name} is already running.`,
       );
       return cb();
     }
+
     const handler = this.createMessageHandlerInstance(handlerParams);
     handler.run((err) => {
       if (err) {
@@ -386,12 +437,27 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       return cb(null, false);
     }
 
-    // Check if already running
-    if (this.getMessageHandlerInstance(queue)) {
+    // Check if an OPERATIONAL instance is already running. A stopped
+    // instance that has not yet been cleaned up must not block restart.
+    const existing = this.getMessageHandlerInstance(queue);
+    if (existing && existing.isOperational()) {
       this.logger.debug(
         `Handler already running for queue: ${queue.queueParams.name}`,
       );
       return cb(null, false);
+    }
+
+    // If a stopped instance is lingering, remove it before creating a
+    // fresh one. This should not normally happen (attachHandlerListeners
+    // removes instances on shutdownRequired), but it is a cheap safety
+    // net against future lifecycle races.
+    if (existing) {
+      this.logger.debug(
+        `Removing stale non-operational handler instance for queue: ${queue.queueParams.name}`,
+      );
+      this.messageHandlerInstances = this.messageHandlerInstances.filter(
+        (i) => i.getId() !== existing.getId(),
+      );
     }
 
     // Check queue state before starting
@@ -496,10 +562,9 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   getQueueWithStatus(): IConsumerQueuesWithStatus[] {
     const queues = this.getQueues();
     return queues.map((queue: IQueueParsedParams) => {
+      const instance = this.getMessageHandlerInstance(queue);
       const status: IConsumerQueuesWithStatus['status'] =
-        this.getMessageHandlerInstance(queue)?.isRunning()
-          ? 'active'
-          : 'stopped';
+        instance && instance.isRunning() ? 'active' : 'stopped';
       return {
         queue,
         status,
