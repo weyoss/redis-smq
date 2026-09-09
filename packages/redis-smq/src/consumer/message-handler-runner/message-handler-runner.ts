@@ -59,6 +59,12 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
   /**
    * Generates a unique, consistent identifier for a queue configuration.
+   *
+   * NOTE: this string is used for identity comparison between a running
+   * handler instance and its configuration entry. For PUB/SUB queues without
+   * an explicit consumer group, the running handler generates an ephemeral
+   * group ID during goingUp() and the config must be synced to match it —
+   * see runMessageHandler() below.
    */
   protected getQueueIdentifier(queue: IQueueParsedParams): string {
     return `${queue.queueParams.ns}:${queue.queueParams.name}:${queue.groupId ?? ''}`;
@@ -66,12 +72,31 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
   /**
    * Checks if two queue parameter objects represent the same queue.
+   *
+   * A lookup with `groupId === null` matches any group for the same
+   * (ns, name). This is required for operations like `consumer.cancel('q')`
+   * or a `stop`/`start` triggered from a caller-supplied queue identifier:
+   * the caller passes only the queue name, but the running handler may be
+   * using an ephemeral consumer group (`cid-<consumerId>`) that was
+   * generated internally and is not visible to the caller.
+   *
+   * A lookup with a specific `groupId` requires an exact match, so
+   * consumers that use explicit groups can still address a single group.
    */
   protected isSameQueue(
-    q1: IQueueParsedParams,
-    q2: IQueueParsedParams,
+    candidate: IQueueParsedParams,
+    lookup: IQueueParsedParams,
   ): boolean {
-    return this.getQueueIdentifier(q1) === this.getQueueIdentifier(q2);
+    if (
+      candidate.queueParams.ns !== lookup.queueParams.ns ||
+      candidate.queueParams.name !== lookup.queueParams.name
+    ) {
+      return false;
+    }
+    if (lookup.groupId === null) {
+      return true;
+    }
+    return candidate.groupId === lookup.groupId;
   }
 
   /**
@@ -275,6 +300,23 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
   /**
    * Starts a message handler for the given parameters.
+   *
+   * After the handler has finished its goingUp() sequence, the config entry
+   * is synced with the handler's effective queue. For PUB/SUB queues without
+   * an explicit consumer group, the handler generates an ephemeral group ID
+   * during _prepareConsumerGroup() and mutates its own queue to include it.
+   * Without this sync, the config would still carry `groupId: null`, and every
+   * subsequent lookup that compares a config-sourced queue against the running
+   * instance's identifier would fail:
+   *
+   *   - stopMessageHandler (queue -> STOPPED/PAUSED/LOCKED transitions)
+   *   - removeMessageHandler (consumer.cancel())
+   *   - startMessageHandler (queue -> ACTIVE transitions)
+   *   - reconcileHandlers (the supervisor's zombie scan)
+   *
+   * The handlerParams object is the same reference that lives in
+   * `this.messageHandlers`, so mutating `handlerParams.queue` propagates
+   * to the registry.
    */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
@@ -302,6 +344,24 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
     const handler = this.createMessageHandlerInstance(handlerParams);
     handler.run((err) => {
+      // Sync the handler's effective queue back into the config entry.
+      //
+      // This runs whether run() succeeded or failed. On a partial failure,
+      // the handler may have completed _prepareConsumerGroup before a later
+      // goingUp hook errored, in which case its queue has already been
+      // mutated and the config must still adopt it — otherwise the cleanup
+      // path (removeMessageHandler, called below on error) will not find
+      // the instance.
+      const effectiveQueue = handler.getQueue();
+      if (!this.isSameQueue(effectiveQueue, handlerParams.queue)) {
+        this.logger.debug(
+          `Syncing effective queue for ${handlerParams.queue.queueParams.name}: ` +
+            `groupId '${handlerParams.queue.groupId ?? 'null'}' -> ` +
+            `'${effectiveQueue.groupId ?? 'null'}'`,
+        );
+        handlerParams.queue = effectiveQueue;
+      }
+
       if (err) {
         this.logger.error(
           `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,

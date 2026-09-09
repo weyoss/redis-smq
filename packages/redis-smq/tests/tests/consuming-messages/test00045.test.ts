@@ -15,7 +15,7 @@ import {
   QueueStateManager,
 } from '../../../src/index.js';
 import { createQueue } from '../../common/message-producing-consuming.js';
-import bluebird from 'bluebird';
+import { waitFor } from '../../common/wait-for.js';
 
 it('removes the handler from the runner when the queue is stopped mid-flight', async () => {
   await createQueue('orders', EQueueType.FIFO_QUEUE);
@@ -37,18 +37,18 @@ it('removes the handler from the runner when the queue is stopped mid-flight', a
   const queueStateManager = new QueueStateManager();
   await queueStateManager.stop('orders', null);
 
-  await bluebird.delay(5000); // let the state event propagate
-
   // Before the fix: the handler's shutdown() is called, but the runner
   // still holds a reference. After the fix: the instance is removed.
-  expect(runner.messageHandlerInstances.length).toBe(0);
+  await waitFor(() => {
+    return runner.messageHandlerInstances.length == 0;
+  }, 5000);
 
   // And when the queue goes back to ACTIVE, a new handler is created
   await queueStateManager.resume('orders', null);
 
-  await bluebird.delay(5000); // let the state event propagate
-
-  expect(runner.messageHandlerInstances.length).toBe(1);
+  await waitFor(() => {
+    return runner.messageHandlerInstances.length == 1;
+  }, 5000);
 
   await consumer.shutdown();
 });

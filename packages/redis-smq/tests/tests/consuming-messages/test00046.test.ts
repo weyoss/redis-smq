@@ -22,6 +22,7 @@ import {
 } from '../../../index.js';
 import { _setQueueState } from '../../../src/queue-state-manager/_/_set-queue-state.js';
 import { withSharedPoolConnection } from '../../../src/common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { waitFor } from '../../common/wait-for.js';
 
 /**
  * Write a queue's operational state directly to Redis, bypassing
@@ -57,29 +58,6 @@ async function setQueueStateDirectly(
       (err) => (err ? reject(err) : resolve()),
     );
   });
-}
-
-/**
- * Poll until predicate() returns true, or throw after timeoutMs.
- * The shutdownRequested -> shutdownMessageHandler sequence crosses two async
- * hops (Redis script round-trip + handler.shutdown's goingDown hooks), so we
- * cannot assert synchronously.
- */
-async function waitFor(
-  predicate: () => boolean,
-  timeoutMs = 2000,
-  intervalMs = 20,
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (predicate()) return;
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
-  if (!predicate()) {
-    throw new Error(
-      `waitFor: predicate did not become true within ${timeoutMs}ms`,
-    );
-  }
 }
 
 describe('MessageHandler: processMessage -> shutdownRequired', () => {
