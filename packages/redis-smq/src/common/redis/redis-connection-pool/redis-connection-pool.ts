@@ -143,6 +143,19 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
   protected connectionIdCounter = 0;
 
   /**
+   * Number of connections currently being created but not yet present in
+   * `this.connections`. Incremented synchronously at the top of
+   * createConnection(), decremented in the init callback (both success and
+   * error paths).
+   *
+   * Included in every capacity check so N concurrent acquires see the same
+   * effective "used" value. Without this, two acquires observing the same
+   * stale `connections.size` would both call createConnection, and the pool
+   * would exceed `max` by one per race.
+   */
+  protected pendingCreations = 0;
+
+  /**
    * Creates a new Redis Connection Pool instance.
    *
    * @param redisConfig - Configuration for Redis client connections
@@ -366,19 +379,46 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * Creates a new Redis connection and adds it to the pool.
    *
    * This method:
-   * 1. Instantiates a new RedisClient with the pool's configuration
-   * 2. Initializes the client connection
-   * 3. Creates a pooled connection wrapper with metadata
-   * 4. Sets up error handling for the connection
-   * 5. Adds the connection to the pool
+   * 1. Reserves a capacity slot by incrementing `pendingCreations`
+   * 2. Instantiates a new RedisClient with the pool's configuration
+   * 3. Initializes the client connection
+   * 4. Releases the reservation (success or failure)
+   * 5. On success, wraps the client in a pooled connection and adds it
+   *
+   * The reservation is taken before any async work so that concurrent
+   * callers observe the pool's true used capacity immediately, without
+   * racing each other past the max check.
    *
    * @param cb - Callback function invoked with the new connection or creation error
    */
   protected createConnection(cb: ICallback<IRedisPooledConnection>): void {
+    // Reserve a slot immediately. Every capacity check in this class reads
+    // `connections.size + pendingCreations`, so this increment is what makes
+    // concurrent acquire() calls see the reservation and queue instead of
+    // racing to create.
+    this.pendingCreations++;
+
     const redisClient = new RedisClient(this.redisConfig);
 
     redisClient.init((err) => {
+      // Release the reservation unconditionally. On success, the connection
+      // is about to be added to `connections`, so the net effect on used
+      // capacity is zero. On failure, nothing is added, so the reservation
+      // must be released to keep the counter honest.
+      this.pendingCreations--;
+
       if (err) return cb(err);
+
+      // Race guard: if shutdown began while the init was in flight, the
+      // connection must not be added to the pool. The shutdown loop
+      // iterates `connections` on entry and would miss this new entry;
+      // adding it would leak a live socket after shutdown completes.
+      if (this.shuttingDown) {
+        const clientInstance = redisClient.getInstance();
+        return clientInstance.halt(() =>
+          cb(new Error('Connection pool is shutting down')),
+        );
+      }
 
       const clientInstance = redisClient.getInstance();
       const connectionId = this.generateConnectionId();
@@ -562,7 +602,9 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
   /**
    * Handles connection errors by emitting events and replacing failed connections.
    *
-   * Automatically creates replacement connections if the pool falls below minimum size.
+   * Automatically creates replacement connections if the pool falls below
+   * the minimum size, accounting for any replacement creations already in
+   * flight so concurrent errors do not over-create.
    *
    * @param connectionId - ID of the connection that encountered an error
    * @param error - The error that occurred on the connection
@@ -571,8 +613,13 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
     this.emit('connectionError', error);
     this.destroyConnection(connectionId);
 
-    // If we're below minimum connections, create a new one
-    if (this.connections.size < this.poolConfig.min && !this.shuttingDown) {
+    // If we're below the minimum, replace the lost connection. The check
+    // accounts for in-flight creations so that two concurrent errors do
+    // not each spawn a replacement and push the pool above `min`.
+    if (
+      this.connections.size + this.pendingCreations < this.poolConfig.min &&
+      !this.shuttingDown
+    ) {
       this.createConnection((err) => {
         if (err) {
           this.emit(
@@ -632,46 +679,15 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * Acquires a connection from the pool with the specified acquisition mode.
    *
    * This method attempts to find an available connection matching the requested mode.
-   * If no connection is available, it will create a new one (if under max limit) or
-   * queue the request with a timeout.
+   * If no connection is available, it will create a new one (if under the effective
+   * max limit) or queue the request with a timeout.
+   *
+   * The capacity check uses `connections.size + pendingCreations` so that a
+   * burst of concurrent acquire() calls cannot each observe the same stale
+   * size and collectively push the pool above `max`.
    *
    * @param mode - The acquisition mode determining connection sharing behavior
    * @param cb - Callback function invoked with the acquired connection or error
-   *
-   * @example Exclusive Mode
-   * ```typescript
-   * // Exclusive acquisition - connection is locked until released
-   * pool.acquire(ERedisConnectionAcquisitionMode.EXCLUSIVE, (err, client) => {
-   *   if (err) {
-   *     console.error('Failed to acquire exclusive connection:', err);
-   *     return;
-   *   }
-   *
-   *   // Connection is exclusively yours - no other operations can use it
-   *   client.multi()
-   *     .set('key1', 'value1')
-   *     .set('key2', 'value2')
-   *     .exec((err, results) => {
-   *       pool.release(client); // Must release when done
-   *     });
-   * });
-   * ```
-   *
-   * @example Shared Mode
-   * ```typescript
-   * // Shared acquisition - connection can be used by multiple clients
-   * pool.acquire(ERedisConnectionAcquisitionMode.SHARED, (err, client) => {
-   *   if (err) {
-   *     console.error('Failed to acquire shared connection:', err);
-   *     return;
-   *   }
-   *
-   *   // Connection may be shared with other operations
-   *   client.get('user:123', (err, userData) => {
-   *     pool.release(client); // Optional but recommended
-   *   });
-   * });
-   * ```
    */
   acquire(
     mode: ERedisConnectionAcquisitionMode,
@@ -691,8 +707,11 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
       return this.prepareConnection(availableConnection, mode, cb);
     }
 
-    // No available connections, check if we can create a new one
-    if (this.connections.size < this.poolConfig.max) {
+    // No available connections. Check effective capacity, which includes
+    // in-flight creations. Without `pendingCreations`, two acquires calling
+    // this method on the same tick would both see size < max, both create,
+    // and push the pool to max + 1 (or higher under sustained concurrency).
+    if (this.connections.size + this.pendingCreations < this.poolConfig.max) {
       return this.createConnection((err, connection) => {
         if (err) return cb(err);
         if (!connection) return cb(new Error('Failed to create connection'));
@@ -700,7 +719,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
       });
     }
 
-    // Pool is at max capacity, add to waiting queue
+    // Pool is at effective capacity, add to waiting queue
     this.waitingQueue.push({
       callback: cb,
       timestamp: Date.now(),
@@ -765,7 +784,8 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * Destroys a specific connection and ensures minimum pool size is maintained.
    *
    * This method forcibly removes a connection from the pool and creates replacement
-   * connections if necessary to maintain the configured minimum pool size.
+   * connections if necessary to maintain the configured minimum pool size. The
+   * replenishment accounts for in-flight creations.
    *
    * @param client - The Redis client connection to destroy
    * @param cb - Callback function invoked when destruction is complete
@@ -789,18 +809,18 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
 
     this.destroyConnection(connectionId);
 
-    // Check if we need to maintain minimum pool size
-    const currentPoolSize = this.connections.size;
+    // Check if we need to maintain minimum pool size, accounting for any
+    // creation that may already be in flight.
+    const effectiveSize = this.connections.size + this.pendingCreations;
     const minConnections = this.poolConfig.min;
 
-    if (currentPoolSize < minConnections) {
-      const connectionsToCreate = minConnections - currentPoolSize;
+    if (effectiveSize < minConnections) {
+      const connectionsToCreate = minConnections - effectiveSize;
 
       // Create new connections to maintain minimum pool size
       for (let i = 0; i < connectionsToCreate; i++) {
         this.createConnection((err) => {
           if (err) {
-            // Log error but don't fail the destroy operation
             this.emit('connectionError', err);
           }
         });
@@ -814,23 +834,13 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * Retrieves comprehensive statistics about the current pool state.
    *
    * Provides detailed information about connection usage patterns, including
-   * shared connection metrics and queue status.
+   * shared connection metrics, pending creations, and queue status.
+   *
+   * `total + pendingCreations` is the pool's effective used capacity and
+   * should never exceed `max`. During a burst of concurrent acquisitions,
+   * `pendingCreations` may be non-zero while `total` lags behind.
    *
    * @returns Detailed statistics object with connection counts and usage information
-   *
-   * @example
-   * ```typescript
-   * const stats = pool.getStats();
-   * console.log(`Pool Status:
-   *   Total Connections: ${stats.total}
-   *   Available: ${stats.available}
-   *   In Use: ${stats.inUse}
-   *   Exclusively Acquired: ${stats.exclusively}
-   *   Shared Connections: ${stats.shared}
-   *   Total Shared Users: ${stats.sharedUsers}
-   *   Waiting Requests: ${stats.waiting}
-   * `);
-   * ```
    */
   getStats(): {
     total: number;
@@ -840,6 +850,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
     shared: number;
     sharedUsers: number;
     waiting: number;
+    pendingCreations: number;
   } {
     let exclusively = 0;
     let shared = 0;
@@ -865,6 +876,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
       shared,
       sharedUsers,
       waiting: this.waitingQueue.length,
+      pendingCreations: this.pendingCreations,
     };
   }
 
