@@ -27,6 +27,18 @@ import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
 
 /**
+ * An event that arrived while the initial load was in flight. Events are
+ * recorded in arrival order and replayed against the cache once the load
+ * settles, so that no group creation or deletion that happened during the
+ * load is lost.
+ */
+export type TBufferedEvent =
+  | { type: 'queueCreated'; queue: IQueueParams; properties: IQueueProperties }
+  | { type: 'queueDeleted'; queue: IQueueParams }
+  | { type: 'groupCreated'; queue: IQueueParams; groupId: string }
+  | { type: 'groupDeleted'; queue: IQueueParams; groupId: string };
+
+/**
  * Manages an in-memory cache of consumer groups for PUB/SUB queues.
  *
  * This class is responsible for:
@@ -38,6 +50,21 @@ import { InternalEventBus } from '../event-bus/internal-event-bus.js';
  *   during the message production path.
  * - Operating resiliently, ensuring that a failure to process one queue
  *   during the initial load does not prevent the entire system from starting.
+ *
+ * Concurrency note — events during the initial load:
+ *
+ * The resolver subscribes to queue/group events before the load begins,
+ * so it can observe changes that happen while it is reading the queues.
+ * However, during the load, `pubSubTargets` is being populated and any
+ * event applied against a partially-populated cache may be lost (if the
+ * entry does not yet exist) or overwritten (if the load's own read for
+ * the same queue completes afterwards with a stale response).
+ *
+ * To handle this, `initialLoadInProgress` is set before the first Redis
+ * read and cleared after the last one. Every queue/group event that
+ * arrives during that interval is recorded in `bufferedEvents`, and the
+ * buffer is replayed against the cache (in arrival order) once the load
+ * settles. Once the flag is cleared, events are applied directly.
  */
 export class PubSubTargetResolver extends Runnable<
   Pick<TRedisClientEvent, 'error'>
@@ -45,14 +72,31 @@ export class PubSubTargetResolver extends Runnable<
   protected internalEventBus;
   protected producerId;
   protected logger;
+
   /**
    * In-memory cache.
-   * Key: A string identifier for the queue (e.g., "my-queue@my-ns").
-   * Value: An array of consumer group IDs.
+   * Key: `name@ns` for a queue.
+   * Value: the IDs of every consumer group currently attached to it.
    *
-   * A queue is only present in this cache if its delivery model is PUB_SUB.
+   * A queue is only present here if its delivery model is PUB_SUB.
    */
   protected pubSubTargets: Record<string, string[]> = {};
+
+  /**
+   * True from the moment loadAndCacheInitialTargets() begins its first
+   * Redis read until the last read for the last queue has settled and the
+   * buffered events have been replayed.
+   *
+   * While this flag is true, every queue/group event is recorded in
+   * `bufferedEvents` instead of being applied directly.
+   */
+  protected initialLoadInProgress = false;
+
+  /**
+   * Events received while `initialLoadInProgress` was true, in arrival
+   * order. Drained once the load completes.
+   */
+  protected bufferedEvents: TBufferedEvent[] = [];
 
   constructor(producer: Producer, logger: ILogger) {
     super();
@@ -64,11 +108,6 @@ export class PubSubTargetResolver extends Runnable<
     );
   }
 
-  /**
-   * Generates a unique string key for a queue.
-   * @param queue - The queue parameters.
-   * @returns A string in the format "name@ns".
-   */
   private getQueueKey(queue: IQueueParams): string {
     return `${queue.name}@${queue.ns}`;
   }
@@ -85,40 +124,48 @@ export class PubSubTargetResolver extends Runnable<
     );
   }
 
-  /**
-   * Event handler for 'queue.consumerGroupCreated'.
-   * Adds a consumer group to a PUB/SUB queue's entry in the cache.
-   */
-  protected onConsumerGroupCreated = (queue: IQueueParams, groupId: string) => {
-    const queueKey = this.getQueueKey(queue);
-    this.logger.debug(
-      `Handling 'consumerGroupCreated' event for group [${groupId}] on queue [${queueKey}]`,
-    );
+  // ─── Cache mutation primitives ───────────────────────────────────────────
+  //
+  // These are the single source of truth for how the cache reflects each
+  // event. Both the direct (post-load) path and the buffered-replay path
+  // call them, so there is exactly one implementation of each rule.
 
-    // The queue might not be a PUB/SUB queue, in which case it won't be in the cache.
-    if (this.pubSubTargets[queueKey]) {
-      const targets = this.pubSubTargets[queueKey];
-      if (!targets.includes(groupId)) {
-        targets.push(groupId);
-        this.logger.debug(
-          `Added group [${groupId}] to cache for queue [${queueKey}].`,
-        );
-      }
+  private applyQueueCreated(
+    queue: IQueueParams,
+    properties: IQueueProperties,
+  ): void {
+    if (properties.deliveryModel !== EQueueDeliveryModel.PUB_SUB) {
+      // A non-PUB/SUB queue is not tracked in the cache.
+      return;
     }
-  };
-
-  /**
-   * Event handler for 'queue.consumerGroupDeleted'.
-   * Removes a consumer group from a PUB/SUB queue's entry in the cache.
-   */
-  protected onConsumerGroupDeleted = (queue: IQueueParams, groupId: string) => {
     const queueKey = this.getQueueKey(queue);
-    this.logger.debug(
-      `Handling 'consumerGroupDeleted' event for group [${groupId}] on queue [${queueKey}]`,
-    );
+    this.pubSubTargets[queueKey] = this.pubSubTargets[queueKey] ?? [];
+    this.logger.debug(`Added PUB/SUB queue [${queueKey}] to cache.`);
+  }
 
+  private applyQueueDeleted(queue: IQueueParams): void {
+    const queueKey = this.getQueueKey(queue);
     if (this.pubSubTargets[queueKey]) {
-      const targets = this.pubSubTargets[queueKey];
+      delete this.pubSubTargets[queueKey];
+      this.logger.debug(`Removed queue [${queueKey}] from cache.`);
+    }
+  }
+
+  private applyGroupCreated(queue: IQueueParams, groupId: string): void {
+    const queueKey = this.getQueueKey(queue);
+    const targets = this.pubSubTargets[queueKey];
+    if (targets && !targets.includes(groupId)) {
+      targets.push(groupId);
+      this.logger.debug(
+        `Added group [${groupId}] to cache for queue [${queueKey}].`,
+      );
+    }
+  }
+
+  private applyGroupDeleted(queue: IQueueParams, groupId: string): void {
+    const queueKey = this.getQueueKey(queue);
+    const targets = this.pubSubTargets[queueKey];
+    if (targets) {
       const index = targets.indexOf(groupId);
       if (index > -1) {
         targets.splice(index, 1);
@@ -127,12 +174,59 @@ export class PubSubTargetResolver extends Runnable<
         );
       }
     }
+  }
+
+  // ─── Event handlers ──────────────────────────────────────────────────────
+  //
+  // Each handler applies its event to the cache, unless the initial load
+  // is in progress, in which case the event is buffered and replayed once
+  // the load settles.
+
+  protected onConsumerGroupCreated = (queue: IQueueParams, groupId: string) => {
+    const queueKey = this.getQueueKey(queue);
+    this.logger.debug(
+      `Handling 'consumerGroupCreated' event for group [${groupId}] on queue [${queueKey}]`,
+    );
+
+    if (this.initialLoadInProgress) {
+      // Queue entry may not exist yet, or may be about to be overwritten by
+      // the load's own read for the same queue. Buffer the event; it will
+      // be replayed against the final cache state.
+      this.bufferedEvents.push({
+        type: 'groupCreated',
+        queue,
+        groupId,
+      });
+      return;
+    }
+
+    // The queue is guaranteed PUB/SUB here: _saveConsumerGroup rejects any
+    // other delivery model before publishing this event. The cache entry
+    // exists unless the queue was never observed by the load and no
+    // queue-created event has arrived since — in which case there is
+    // nothing to attach this group to, and dropping is the only sane
+    // behavior.
+    this.applyGroupCreated(queue, groupId);
   };
 
-  /**
-   * Event handler for 'queue.queueCreated'.
-   * If the new queue is a PUB/SUB queue, it adds an entry for it in the cache.
-   */
+  protected onConsumerGroupDeleted = (queue: IQueueParams, groupId: string) => {
+    const queueKey = this.getQueueKey(queue);
+    this.logger.debug(
+      `Handling 'consumerGroupDeleted' event for group [${groupId}] on queue [${queueKey}]`,
+    );
+
+    if (this.initialLoadInProgress) {
+      this.bufferedEvents.push({
+        type: 'groupDeleted',
+        queue,
+        groupId,
+      });
+      return;
+    }
+
+    this.applyGroupDeleted(queue, groupId);
+  };
+
   protected onQueueCreated = (
     queue: IQueueParams,
     properties: IQueueProperties,
@@ -142,28 +236,35 @@ export class PubSubTargetResolver extends Runnable<
       `Handling 'queueCreated' event for queue [${queueKey}] with delivery model [${EQueueDeliveryModel[properties.deliveryModel]}]`,
     );
 
-    if (properties.deliveryModel === EQueueDeliveryModel.PUB_SUB) {
-      this.pubSubTargets[queueKey] = this.pubSubTargets[queueKey] ?? [];
-      this.logger.debug(`Added PUB/SUB queue [${queueKey}] to cache.`);
+    if (this.initialLoadInProgress) {
+      this.bufferedEvents.push({
+        type: 'queueCreated',
+        queue,
+        properties,
+      });
+      return;
     }
+
+    this.applyQueueCreated(queue, properties);
   };
 
-  /**
-   * Event handler for 'queue.queueDeleted'.
-   * Removes the queue's entry from the cache.
-   */
   protected onQueueDeleted = (queue: IQueueParams) => {
     const queueKey = this.getQueueKey(queue);
     this.logger.debug(`Handling 'queueDeleted' event for queue [${queueKey}]`);
-    if (this.pubSubTargets[queueKey]) {
-      delete this.pubSubTargets[queueKey];
-      this.logger.debug(`Removed queue [${queueKey}] from cache.`);
+
+    if (this.initialLoadInProgress) {
+      this.bufferedEvents.push({
+        type: 'queueDeleted',
+        queue,
+      });
+      return;
     }
+
+    this.applyQueueDeleted(queue);
   };
 
-  /**
-   * Subscribes to real-time events to keep the cache synchronized.
-   */
+  // ─── Subscription management ─────────────────────────────────────────────
+
   protected subscribeToEvents = (cb: ICallback<void>): void => {
     this.logger.debug('Subscribing to queue and consumer group events...');
     this.internalEventBus.on('queue.queueCreated', this.onQueueCreated);
@@ -180,9 +281,6 @@ export class PubSubTargetResolver extends Runnable<
     cb();
   };
 
-  /**
-   * Unsubscribes from all events during shutdown.
-   */
   protected unsubscribeFromEvents = (cb: ICallback): void => {
     this.logger.debug('Unsubscribing from events...');
     this.internalEventBus.removeListener(
@@ -205,24 +303,24 @@ export class PubSubTargetResolver extends Runnable<
     cb();
   };
 
-  /**
-   * Performs the initial population of the cache on startup.
-   *
-   * It fetches all queues, identifies those with a PUB/SUB delivery model,
-   * and loads their consumer groups into the cache. This process is designed
-   * to be resilient; if fetching details for one queue fails, it logs the
-   * error and continues with the others, preventing a single faulty queue
-   * from halting the entire producer startup.
-   */
+  // ─── Initial load ────────────────────────────────────────────────────────
+
   protected loadAndCacheInitialTargets = (cb: ICallback<void>): void => {
     this.logger.debug('Loading and caching initial PUB/SUB targets...');
-    withSharedPoolConnection((redisClient, cb) => {
+
+    // Set the buffering flag BEFORE any async work begins. Between this
+    // line and the drain below, no event can be lost: every queue/group
+    // event that fires while the flag is true is appended to
+    // `bufferedEvents` and replayed once the load settles.
+    this.initialLoadInProgress = true;
+
+    withSharedPoolConnection((redisClient, connCb) => {
       async.waterfall(
         [
-          (cb: ICallback<IQueueParams[]>) => {
-            _getQueues(redisClient, cb);
+          (next: ICallback<IQueueParams[]>) => {
+            _getQueues(redisClient, next);
           },
-          (queues: IQueueParams[], cb: ICallback<void>) => {
+          (queues: IQueueParams[], next: ICallback<void>) => {
             this.logger.debug(`Found [${queues.length}] queues to process.`);
             async.eachOf(
               queues,
@@ -233,31 +331,31 @@ export class PubSubTargetResolver extends Runnable<
                 );
                 async.waterfall(
                   [
-                    (cb: ICallback<IQueueProperties>) => {
-                      _getQueueProperties(redisClient, queue, cb);
+                    (nextQ: ICallback<IQueueProperties>) => {
+                      _getQueueProperties(redisClient, queue, nextQ);
                     },
-                    (properties: IQueueProperties, cb: ICallback<void>) => {
+                    (properties: IQueueProperties, nextQ: ICallback<void>) => {
                       if (
                         properties.deliveryModel === EQueueDeliveryModel.PUB_SUB
                       ) {
                         _getConsumerGroups(redisClient, queue, (err, reply) => {
-                          if (err) return cb(err);
+                          if (err) return nextQ(err);
                           const targets = reply ?? [];
                           this.pubSubTargets[queueKey] = targets;
                           this.logger.debug(
                             `Cached [${targets.length}] targets for PUB/SUB queue [${queueKey}].`,
                           );
-                          cb();
+                          nextQ();
                         });
                       } else {
-                        cb();
+                        nextQ();
                       }
                     },
                   ],
                   (err) => {
                     if (err) {
-                      // Log the error but do not propagate it up. A failure in loading
-                      // one queue should not prevent the producer from starting.
+                      // Log and continue: a failure to load one queue must
+                      // not prevent the producer from starting.
                       this.logger.error(
                         `Error processing queue [${queueKey}]. Skipping.`,
                         err,
@@ -267,16 +365,20 @@ export class PubSubTargetResolver extends Runnable<
                   },
                 );
               },
-              () => {
-                this.logger.debug(
-                  'Finished initial loading of PUB/SUB targets.',
-                );
-                cb();
-              },
+              () => next(),
             );
           },
         ],
         (err) => {
+          // Load complete (success or failure). Clear the flag first so
+          // any event fired after this line is applied directly rather
+          // than being appended to a buffer that will not be drained.
+          this.initialLoadInProgress = false;
+
+          // Drain the buffer. This runs synchronously, so no event can
+          // fire between clearing the flag above and finishing the drain.
+          this.replayBufferedEvents();
+
           if (err) {
             this.logger.error(
               'Failed to complete initial target loading.',
@@ -285,22 +387,52 @@ export class PubSubTargetResolver extends Runnable<
           } else {
             this.logger.debug('Initial target cache is ready.');
           }
-          cb(err);
+          connCb(err);
         },
       );
     }, cb);
   };
 
   /**
-   * Clears the cache during shutdown.
+   * Replay every event buffered during the initial load against the cache,
+   * in arrival order. Called once by loadAndCacheInitialTargets() after the
+   * flag is cleared, and exposed as protected for tests.
+   *
+   * Must run synchronously after `initialLoadInProgress` is set to false:
+   * no event can fire between the two, so nothing can slip past the flag.
    */
+  protected replayBufferedEvents(): void {
+    const buffered = this.bufferedEvents;
+    this.bufferedEvents = [];
+    for (const event of buffered) {
+      switch (event.type) {
+        case 'queueCreated':
+          this.applyQueueCreated(event.queue, event.properties);
+          break;
+        case 'queueDeleted':
+          this.applyQueueDeleted(event.queue);
+          break;
+        case 'groupCreated':
+          this.applyGroupCreated(event.queue, event.groupId);
+          break;
+        case 'groupDeleted':
+          this.applyGroupDeleted(event.queue, event.groupId);
+          break;
+      }
+    }
+  }
+
   protected clearCache = (cb: ICallback<void>): void => {
     this.logger.debug('Clearing PUB/SUB target cache...');
     const count = Object.keys(this.pubSubTargets).length;
     this.pubSubTargets = {};
+    this.initialLoadInProgress = false;
+    this.bufferedEvents = [];
     this.logger.debug(`Cleared [${count}] entries from cache.`);
     cb();
   };
+
+  // ─── Public API ──────────────────────────────────────────────────────────
 
   /**
    * Resolves the consumer groups for a given queue.
