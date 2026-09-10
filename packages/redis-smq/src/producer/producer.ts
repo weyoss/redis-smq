@@ -85,12 +85,32 @@ export class Producer extends Runnable<TProducerEvent> {
     return this.redisClient;
   }
 
-  protected _runPubSubTargetResolver = (cb: ICallback): void => {
+  protected runPubSubTargetResolver = (cb: ICallback): void => {
     this.logger.debug('Starting PubSubTargetResolver...');
-    this.pubSubTargetResolver = new PubSubTargetResolver(this, this.logger);
-    this.pubSubTargetResolver.run((err) => {
+
+    const resolver = new PubSubTargetResolver(this, this.logger);
+    this.pubSubTargetResolver = resolver;
+
+    // The resolver is required for the producer to be considered
+    // operational, not just for PUB/SUB fan-out. Its cache is the single
+    // source of truth for a queue's delivery model: an entry means PUB/SUB,
+    // absence means POINT_TO_POINT. resolveTargets() returns
+    // { isPubSub: false } for a missing entry, and there is no other
+    // signal — so a DOWN resolver (whose cache has been cleared by
+    // clearCache() during its goingDown) is indistinguishable from
+    // "every queue is POINT_TO_POINT."
+    resolver.on('error', (err) => {
+      this.logger.error(
+        `PubSubTargetResolver error: ${err.message}. Shutting down producer.`,
+        err,
+      );
+      this.handleError(err);
+    });
+
+    resolver.run((err) => {
       if (err) {
         this.logger.error('Failed to start PubSubTargetResolver.', err);
+        this.pubSubTargetResolver = null;
       } else {
         this.logger.debug('PubSubTargetResolver has been started.');
       }
@@ -98,12 +118,13 @@ export class Producer extends Runnable<TProducerEvent> {
     });
   };
 
-  protected _shutdownPubSubTargetResolver = (cb: ICallback): void => {
+  protected shutdownPubSubTargetResolver = (cb: ICallback): void => {
     if (this.pubSubTargetResolver) {
       this.logger.debug('Shutting down PubSubTargetResolver...');
-      this.pubSubTargetResolver.shutdown(() => {
+      const resolver = this.pubSubTargetResolver;
+      this.pubSubTargetResolver = null;
+      resolver.shutdown(() => {
         this.logger.debug('PubSubTargetResolver has been shut down.');
-        this.pubSubTargetResolver = null;
         cb();
       });
     } else {
@@ -129,7 +150,7 @@ export class Producer extends Runnable<TProducerEvent> {
         this.emit('producer.goingUp', this.id);
         cb();
       },
-      this._runPubSubTargetResolver,
+      this.runPubSubTargetResolver,
     ]);
   }
 
@@ -141,7 +162,7 @@ export class Producer extends Runnable<TProducerEvent> {
   protected override goingDown(): ((cb: ICallback) => void)[] {
     this.emit('producer.goingDown', this.id);
     return [
-      this._shutdownPubSubTargetResolver,
+      this.shutdownPubSubTargetResolver,
       (cb: ICallback) => {
         if (this.redisClient) {
           RedisConnectionPool.getInstance().release(this.redisClient);
@@ -157,16 +178,30 @@ export class Producer extends Runnable<TProducerEvent> {
     this.emit('producer.down', this.id);
   }
 
+  /**
+   * Returns the PubSubTargetResolver if it is present AND operational.
+   *
+   * A non-null resolver that has transitioned to DOWN (for example after
+   * a runtime error) is treated the same as a missing resolver: callers
+   * must not use its now-cleared cache to decide whether a queue is
+   * PUB/SUB.
+   */
   protected getPubSubTargetResolver(): PubSubTargetResolver {
     if (!this.pubSubTargetResolver) {
       throw new PanicError({
         message: 'Expected PubSubTargetResolver to be running.',
       });
     }
+    if (!this.pubSubTargetResolver.isOperational()) {
+      throw new PanicError({
+        message:
+          'PubSubTargetResolver is not operational. The producer cannot resolve queue delivery models.',
+      });
+    }
     return this.pubSubTargetResolver;
   }
 
-  protected _dispatch(
+  protected dispatch(
     message: MessageEnvelope,
     queue: IQueueParams,
     cb: ICallback<string>,
@@ -214,14 +249,32 @@ export class Producer extends Runnable<TProducerEvent> {
     });
   }
 
-  protected _produceToQueue(
+  protected produceToQueue(
     message: ProducibleMessage,
     queue: IQueueParams,
     cb: ICallback<string[]>,
   ): void {
     const queueName = `${queue.name}@${queue.ns}`;
-    const { isPubSub, targets } =
-      this.getPubSubTargetResolver().resolveTargets(queue);
+
+    // The resolver is required, not just for PUB/SUB fan-out but for the
+    // routing decision itself. Its absence or non-operational state means
+    // the producer cannot determine any queue's delivery model, so no
+    // produce can proceed honestly. This check also covers the small
+    // window between the resolver emitting an error (which triggers
+    // shutdown) and the producer's own isOperational() flipping to false.
+    const resolver = this.pubSubTargetResolver;
+    if (!resolver || !resolver.isOperational()) {
+      this.logger.error(
+        `Cannot produce to queue [${queueName}]: PubSubTargetResolver is not operational.`,
+      );
+      return cb(
+        new PanicError({
+          message: `PubSubTargetResolver is not operational. Producer cannot produce to queue [${queueName}].`,
+        }),
+      );
+    }
+
+    const { isPubSub, targets } = resolver.resolveTargets(queue);
 
     if (isPubSub) {
       if (!targets.length) {
@@ -240,7 +293,7 @@ export class Producer extends Runnable<TProducerEvent> {
         targets,
         (groupId, _, done) => {
           const msg = new MessageEnvelope(message).setConsumerGroupId(groupId);
-          this._dispatch(msg, queue, (err, reply) => {
+          this.dispatch(msg, queue, (err, reply) => {
             if (err) return done(err);
             if (reply) ids.push(reply);
             done();
@@ -262,7 +315,7 @@ export class Producer extends Runnable<TProducerEvent> {
       );
     } else {
       const msg = new MessageEnvelope(message);
-      this._dispatch(msg, queue, (err, reply) => {
+      this.dispatch(msg, queue, (err, reply) => {
         if (err) {
           this.logger.error(
             `Failed to produce message to queue [${queueName}].`,
@@ -278,7 +331,7 @@ export class Producer extends Runnable<TProducerEvent> {
     }
   }
 
-  protected _matchExchangeQueues(
+  protected matchExchangeQueues(
     exchange: IExchangeParsedParams,
     routingKey: string | null,
     cb: ICallback<IQueueParams[]>,
@@ -334,7 +387,7 @@ export class Producer extends Runnable<TProducerEvent> {
 
       const queueParams = msg.getQueue();
       if (queueParams) {
-        return this._produceToQueue(msg, queueParams, callback);
+        return this.produceToQueue(msg, queueParams, callback);
       }
 
       const exchangeParams = msg.getExchange();
@@ -348,7 +401,7 @@ export class Producer extends Runnable<TProducerEvent> {
       this.logger.debug(
         `Looking up queues for exchange [${exchangeParams.name}@${exchangeParams.ns}]...`,
       );
-      this._matchExchangeQueues(
+      this.matchExchangeQueues(
         exchangeParams,
         msg.getExchangeRoutingKey(),
         (err, queues) => {
@@ -375,7 +428,7 @@ export class Producer extends Runnable<TProducerEvent> {
               this.logger.debug(
                 `Producing message to queue [${queue.name}@${queue.ns}] (${index + 1}/${queues.length}).`,
               );
-              this._produceToQueue(msg, queue, (err, reply) => {
+              this.produceToQueue(msg, queue, (err, reply) => {
                 if (err) {
                   this.logger.error(
                     `Failed to produce message to queue [${queue.name}@${queue.ns}].`,
