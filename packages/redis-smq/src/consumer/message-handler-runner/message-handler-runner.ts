@@ -18,6 +18,7 @@ import {
 import { EMessageUnacknowledgementCause } from '../message-handler/consume-message/types/index.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { QueueStateChangeHandler } from './queue-state-change-handler.js';
+import { HandlerRegistry } from './handler-registry.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
@@ -39,9 +40,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected readonly supervisorTimer: Timer;
   protected readonly queueStateChangeHandler: QueueStateChangeHandler;
 
+  /**
+   * Registered handler configurations and the canonical identity function
+   */
+  protected readonly registry: HandlerRegistry;
+
   protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
-  protected messageHandlers: IConsumerMessageHandlerParams[] = [];
 
   constructor(consumerContext: IConsumerContext) {
     super();
@@ -49,54 +54,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     this.logger = this.consumerContext.logger.createLogger(
       this.constructor.name,
     );
+    this.registry = new HandlerRegistry();
     this.queueStateChangeHandler = new QueueStateChangeHandler(
       this,
       this.logger,
     );
     this.supervisorTimer = new Timer(this.logger);
     this.logger.debug(`MessageHandlerRunner with ID: ${this.id} initialized.`);
-  }
-
-  /**
-   * Generates a unique, consistent identifier for a queue configuration.
-   *
-   * NOTE: this string is used for identity comparison between a running
-   * handler instance and its configuration entry. For PUB/SUB queues without
-   * an explicit consumer group, the running handler generates an ephemeral
-   * group ID during goingUp() and the config must be synced to match it —
-   * see runMessageHandler() below.
-   */
-  protected getQueueIdentifier(queue: IQueueParsedParams): string {
-    return `${queue.queueParams.ns}:${queue.queueParams.name}:${queue.groupId ?? ''}`;
-  }
-
-  /**
-   * Checks if two queue parameter objects represent the same queue.
-   *
-   * A lookup with `groupId === null` matches any group for the same
-   * (ns, name). This is required for operations like `consumer.cancel('q')`
-   * or a `stop`/`start` triggered from a caller-supplied queue identifier:
-   * the caller passes only the queue name, but the running handler may be
-   * using an ephemeral consumer group (`cid-<consumerId>`) that was
-   * generated internally and is not visible to the caller.
-   *
-   * A lookup with a specific `groupId` requires an exact match, so
-   * consumers that use explicit groups can still address a single group.
-   */
-  protected isSameQueue(
-    candidate: IQueueParsedParams,
-    lookup: IQueueParsedParams,
-  ): boolean {
-    if (
-      candidate.queueParams.ns !== lookup.queueParams.ns ||
-      candidate.queueParams.name !== lookup.queueParams.name
-    ) {
-      return false;
-    }
-    if (lookup.groupId === null) {
-      return true;
-    }
-    return candidate.groupId === lookup.groupId;
   }
 
   /**
@@ -143,9 +107,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    * - 'shutdownRequired': the handler cannot continue (queue is STOPPED,
    *   LOCKED, or otherwise non-runnable). Remove the instance from
    *   `messageHandlerInstances` so that when the queue returns to ACTIVE,
-   *   a fresh handler can be created. Without this, a stopped instance
-   *   remains in the array and blocks restart via the "already running"
-   *   guard in startMessageHandler().
+   *   a fresh handler can be created.
    *
    * `shutdownMessageHandler` is dynamically dispatched, so the multiplexed
    * override (which also clears `activeMessageHandler` and schedules the
@@ -203,14 +165,17 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     const runningQueues = new Set(
       this.messageHandlerInstances
         .filter((i) => i.isOperational())
-        .map((i) => this.getQueueIdentifier(i.getQueue())),
+        .map((i) => this.registry.getKey(i.getQueue())),
     );
 
-    const zombieHandlers = this.messageHandlers.filter(
-      (i) =>
-        !runningQueues.has(this.getQueueIdentifier(i.queue)) &&
-        this.isQueueActive(i.queue),
-    );
+    const zombieHandlers = this.registry
+      .list()
+      .map((e) => e.params)
+      .filter(
+        (i) =>
+          !runningQueues.has(this.registry.getKey(i.queue)) &&
+          this.isQueueActive(i.queue),
+      );
 
     if (zombieHandlers.length > 0) {
       this.logger.warn(
@@ -269,7 +234,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     queue: IQueueParsedParams,
   ): MessageHandler | undefined {
     return this.messageHandlerInstances.find((i) =>
-      this.isSameQueue(i.getQueue(), queue),
+      this.registry.matches(i.getQueue(), queue),
     );
   }
 
@@ -279,7 +244,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   getMessageHandler(
     queue: IQueueParsedParams,
   ): IConsumerMessageHandlerParams | undefined {
-    return this.messageHandlers.find((i) => this.isSameQueue(i.queue, queue));
+    return this.registry.get(queue)?.params;
   }
 
   /**
@@ -314,9 +279,8 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    *   - startMessageHandler (queue -> ACTIVE transitions)
    *   - reconcileHandlers (the supervisor's zombie scan)
    *
-   * The handlerParams object is the same reference that lives in
-   * `this.messageHandlers`, so mutating `handlerParams.queue` propagates
-   * to the registry.
+   * The handlerParams object is the same reference that the registry stores,
+   * so mutating `handlerParams.queue` propagates to the registry.
    */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
@@ -353,7 +317,10 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       // path (removeMessageHandler, called below on error) will not find
       // the instance.
       const effectiveQueue = handler.getQueue();
-      if (!this.isSameQueue(effectiveQueue, handlerParams.queue)) {
+      if (
+        this.registry.getKey(effectiveQueue) !==
+        this.registry.getKey(handlerParams.queue)
+      ) {
         this.logger.debug(
           `Syncing effective queue for ${handlerParams.queue.queueParams.name}: ` +
             `groupId '${handlerParams.queue.groupId ?? 'null'}' -> ` +
@@ -394,9 +361,10 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    */
   protected runMessageHandlers = (cb: ICallback): void => {
     // Filter to only active queues
-    const handlersToStart = this.messageHandlers.filter((handler) =>
-      this.isQueueActive(handler.queue),
-    );
+    const handlersToStart = this.registry
+      .list()
+      .map((e) => e.params)
+      .filter((handler) => this.isQueueActive(handler.queue));
 
     async.each(
       handlersToStart,
@@ -459,7 +427,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
     if (!handlerInstance) {
       // No instance running, but configuration exists
-      const hasConfig = !!this.getMessageHandler(queue);
+      const hasConfig = this.registry.has(queue);
       this.logger.debug(
         `Stop requested for queue: ${queue.queueParams.name} (no instance)`,
       );
@@ -550,15 +518,12 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    */
   removeMessageHandler(queue: IQueueParsedParams, cb: ICallback): void {
     // Remove configuration
-    const hadConfig = this.getMessageHandler(queue);
-    this.messageHandlers = this.messageHandlers.filter(
-      (h) => !this.isSameQueue(h.queue, queue),
-    );
+    const removed = this.registry.remove(queue);
     const handlerInstance = this.getMessageHandlerInstance(queue);
     if (handlerInstance) {
       this.shutdownMessageHandler(handlerInstance, cb);
     } else {
-      if (hadConfig) {
+      if (removed) {
         this.logger.debug(
           `Removed handler configuration for queue: ${queue.queueParams.name}`,
         );
@@ -576,12 +541,17 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
-    if (this.getMessageHandler(queue)) {
+    if (this.registry.has(queue)) {
       this.logger.warn(
         `Message handler for queue ${queue.queueParams.name} already exists`,
       );
       return cb(new MessageHandlerAlreadyExistsError());
     }
+
+    const handlerParams: IConsumerMessageHandlerParams = {
+      queue,
+      messageHandler,
+    };
 
     async.series(
       [
@@ -595,13 +565,12 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
             );
           }, cb),
         (cb) => {
-          const handlerParams: IConsumerMessageHandlerParams = {
-            queue,
-            messageHandler,
-          };
-          this.messageHandlers.push(handlerParams);
+          // Between `has` above and this call, no code has yielded, so the
+          // add cannot fail. Adding here — after validation — means an
+          // invalid operation never leaves a stale registry entry behind.
+          this.registry.add(handlerParams);
           this.logger.debug(
-            `Message handler registered for queue: ${queue.queueParams.name}. Total handlers: ${this.messageHandlers.length}`,
+            `Message handler registered for queue: ${queue.queueParams.name}. Total handlers: ${this.registry.size}`,
           );
 
           // If runner is running and queue is active, start it immediately
@@ -636,43 +605,47 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    * Returns all queues with handler configurations.
    */
   getQueues(): IQueueParsedParams[] {
-    return this.messageHandlers.map((i) => i.queue);
+    return this.registry.list().map((e) => e.params.queue);
   }
 
   /**
    * Returns only active queues.
    */
   getActiveQueues(): IQueueParsedParams[] {
-    return this.messageHandlers
-      .filter((handler) => this.isQueueActive(handler.queue))
-      .map((i) => i.queue);
+    return this.registry
+      .list()
+      .filter((e) => this.isQueueActive(e.params.queue))
+      .map((e) => e.params.queue);
   }
 
   /**
    * Returns only stopped queues.
    */
   getStoppedQueues(): IQueueParsedParams[] {
-    return this.messageHandlers
-      .filter((handler) => this.isQueueStopped(handler.queue))
-      .map((i) => i.queue);
+    return this.registry
+      .list()
+      .filter((e) => this.isQueueStopped(e.params.queue))
+      .map((e) => e.params.queue);
   }
 
   /**
    * Returns only paused queues.
    */
   getPausedQueues(): IQueueParsedParams[] {
-    return this.messageHandlers
-      .filter((handler) => this.isQueuePaused(handler.queue))
-      .map((i) => i.queue);
+    return this.registry
+      .list()
+      .filter((e) => this.isQueuePaused(e.params.queue))
+      .map((e) => e.params.queue);
   }
 
   /**
    * Returns only locked queues.
    */
   getLockedQueues(): IQueueParsedParams[] {
-    return this.messageHandlers
-      .filter((handler) => this.isQueueLocked(handler.queue))
-      .map((i) => i.queue);
+    return this.registry
+      .list()
+      .filter((e) => this.isQueueLocked(e.params.queue))
+      .map((e) => e.params.queue);
   }
 
   /**
@@ -700,7 +673,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     paused: number;
     locked: number;
   } {
-    const total = this.messageHandlers.length;
+    const total = this.registry.size;
     const active = this.getActiveQueues().length;
     const stopped = this.getStoppedQueues().length;
     const paused = this.getPausedQueues().length;
