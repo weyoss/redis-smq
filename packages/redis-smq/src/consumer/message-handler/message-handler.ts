@@ -43,8 +43,6 @@ import { IConsumerMessageHandlerParams } from './types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
-import { _generateEphemeralConsumerGroupId } from './_/_generate-ephemeral-consumer-group-id.js';
-import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { IQueueWorkerPayload } from './queue-workers/types/queue-worker.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
@@ -96,6 +94,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   constructor(
     consumerContext: IConsumerContext,
     handlerParams: IConsumerMessageHandlerParams,
+    ephemeralGroupId: string | null,
     autoDequeue: boolean = true,
   ) {
     super();
@@ -106,6 +105,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
     const { queue, messageHandler } = handlerParams;
     this.queue = queue;
     this.messageHandler = messageHandler;
+    this.ephemeralConsumerGroupId = ephemeralGroupId;
     this.autoDequeue = autoDequeue;
     this.timer = new Timer(this.logger);
   }
@@ -206,50 +206,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
             this.redisClient = redisClient;
             cb();
           },
-        );
-      },
-      (cb: ICallback) => {
-        _prepareConsumerGroup(
-          this.queue,
-          this.consumerContext.consumerId,
-          (err, effectiveGroupId) => {
-            if (err) return cb(err);
-            if (effectiveGroupId) {
-              // Adopt the effective group ID if it differs from what we
-              // started with. This mutation is the only place the handler's
-              // queue is updated; MessageHandlerRunner.runMessageHandler()
-              // syncs the same value back into its config entry once
-              // goingUp() completes, so both sides agree on the identity.
-              if (this.queue.groupId !== effectiveGroupId) {
-                this.queue = { ...this.queue, groupId: effectiveGroupId };
-              }
-
-              // Track the ephemeral marker separately from the mutation.
-              //
-              // On the FIRST start: the queue had groupId === null, and
-              // _prepareConsumerGroup generated a fresh `cid-<consumerId>`.
-              // The two checks (adopt + mark) both fire.
-              //
-              // On a RESTART: the runner has already synced the config to
-              // the ephemeral ID, so this.queue.groupId already equals
-              // effectiveGroupId. The "adopt" check is a no-op — but the
-              // marker MUST still be set, otherwise goingDown() will skip
-              // deleting the ephemeral group and it leaks.
-              //
-              // Detecting by pattern (rather than by "did the ID change")
-              // handles both cases with one condition.
-              if (
-                effectiveGroupId ===
-                _generateEphemeralConsumerGroupId(
-                  this.consumerContext.consumerId,
-                )
-              ) {
-                this.ephemeralConsumerGroupId = effectiveGroupId;
-              }
-            }
-            cb();
-          },
-          this.logger,
         );
       },
       (cb: ICallback) => {

@@ -10,7 +10,7 @@
 import { ConsumerGroups } from '../../../consumer-groups/index.js';
 import { ICallback } from 'redis-smq-common';
 import { IQueueParams } from '../../../queue-manager/index.js';
-import { _generateEphemeralConsumerGroupId } from './_generate-ephemeral-consumer-group-id.js';
+import { _generateEphemeralConsumerGroupId } from '../../message-handler-runner/_/_generate-ephemeral-consumer-group-id.js';
 
 export function _deleteEphemeralConsumerGroup(
   queueParams: IQueueParams,

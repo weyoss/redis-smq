@@ -23,6 +23,8 @@ import { _validateOperation } from '../../queue-operation-validator/_/_validate-
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { IConsumerQueuesWithStatus } from '../types/index.js';
+import { _generateEphemeralConsumerGroupId } from './_/_generate-ephemeral-consumer-group-id.js';
+import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 
 export type TMessageHandlerRunnerEvent = {
   error: (err: Error, consumerId: string) => void;
@@ -252,10 +254,12 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    */
   protected createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
+    ephemeralGroupId: string | null,
   ): MessageHandler {
     const instance = new MessageHandler(
       this.consumerContext,
       handlerParams,
+      ephemeralGroupId,
       true,
     );
     this.attachHandlerListeners(instance);
@@ -295,9 +299,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     }
 
     // Avoid creating a duplicate instance if an OPERATIONAL one exists.
-    // A stopped instance may still be in the array between a shutdown
-    // event firing and the shutdown completion callback running; in that
-    // window we should not block, but the shutdown will remove it shortly.
     const existing = this.getMessageHandlerInstance(handlerParams.queue);
     if (existing && existing.isOperational()) {
       this.logger.warn(
@@ -306,39 +307,71 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       return cb();
     }
 
-    const handler = this.createMessageHandlerInstance(handlerParams);
-    handler.run((err) => {
-      // Sync the handler's effective queue back into the config entry.
-      //
-      // This runs whether run() succeeded or failed. On a partial failure,
-      // the handler may have completed _prepareConsumerGroup before a later
-      // goingUp hook errored, in which case its queue has already been
-      // mutated and the config must still adopt it — otherwise the cleanup
-      // path (removeMessageHandler, called below on error) will not find
-      // the instance.
-      const effectiveQueue = handler.getQueue();
-      if (
-        this.registry.getKey(effectiveQueue) !==
-        this.registry.getKey(handlerParams.queue)
-      ) {
-        this.logger.debug(
-          `Syncing effective queue for ${handlerParams.queue.queueParams.name}: ` +
-            `groupId '${handlerParams.queue.groupId ?? 'null'}' -> ` +
-            `'${effectiveQueue.groupId ?? 'null'}'`,
-        );
-        handlerParams.queue = effectiveQueue;
-      }
+    // Resolve the effective consumer group ID. This is idempotent: for
+    // POINT_TO_POINT queues it returns undefined, for PUB/SUB queues with
+    // an explicit group it re-saves that group, and for PUB/SUB queues
+    // without a group it generates and saves an ephemeral one.
+    //
+    // The re-save matters on restart: MessageHandler.goingDown currently
+    // deletes the ephemeral group on every shutdown, so a restart must
+    // recreate it before _subscribeConsumer runs (otherwise publish-time
+    // SISMEMBER checks would fail with CONSUMER_GROUP_NOT_FOUND). Step 3
+    // will move the deletion to removeMessageHandler and this comment
+    // becomes obsolete.
+    _prepareConsumerGroup(
+      handlerParams.queue,
+      this.consumerContext.consumerId,
+      (err, effectiveGroupId) => {
+        if (err) {
+          this.logger.error(
+            `Failed to prepare consumer group for queue ${handlerParams.queue.queueParams.name}: ${err.message}`,
+          );
+          return cb(err);
+        }
 
-      if (err) {
-        this.logger.error(
-          `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,
-          err,
+        // Adopt the resolved group ID into the config entry. This is the
+        // single place the config's queue is mutated; the registry stores
+        // the same object, so the mutation is visible to every lookup.
+        if (
+          effectiveGroupId &&
+          handlerParams.queue.groupId !== effectiveGroupId
+        ) {
+          handlerParams.queue = {
+            ...handlerParams.queue,
+            groupId: effectiveGroupId,
+          };
+        }
+
+        // Determine whether the effective group is ephemeral. The
+        // generator is deterministic per consumer, so a pattern match
+        // is the reliable signal — checking "did the ID change?" would
+        // fail on restarts, when the config already carries the
+        // ephemeral ID.
+        const ephemeralGroupId =
+          effectiveGroupId &&
+          effectiveGroupId ===
+            _generateEphemeralConsumerGroupId(this.consumerContext.consumerId)
+            ? effectiveGroupId
+            : null;
+
+        const handler = this.createMessageHandlerInstance(
+          handlerParams,
+          ephemeralGroupId,
         );
-        this.removeMessageHandler(handlerParams.queue, () => cb(err));
-      } else {
-        cb();
-      }
-    });
+        handler.run((runErr) => {
+          if (runErr) {
+            this.logger.error(
+              `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,
+              runErr,
+            );
+            this.removeMessageHandler(handlerParams.queue, () => cb(runErr));
+          } else {
+            cb();
+          }
+        });
+      },
+      this.logger,
+    );
   }
 
   /**
@@ -565,20 +598,41 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
             );
           }, cb),
         (cb) => {
-          // Between `has` above and this call, no code has yielded, so the
-          // add cannot fail. Adding here — after validation — means an
-          // invalid operation never leaves a stale registry entry behind.
-          this.registry.add(handlerParams);
-          this.logger.debug(
-            `Message handler registered for queue: ${queue.queueParams.name}. Total handlers: ${this.registry.size}`,
-          );
+          // Resolve the consumer group BEFORE registering the config, so
+          // the registry stores a fully-resolved queue. This is what lets
+          // runMessageHandler drop its post-run config sync.
+          _prepareConsumerGroup(
+            queue,
+            this.consumerContext.consumerId,
+            (err, effectiveGroupId) => {
+              if (err) return cb(err);
 
-          // If runner is running and queue is active, start it immediately
-          if (this.isOperational() && this.isQueueActive(queue)) {
-            this.runMessageHandler(handlerParams, cb);
-          } else {
-            cb();
-          }
+              if (
+                effectiveGroupId &&
+                handlerParams.queue.groupId !== effectiveGroupId
+              ) {
+                handlerParams.queue = {
+                  ...handlerParams.queue,
+                  groupId: effectiveGroupId,
+                };
+              }
+
+              this.registry.add(handlerParams);
+              this.logger.debug(
+                `Message handler registered for queue: ${handlerParams.queue.queueParams.name}. Total handlers: ${this.registry.size}`,
+              );
+
+              if (
+                this.isOperational() &&
+                this.isQueueActive(handlerParams.queue)
+              ) {
+                this.runMessageHandler(handlerParams, cb);
+              } else {
+                cb();
+              }
+            },
+            this.logger,
+          );
         },
       ],
       (err) => cb(err),
