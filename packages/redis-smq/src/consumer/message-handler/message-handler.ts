@@ -42,7 +42,6 @@ import { EMessageUnacknowledgementCause } from './consume-message/types/index.js
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
-import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { IQueueWorkerPayload } from './queue-workers/types/queue-worker.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
@@ -88,13 +87,9 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   protected redisClient: IRedisClient | null = null;
   protected timer: Timer;
 
-  // Tracks an auto-generated ephemeral consumer group for PUB_SUB
-  protected ephemeralConsumerGroupId: string | null = null;
-
   constructor(
     consumerContext: IConsumerContext,
     handlerParams: IConsumerMessageHandlerParams,
-    ephemeralGroupId: string | null,
     autoDequeue: boolean = true,
   ) {
     super();
@@ -105,7 +100,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
     const { queue, messageHandler } = handlerParams;
     this.queue = queue;
     this.messageHandler = messageHandler;
-    this.ephemeralConsumerGroupId = ephemeralGroupId;
     this.autoDequeue = autoDequeue;
     this.timer = new Timer(this.logger);
   }
@@ -283,25 +277,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       // unsubscribe from queue
       (cb: ICallback) => {
         _unsubscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
-      },
-
-      (cb: ICallback): void => {
-        const ephemeral = this.ephemeralConsumerGroupId;
-        if (!ephemeral) return cb();
-        _deleteEphemeralConsumerGroup(
-          this.queue.queueParams,
-          this.consumerContext.consumerId,
-          ephemeral,
-          (err) => {
-            if (err) {
-              this.logger.warn(
-                `Failed to delete ephemeral consumer group '${ephemeral}': ${err.message}`,
-              );
-            }
-            this.ephemeralConsumerGroupId = null;
-            cb();
-          },
-        );
       },
 
       (cb: ICallback) => {

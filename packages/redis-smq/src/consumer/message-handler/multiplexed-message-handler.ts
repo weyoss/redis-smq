@@ -18,10 +18,9 @@ export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
     consumerContext: IConsumerContext,
     handlerParams: IConsumerMessageHandlerParams,
-    ephemeralGroupId: string | null,
     dequeueNextFn: () => void,
   ) {
-    super(consumerContext, handlerParams, ephemeralGroupId, false);
+    super(consumerContext, handlerParams, false);
     this.dequeueNextFn = dequeueNextFn;
     this.logger.debug(
       `MultiplexedMessageHandler initialized for consumer ${this.consumerContext.consumerId}, queue ${this.queue.queueParams.name}`,

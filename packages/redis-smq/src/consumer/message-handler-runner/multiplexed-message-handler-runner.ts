@@ -103,14 +103,12 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
    */
   protected override createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
-    ephemeralGroupId: string | null,
   ): MessageHandler {
     // Pass scheduleNextTick to the handler. When a dequeue is empty or a message
     // is processed, it will schedule the next tick, preventing an infinite loop.
     const instance = new MultiplexedMessageHandler(
       this.consumerContext,
       handlerParams,
-      ephemeralGroupId,
       this.scheduleNextTick,
     );
     this.attachHandlerListeners(instance);

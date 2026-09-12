@@ -17,13 +17,30 @@ import { IConsumerMessageHandlerParams } from '../message-handler/types/index.js
  * owns the live instances and uses the registry to answer
  * "is this the same handler?" consistently across all call sites.
  *
- * The `params` object is stored by reference. The runner mutates
- * `params.queue` after a handler resolves an ephemeral group ID (see
- * MessageHandlerRunner.runMessageHandler), and the registry sees that
- * mutation because it holds the same object.
+ * Field semantics:
+ *
+ *   - `params` is stored by reference. The runner mutates `params.queue`
+ *     when it resolves an ephemeral group ID (see
+ *     MessageHandlerRunner.addMessageHandler), and the registry sees the
+ *     mutation because it holds the same object.
+ *
+ *   - `ephemeralGroupId` is captured once, at registration time, and never
+ *     changes. It is the group ID the runner will delete when the handler
+ *     is REMOVED (cancel or consumer shutdown) — and only when the handler
+ *     is removed, not when it is merely stopped for a queue state
+ *     transition. See MessageHandlerRunner.removeHandlerInstance for the
+ *     removal path and stopMessageHandler for the stop path.
+ *
+ *     Capturing it here rather than re-deriving it at removal time matters
+ *     because the ephemeral pattern (`cid-<consumerId>`) is deterministic,
+ *     but the queue's groupId may have been reset between registration and
+ *     removal (e.g., by a partial sync or by a caller that rebuilt the
+ *     config from an unparsed form). Reading it from the entry makes
+ *     removal independent of what the queue currently looks like.
  */
 export interface IRegisteredHandler {
   readonly params: IConsumerMessageHandlerParams;
+  readonly ephemeralGroupId: string | null;
 }
 
 /**
@@ -39,6 +56,7 @@ export interface IRegisteredHandler {
  * Scope:
  *   - Owns: the list of registered configs.
  *   - Owns: the canonical key function and the loose-match predicate.
+ *   - Owns: the ephemeral consumer group ID associated with each config.
  *   - Does NOT own: live handler instances (that's MessageHandlerRunner).
  *   - Does NOT own: queue state, scheduling, lifecycle.
  *
@@ -115,21 +133,28 @@ export class HandlerRegistry {
   }
 
   /**
-   * Register a handler. Returns `false` if a handler with the same
-   * (loosely-matched) identity is already present.
+   * Register a handler.
    *
-   * The duplicate check uses `matches`, so a second `consume('queue')`
-   * collides with an existing registration on that queue regardless of
-   * which group ID the first registration resolved to.
+   * `ephemeralGroupId` is the effective group ID if the runner generated
+   * it for an ephemeral PUB/SUB consumer, or null otherwise. Capturing it
+   * here means the removal path does not need to re-derive it, which
+   * would fail on restart when the config already carries the generated
+   * ID and `_prepareConsumerGroup` has nothing to change.
+   *
+   * Returns `false` if a handler with the same (loosely-matched) identity
+   * is already present.
    *
    * The registry stores `params` by reference. Callers that later mutate
    * `params.queue` (see the ephemeral-group sync in
-   * MessageHandlerRunner.runMessageHandler) mutate the entry the registry
+   * MessageHandlerRunner.addMessageHandler) mutate the entry the registry
    * sees, which is what keeps subsequent lookups consistent.
    */
-  add(params: IConsumerMessageHandlerParams): boolean {
+  add(
+    params: IConsumerMessageHandlerParams,
+    ephemeralGroupId: string | null,
+  ): boolean {
     if (this.has(params.queue)) return false;
-    this.entries.push({ params });
+    this.entries.push({ params, ephemeralGroupId });
     return true;
   }
 
@@ -139,6 +164,10 @@ export class HandlerRegistry {
    *
    * Uses `matches`, so `cancel('queue')` removes the config even when the
    * config carries an ephemeral group ID.
+   *
+   * The caller is responsible for the removed entry's ephemeral group
+   * deletion (if `entry.ephemeralGroupId !== null`). The registry does not
+   * perform I/O and cannot do this itself.
    */
   remove(queue: IQueueParsedParams): IRegisteredHandler | undefined {
     const index = this.entries.findIndex((e) =>
