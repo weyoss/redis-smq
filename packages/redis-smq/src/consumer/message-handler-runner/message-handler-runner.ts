@@ -8,7 +8,11 @@
  */
 
 import { async, ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
-import { IQueueParsedParams } from '../../queue-manager/index.js';
+import {
+  EQueueOperationalState,
+  IQueueParams,
+  IQueueParsedParams,
+} from '../../queue-manager/index.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
 import {
@@ -18,7 +22,6 @@ import {
 import { EMessageUnacknowledgementCause } from '../message-handler/consume-message/types/index.js';
 import { _deleteEphemeralConsumerGroup } from '../message-handler/_/_delete-ephemeral-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
-import { QueueStateChangeHandler } from './queue-state-change-handler.js';
 import { HandlerRegistry } from './handler-registry.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { _generateEphemeralConsumerGroupId } from './_/_generate-ephemeral-consumer-group-id.js';
@@ -26,6 +29,8 @@ import { _validateOperation } from '../../queue-operation-validator/_/_validate-
 import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { IConsumerQueuesWithStatus } from '../types/index.js';
+import { InternalEventBus } from '../../event-bus/internal-event-bus.js';
+import { IQueueStateTransition } from '../../queue-state-manager/index.js';
 
 export type TMessageHandlerRunnerEvent = {
   error: (err: Error, consumerId: string) => void;
@@ -33,17 +38,17 @@ export type TMessageHandlerRunnerEvent = {
 
 /**
  * Manages the lifecycle of message handlers for a consumer, including
- * adding, removing, starting, and shutting down handlers for specific queues.
- * It also includes a supervisor mechanism to automatically restart handlers
- * that fail during runtime.
+ * adding, removing, starting, and shutting down handlers for specific
+ * queues. It also includes a supervisor mechanism to automatically restart
+ * handlers that fail during runtime.
  *
  * Ownership:
  *   - HandlerRegistry owns the set of registered handler configurations,
  *     the canonical queue-identity function, and each config's ephemeral
  *     consumer group ID (if any). It is a pure read model.
- *   - This runner owns the live MessageHandler instances (in
- *     `messageHandlerInstances`) and all lifecycle decisions about them,
- *     including deletion of ephemeral consumer groups on removal.
+ *   - This runner owns the live MessageHandler instances, all lifecycle
+ *     decisions about them, and a local mirror of each queue's operational
+ *     state (populated from InternalEventBus).
  *
  * Stop vs. remove:
  *   - `stopMessageHandler` tears down the handler instance but keeps the
@@ -53,19 +58,34 @@ export type TMessageHandlerRunnerEvent = {
  *   - `removeMessageHandler` and `shutDownMessageHandlers` tear down the
  *     instance AND delete its ephemeral group. Used for cancel() and
  *     consumer shutdown, where the config is gone permanently.
+ *
+ * Queue state:
+ *   The runner subscribes to `queue.stateChanged` in its constructor and
+ *   maintains a `queueStates` map keyed by `ns:name`. The map only holds
+ *   entries for queues whose state has changed since the runner started;
+ *   `getQueueState` defaults to ACTIVE for any queue without an entry.
+ *   The default is correct because a handler can only be registered after
+ *   `_validateOperation(CONSUME)` has confirmed the queue is ACTIVE in
+ *   Redis.
  */
 export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected readonly handlerReconciliationInterval = 5000; // todo: make it configurable: config.consumer.handlerReconciliationInterval
   protected readonly consumerContext: IConsumerContext;
   protected readonly supervisorTimer: Timer;
-  protected readonly queueStateChangeHandler: QueueStateChangeHandler;
 
   /**
    * Registered handler configurations and the canonical identity function.
-   * Replaces the previous `messageHandlers` array and `getQueueIdentifier` /
-   * `isSameQueue` methods.
    */
   protected readonly registry: HandlerRegistry;
+
+  /**
+   * Current operational state of each queue this runner has heard about.
+   *
+   * Keyed by `ns:name` — state is a property of the queue, shared across
+   * every consumer group. A queue that has never had a state change since
+   * the runner started has no entry, and `getQueueState` returns ACTIVE.
+   */
+  protected readonly queueStates = new Map<string, EQueueOperationalState>();
 
   protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
@@ -77,50 +97,179 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       this.constructor.name,
     );
     this.registry = new HandlerRegistry();
-    this.queueStateChangeHandler = new QueueStateChangeHandler(
-      this,
-      this.logger,
-    );
     this.supervisorTimer = new Timer(this.logger);
+
+    // Subscribe before goingUp, so state-change events that fire between
+    // construction and run() are not missed. A consumer.consume() call
+    // issued before run() registers a config that will be started on
+    // goingUp; if the queue's state changed in the interim, this
+    // subscription is what records that transition.
+    InternalEventBus.getInstance().on(
+      'queue.stateChanged',
+      this.onQueueStateChanged,
+    );
+
     this.logger.debug(`MessageHandlerRunner with ID: ${this.id} initialized.`);
   }
 
+  /**
+   * Key for the queue-state map. State is a property of the queue, not of
+   * any consumer group, so the map is keyed by `ns:name`.
+   */
+  protected getQueueStateKey(queueParams: IQueueParams): string {
+    return `${queueParams.ns}:${queueParams.name}`;
+  }
+
+  /**
+   * Read the current operational state of a queue. Defaults to ACTIVE for
+   * any queue without a recorded transition.
+   */
+  protected getQueueState(queueParams: IQueueParams): EQueueOperationalState {
+    return (
+      this.queueStates.get(this.getQueueStateKey(queueParams)) ??
+      EQueueOperationalState.ACTIVE
+    );
+  }
+
   protected isQueueActive(queue: IQueueParsedParams): boolean {
-    return this.queueStateChangeHandler.isQueueActive(queue.queueParams);
+    return (
+      this.getQueueState(queue.queueParams) === EQueueOperationalState.ACTIVE
+    );
   }
 
   protected isQueueStopped(queue: IQueueParsedParams): boolean {
-    return this.queueStateChangeHandler.isQueueStopped(queue.queueParams);
+    return (
+      this.getQueueState(queue.queueParams) === EQueueOperationalState.STOPPED
+    );
   }
 
   protected isQueuePaused(queue: IQueueParsedParams): boolean {
-    return this.queueStateChangeHandler.isQueuePaused(queue.queueParams);
+    return (
+      this.getQueueState(queue.queueParams) === EQueueOperationalState.PAUSED
+    );
   }
 
   protected isQueueLocked(queue: IQueueParsedParams): boolean {
-    return this.queueStateChangeHandler.isQueueLocked(queue.queueParams);
+    return (
+      this.getQueueState(queue.queueParams) === EQueueOperationalState.LOCKED
+    );
+  }
+
+  /**
+   * Handle a queue state transition from InternalEventBus.
+   *
+   * Records the transition, then starts or stops every registered handler
+   * for that queue. The action depends on the transition target:
+   *
+   *   - PAUSED / STOPPED / LOCKED  -> stop every handler on the queue
+   *   - ACTIVE                     -> start every handler on the queue
+   *
+   * Runs synchronously; the start/stop calls are fire-and-forget, with
+   * their own per-handler error logging.
+   */
+  protected onQueueStateChanged = (
+    queue: IQueueParams,
+    transition: IQueueStateTransition,
+  ): void => {
+    const queueKey = this.getQueueStateKey(queue);
+    this.logger.info(
+      `Queue state changed: ${queueKey} from ${transition.from} to ${transition.to}`,
+    );
+
+    this.queueStates.set(queueKey, transition.to);
+
+    // A queue's state is shared across its consumer groups, so every
+    // registered config for this (ns, name) reacts to the same transition.
+    const configs = this.registry
+      .list()
+      .map((e) => e.params.queue)
+      .filter(
+        (q) =>
+          q.queueParams.ns === queue.ns && q.queueParams.name === queue.name,
+      );
+
+    if (configs.length === 0) {
+      this.logger.debug(
+        `No registered handlers for queue ${queueKey}; transition recorded only.`,
+      );
+      return;
+    }
+
+    switch (transition.to) {
+      case EQueueOperationalState.STOPPED:
+      case EQueueOperationalState.PAUSED:
+      case EQueueOperationalState.LOCKED:
+        this.stopHandlersForConfigs(configs, transition.to);
+        break;
+
+      case EQueueOperationalState.ACTIVE:
+        this.startHandlersForConfigs(configs);
+        break;
+    }
+  };
+
+  /**
+   * Stop every handler in `configs`, logging per handler.
+   */
+  protected stopHandlersForConfigs(
+    configs: readonly IQueueParsedParams[],
+    state: EQueueOperationalState,
+  ): void {
+    const stateName = EQueueOperationalState[state].toLowerCase();
+    configs.forEach((queueParsed) => {
+      this.stopMessageHandler(queueParsed, (err, wasRunning) => {
+        if (err) {
+          this.logger.error(
+            `Failed to ${stateName} message handler for queue ${queueParsed.queueParams.name} (group: ${queueParsed.groupId || 'default'}):`,
+            err,
+          );
+        } else if (wasRunning) {
+          this.logger.debug(
+            `Message handler ${stateName} for queue: ${queueParsed.queueParams.name} (group: ${queueParsed.groupId || 'default'})`,
+          );
+        }
+      });
+    });
+  }
+
+  /**
+   * Start every handler in `configs`, logging per handler.
+   */
+  protected startHandlersForConfigs(
+    configs: readonly IQueueParsedParams[],
+  ): void {
+    configs.forEach((queueParsed) => {
+      if (this.isMessageHandlerRunning(queueParsed)) {
+        this.logger.debug(
+          `Message handler already running for queue: ${queueParsed.queueParams.name} (group: ${queueParsed.groupId || 'default'})`,
+        );
+        return;
+      }
+
+      if (!this.getMessageHandler(queueParsed)) {
+        this.logger.debug(
+          `No handler configuration found for queue: ${queueParsed.queueParams.name} (group: ${queueParsed.groupId || 'default'}), skipping`,
+        );
+        return;
+      }
+
+      this.startMessageHandler(queueParsed, (err, wasStarted) => {
+        if (err) {
+          this.logger.error(
+            `Failed to start message handler for queue ${queueParsed.queueParams.name} (group: ${queueParsed.groupId || 'default'}):`,
+            err,
+          );
+        } else if (wasStarted) {
+          this.logger.debug(
+            `Message handler started for queue: ${queueParsed.queueParams.name} (group: ${queueParsed.groupId || 'default'})`,
+          );
+        }
+      });
+    });
   }
 
   /**
    * Attach lifecycle listeners to a freshly created handler instance.
-   *
-   * Both the base runner and the multiplexed runner create handlers; the
-   * wiring is identical, so it lives here. Subclasses call this from their
-   * own createMessageHandlerInstance().
-   *
-   * Two events are wired:
-   *
-   * - 'error': the handler hit a runtime error. Log, then shut it down.
-   *   The supervisor will recreate it on the next reconciliation tick
-   *   if the queue is still active.
-   *
-   * - 'shutdownRequired': the handler cannot continue (queue is STOPPED,
-   *   LOCKED, or otherwise non-runnable). Remove the instance from
-   *   `messageHandlerInstances` so that when the queue returns to ACTIVE,
-   *   a fresh handler can be created.
-   *
-   * Both paths use `shutdownMessageHandler`, not `removeHandlerInstance`:
-   * the config stays, so the ephemeral group must survive the restart.
    */
   protected attachHandlerListeners(instance: MessageHandler): void {
     instance.on('error', (err) => {
@@ -162,8 +311,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected reconcileHandlers = (): void => {
     if (!this.isOperational()) return;
 
-    // Only count OPERATIONAL instances as "running". A stopped instance
-    // that lingers in messageHandlerInstances must not mask a zombie.
     const runningQueues = new Set(
       this.messageHandlerInstances
         .filter((i) => i.isOperational())
@@ -221,17 +368,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     }
   };
 
-  /**
-   * Finds a running message handler instance for the given queue.
-   *
-   * Note: this returns the instance regardless of whether it is currently
-   * operational. Callers that need an operational instance must check
-   * `instance.isOperational()` themselves.
-   *
-   * Uses `registry.matches`, so a lookup with `groupId: null` matches any
-   * group on the same (ns, name) — the semantics `consumer.cancel('queue')`
-   * relies on. See issue #4.
-   */
   protected getMessageHandlerInstance(
     queue: IQueueParsedParams,
   ): MessageHandler | undefined {
@@ -240,23 +376,12 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   }
 
-  /**
-   * Finds the handler configuration for the given queue.
-   */
   getMessageHandler(
     queue: IQueueParsedParams,
   ): IConsumerMessageHandlerParams | undefined {
     return this.registry.get(queue)?.params;
   }
 
-  /**
-   * Creates and registers a new MessageHandler instance for the given
-   * parameters.
-   *
-   * The handler's constructor no longer takes an ephemeral group ID —
-   * the deletion of the group is now the runner's job, driven from the
-   * registry entry (see removeHandlerInstance).
-   */
   protected createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
@@ -270,20 +395,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     return instance;
   }
 
-  /**
-   * Starts a message handler for the given parameters.
-   *
-   * The `_prepareConsumerGroup` call resolves the effective group ID
-   * (idempotently) and adopts it into `handlerParams.queue` if it differs.
-   * The ephemeral marker, however, is computed once in `addMessageHandler`
-   * and stored on the registry entry — this method does not recompute it.
-   *
-   * Resolution here is redundant with the call in `addMessageHandler` on
-   * the initial add, but it is idempotent and preserves the invariant that
-   * `runMessageHandler` can be entered from any path (reconciler, state
-   * change, initial `goingUp`) without assuming the group was resolved
-   * earlier.
-   */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
     cb: ICallback,
@@ -314,9 +425,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
           return cb(err);
         }
 
-        // Adopt the resolved group ID into the config entry. This is the
-        // single place the config's queue is mutated; the registry stores
-        // the same object, so the mutation is visible to every lookup.
         if (
           effectiveGroupId &&
           handlerParams.queue.groupId !== effectiveGroupId
@@ -344,15 +452,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   }
 
-  /**
-   * Shuts down a message handler and removes it from the instance list.
-   *
-   * This is the low-level primitive. It does NOT delete the ephemeral
-   * group — that is the caller's responsibility. Use this for stops
-   * (queue state change), where the config survives. Use
-   * `removeHandlerInstance` for removals (cancel, shutdown), where the
-   * config is gone.
-   */
   protected shutdownMessageHandler(
     messageHandler: MessageHandler,
     cb: ICallback,
@@ -365,27 +464,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     });
   }
 
-  /**
-   * Fully remove a running handler instance.
-   *
-   * Shuts the handler down (which runs `_unsubscribeConsumer` inside its
-   * `goingDown`) and, if the handler's registry entry carried an ephemeral
-   * consumer group ID, deletes that group.
-   *
-   * Ordering matters. The delete script refuses to act while the group
-   * still has members (`SCARD keyQueueConsumerGroupConsumers > 0`). The
-   * `SREM` that removes this consumer from the group's member set is
-   * issued by `_unsubscribeConsumer`, which runs inside the handler's
-   * `goingDown`. Only after shutdown completes can the delete succeed.
-   * Running the delete before the unsubscribe — as the pre-Step-3 handler
-   * did — always failed with `CONSUMER_GROUP_HAS_ACTIVE_CONSUMERS` and
-   * leaked the group (see issue #5).
-   *
-   * The `ephemeralGroupId` is passed as an argument rather than looked up
-   * from the registry, because callers may have already removed the entry
-   * from the registry before invoking this method (see removeMessageHandler).
-   * Capturing it as a value preserves it across the removal.
-   */
   protected removeHandlerInstance(
     messageHandler: MessageHandler,
     ephemeralGroupId: string | null,
@@ -427,17 +505,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   };
 
-  /**
-   * Shuts down all running message handlers and deletes their ephemeral
-   * groups.
-   *
-   * This runs during consumer shutdown, when the whole consumer is going
-   * away. Every handler is being removed permanently, so this path uses
-   * `removeHandlerInstance` rather than `shutdownMessageHandler`.
-   *
-   * Registry entries are still present at this point, so the ephemeral
-   * group ID is read from the entry for each instance.
-   */
   protected shutDownMessageHandlers = (cb: ICallback): void => {
     async.each(
       this.messageHandlerInstances,
@@ -467,7 +534,16 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
       (cb: ICallback) => this.supervisorTimer.shutdown(cb),
-      this.queueStateChangeHandler.shutdown,
+      (cb: ICallback) => {
+        // Unsubscribe before tearing down handlers, so a state-change
+        // event arriving mid-shutdown cannot start a new handler.
+        InternalEventBus.getInstance().removeListener(
+          'queue.stateChanged',
+          this.onQueueStateChanged,
+        );
+        this.queueStates.clear();
+        cb();
+      },
       this.shutDownMessageHandlers,
     ].concat(super.goingDown());
   }
@@ -480,13 +556,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     super.handleError(err);
   }
 
-  /**
-   * Stops a message handler (keeps configuration and ephemeral group).
-   *
-   * Used when a queue transitions to PAUSED/STOPPED/LOCKED. The config
-   * stays in the registry and the ephemeral group stays in Redis so that
-   * `startMessageHandler` can resume with the same identity.
-   */
   stopMessageHandler(queue: IQueueParsedParams, cb: ICallback<boolean>): void {
     const handlerInstance = this.getMessageHandlerInstance(queue);
 
@@ -514,13 +583,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     });
   }
 
-  /**
-   * Starts a message handler.
-   *
-   * Used when a queue transitions from STOPPED/PAUSED/LOCKED back to
-   * ACTIVE. The config (and ephemeral group) survived the earlier stop,
-   * so this only needs to construct and run a fresh instance.
-   */
   startMessageHandler(queue: IQueueParsedParams, cb: ICallback<boolean>): void {
     const handlerConfig = this.getMessageHandler(queue);
     if (!handlerConfig) {
@@ -570,16 +632,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     });
   }
 
-  /**
-   * Removes a message handler completely.
-   *
-   * Used by `consumer.cancel()`. The config is gone permanently, so the
-   * ephemeral group is deleted. The group ID is captured from the registry
-   * BEFORE the entry is removed, because `removeHandlerInstance` receives
-   * it as an argument and cannot look it up once removal has happened.
-   */
   removeMessageHandler(queue: IQueueParsedParams, cb: ICallback): void {
-    // Capture the entry (including its ephemeral group ID) before removal.
     const entry = this.registry.get(queue);
     const ephemeralGroupId = entry?.ephemeralGroupId ?? null;
 
@@ -598,16 +651,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     }
   }
 
-  /**
-   * Adds a message handler for a queue. If already exists, returns an
-   * error. If the runner is running and the queue is active, starts the
-   * handler immediately.
-   *
-   * Resolution of the consumer group happens here, BEFORE registry.add,
-   * so the entry stored in the registry is fully resolved. The ephemeral
-   * marker is computed once here and stored on the entry — it is not
-   * recomputed on subsequent restarts.
-   */
   addMessageHandler(
     queue: IQueueParsedParams,
     messageHandler: TConsumerMessageHandler,
@@ -643,7 +686,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
             (err, effectiveGroupId) => {
               if (err) return cb(err);
 
-              // Adopt the resolved group ID into the config entry.
               if (
                 effectiveGroupId &&
                 handlerParams.queue.groupId !== effectiveGroupId
@@ -654,10 +696,6 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
                 };
               }
 
-              // Compute the ephemeral marker once, at registration time.
-              // The pattern match is reliable across restarts: the
-              // generator is deterministic per consumer, so a stored
-              // config that already carries an ephemeral ID still matches.
               const ephemeralGroupId =
                 effectiveGroupId &&
                 effectiveGroupId ===
