@@ -10,4 +10,4 @@
 export * from './types/index.js';
 export * from './consumer.js';
 export * from './message-handler/types/index.js';
-export * from './message-handler/consume-message/types/index.js';
+export * from './message-handler/message-consumer/types/index.js';

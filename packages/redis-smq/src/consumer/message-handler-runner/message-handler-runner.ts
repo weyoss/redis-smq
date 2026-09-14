@@ -19,7 +19,7 @@ import {
   IConsumerMessageHandlerParams,
   TConsumerMessageHandler,
 } from '../message-handler/types/index.js';
-import { EMessageUnacknowledgementCause } from '../message-handler/consume-message/types/index.js';
+import { EMessageUnacknowledgementCause } from '../message-handler/message-consumer/types/index.js';
 import { _deleteEphemeralConsumerGroup } from '../message-handler/_/_delete-ephemeral-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { HandlerRegistry } from './handler-registry.js';
@@ -32,6 +32,7 @@ import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { IConsumerQueuesWithStatus } from '../types/index.js';
 import { InternalEventBus } from '../../event-bus/internal-event-bus.js';
 import { IQueueStateTransition } from '../../queue-state-manager/index.js';
+import { eventPublisher } from './event-publisher.js';
 
 export type TMessageHandlerRunnerEvent = {
   error: (err: Error, consumerId: string) => void;
@@ -478,7 +479,16 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       handlerParams,
       options,
     );
+
+    // Runner-level listeners: 'error' and 'shutdownRequired' drive the
+    // handler's lifecycle.
     this.attachHandlerListeners(instance);
+
+    // Event-bus listeners: the five message-outcome events are forwarded to
+    // the public EventMultiplexer. This is what makes the events observable
+    // to application code (and to tests that listen on the bus).
+    eventPublisher(instance);
+
     this.messageHandlerInstances.push(instance);
     return instance;
   }
@@ -486,21 +496,25 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   /**
    * Starts a message handler for the given parameters.
    *
-   * The `_prepareConsumerGroup` call resolves the effective group ID
-   * (idempotently) and adopts it into `handlerParams.queue` if it differs.
-   * The ephemeral marker, however, is computed once in `addMessageHandler`
-   * and stored on the registry entry — this method does not recompute it.
+   * The queue in `handlerParams` is expected to be fully resolved — this
+   * method does not call `_prepareConsumerGroup`. Resolution happens once,
+   * in `addMessageHandler`, before the config is stored in the registry.
+   * Every caller of this method reads from the registry, so every
+   * `handlerParams` here has already been resolved.
    *
-   * Resolution here is redundant with the call in `addMessageHandler` on
-   * the initial add, but it is idempotent and preserves the invariant that
-   * `runMessageHandler` can be entered from any path (reconciler, state
-   * change, initial `goingUp`) without assuming the group was resolved
-   * earlier.
+   * If a future code path introduces a caller that has not resolved its
+   * queue, that caller must call `_prepareConsumerGroup` first — otherwise
+   * the handler subscribes under `groupId: null` and PUB/SUB fan-out to
+   * the ephemeral group fails.
+   *
+   * On handler startup failure, the configuration is removed via
+   * `removeMessageHandler`, which also deletes the ephemeral group.
    */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
     cb: ICallback,
   ): void {
+    // Check queue state before starting
     if (!this.isQueueActive(handlerParams.queue)) {
       this.logger.debug(
         `Queue ${handlerParams.queue.queueParams.name} is not active, skipping start`,
@@ -508,6 +522,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       return cb();
     }
 
+    // Avoid creating a duplicate instance if an OPERATIONAL one exists.
     const existing = this.getMessageHandlerInstance(handlerParams.queue);
     if (existing && existing.isOperational()) {
       this.logger.warn(
@@ -516,45 +531,18 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       return cb();
     }
 
-    _prepareConsumerGroup(
-      handlerParams.queue,
-      this.consumerContext.consumerId,
-      (err, effectiveGroupId) => {
-        if (err) {
-          this.logger.error(
-            `Failed to prepare consumer group for queue ${handlerParams.queue.queueParams.name}: ${err.message}`,
-          );
-          return cb(err);
-        }
-
-        // Adopt the resolved group ID into the config entry. This is the
-        // single place the config's queue is mutated; the registry stores
-        // the same object, so the mutation is visible to every lookup.
-        if (
-          effectiveGroupId &&
-          handlerParams.queue.groupId !== effectiveGroupId
-        ) {
-          handlerParams.queue = {
-            ...handlerParams.queue,
-            groupId: effectiveGroupId,
-          };
-        }
-
-        const handler = this.createMessageHandlerInstance(handlerParams);
-        handler.run((runErr) => {
-          if (runErr) {
-            this.logger.error(
-              `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,
-              runErr,
-            );
-            this.removeMessageHandler(handlerParams.queue, () => cb(runErr));
-          } else {
-            cb();
-          }
-        });
-      },
-      this.logger,
-    );
+    const handler = this.createMessageHandlerInstance(handlerParams);
+    handler.run((runErr) => {
+      if (runErr) {
+        this.logger.error(
+          `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,
+          runErr,
+        );
+        this.removeMessageHandler(handlerParams.queue, () => cb(runErr));
+      } else {
+        cb();
+      }
+    });
   }
 
   /**

@@ -28,18 +28,24 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
+import { MessageEnvelope } from '../../message/message-envelope.js';
 import {
   EQueueOperationalState,
   EQueueProperty,
   IQueueParsedParams,
 } from '../../queue-manager/index.js';
-import { ConsumeMessage } from './consume-message/consume-message.js';
 import {
   DequeueMessage,
   TDequeueMessageEvent,
 } from './dequeue-message/dequeue-message.js';
-import { EMessageUnacknowledgementCause } from './consume-message/types/index.js';
+import { MessageConsumer } from './message-consumer/message-consumer.js';
+import { AcknowledgementPipeline } from './message-consumer/acknowledgement-pipeline.js';
+import {
+  EMessageDeadLetterCause,
+  EMessageUnacknowledgementCause,
+} from './message-consumer/types/index.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
+import { TConsumerMessageHandler } from './types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
@@ -51,13 +57,18 @@ import { RedisConfig } from '../../common/redis/redis-config.js';
 /**
  * Events emitted by a MessageHandler.
  *
- * - `error`: a runtime error occurred; the runner should shut down and
- *   possibly restart this handler.
- * - `shutdownRequired`: the handler cannot continue (e.g., the queue is
- *   STOPPED/LOCKED). The runner is expected to remove the instance from its
- *   registry. The handler does NOT shut itself down, because doing so would
- *   leave a stale instance in `MessageHandlerRunner.messageHandlerInstances`
- *   that blocks restart when the queue becomes ACTIVE again.
+ * Lifecycle (consumed by the runner):
+ *   - error: a fatal failure; the runner tears down the instance.
+ *   - shutdownRequired: the queue is STOPPED/LOCKED; the runner removes
+ *     the instance so a fresh one can be created when the queue returns
+ *     to ACTIVE.
+ *
+ * Message outcomes (forwarded to EventMultiplexer by event-publisher):
+ *   - messageAcknowledged
+ *   - messageUnacknowledged
+ *   - messageDeadLettered
+ *   - messageRequeued
+ *   - messageDelayed
  */
 export type TMessageHandlerEvent = {
   error: (err: Error, consumerId: string, queue: IQueueParsedParams) => void;
@@ -66,25 +77,43 @@ export type TMessageHandlerEvent = {
     consumerId: string,
     queue: IQueueParsedParams,
   ) => void;
+  messageAcknowledged: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+  ) => void;
+  messageUnacknowledged: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+    unacknowledgmentCause: EMessageUnacknowledgementCause,
+  ) => void;
+  messageDeadLettered: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+    deadLetterCause: EMessageDeadLetterCause,
+  ) => void;
+  messageRequeued: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+  ) => void;
+  messageDelayed: (
+    messageId: string,
+    queue: IQueueParsedParams,
+    consumerId: string,
+  ) => void;
 };
 
 /**
- * Options that control how a handler runs.
- *
- * - `autoDequeue`: whether `goingUp` should call `dequeue()` once the
- *   handler is up. Non-multiplexed handlers start their own loop and set
- *   this to true. Multiplexed handlers leave it false; the controller
- *   drives them.
- *
- * - `blockUntilMessageReceived`: whether the underlying `DequeueMessage`
- *   should block on `BRPOPLPUSH` (non-multiplexed) or use a non-blocking
- *   `RPOPLPUSH` (multiplexed, so a shared connection can be round-robined).
- *
- * - `nextFn`: how the handler yields control after processing a message
- *   or finding the queue empty. In non-multiplexed mode it is null, and
- *   `next()` calls `dequeue()` on itself. In multiplexed mode it is the
- *   controller's `scheduleNextTick`, which returns control to the shared
- *   tick loop.
+ * Options that control how a handler runs:
+ *   - autoDequeue: whether goingUp self-starts the dequeue loop
+ *   - blockUntilMessageReceived: BRPOPLPUSH vs. RPOPLPUSH (and, by
+ *     extension, whether DequeueMessage auto-closes its Redis connection)
+ *   - nextFn: how to yield after a message. Null means "loop on yourself"
+ *     (non-multiplexed). A function means "hand control back to the
+ *     caller" (multiplexed).
  */
 export interface IMessageHandlerOptions {
   autoDequeue?: boolean;
@@ -102,10 +131,11 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   protected readonly config: IRedisSMQParsedConfig;
 
   protected logger: ILogger;
-  protected queue;
+  protected queue: IQueueParsedParams;
+  protected messageHandler: TConsumerMessageHandler;
   protected dequeueMessage: DequeueMessage | null = null;
-  protected consumeMessage: ConsumeMessage | null = null;
-  protected messageHandler;
+  protected acknowledgementPipeline: AcknowledgementPipeline | null = null;
+  protected messageConsumer: MessageConsumer | null = null;
   protected queueWorkerCluster: WorkerCluster | null = null;
   protected redisClient: IRedisClient | null = null;
   protected timer: Timer;
@@ -148,13 +178,10 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   /**
    * Called by DequeueMessage when no message was available.
    *
-   * Multiplexed mode yields to the controller immediately: the controller's
-   * tick interval is the delay before this handler is retried, and stacking
-   * another 1-second timer here (as the pre-Step-5 code did) produced ~2s
-   * of dead time between messages. See issue #13.
-   *
-   * Non-multiplexed mode schedules its own retry, throttling empty-queue
-   * polling to one attempt per second.
+   * Multiplexed mode yields to the controller immediately; the
+   * controller's tick interval is the retry delay. Non-multiplexed mode
+   * schedules its own retry, throttling empty-queue polling to one
+   * attempt per second.
    */
   protected onMessageNext: TDequeueMessageEvent['nextMessage'] = () => {
     if (this.nextFn) {
@@ -223,8 +250,8 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   };
 
   /**
-   * A factory method for creating a DequeueMessage instance.
-   * The blocking flags are driven by the handler's options:
+   * A factory for DequeueMessage. The blocking flags follow the handler's
+   * mode:
    *   - non-multiplexed: blocking = true, autoClose = true
    *   - multiplexed:     blocking = false, autoClose = false
    */
@@ -257,18 +284,35 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       (cb: ICallback) => {
         _subscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
       },
+      // Start the acknowledgement pipeline (unacknowledger first, then
+      // acknowledger). The pipeline is the IMessageControl that
+      // MessageConsumer will call into.
       (cb: ICallback) => {
-        this.consumeMessage = new ConsumeMessage(
-          this.consumerContext,
+        const pipeline = new AcknowledgementPipeline(
           this.queue,
-          this.getId(),
-          this.messageHandler,
+          this.consumerContext.consumerId,
+          this.logger,
+          this.consumerContext.consumerOptions,
         );
-        this.consumeMessage.on('error', (err) => this.handleError(err));
-        this.consumeMessage.on('next', () => {
-          this.next();
-        });
-        this.consumeMessage.run(cb);
+        this.attachPipelineListeners(pipeline);
+        this.acknowledgementPipeline = pipeline;
+        pipeline.run(cb);
+      },
+      // Construct the consumer and validate the handler's shape before
+      // any message is processed.
+      (cb: ICallback) => {
+        const pipeline = this.acknowledgementPipeline;
+        if (!pipeline) {
+          return cb(new PanicError({ message: 'Pipeline not initialized' }));
+        }
+        const mc = new MessageConsumer(
+          this.messageHandler,
+          this.queue,
+          pipeline,
+          this.logger,
+        );
+        this.messageConsumer = mc;
+        mc.validateHandler(cb);
       },
       (cb: ICallback) => {
         this.dequeueMessage = this.createDequeueMessageInstance();
@@ -313,17 +357,24 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
         } else cb();
       },
 
-      // stop consuming messages
+      // Stop the acknowledgement pipeline first (acknowledger, then
+      // unacknowledger). This matches the pre-Step-6 ordering: acks are
+      // flushed while the worker is still alive, so any in-flight worker
+      // completion can still enqueue its outcome before the pipeline
+      // stops accepting requests.
       (cb: ICallback) => {
-        if (this.consumeMessage) {
-          this.consumeMessage.shutdown(() => {
-            this.consumeMessage?.removeListener('error', (err) =>
-              this.handleError(err),
-            );
-            this.consumeMessage = null;
-            cb();
-          });
-        } else cb();
+        const pipeline = this.acknowledgementPipeline;
+        if (!pipeline) return cb();
+        this.acknowledgementPipeline = null;
+        pipeline.shutdown(cb);
+      },
+
+      // Then shut down MessageConsumer (releases the worker, if any).
+      (cb: ICallback) => {
+        const mc = this.messageConsumer;
+        if (!mc) return cb();
+        this.messageConsumer = null;
+        mc.shutdown(cb);
       },
 
       // unsubscribe from queue (must run before the runner deletes the
@@ -344,10 +395,9 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   }
 
   processMessage(messageId: string): void {
-    if (!this.isOperational() || !this.consumeMessage) {
+    if (!this.isOperational() || !this.messageConsumer) {
       return;
     }
-    const consumeMessage = this.consumeMessage;
     const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) {
       return this.handleError(redisClient);
@@ -367,7 +417,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       Date.now(),
       EMessageProperty.STATUS,
       EMessagePropertyStatus.PROCESSING,
-      EMessagePropertyStatus.PENDING, // Required for atomic check
+      EMessagePropertyStatus.PENDING,
       EMessageProperty.ATTEMPTS,
       EQueueProperty.PROCESSING_MESSAGES_COUNT,
       EQueueProperty.PENDING_MESSAGES_COUNT,
@@ -385,11 +435,10 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       (err, reply: unknown) => {
         if (err) return this.handleError(err);
 
-        // Handle queue state specific errors. In each case, signal the
-        // runner that this handler must be stopped, but do NOT call
-        // this.shutdown() directly: the runner owns the instance's
-        // lifecycle and needs to remove it from its registry so that a
-        // fresh handler can be created when the queue returns to ACTIVE.
+        // Queue-state branches: signal the runner, do NOT self-shutdown.
+        // The runner owns the instance's lifecycle and must remove it
+        // from its registry so a fresh handler can be created when the
+        // queue returns to ACTIVE.
         if (reply === 'QUEUE_STOPPED') {
           this.logger.warn(
             `Cannot checkout message ${messageId}: Queue is in STOPPED state. Requesting shutdown of this message handler.`,
@@ -456,20 +505,127 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
           return this.handleError(new CallbackInvalidReplyError());
         }
         const message = _parseMessage(reply);
-        consumeMessage.handleReceivedMessage(message);
+        this.handleReceivedMessage(message);
       },
     );
+  }
+
+  /**
+   * Called once CHECKOUT_MESSAGE succeeds. Applies the expired-message
+   * shortcut, then delegates to MessageConsumer.
+   *
+   * Timeout enforcement, outcome recording, and the ack/unack race guard
+   * all live in MessageConsumer.consume now. This method only decides
+   * whether the message has expired and whether to advance the dequeue
+   * loop after the outcome is recorded.
+   *
+   * The `isOperational()` check in the completion callback matches the
+   * pre-Step-6 ConsumeMessage behavior: a handler that completes while
+   * the parent is shutting down does not advance the loop. The outcome
+   * itself is dropped by the pipeline's own operational guard, and the
+   * unacknowledger's `goingDown` will handle any in-flight message with
+   * cause SHUTTING_DOWN.
+   */
+  protected handleReceivedMessage(message: MessageEnvelope): void {
+    const messageId = message.getId();
+    const pipeline = this.acknowledgementPipeline;
+    const consumer = this.messageConsumer;
+
+    if (!this.isOperational() || !consumer || !pipeline) {
+      this.logger.warn(
+        `Ignoring message ${messageId} - handler not fully operational`,
+      );
+      return;
+    }
+
+    if (message.getSetExpired()) {
+      this.logger.info(`Message ${messageId} expired, unacknowledging`);
+      pipeline.unack(message, EMessageUnacknowledgementCause.TTL_EXPIRED);
+      this.next();
+      return;
+    }
+
+    consumer.consume(message, () => {
+      if (!this.isOperational()) {
+        this.logger.debug(
+          `Consumer not running, ignoring callback for ${messageId}`,
+        );
+        return;
+      }
+      this.next();
+    });
+  }
+
+  /**
+   * Forward AcknowledgementPipeline events.
+   *
+   * Fatal errors propagate to the handler's error channel, which the
+   * runner interprets as a signal to tear the instance down. This
+   * matches the pre-Step-6 behavior: an acknowledger or unacknowledger
+   * error routed through ConsumeMessage.handleError, which emitted on
+   * the handler's error channel.
+   *
+   * Message outcomes are enriched with queue + consumerId and re-emitted,
+   * preserving the shape the old ConsumeMessage emitted.
+   */
+  protected attachPipelineListeners(pipeline: AcknowledgementPipeline): void {
+    pipeline.on('error', (err) => {
+      this.handleError(err);
+    });
+
+    pipeline.on('messageAcknowledged', (message) => {
+      this.emit(
+        'messageAcknowledged',
+        message.getId(),
+        this.queue,
+        this.consumerContext.consumerId,
+      );
+    });
+
+    pipeline.on('messageUnacknowledged', (messageId, cause) => {
+      this.emit(
+        'messageUnacknowledged',
+        messageId,
+        this.queue,
+        this.consumerContext.consumerId,
+        cause,
+      );
+    });
+
+    pipeline.on('messageDeadLettered', (messageId, deadLetterCause) => {
+      this.emit(
+        'messageDeadLettered',
+        messageId,
+        this.queue,
+        this.consumerContext.consumerId,
+        deadLetterCause,
+      );
+    });
+
+    pipeline.on('messageRequeued', (messageId) => {
+      this.emit(
+        'messageRequeued',
+        messageId,
+        this.queue,
+        this.consumerContext.consumerId,
+      );
+    });
+
+    pipeline.on('messageDelayed', (messageId) => {
+      this.emit(
+        'messageDelayed',
+        messageId,
+        this.queue,
+        this.consumerContext.consumerId,
+      );
+    });
   }
 
   /**
    * Yield control after processing a message or finding the queue empty.
    *
    * - Multiplexed (`nextFn` present): hand control back to the controller.
-   *   The controller decides whether this handler runs again on the next
-   *   tick. No local operational check — the controller performs one.
-   *
-   * - Non-multiplexed (`nextFn` absent): loop on ourselves, guarded by
-   *   our own operational state.
+   * - Non-multiplexed (`nextFn` absent): loop on ourselves.
    */
   next(): void {
     if (this.nextFn) {

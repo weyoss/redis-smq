@@ -9,8 +9,8 @@
 
 import { async, ICallback } from 'redis-smq-common';
 import { _getQueueConsumerIds } from '../../../../queue-manager/_/_get-queue-consumer-ids.js';
-import { MessageUnacknowledger } from '../../consume-message/message-unacknowledger.js';
-import { EMessageUnacknowledgementCause } from '../../consume-message/types/index.js';
+import { MessageUnacknowledger } from '../../message-consumer/message-unacknowledger.js';
+import { EMessageUnacknowledgementCause } from '../../message-consumer/types/index.js';
 import { withSharedPoolConnection } from '../../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _deleteEphemeralConsumerGroup } from '../../_/_delete-ephemeral-consumer-group.js';
 import { QueueWorkerAbstract } from '../queue-worker-abstract.js';
