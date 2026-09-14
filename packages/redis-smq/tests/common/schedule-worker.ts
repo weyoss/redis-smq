@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { PublishScheduledWorker } from '../../src/consumer/message-handler/queue-workers/workers/publish-scheduled.worker.js';
+import { PublishScheduledWorker } from '../../src/consumer/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
 import { config, redisConfig } from './config.js';
 

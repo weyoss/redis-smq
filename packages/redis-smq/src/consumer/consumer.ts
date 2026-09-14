@@ -23,9 +23,9 @@ import {
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../queue-manager/index.js';
-import { MessageHandlerRunner } from './message-handler-runner/message-handler-runner.js';
-import { eventPublisher } from './event-publisher.js';
-import { TConsumerMessageHandler } from './message-handler/types/index.js';
+import { MessageHandlerRunner } from './message-handler-runner.js';
+import { consumerEventPublisher } from './consumer-event-publisher.js';
+import { TConsumerMessageHandler } from './types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
 import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import {
@@ -101,7 +101,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
       consumerOptions: this.consumerOptions,
     };
 
-    eventPublisher(this);
+    consumerEventPublisher(this);
 
     // One runner class regardless of scheduling mode. The runner decides
     // whether to construct a MultiplexingController based on

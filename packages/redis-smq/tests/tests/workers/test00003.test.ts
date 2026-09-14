@@ -13,8 +13,8 @@ import {
   EMessagePropertyStatus,
   QueuePublishedMessages,
 } from '../../../src/index.js';
-import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
-import { ReapConsumersWorker } from '../../../src/consumer/message-handler/queue-workers/workers/reap-consumers.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/workers/requeue-immediate.worker.js';
+import { ReapConsumersWorker } from '../../../src/consumer/workers/reap-consumers.worker.js';
 import {
   crashAConsumerConsumingAMessage,
   createQueue,

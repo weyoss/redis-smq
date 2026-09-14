@@ -8,3 +8,6 @@
  */
 
 export * from './consumer.js';
+export * from './message-unacknowledgement.js';
+export * from './message-unacknowledgement-history.js';
+export * from './message-handler.js';

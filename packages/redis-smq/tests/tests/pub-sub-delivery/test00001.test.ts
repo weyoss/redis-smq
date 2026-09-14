@@ -16,7 +16,7 @@ import {
   ProducibleMessage,
   RedisSMQ,
 } from '../../../src/index.js';
-import { _generateEphemeralConsumerGroupId } from '../../../src/consumer/message-handler-runner/_/_generate-ephemeral-consumer-group-id.js';
+import { _generateEphemeralConsumerGroupId } from '../../../src/consumer/_/_generate-ephemeral-consumer-group-id.js';
 
 test('PUB/SUB Delivery: consuming a PUB_SUB queue without providing consumer group ID', async () => {
   const qm = bluebird.promisifyAll(RedisSMQ.createQueueManager());

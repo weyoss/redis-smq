@@ -15,7 +15,7 @@ import {
   MessageManager,
   ProducibleMessage,
 } from '../../../src/index.js';
-import { RequeueDelayedWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-delayed.worker.js';
+import { RequeueDelayedWorker } from '../../../src/consumer/workers/requeue-delayed.worker.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
@@ -25,7 +25,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/workers/requeue-immediate.worker.js';
 import { config, redisConfig } from '../../common/config.js';
 import { randomUUID } from 'node:crypto';
 import { ICallback } from 'redis-smq-common';

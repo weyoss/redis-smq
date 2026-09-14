@@ -24,7 +24,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/queue-workers/workers/requeue-immediate.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/workers/requeue-immediate.worker.js';
 import { config, redisConfig } from '../../common/config.js';
 import { randomUUID } from 'node:crypto';
 import { ICallback } from 'redis-smq-common';
