@@ -42,10 +42,10 @@ import { EMessageUnacknowledgementCause } from './consume-message/types/index.js
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
-import { IConsumerContext } from '../types/consumer-context.js';
-import { IQueueWorkerPayload } from './queue-workers/types/queue-worker.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
 import { _unsubscribeConsumer } from './_/_unsubscribe-consumer.js';
+import { IConsumerContext } from '../types/consumer-context.js';
+import { IQueueWorkerPayload } from './queue-workers/types/queue-worker.js';
 import { RedisConfig } from '../../common/redis/redis-config.js';
 
 /**
@@ -68,6 +68,30 @@ export type TMessageHandlerEvent = {
   ) => void;
 };
 
+/**
+ * Options that control how a handler runs.
+ *
+ * - `autoDequeue`: whether `goingUp` should call `dequeue()` once the
+ *   handler is up. Non-multiplexed handlers start their own loop and set
+ *   this to true. Multiplexed handlers leave it false; the controller
+ *   drives them.
+ *
+ * - `blockUntilMessageReceived`: whether the underlying `DequeueMessage`
+ *   should block on `BRPOPLPUSH` (non-multiplexed) or use a non-blocking
+ *   `RPOPLPUSH` (multiplexed, so a shared connection can be round-robined).
+ *
+ * - `nextFn`: how the handler yields control after processing a message
+ *   or finding the queue empty. In non-multiplexed mode it is null, and
+ *   `next()` calls `dequeue()` on itself. In multiplexed mode it is the
+ *   controller's `scheduleNextTick`, which returns control to the shared
+ *   tick loop.
+ */
+export interface IMessageHandlerOptions {
+  autoDequeue?: boolean;
+  blockUntilMessageReceived?: boolean;
+  nextFn?: (() => void) | null;
+}
+
 const WORKERS_DIR = path.resolve(
   env.getCurrentDir(),
   './queue-workers/workers',
@@ -82,15 +106,18 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   protected dequeueMessage: DequeueMessage | null = null;
   protected consumeMessage: ConsumeMessage | null = null;
   protected messageHandler;
-  protected autoDequeue;
   protected queueWorkerCluster: WorkerCluster | null = null;
   protected redisClient: IRedisClient | null = null;
   protected timer: Timer;
 
+  protected readonly autoDequeue: boolean;
+  protected readonly blockUntilMessageReceived: boolean;
+  protected readonly nextFn: (() => void) | null;
+
   constructor(
     consumerContext: IConsumerContext,
     handlerParams: IConsumerMessageHandlerParams,
-    autoDequeue: boolean = true,
+    options: IMessageHandlerOptions = {},
   ) {
     super();
     this.consumerContext = consumerContext;
@@ -100,7 +127,9 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
     const { queue, messageHandler } = handlerParams;
     this.queue = queue;
     this.messageHandler = messageHandler;
-    this.autoDequeue = autoDequeue;
+    this.autoDequeue = options.autoDequeue ?? true;
+    this.blockUntilMessageReceived = options.blockUntilMessageReceived ?? true;
+    this.nextFn = options.nextFn ?? null;
     this.timer = new Timer(this.logger);
   }
 
@@ -113,12 +142,25 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   protected onMessageReceived: TDequeueMessageEvent['messageReceived'] = (
     messageId,
   ) => {
-    // A message has been received, so process it
     this.processMessage(messageId);
   };
 
+  /**
+   * Called by DequeueMessage when no message was available.
+   *
+   * Multiplexed mode yields to the controller immediately: the controller's
+   * tick interval is the delay before this handler is retried, and stacking
+   * another 1-second timer here (as the pre-Step-5 code did) produced ~2s
+   * of dead time between messages. See issue #13.
+   *
+   * Non-multiplexed mode schedules its own retry, throttling empty-queue
+   * polling to one attempt per second.
+   */
   protected onMessageNext: TDequeueMessageEvent['nextMessage'] = () => {
-    // This event means the queue is empty or rate-limited.
+    if (this.nextFn) {
+      this.next();
+      return;
+    }
     this.timer.schedule(() => this.next(), 1000);
   };
 
@@ -182,10 +224,18 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
 
   /**
    * A factory method for creating a DequeueMessage instance.
-   * This method can be overridden by subclasses to customize the DequeueMessage creation.
+   * The blocking flags are driven by the handler's options:
+   *   - non-multiplexed: blocking = true, autoClose = true
+   *   - multiplexed:     blocking = false, autoClose = false
    */
   protected createDequeueMessageInstance(): DequeueMessage {
-    return new DequeueMessage(this.consumerContext, this.queue);
+    const blocking = this.blockUntilMessageReceived;
+    return new DequeueMessage(
+      this.consumerContext,
+      this.queue,
+      blocking,
+      blocking,
+    );
   }
 
   protected override goingUp(): ((cb: ICallback) => void)[] {
@@ -202,6 +252,8 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
           },
         );
       },
+      // Consumer group resolution happened in the runner before this
+      // handler was constructed; the queue is already fully resolved.
       (cb: ICallback) => {
         _subscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
       },
@@ -274,7 +326,9 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
         } else cb();
       },
 
-      // unsubscribe from queue
+      // unsubscribe from queue (must run before the runner deletes the
+      // ephemeral group — the delete script refuses while a consumer is
+      // still a member)
       (cb: ICallback) => {
         _unsubscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
       },
@@ -331,11 +385,11 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       (err, reply: unknown) => {
         if (err) return this.handleError(err);
 
-        // Handle queue state specific errors. In each case, signal the runner
-        // that this handler must be stopped, but do NOT call this.shutdown()
-        // directly: the runner owns the instance's lifecycle and needs to
-        // remove it from its registry so that a fresh handler can be created
-        // when the queue returns to ACTIVE (see MessageHandlerRunner).
+        // Handle queue state specific errors. In each case, signal the
+        // runner that this handler must be stopped, but do NOT call
+        // this.shutdown() directly: the runner owns the instance's
+        // lifecycle and needs to remove it from its registry so that a
+        // fresh handler can be created when the queue returns to ACTIVE.
         if (reply === 'QUEUE_STOPPED') {
           this.logger.warn(
             `Cannot checkout message ${messageId}: Queue is in STOPPED state. Requesting shutdown of this message handler.`,
@@ -379,7 +433,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
           this.logger.warn(
             `Message [${messageId}] not found. It may have been deleted or expired.`,
           );
-          // A slot has been freed. Immediately try to get another message.
           this.next();
           return;
         }
@@ -388,7 +441,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
           this.logger.warn(
             `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
           );
-          // A slot has been freed. Immediately try to get another message.
           this.next();
           return;
         }
@@ -397,7 +449,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
           this.logger.warn(
             `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
           );
-          // A slot has been freed. Immediately try to get another message.
           this.next();
           return;
         }
@@ -410,7 +461,22 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
     );
   }
 
+  /**
+   * Yield control after processing a message or finding the queue empty.
+   *
+   * - Multiplexed (`nextFn` present): hand control back to the controller.
+   *   The controller decides whether this handler runs again on the next
+   *   tick. No local operational check — the controller performs one.
+   *
+   * - Non-multiplexed (`nextFn` absent): loop on ourselves, guarded by
+   *   our own operational state.
+   */
   next(): void {
+    if (this.nextFn) {
+      this.nextFn();
+      return;
+    }
+
     if (this.isOperational()) {
       this.dequeue();
     }

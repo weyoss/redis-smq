@@ -23,6 +23,7 @@ import { EMessageUnacknowledgementCause } from '../message-handler/consume-messa
 import { _deleteEphemeralConsumerGroup } from '../message-handler/_/_delete-ephemeral-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
 import { HandlerRegistry } from './handler-registry.js';
+import { MultiplexingController } from './multiplexing-controller.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { _generateEphemeralConsumerGroupId } from './_/_generate-ephemeral-consumer-group-id.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
@@ -49,6 +50,9 @@ export type TMessageHandlerRunnerEvent = {
  *   - This runner owns the live MessageHandler instances, all lifecycle
  *     decisions about them, and a local mirror of each queue's operational
  *     state (populated from InternalEventBus).
+ *   - In multiplexed mode, a MultiplexingController owns the round-robin
+ *     scheduling policy. The runner creates handlers with options that
+ *     defer their dequeue loop to the controller.
  *
  * Stop vs. remove:
  *   - `stopMessageHandler` tears down the handler instance but keeps the
@@ -67,9 +71,19 @@ export type TMessageHandlerRunnerEvent = {
  *   The default is correct because a handler can only be registered after
  *   `_validateOperation(CONSUME)` has confirmed the queue is ACTIVE in
  *   Redis.
+ *
+ * Scheduling mode:
+ *   - Non-multiplexed (default): each handler owns its dequeue loop,
+ *     blocking on BRPOPLPUSH with an exclusive connection.
+ *   - Multiplexed (`enableMultiplexing: true`): a single
+ *     MultiplexingController runs a 1s round-robin tick, calling
+ *     `dequeue()` on one handler per tick. Handlers use non-blocking
+ *     RPOPLPUSH on a shared connection and yield control back to the
+ *     controller after each message.
  */
 export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected readonly handlerReconciliationInterval = 5000; // todo: make it configurable: config.consumer.handlerReconciliationInterval
+  protected readonly multiplexingTickIntervalMs = 1000; // todo: make it configurable: config.consumer.multiplexingTickIntervalMs
   protected readonly consumerContext: IConsumerContext;
   protected readonly supervisorTimer: Timer;
 
@@ -77,6 +91,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    * Registered handler configurations and the canonical identity function.
    */
   protected readonly registry: HandlerRegistry;
+
+  /**
+   * Round-robin tick loop used when the consumer is configured with
+   * `enableMultiplexing: true`. Null otherwise, in which case each handler
+   * runs its own dequeue loop.
+   */
+  protected multiplexingController: MultiplexingController | null = null;
 
   /**
    * Current operational state of each queue this runner has heard about.
@@ -99,6 +120,18 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     this.registry = new HandlerRegistry();
     this.supervisorTimer = new Timer(this.logger);
 
+    // In multiplexed mode, construct the round-robin controller. It needs
+    // only two things from the runner: the current handler list, and a
+    // predicate for whether a handler's queue is currently ACTIVE.
+    if (consumerContext.consumerOptions.enableMultiplexing) {
+      this.multiplexingController = new MultiplexingController(
+        this.logger,
+        this.multiplexingTickIntervalMs,
+        () => this.messageHandlerInstances,
+        (handler) => this.isQueueActive(handler.getQueue()),
+      );
+    }
+
     // Subscribe before goingUp, so state-change events that fire between
     // construction and run() are not missed. A consumer.consume() call
     // issued before run() registers a config that will be started on
@@ -109,7 +142,11 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       this.onQueueStateChanged,
     );
 
-    this.logger.debug(`MessageHandlerRunner with ID: ${this.id} initialized.`);
+    this.logger.debug(
+      `MessageHandlerRunner with ID: ${this.id} initialized${
+        this.multiplexingController ? ' (multiplexing enabled)' : ''
+      }.`,
+    );
   }
 
   /**
@@ -270,6 +307,20 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
   /**
    * Attach lifecycle listeners to a freshly created handler instance.
+   *
+   * Two events are wired:
+   *
+   * - 'error': the handler hit a runtime error. Log, then shut it down.
+   *   The supervisor will recreate it on the next reconciliation tick
+   *   if the queue is still active.
+   *
+   * - 'shutdownRequired': the handler cannot continue (queue is STOPPED,
+   *   LOCKED, or otherwise non-runnable). Remove the instance from
+   *   `messageHandlerInstances` so that when the queue returns to ACTIVE,
+   *   a fresh handler can be created.
+   *
+   * Both paths use `shutdownMessageHandler`, not `removeHandlerInstance`:
+   * the config stays, so the ephemeral group must survive the restart.
    */
   protected attachHandlerListeners(instance: MessageHandler): void {
     instance.on('error', (err) => {
@@ -311,6 +362,8 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected reconcileHandlers = (): void => {
     if (!this.isOperational()) return;
 
+    // Only count OPERATIONAL instances as "running". A stopped instance
+    // that lingers in messageHandlerInstances must not mask a zombie.
     const runningQueues = new Set(
       this.messageHandlerInstances
         .filter((i) => i.isOperational())
@@ -368,6 +421,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     }
   };
 
+  /**
+   * Finds a running message handler instance for the given queue.
+   *
+   * Uses `registry.matches`, so a lookup with `groupId: null` matches any
+   * group on the same (ns, name) — the semantics `consumer.cancel('queue')`
+   * relies on. See issue #4.
+   */
   protected getMessageHandlerInstance(
     queue: IQueueParsedParams,
   ): MessageHandler | undefined {
@@ -376,25 +436,67 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   }
 
+  /**
+   * Finds the handler configuration for the given queue.
+   */
   getMessageHandler(
     queue: IQueueParsedParams,
   ): IConsumerMessageHandlerParams | undefined {
     return this.registry.get(queue)?.params;
   }
 
+  /**
+   * Creates and registers a new MessageHandler instance for the given
+   * parameters.
+   *
+   * The options passed to the handler depend on the scheduling mode:
+   *   - Non-multiplexed: the handler self-starts, blocks on the queue, and
+   *     loops on itself.
+   *   - Multiplexed: the handler defers to the controller. It does not
+   *     self-start, uses non-blocking dequeue on a shared connection, and
+   *     yields to the controller after each message via `nextFn`.
+   */
   protected createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
+    const controller = this.multiplexingController;
+
+    const options = controller
+      ? {
+          autoDequeue: false,
+          blockUntilMessageReceived: false,
+          nextFn: (): void => controller.scheduleNextTick(),
+        }
+      : {
+          autoDequeue: true,
+          blockUntilMessageReceived: true,
+          nextFn: null,
+        };
+
     const instance = new MessageHandler(
       this.consumerContext,
       handlerParams,
-      true,
+      options,
     );
     this.attachHandlerListeners(instance);
     this.messageHandlerInstances.push(instance);
     return instance;
   }
 
+  /**
+   * Starts a message handler for the given parameters.
+   *
+   * The `_prepareConsumerGroup` call resolves the effective group ID
+   * (idempotently) and adopts it into `handlerParams.queue` if it differs.
+   * The ephemeral marker, however, is computed once in `addMessageHandler`
+   * and stored on the registry entry — this method does not recompute it.
+   *
+   * Resolution here is redundant with the call in `addMessageHandler` on
+   * the initial add, but it is idempotent and preserves the invariant that
+   * `runMessageHandler` can be entered from any path (reconciler, state
+   * change, initial `goingUp`) without assuming the group was resolved
+   * earlier.
+   */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
     cb: ICallback,
@@ -425,6 +527,9 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
           return cb(err);
         }
 
+        // Adopt the resolved group ID into the config entry. This is the
+        // single place the config's queue is mutated; the registry stores
+        // the same object, so the mutation is visible to every lookup.
         if (
           effectiveGroupId &&
           handlerParams.queue.groupId !== effectiveGroupId
@@ -452,6 +557,19 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   }
 
+  /**
+   * Shuts down a message handler and removes it from the instance list.
+   *
+   * This is the low-level primitive. It does NOT delete the ephemeral
+   * group — that is the caller's responsibility. Use this for stops
+   * (queue state change), where the config survives. Use
+   * `removeHandlerInstance` for removals (cancel, shutdown), where the
+   * config is gone.
+   *
+   * In multiplexed mode, the controller is notified so it can drop its
+   * reference to the handler if it was the active one, and pick the next
+   * operational handler on the next tick.
+   */
   protected shutdownMessageHandler(
     messageHandler: MessageHandler,
     cb: ICallback,
@@ -460,10 +578,25 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       this.messageHandlerInstances = this.messageHandlerInstances.filter(
         (handler) => handler.getId() !== messageHandler.getId(),
       );
+      this.multiplexingController?.onHandlerStopped(messageHandler);
       cb();
     });
   }
 
+  /**
+   * Fully remove a running handler instance.
+   *
+   * Shuts the handler down (which runs `_unsubscribeConsumer` inside its
+   * `goingDown`) and, if the handler's registry entry carried an ephemeral
+   * consumer group ID, deletes that group.
+   *
+   * Ordering matters. The delete script refuses to act while the group
+   * still has members (`SCARD keyQueueConsumerGroupConsumers > 0`). The
+   * `SREM` that removes this consumer from the group's member set is
+   * issued by `_unsubscribeConsumer`, which runs inside the handler's
+   * `goingDown`. Only after shutdown completes can the delete succeed.
+   * See issue #5.
+   */
   protected removeHandlerInstance(
     messageHandler: MessageHandler,
     ephemeralGroupId: string | null,
@@ -505,6 +638,17 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   };
 
+  /**
+   * Shuts down all running message handlers and deletes their ephemeral
+   * groups.
+   *
+   * This runs during consumer shutdown, when the whole consumer is going
+   * away. Every handler is being removed permanently, so this path uses
+   * `removeHandlerInstance` rather than `shutdownMessageHandler`.
+   *
+   * Registry entries are still present at this point, so the ephemeral
+   * group ID is read from the entry for each instance.
+   */
   protected shutDownMessageHandlers = (cb: ICallback): void => {
     async.each(
       this.messageHandlerInstances,
@@ -528,12 +672,28 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
         this.reconcileHandlers();
         cb();
       },
+      (cb: ICallback) => {
+        if (!this.multiplexingController) return cb();
+        this.multiplexingController.run(cb);
+      },
+      (cb: ICallback) => {
+        if (!this.multiplexingController) return cb();
+        // Kick off the first tick. Subsequent ticks are scheduled by the
+        // controller itself, via the `nextFn` the handlers call after
+        // each message.
+        this.multiplexingController.execNextTick();
+        cb();
+      },
     ]);
   }
 
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
       (cb: ICallback) => this.supervisorTimer.shutdown(cb),
+      (cb: ICallback) => {
+        if (!this.multiplexingController) return cb();
+        this.multiplexingController.shutdown(cb);
+      },
       (cb: ICallback) => {
         // Unsubscribe before tearing down handlers, so a state-change
         // event arriving mid-shutdown cannot start a new handler.
@@ -556,6 +716,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     super.handleError(err);
   }
 
+  /**
+   * Stops a message handler (keeps configuration and ephemeral group).
+   *
+   * Used when a queue transitions to PAUSED/STOPPED/LOCKED. The config
+   * stays in the registry and the ephemeral group stays in Redis so that
+   * `startMessageHandler` can resume with the same identity.
+   */
   stopMessageHandler(queue: IQueueParsedParams, cb: ICallback<boolean>): void {
     const handlerInstance = this.getMessageHandlerInstance(queue);
 
@@ -583,6 +750,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     });
   }
 
+  /**
+   * Starts a message handler.
+   *
+   * Used when a queue transitions from STOPPED/PAUSED/LOCKED back to
+   * ACTIVE. The config (and ephemeral group) survived the earlier stop,
+   * so this only needs to construct and run a fresh instance.
+   */
   startMessageHandler(queue: IQueueParsedParams, cb: ICallback<boolean>): void {
     const handlerConfig = this.getMessageHandler(queue);
     if (!handlerConfig) {
@@ -632,7 +806,16 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     });
   }
 
+  /**
+   * Removes a message handler completely.
+   *
+   * Used by `consumer.cancel()`. The config is gone permanently, so the
+   * ephemeral group is deleted. The group ID is captured from the registry
+   * BEFORE the entry is removed, because `removeHandlerInstance` receives
+   * it as an argument and cannot look it up once removal has happened.
+   */
   removeMessageHandler(queue: IQueueParsedParams, cb: ICallback): void {
+    // Capture the entry (including its ephemeral group ID) before removal.
     const entry = this.registry.get(queue);
     const ephemeralGroupId = entry?.ephemeralGroupId ?? null;
 
@@ -651,6 +834,16 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     }
   }
 
+  /**
+   * Adds a message handler for a queue. If already exists, returns an
+   * error. If the runner is running and the queue is active, starts the
+   * handler immediately.
+   *
+   * Resolution of the consumer group happens here, BEFORE registry.add,
+   * so the entry stored in the registry is fully resolved. The ephemeral
+   * marker is computed once here and stored on the entry — it is not
+   * recomputed on subsequent restarts.
+   */
   addMessageHandler(
     queue: IQueueParsedParams,
     messageHandler: TConsumerMessageHandler,
@@ -686,6 +879,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
             (err, effectiveGroupId) => {
               if (err) return cb(err);
 
+              // Adopt the resolved group ID into the config entry.
               if (
                 effectiveGroupId &&
                 handlerParams.queue.groupId !== effectiveGroupId
@@ -696,6 +890,10 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
                 };
               }
 
+              // Compute the ephemeral marker once, at registration time.
+              // The pattern match is reliable across restarts: the
+              // generator is deterministic per consumer, so a stored
+              // config that already carries an ephemeral ID still matches.
               const ephemeralGroupId =
                 effectiveGroupId &&
                 effectiveGroupId ===
@@ -727,20 +925,32 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     );
   }
 
+  /**
+   * Returns all queues with handler configurations and consumption status.
+   */
   getQueueWithStatus(): IConsumerQueuesWithStatus[] {
     const queues = this.getQueues();
     return queues.map((queue: IQueueParsedParams) => {
       const instance = this.getMessageHandlerInstance(queue);
       const status: IConsumerQueuesWithStatus['status'] =
         instance && instance.isRunning() ? 'active' : 'stopped';
-      return { queue, status };
+      return {
+        queue,
+        status,
+      };
     });
   }
 
+  /**
+   * Returns all queues with handler configurations.
+   */
   getQueues(): IQueueParsedParams[] {
     return this.registry.list().map((e) => e.params.queue);
   }
 
+  /**
+   * Returns only active queues.
+   */
   getActiveQueues(): IQueueParsedParams[] {
     return this.registry
       .list()
@@ -748,6 +958,9 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       .map((e) => e.params.queue);
   }
 
+  /**
+   * Returns only stopped queues.
+   */
   getStoppedQueues(): IQueueParsedParams[] {
     return this.registry
       .list()
@@ -755,6 +968,9 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       .map((e) => e.params.queue);
   }
 
+  /**
+   * Returns only paused queues.
+   */
   getPausedQueues(): IQueueParsedParams[] {
     return this.registry
       .list()
@@ -762,6 +978,9 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       .map((e) => e.params.queue);
   }
 
+  /**
+   * Returns only locked queues.
+   */
   getLockedQueues(): IQueueParsedParams[] {
     return this.registry
       .list()
@@ -769,15 +988,24 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
       .map((e) => e.params.queue);
   }
 
+  /**
+   * Checks if a handler is stopped.
+   */
   isMessageHandlerStopped(queue: IQueueParsedParams): boolean {
     return this.isQueueStopped(queue);
   }
 
+  /**
+   * Checks if a handler is running.
+   */
   isMessageHandlerRunning(queue: IQueueParsedParams): boolean {
     const instance = this.getMessageHandlerInstance(queue);
     return !!instance && instance.isOperational();
   }
 
+  /**
+   * Gets the number of registered handlers.
+   */
   getHandlerCount(): {
     total: number;
     active: number;

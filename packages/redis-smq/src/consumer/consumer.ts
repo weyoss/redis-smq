@@ -24,7 +24,6 @@ import {
   TQueueExtendedParams,
 } from '../queue-manager/index.js';
 import { MessageHandlerRunner } from './message-handler-runner/message-handler-runner.js';
-import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multiplexed-message-handler-runner.js';
 import { eventPublisher } from './event-publisher.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
@@ -104,9 +103,10 @@ export class Consumer extends Runnable<TConsumerEvent> {
 
     eventPublisher(this);
 
-    this.messageHandlerRunner = this.consumerOptions.enableMultiplexing
-      ? new MultiplexedMessageHandlerRunner(this.consumerContext)
-      : new MessageHandlerRunner(this.consumerContext);
+    // One runner class regardless of scheduling mode. The runner decides
+    // whether to construct a MultiplexingController based on
+    // consumerOptions.enableMultiplexing
+    this.messageHandlerRunner = new MessageHandlerRunner(this.consumerContext);
 
     this.messageHandlerRunner.on('error', (err) => {
       this.logger.error(`Message handler runner error: ${err.message}`);
@@ -114,7 +114,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
     });
 
     this.logger.info(
-      `Consumer initialized${this.consumerOptions.enableMultiplexing ? ' with multiplexing enabled' : ''}`,
+      `Consumer initialized${
+        this.consumerOptions.enableMultiplexing
+          ? ' with multiplexing enabled'
+          : ''
+      }`,
     );
   }
 
@@ -311,7 +315,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
   ): Promise<void> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.info(
-        `Setting up consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
+        `Setting up consumption for queue: ${
+          typeof queue === 'string' ? queue : JSON.stringify(queue)
+        }`,
       );
       const parsedQueueParams = _parseQueueExtendedParams(queue);
       if (parsedQueueParams instanceof Error) {
@@ -334,7 +340,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
               return callback(err);
             }
             this.logger.info(
-              `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''}`,
+              `Successfully set up consumption for queue: ${
+                parsedQueueParams.queueParams.name
+              }@${parsedQueueParams.queueParams.ns}${
+                parsedQueueParams.groupId
+                  ? `, group: ${parsedQueueParams.groupId}`
+                  : ''
+              }`,
             );
             callback();
           },
@@ -367,7 +379,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
   ): Promise<void> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.info(
-        `Canceling consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
+        `Canceling consumption for queue: ${
+          typeof queue === 'string' ? queue : JSON.stringify(queue)
+        }`,
       );
 
       const parsedQueueParams = _parseQueueExtendedParams(queue);
@@ -392,7 +406,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
             callback(err);
           } else {
             this.logger.info(
-              `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name}@${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''}`,
+              `Successfully canceled consumption for queue: ${
+                parsedQueueParams.queueParams.name
+              }@${parsedQueueParams.queueParams.ns}${
+                parsedQueueParams.groupId
+                  ? `, group: ${parsedQueueParams.groupId}`
+                  : ''
+              }`,
             );
             callback();
           }

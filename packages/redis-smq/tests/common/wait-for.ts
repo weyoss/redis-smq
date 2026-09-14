@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/tests/common/wait-for.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 /**
@@ -9,16 +14,16 @@
  * cannot assert synchronously.
  */
 export async function waitFor(
-  predicate: () => boolean,
+  predicate: (() => boolean) | (() => Promise<boolean>),
   timeoutMs = 2000,
   intervalMs = 20,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (predicate()) return;
+    if (await predicate()) return;
     await new Promise((r) => setTimeout(r, intervalMs));
   }
-  if (!predicate()) {
+  if (!(await predicate())) {
     throw new Error(
       `waitFor: predicate did not become true within ${timeoutMs}ms`,
     );
