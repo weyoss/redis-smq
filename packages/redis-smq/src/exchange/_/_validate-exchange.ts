@@ -9,7 +9,7 @@
 
 import { EExchangeProperty, IExchangeParsedParams } from '../types/index.js';
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import {
   ExchangeNotFoundError,
   ExchangeTypeMismatchError,
@@ -21,7 +21,7 @@ export function _validateExchange(
   required: boolean,
   cb: ICallback,
 ) {
-  const { keyExchange } = redisKeys.getExchangeKeys(exchange.ns, exchange.name);
+  const { keyExchange } = keys.getExchangeKeys(exchange.ns, exchange.name);
   client.hget(keyExchange, String(EExchangeProperty.TYPE), (err, reply) => {
     if (err) return cb(err);
     if (reply == null) {

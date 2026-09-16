@@ -8,11 +8,11 @@
  */
 
 import bluebird from 'bluebird';
-import { ERedisConnectionAcquisitionMode } from '../../src/common/redis/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../src/common/redis/connection-pool/types/connection-pool.js';
+import { Pool } from '../../src/common/redis/connection-pool/pool.js';
 
 export async function getRedisInstance() {
-  const p = bluebird.promisifyAll(RedisConnectionPool.getInstance());
+  const p = bluebird.promisifyAll(Pool.getInstance());
   const c = await p.acquireAsync(ERedisConnectionAcquisitionMode.EXCLUSIVE);
   return bluebird.promisifyAll(c);
 }

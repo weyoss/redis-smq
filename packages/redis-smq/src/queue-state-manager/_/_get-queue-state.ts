@@ -17,9 +17,9 @@ import {
   ESystemStateTransitionReason,
   IQueueStateTransition,
 } from '../types/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { _createQueueStateTransition } from './_create-queue-state-transition.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import { QueueNotFoundError } from '../../errors/index.js';
 
 export function _getQueueState(
@@ -27,7 +27,7 @@ export function _getQueueState(
   queueParams: IQueueParams,
   cb: ICallback<IQueueStateTransition>,
 ): void {
-  const { keyQueueProperties } = redisKeys.getQueueKeys(
+  const { keyQueueProperties } = keys.getQueueKeys(
     queueParams.ns,
     queueParams.name,
     null,
@@ -55,7 +55,7 @@ export function _getQueueState(
         : EQueueOperationalState.ACTIVE;
 
       // Get latest state transition
-      const { keyQueueStateHistory } = redisKeys.getQueueKeys(
+      const { keyQueueStateHistory } = keys.getQueueKeys(
         queueParams.ns,
         queueParams.name,
         null,

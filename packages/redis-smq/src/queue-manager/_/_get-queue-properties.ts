@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient, PanicError } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { QueueNotFoundError } from '../../errors/index.js';
 import {
   EQueueDeliveryModel,
@@ -98,7 +98,7 @@ export function _getQueueProperties(
   queueParams: IQueueParams,
   cb: ICallback<IQueueProperties>,
 ): void {
-  const { keyQueueProperties } = redisKeys.getQueueKeys(
+  const { keyQueueProperties } = keys.getQueueKeys(
     queueParams.ns,
     queueParams.name,
     null,

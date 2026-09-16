@@ -15,7 +15,7 @@ import {
 } from '../types/index.js';
 import { _parseQueueParams } from './_parse-queue-params.js';
 import { RedisSMQError } from 'redis-smq-common';
-import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../../common/redis/keys/validator.js';
 
 function isQueueParams(args: unknown): args is IQueueParams {
   return (

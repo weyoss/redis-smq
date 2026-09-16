@@ -10,7 +10,7 @@
 import { Configuration } from '../../config-manager/configuration.js';
 import { InvalidQueueParametersError } from '../../errors/index.js';
 import { IQueueParams } from '../types/index.js';
-import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../../common/redis/keys/validator.js';
 
 export function _parseQueueParams(
   queue: string | IQueueParams,

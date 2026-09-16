@@ -9,7 +9,7 @@
 
 import { EventBusRedis, ICallback } from 'redis-smq-common';
 import { TRedisSMQEvent } from './types/index.js';
-import { RedisConfig } from '../common/redis/redis-config.js';
+import { Config } from '../common/redis/config.js';
 
 /**
  * The InternalEventBus class provides a singleton interface for accessing a
@@ -29,7 +29,7 @@ export class InternalEventBus {
   static getInstance() {
     if (!InternalEventBus.instance) {
       const cfg = {
-        redis: RedisConfig.getConfig(),
+        redis: Config.getConfig(),
       };
       InternalEventBus.instance = new EventBusRedis<TRedisSMQEvent>(
         cfg,

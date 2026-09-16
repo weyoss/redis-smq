@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import {
   TMessageStateProperty,
   TMessageStatePropertyType,
@@ -25,7 +25,7 @@ export function _getMessageStateProperty<T extends TMessageStateProperty>(
   property: T,
   cb: ICallback<TMessageStatePropertyType<T>>,
 ): void {
-  const { keyMessage } = redisKeys.getMessageKeys(messageId);
+  const { keyMessage } = keys.getMessageKeys(messageId);
 
   async.withCallback(
     (cb: ICallback<string | null>) =>

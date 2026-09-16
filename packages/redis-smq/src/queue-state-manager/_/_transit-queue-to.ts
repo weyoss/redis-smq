@@ -17,7 +17,7 @@ import {
   TQueueStateTransitionOptions,
 } from '../types/index.js';
 import { CallbackEmptyReplyError, ICallback, ILogger } from 'redis-smq-common';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import { _parseQueueParamsAndValidate } from '../../queue-manager/_/_parse-queue-params-and-validate.js';
 import { _getQueueState } from './_get-queue-state.js';
 import { _isAllowedTransition } from './_is-allowed-transition.js';
@@ -38,7 +38,7 @@ export function _transitQueueTo(
     `Setting operational state for queue ${queueDesc} to: ${EQueueOperationalState[newState]}`,
   );
 
-  withSharedPoolConnection((client, done) => {
+  withShared((client, done) => {
     _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
       if (err) return done(err);
       if (!queueParams) return done(new CallbackEmptyReplyError());

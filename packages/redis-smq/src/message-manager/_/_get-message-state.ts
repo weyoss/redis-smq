@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { MessageState } from '../../message/message-state.js';
 import { _parseMessageState } from './_parse-message-state.js';
 import { MessageNotFoundError } from '../../errors/index.js';
@@ -18,7 +18,7 @@ export function _getMessageState(
   messageId: string,
   cb: ICallback<MessageState>,
 ): void {
-  const { keyMessage } = redisKeys.getMessageKeys(messageId);
+  const { keyMessage } = keys.getMessageKeys(messageId);
   redisClient.hgetall(keyMessage, (err, result) => {
     if (err) {
       cb(err);

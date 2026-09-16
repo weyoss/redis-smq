@@ -8,13 +8,13 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../../redis/redis-keys/redis-keys.js';
-import { withSharedPoolConnection } from '../../../redis/redis-connection-pool/with-shared-pool-connection.js';
-import { BackgroundJobWorkerNotFoundError } from '../../../../errors/index.js';
+import { keys } from '../../redis/keys/keys.js';
+import { withShared } from '../../redis/connection-pool/with-shared.js';
+import { BackgroundJobWorkerNotFoundError } from '../../../errors/index.js';
 
-export function _getBackgroundJobWorker(jobId: string, cb: ICallback<string>) {
-  const { keyJobWorker } = redisKeys.getJobKeys(jobId);
-  withSharedPoolConnection((client, cb) => {
+export function _getWorker(jobId: string, cb: ICallback<string>) {
+  const { keyJobWorker } = keys.getJobKeys(jobId);
+  withShared((client, cb) => {
     client.get(keyJobWorker, (err, workerId) => {
       if (err) return cb(err);
       if (!workerId)

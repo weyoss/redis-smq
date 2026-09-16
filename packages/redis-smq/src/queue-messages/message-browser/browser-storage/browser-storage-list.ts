@@ -9,7 +9,7 @@
 
 import { ICallback } from 'redis-smq-common';
 import { BrowserStorageAbstract } from './browser-storage-abstract.js';
-import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../../common/redis/connection-pool/with-shared.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis lists
@@ -27,7 +27,7 @@ export class BrowserStorageList extends BrowserStorageAbstract {
   count(redisKey: string, cb: ICallback<number>): void {
     this.logger.debug(`Counting items in list ${redisKey}`);
 
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       this.logger.debug(`Executing LLEN on ${redisKey}`);
       client.llen(redisKey, (err, count) => {
         if (err) {
@@ -71,7 +71,7 @@ export class BrowserStorageList extends BrowserStorageAbstract {
       `Fetching items from ${redisKey} range [${offsetStart}:${offsetEnd}]`,
     );
 
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       client.lrange(redisKey, offsetStart, offsetEnd, (err, items) => {
         if (err) {
           this.logger.error(`LRANGE operation failed: ${err.message}`);
@@ -101,7 +101,7 @@ export class BrowserStorageList extends BrowserStorageAbstract {
     const chunkSize = 100; // Number of items to fetch in each chunk
     this.logger.debug(`Fetching all items with chunk size ${chunkSize}`);
 
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       // First get the list length to determine how many chunks we need
       this.logger.debug(
         `Executing LLEN on ${redisKey} to determine total length`,

@@ -19,8 +19,8 @@ import {
   EQueueType,
   IQueueParams,
 } from '../../queue-manager/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import {
   EMessageProperty,

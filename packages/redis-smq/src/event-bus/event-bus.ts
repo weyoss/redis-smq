@@ -9,7 +9,7 @@
 
 import { async, EventBusRedis, ICallback } from 'redis-smq-common';
 import { TRedisSMQEvent } from './types/index.js';
-import { RedisConfig } from '../common/redis/redis-config.js';
+import { Config } from '../common/redis/config.js';
 
 /**
  * Singleton distributed event bus for RedisSMQ.
@@ -41,7 +41,7 @@ export class EventBus {
    */
   static getInstance() {
     if (!EventBus.instance) {
-      const redis = RedisConfig.getConfig();
+      const redis = Config.getConfig();
       EventBus.instance = new EventBusRedis<TRedisSMQEvent>(
         { redis },
         'redis-smq:events:user',

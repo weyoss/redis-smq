@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 
 /**
@@ -25,7 +25,7 @@ export function _getConsumerQueues(
   consumerId: string,
   cb: ICallback<IQueueParams[]>,
 ): void {
-  const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
+  const { keyConsumerQueues } = keys.getConsumerKeys(consumerId);
   redisClient.smembers(keyConsumerQueues, (err, reply) => {
     if (err) return cb(err);
     const queues: IQueueParams[] = (reply ?? []).map((i) => JSON.parse(i));

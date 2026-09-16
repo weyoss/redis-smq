@@ -9,14 +9,14 @@
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { IQueueParams } from '../types/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 
 export function _getProcessingQueues(
   redisClient: IRedisClient,
   queue: IQueueParams,
   cb: ICallback<Record<string, string>>,
 ): void {
-  const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(
+  const { keyQueueProcessingQueues } = keys.getQueueKeys(
     queue.ns,
     queue.name,
     null,

@@ -1,9 +1,9 @@
 /*
- * packages/redis-smq/src/consumer/types/queue-worker.ts
+ * packages/redis-smq/src/consumer/types/queue-workers.ts
  */
 
 import { IQueueParsedParams } from '../../queue-manager/index.js';
-import { IWorkerPayload } from '../../common/abstract/worker/types/worker.js';
+import { IWorkerPayload } from '../../common/workers/types/worker.js';
 
 export interface IQueueWorkerPayload extends IWorkerPayload {
   consumerId: string;

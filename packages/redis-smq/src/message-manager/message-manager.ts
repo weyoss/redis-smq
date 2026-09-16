@@ -25,9 +25,9 @@ import {
   IMessageTransferable,
 } from '../message/index.js';
 import { IMessageManagerDeleteResponse } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { TMessageUnacknowledgementHistory } from '../consumer/index.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import {
   MessageNotFoundError,
   UnacknowledgmentHistoryDisabledError,
@@ -84,7 +84,7 @@ export class MessageManager {
   ): Promise<EMessagePropertyStatus> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting message status', { messageId });
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _getMessageStatus(client, messageId, (err, status) => {
           if (err) {
             this.logger.error('Failed to get message status', {
@@ -133,7 +133,7 @@ export class MessageManager {
   ): Promise<IMessageStateTransferable> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting message state', { messageId });
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _getMessageState(client, messageId, (err, state) => {
           if (err) {
             this.logger.error('Failed to get message state', {
@@ -182,7 +182,7 @@ export class MessageManager {
       this.logger.debug('Getting messages by IDs', {
         messageCount: messageIds.length,
       });
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _getMessages(client, messageIds, (err, reply) => {
           if (err) {
             this.logger.error('Failed to get messages', { error: err.message });
@@ -230,7 +230,7 @@ export class MessageManager {
   ): Promise<IMessageTransferable> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting message by ID', { messageId });
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _getMessage(client, messageId, (err, reply) => {
           if (err) {
             this.logger.error('Failed to get message', {
@@ -281,7 +281,7 @@ export class MessageManager {
       this.logger.debug(`Deleting ${ids.length} messages by IDs`, {
         messageIds: ids,
       });
-      withSharedPoolConnection<IMessageManagerDeleteResponse>(
+      withShared<IMessageManagerDeleteResponse>(
         (client, cb) => {
           async.withCallback(
             (cb: ICallback<IMessageManagerDeleteResponse>) =>
@@ -374,7 +374,7 @@ export class MessageManager {
   ): Promise<string> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Requeuing message by ID', { messageId });
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _requeueMessage(client, messageId, (err, newMessageId) => {
           if (err) {
             this.logger.error('Failed to requeue message', {
@@ -436,8 +436,8 @@ export class MessageManager {
       }
 
       const { keyMessage, keyMessageUnacknowledgementHistory } =
-        redisKeys.getMessageKeys(messageId);
-      withSharedPoolConnection((client, done) => {
+        keys.getMessageKeys(messageId);
+      withShared((client, done) => {
         async.waterfall(
           [
             (cb) => {

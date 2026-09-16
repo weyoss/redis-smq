@@ -9,7 +9,7 @@
 
 import { async, ICallback } from 'redis-smq-common';
 import { BrowserStorageAbstract } from './browser-storage-abstract.js';
-import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../../common/redis/connection-pool/with-shared.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis sets.
@@ -32,7 +32,7 @@ export class BrowserStorageSet extends BrowserStorageAbstract {
    */
   count(redisKey: string, cb: ICallback<number>): void {
     this.logger.debug(`Counting items in ${redisKey}`);
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       this.logger.debug(`Executing SCARD on ${redisKey}`);
 
       client.scard(redisKey, (err, reply) => {
@@ -82,7 +82,7 @@ export class BrowserStorageSet extends BrowserStorageAbstract {
       `Fetching items from ${redisKey} (page ${page}, size ${pageSize})`,
     );
 
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       /**
        * Recursively scans through the set until reaching the target page.
        *
@@ -173,7 +173,7 @@ export class BrowserStorageSet extends BrowserStorageAbstract {
   fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
     this.logger.debug(`Fetching all items from ${redisKey}`);
 
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       // Use a Set to ensure uniqueness of items
       const items = new Set<string>();
       let scanCount = 0;

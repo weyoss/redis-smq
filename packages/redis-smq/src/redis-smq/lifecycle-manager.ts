@@ -9,15 +9,15 @@
 
 import { async, ICallback, IRedisConfig, PanicError } from 'redis-smq-common';
 import { Configuration } from '../config-manager/configuration.js';
-import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { Pool } from '../common/redis/connection-pool/pool.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
-import { BackgroundJobCluster } from '../common/background-jobs/background-job-cluster.js';
+import { Cluster } from '../common/background-jobs/cluster.js';
 import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
 import { EventBus } from '../event-bus/index.js';
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
 import { ConfigSync } from '../config-manager/config-sync.js';
-import { RedisConfig } from '../common/redis/redis-config.js';
+import { Config } from '../common/redis/config.js';
 
 /**
  * Manages RedisSMQ system lifecycle (initialization and shutdown).
@@ -97,13 +97,13 @@ export class LifecycleManager {
       StateManager.goingUp();
 
       // ── Synchronous bootstrap ─────────────────────────────────────────
-      // RedisConfig.initialize() throws synchronously if the singleton is
+      // Config.initialize() throws synchronously if the singleton is
       // already set (retry after a failed attempt). This throw must not
       // escape without rolling back the state machine, otherwise the
       // process becomes permanently bricked: subsequent initialize() calls
       // would queue forever and shutdown() would be rejected.
       try {
-        RedisConfig.initialize(redisConfig);
+        Config.initialize(redisConfig);
       } catch (err) {
         return LifecycleManager.failInitialize(
           err instanceof Error ? err : new Error(String(err)),
@@ -118,11 +118,11 @@ export class LifecycleManager {
       async.series(
         [
           (cb) => {
-            // Guarded because RedisConnectionPool.initialize() throws
+            // Guarded because Pool.initialize() throws
             // synchronously if the singleton is already set.
             try {
-              const config = RedisConfig.getConfig();
-              RedisConnectionPool.initialize(config, {}, (err) => cb(err));
+              const config = Config.getConfig();
+              Pool.initialize(config, {}, (err) => cb(err));
             } catch (err) {
               cb(err instanceof Error ? err : new Error(String(err)));
             }
@@ -137,7 +137,7 @@ export class LifecycleManager {
             ConfigSync.initialize(cb);
           },
           (cb) => {
-            BackgroundJobCluster.run(cb);
+            Cluster.run(cb);
           },
         ],
         (err) => {
@@ -185,7 +185,7 @@ export class LifecycleManager {
       async.series(
         [
           (cb) =>
-            BackgroundJobCluster.shutdown((err) => {
+            Cluster.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
@@ -220,7 +220,7 @@ export class LifecycleManager {
               cb();
             }),
           (cb) =>
-            RedisConnectionPool.shutdown((err) => {
+            Pool.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
@@ -228,7 +228,7 @@ export class LifecycleManager {
         () => {
           StateManager.commit();
           ComponentRegistry.clear();
-          RedisConfig.reset();
+          Config.reset();
 
           const firstErr = errors[0] || null;
 
@@ -300,7 +300,7 @@ export class LifecycleManager {
     async.series(
       [
         (d) =>
-          BackgroundJobCluster.shutdown((err) => {
+          Cluster.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
@@ -320,12 +320,12 @@ export class LifecycleManager {
             d();
           }),
         (d) =>
-          RedisConnectionPool.shutdown((err) => {
+          Pool.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
         (d) => {
-          RedisConfig.reset();
+          Config.reset();
           d();
         },
       ],

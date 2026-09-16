@@ -18,9 +18,9 @@ import {
   IQueueStateTransition,
   TQueueStateTransitionOptions,
 } from '../types/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 import { _createQueueStateTransition } from './_create-queue-state-transition.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import {
   QueueNotFoundError,
   QueueStateTransitionError,

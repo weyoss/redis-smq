@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { ExchangeNotFoundError } from '../../errors/index.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 import { EExchangeProperty, IExchangeProperties } from '../types/index.js';
@@ -18,7 +18,7 @@ export function _getExchangeProperties(
   exchange: IQueueParams,
   cb: ICallback<IExchangeProperties>,
 ) {
-  const { keyExchange } = redisKeys.getExchangeKeys(exchange.ns, exchange.name);
+  const { keyExchange } = keys.getExchangeKeys(exchange.ns, exchange.name);
   client.hgetall(keyExchange, (err, rawProperties) => {
     if (err) return cb(err);
     if (!rawProperties || !Object.keys(rawProperties).length)

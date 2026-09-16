@@ -6,7 +6,7 @@ import { MessageManager } from '../message-manager/index.js';
 import { BrowserStorageSortedSet } from './message-browser/browser-storage/browser-storage-sorted-set.js';
 import { BrowserStorageList } from './message-browser/browser-storage/browser-storage-list.js';
 import { EQueueMessageType } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
 
 export class MessageBrowserFactory {
@@ -106,7 +106,7 @@ export class MessageBrowserFactory {
     logger: ILogger,
     cb: ICallback<IMessageBrowser>,
   ): void {
-    withSharedPoolConnection((client, callback) => {
+    withShared((client, callback) => {
       _getQueueProperties(client, queue, (err, properties) => {
         if (err) return callback(err);
         if (!properties) return callback(new CallbackEmptyReplyError());

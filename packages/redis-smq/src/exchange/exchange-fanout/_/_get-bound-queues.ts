@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../common/redis/keys/keys.js';
 import { IQueueParams } from '../../../queue-manager/index.js';
 import { IExchangeParams } from '../../types/index.js';
 
@@ -17,7 +17,7 @@ export function _getBoundQueues(
   exchange: IExchangeParams,
   cb: ICallback<IQueueParams[]>,
 ) {
-  const { keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+  const { keyFanoutQueues } = keys.getExchangeFanoutKeys(
     exchange.ns,
     exchange.name,
   );

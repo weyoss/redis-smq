@@ -9,7 +9,7 @@
 
 import { IQueueParsedParams } from '../../../../../queue-manager/index.js';
 import { EQueueMessageType } from '../../../../../queue-messages/index.js';
-import { IBackgroundJob } from '../../../../abstract/background-job/types/index.js';
+import { IBackgroundJob } from '../../../types/index.js';
 
 export type TPurgeQueueJobPayload = {
   queue: IQueueParsedParams;

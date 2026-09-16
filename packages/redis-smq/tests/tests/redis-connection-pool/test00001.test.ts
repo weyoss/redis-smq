@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ERedisConnectionAcquisitionMode,
   IConnectionPoolConfig,
-} from '../../../src/common/redis/redis-connection-pool/types/connection-pool.js';
+} from '../../../src/common/redis/connection-pool/types/connection-pool.js';
 import bluebird from 'bluebird';
 import { redisConfig } from '../../common/config.js';
 import {
@@ -20,9 +20,9 @@ import {
   poolLimitsEXCLUSIVE,
   poolLimitsSHARED,
 } from './common.js';
-import { RedisConnectionPool } from '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
+import { Pool } from '../../../src/common/redis/connection-pool/pool.js';
 
-const connectionPool = bluebird.promisifyAll(RedisConnectionPool);
+const connectionPool = bluebird.promisifyAll(Pool);
 
 describe('Redis Connection Pool', async () => {
   const poolConfig: IConnectionPoolConfig = {
@@ -33,7 +33,7 @@ describe('Redis Connection Pool', async () => {
     reapIntervalMillis: 5000,
   };
 
-  let pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>;
+  let pool: ReturnType<typeof bluebird.promisifyAll<Pool>>;
 
   beforeEach(async () => {
     await connectionPool.shutdownAsync();
@@ -43,7 +43,7 @@ describe('Redis Connection Pool', async () => {
   });
 
   afterEach(async () => {
-    await bluebird.promisifyAll(RedisConnectionPool).shutdownAsync();
+    await bluebird.promisifyAll(Pool).shutdownAsync();
   });
 
   it('Pool initialization', async () => {

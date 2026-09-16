@@ -10,8 +10,8 @@
 import { ERedisConfigClient, IRedisConfig } from 'redis-smq-common';
 import _ from 'lodash';
 
-export class RedisConfig {
-  private static instance: RedisConfig | null = null;
+export class Config {
+  private static instance: Config | null = null;
   private config: IRedisConfig;
 
   private constructor(redisConfig?: IRedisConfig) {
@@ -36,20 +36,20 @@ export class RedisConfig {
   }
 
   static initialize(config?: IRedisConfig): void {
-    if (RedisConfig.instance) {
+    if (Config.instance) {
       throw new Error('Already initialized');
     }
-    RedisConfig.instance = new RedisConfig(config);
+    Config.instance = new Config(config);
   }
 
   static getConfig(): IRedisConfig {
-    if (!RedisConfig.instance) {
+    if (!Config.instance) {
       throw new Error('Not initialized');
     }
-    return Object.freeze(RedisConfig.instance.config);
+    return Object.freeze(Config.instance.config);
   }
 
   static reset(): void {
-    RedisConfig.instance = null;
+    Config.instance = null;
   }
 }

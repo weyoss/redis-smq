@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { InvalidRedisKeyError } from '../../../src/errors/index.js';
-import { validateRedisKey } from '../../../src/common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../../../src/common/redis/keys/validator.js';
 
 test('validateRedisKey', async () => {
   expect(validateRedisKey('')).toBeInstanceOf(InvalidRedisKeyError);

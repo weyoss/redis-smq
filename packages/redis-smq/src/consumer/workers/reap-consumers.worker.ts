@@ -11,7 +11,7 @@ import { async, ICallback } from 'redis-smq-common';
 import { _getQueueConsumerIds } from '../../queue-manager/_/_get-queue-consumer-ids.js';
 import { MessageUnacknowledger } from '../message-unacknowledger.js';
 import { EMessageUnacknowledgementCause } from '../types/index.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import { _deleteEphemeralConsumerGroup } from '../_/_delete-ephemeral-consumer-group.js';
 import { ConsumerWorkerAbstract } from './consumer-worker-abstract.js';
 import { _isConsumerAlive } from '../_/_is-consumer-alive.js';
@@ -149,7 +149,7 @@ export class ReapConsumersWorker extends ConsumerWorkerAbstract {
    * Main work function that checks for offline consumers and triggers recovery.
    */
   work = (cb: ICallback<void>): void => {
-    withSharedPoolConnection((redisClient, connCb) => {
+    withShared((redisClient, connCb) => {
       const queue = this.queueParsedParams.queueParams;
       const queueRef = `${queue.name}@${queue.ns}`;
 

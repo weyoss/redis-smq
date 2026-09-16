@@ -18,7 +18,7 @@ import {
   IQueueStateTransition,
   TQueueStateTransitionOptions,
 } from '../types/index.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import { _parseQueueParamsAndValidate } from '../../queue-manager/_/_parse-queue-params-and-validate.js';
 import { _getQueueState } from './_get-queue-state.js';
 import {
@@ -39,7 +39,7 @@ export function _unlockQueue(
     typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
   logger.debug(`Unlocking queue: ${queueDesc} with lock ID: ${lockId}`);
 
-  withSharedPoolConnection((client, done) => {
+  withShared((client, done) => {
     _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
       if (err) return done(err);
       if (!queueParams) return done(new CallbackEmptyReplyError());

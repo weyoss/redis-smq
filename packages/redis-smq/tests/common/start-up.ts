@@ -15,11 +15,11 @@ import {
   RedisSMQ,
 } from '../../src/index.js';
 import { config, redisConfig } from './config.js';
-import { RedisClient } from '../../src/common/redis/redis-client/redis-client.js';
+import { Client } from '../../src/common/redis/client.js';
 import { BackoffConfig } from 'redis-smq-common';
 
 export async function startUp(): Promise<void> {
-  const redisClient = bluebird.promisifyAll(new RedisClient(redisConfig));
+  const redisClient = bluebird.promisifyAll(new Client(redisConfig));
   const instance = bluebird.promisifyAll(
     await redisClient.getSetInstanceAsync(),
   );

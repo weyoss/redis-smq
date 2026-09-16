@@ -15,8 +15,8 @@ import {
   Timer,
   WorkerCluster,
 } from 'redis-smq-common';
-import { ERedisScriptName } from '../common/redis/scripts.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { ERedisScriptName } from '../common/scripts/registry.js';
+import { keys as redisKeys } from '../common/redis/keys/keys.js';
 import { IRedisSMQParsedConfig } from '../config-manager/index.js';
 import { _parseMessage } from '../message-manager/_/_parse-message.js';
 import { EMessageProperty, EMessagePropertyStatus } from '../message/index.js';
@@ -33,15 +33,17 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementCause,
 } from './types/index.js';
-import { IConsumerMessageHandlerParams } from './types/message-handler.js';
-import { TConsumerMessageHandler } from './types/message-handler.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
+import {
+  IConsumerMessageHandlerParams,
+  TConsumerMessageHandler,
+} from './types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis/connection-pool/types/connection-pool.js';
+import { Pool } from '../common/redis/connection-pool/pool.js';
 import { _subscribeConsumer } from './_/_subscribe-consumer.js';
 import { _unsubscribeConsumer } from './_/_unsubscribe-consumer.js';
 import { IConsumerContext } from './types/consumer-context.js';
 import { IQueueWorkerPayload } from './types/queue-worker.js';
-import { RedisConfig } from '../common/redis/redis-config.js';
+import { Config } from '../common/redis/config.js';
 
 /**
  * Events emitted by a MessageHandler.
@@ -151,7 +153,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
 
   protected getRedisClient(): IRedisClient | PanicError {
     if (!this.redisClient)
-      return new PanicError({ message: 'A RedisClient instance is required.' });
+      return new PanicError({ message: 'A Client instance is required.' });
     return this.redisClient;
   }
 
@@ -208,7 +210,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       WORKERS_DIR,
       {
         config: this.config,
-        redisConfig: RedisConfig.getConfig(),
+        redisConfig: Config.getConfig(),
         queueParsedParams: this.queue,
         loggerContext: {
           namespaces: this.logger.getNamespaces(),
@@ -255,7 +257,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
     return super.goingUp().concat([
       (cb: ICallback) => this.timer.run(cb),
       (cb: ICallback) => {
-        RedisConnectionPool.getInstance().acquire(
+        Pool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
           (err, redisClient) => {
             if (err) return cb(err);
@@ -345,7 +347,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
 
       // Stop the acknowledgement pipeline first (acknowledger, then
       // unacknowledger). This matches the pre-Step-6 ordering: acks are
-      // flushed while the worker is still alive, so any in-flight worker
+      // flushed while the workers is still alive, so any in-flight workers
       // completion can still enqueue its outcome before the pipeline
       // stops accepting requests.
       (cb: ICallback) => {
@@ -355,7 +357,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
         pipeline.shutdown(cb);
       },
 
-      // Then shut down MessageConsumer (releases the worker, if any).
+      // Then shut down MessageConsumer (releases the workers, if any).
       (cb: ICallback) => {
         const mc = this.messageConsumer;
         if (!mc) return cb();
@@ -372,7 +374,7 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
 
       (cb: ICallback) => {
         if (this.redisClient) {
-          RedisConnectionPool.getInstance().release(this.redisClient);
+          Pool.getInstance().release(this.redisClient);
           this.redisClient = null;
         }
         cb();

@@ -10,7 +10,7 @@
 import { ConsumerWorkerAbstract } from './consumer-worker-abstract.js';
 import { async, ICallback } from 'redis-smq-common';
 import { _getQueueState } from '../../queue-state-manager/_/_get-queue-state.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import {
   EQueueStateLockOwner,
   ESystemStateTransitionReason,
@@ -22,7 +22,7 @@ import { _unlockQueue } from '../../queue-state-manager/_/_unlock-queue.js';
 
 export class RecoverOrphanedQueueLockWorker extends ConsumerWorkerAbstract {
   override work(cb: ICallback) {
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       const queue = this.queueParsedParams.queueParams;
       async.waterfall(
         [

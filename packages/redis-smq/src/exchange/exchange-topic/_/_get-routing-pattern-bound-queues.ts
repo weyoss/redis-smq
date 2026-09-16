@@ -12,7 +12,7 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../common/redis/keys/keys.js';
 import { IQueueParams } from '../../../queue-manager/index.js';
 import { _parseExchangeParams } from '../../_/_parse-exchange-params.js';
 import { EExchangeType, IExchangeParams } from '../../types/index.js';
@@ -26,12 +26,11 @@ export function _getRoutingPatternBoundQueues(
   const exchangeParams = _parseExchangeParams(exchange, EExchangeType.TOPIC);
   if (exchangeParams instanceof Error) cb(exchangeParams);
   else {
-    const { keyBindingPatternQueues } =
-      redisKeys.getExchangeTopicBindingPatternKeys(
-        exchangeParams.ns,
-        exchangeParams.name,
-        bindingPattern,
-      );
+    const { keyBindingPatternQueues } = keys.getExchangeTopicBindingPatternKeys(
+      exchangeParams.ns,
+      exchangeParams.name,
+      bindingPattern,
+    );
     redisClient.smembers(keyBindingPatternQueues, (err, reply) => {
       if (err) return cb(err);
       if (!reply) return cb(new CallbackEmptyReplyError());

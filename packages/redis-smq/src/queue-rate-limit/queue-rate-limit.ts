@@ -13,8 +13,8 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { ERedisScriptName } from '../common/redis/scripts.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { ERedisScriptName } from '../common/scripts/registry.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
 import {
@@ -32,7 +32,7 @@ import {
   QueueNotFoundError,
   UnexpectedScriptReplyError,
 } from '../errors/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { getRedisForQueueOperation } from '../common/helpers/get-redis-for-queue-operation.js';
 import { EQueueOperation } from '../queue-operation-validator/index.js';
@@ -103,8 +103,11 @@ export class QueueRateLimit {
         queue,
         EQueueOperation.CLEAR_RATE_LIMIT,
         (client, cb) => {
-          const { keyQueueProperties, keyQueueRateLimit } =
-            redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
+          const { keyQueueProperties, keyQueueRateLimit } = keys.getQueueKeys(
+            queueParams.ns,
+            queueParams.name,
+            null,
+          );
 
           const argv: (string | number)[] = [
             EQueueProperty.RATE_LIMIT,
@@ -237,7 +240,7 @@ export class QueueRateLimit {
 
           const validatedRateLimit: IQueueRateLimit = { interval, limit };
 
-          const { keyQueueProperties } = redisKeys.getQueueKeys(
+          const { keyQueueProperties } = keys.getQueueKeys(
             queueParams.ns,
             queueParams.name,
             null,
@@ -352,7 +355,7 @@ export class QueueRateLimit {
         `Checking rate limit for ${queueName}: ${rateLimit.limit}/${rateLimit.interval}ms`,
       );
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
           if (err) {
             this.logger.error(
@@ -428,12 +431,12 @@ export class QueueRateLimit {
         typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
       this.logger.debug(`Getting rate limit for ${queueName}`);
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         async.withCallback(
           (cb: ICallback<IQueueParams>) =>
             _parseQueueParamsAndValidate(client, queue, cb),
           (queueParams, cb) => {
-            const { keyQueueProperties } = redisKeys.getQueueKeys(
+            const { keyQueueProperties } = keys.getQueueKeys(
               queueParams.ns,
               queueParams.name,
               null,

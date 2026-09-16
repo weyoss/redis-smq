@@ -19,7 +19,7 @@ import { ConsumerSetMismatchError } from '../../../src/errors/index.js';
 import { resolve } from 'path';
 import esmock from 'esmock';
 import bluebird from 'bluebird';
-import { RedisConnectionPool } from '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
+import { Pool } from '../../../src/common/redis/connection-pool/pool.js';
 import { Configuration } from '../../../src/config-manager/configuration.js';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
@@ -50,7 +50,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   );
   const path4 = resolve(
     env.getCurrentDir(),
-    '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js',
+    '../../../src/common/redis/connection-pool/pool.js',
   );
   const { QueueManager } = await esmock<{
     QueueManager: new () => QueueManager;
@@ -60,7 +60,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
     {
       [path4]: {
         getInstance: () => {
-          RedisConnectionPool.getInstance();
+          Pool.getInstance();
         },
       },
       [path3]: {

@@ -17,8 +17,8 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TProducerEvent } from '../event-bus/index.js';
-import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
+import { Pool } from '../common/redis/connection-pool/pool.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis/connection-pool/types/connection-pool.js';
 import { Configuration } from '../config-manager/configuration.js';
 import {
   MessageExchangeRequiredError,
@@ -81,7 +81,7 @@ export class Producer extends Runnable<TProducerEvent> {
 
   protected getRedisClient(): IRedisClient {
     if (!this.redisClient)
-      throw new PanicError({ message: 'A RedisClient instance is required.' });
+      throw new PanicError({ message: 'A Client instance is required.' });
     return this.redisClient;
   }
 
@@ -135,7 +135,7 @@ export class Producer extends Runnable<TProducerEvent> {
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback): void => {
-        RedisConnectionPool.getInstance().acquire(
+        Pool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
           (err, client) => {
             if (err) cb(err);
@@ -165,7 +165,7 @@ export class Producer extends Runnable<TProducerEvent> {
       this.shutdownPubSubTargetResolver,
       (cb: ICallback) => {
         if (this.redisClient) {
-          RedisConnectionPool.getInstance().release(this.redisClient);
+          Pool.getInstance().release(this.redisClient);
           this.redisClient = null;
         }
         cb();

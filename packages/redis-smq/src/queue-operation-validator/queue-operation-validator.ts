@@ -10,7 +10,7 @@
 import { async, ICallback } from 'redis-smq-common';
 import { IQueueParams } from '../queue-manager/index.js';
 import { EQueueOperation } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import { _checkOperation } from './_/_check-operation.js';
 
@@ -48,7 +48,7 @@ export class QueueOperationValidator {
       const queueParams = _parseQueueParams(queue);
       if (queueParams instanceof Error) return callback(queueParams);
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _checkOperation(client, queueParams, operation, (err, result) =>
           cb(err, result?.allowed),
         );

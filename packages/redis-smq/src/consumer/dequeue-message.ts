@@ -10,14 +10,14 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { IRedisSMQParsedConfig } from '../config-manager/index.js';
 import { _hasRateLimitExceeded } from '../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
 import { EQueueType, IQueueParsedParams, IQueueRateLimit } from '../index.js';
 import { dequeueEventPublisher } from './dequeue-event-publisher.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis/connection-pool/types/connection-pool.js';
+import { Pool } from '../common/redis/connection-pool/pool.js';
 import { IConsumerContext } from './types/consumer-context.js';
 
 export type TDequeueMessageEvent = {
@@ -68,21 +68,21 @@ export class DequeueMessage extends Runnable<TDequeueMessageEvent> {
 
     dequeueEventPublisher(this);
 
-    const { keyConsumerQueues } = redisKeys.getConsumerKeys(
+    const { keyConsumerQueues } = keys.getConsumerKeys(
       this.consumerContext.consumerId,
     );
-    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
+    const { keyQueueProcessing } = keys.getQueueConsumerKeys(
       this.queue.queueParams,
       this.consumerContext.consumerId,
     );
-    const { keyQueues } = redisKeys.getMainKeys();
+    const { keyQueues } = keys.getMainKeys();
     const {
       keyQueueProcessingQueues,
       keyQueuePending,
       keyQueuePriority,
       keyQueueConsumers,
       keyQueueProperties,
-    } = redisKeys.getQueueKeys(
+    } = keys.getQueueKeys(
       this.queue.queueParams.ns,
       this.queue.queueParams.name,
       this.queue.groupId,
@@ -151,7 +151,7 @@ export class DequeueMessage extends Runnable<TDequeueMessageEvent> {
 
   protected getRedisClient(): IRedisClient | PanicError {
     if (!this.redisClient)
-      return new PanicError({ message: 'A RedisClient instance is required.' });
+      return new PanicError({ message: 'A Client instance is required.' });
     return this.redisClient;
   }
 
@@ -170,7 +170,7 @@ export class DequeueMessage extends Runnable<TDequeueMessageEvent> {
           ? ERedisConnectionAcquisitionMode.EXCLUSIVE
           : ERedisConnectionAcquisitionMode.SHARED;
 
-        RedisConnectionPool.getInstance().acquire(
+        Pool.getInstance().acquire(
           redisConnectionAcquisitionMode,
           (err, redisClient) => {
             if (err) return cb(err);
@@ -203,12 +203,12 @@ export class DequeueMessage extends Runnable<TDequeueMessageEvent> {
       (cb: ICallback): void => {
         if (this.redisClient) {
           if (this.autoCloseRedisConnection) {
-            RedisConnectionPool.getInstance().destroy(this.redisClient, () => {
+            Pool.getInstance().destroy(this.redisClient, () => {
               this.redisClient = null;
               cb();
             });
           } else {
-            RedisConnectionPool.getInstance().release(this.redisClient);
+            Pool.getInstance().release(this.redisClient);
             this.redisClient = null;
             cb();
           }

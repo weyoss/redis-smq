@@ -23,7 +23,7 @@ import {
   IQueueProperties,
 } from '../queue-manager/index.js';
 import { Producer } from './producer.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
 
 /**
@@ -314,7 +314,7 @@ export class PubSubTargetResolver extends Runnable<
     // `bufferedEvents` and replayed once the load settles.
     this.initialLoadInProgress = true;
 
-    withSharedPoolConnection((redisClient, connCb) => {
+    withShared((redisClient, connCb) => {
       async.waterfall(
         [
           (next: ICallback<IQueueParams[]>) => {

@@ -20,10 +20,10 @@ import {
   InvalidRedisKeyError,
 } from '../errors/index.js';
 import { Configuration } from '../config-manager/configuration.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
-import { validateRedisKey } from '../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../common/redis/keys/validator.js';
 
 /**
  * Provides read-only exchange discovery operations.
@@ -74,8 +74,8 @@ export class Exchange {
     cb?: ICallback<IExchangeParsedParams[]>,
   ): Promise<IExchangeParsedParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      const { keyExchanges } = redisKeys.getMainKeys();
-      withSharedPoolConnection((client, done) => {
+      const { keyExchanges } = keys.getMainKeys();
+      withShared((client, done) => {
         client.smembers(keyExchanges, (err, members) => {
           if (err) {
             this.logger.error(
@@ -139,8 +139,8 @@ export class Exchange {
         this.logger.error('getNamespaceExchanges: invalid namespace');
         return callback(new InvalidNamespaceError());
       }
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(namespace);
-      withSharedPoolConnection((client, done) => {
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(namespace);
+      withShared((client, done) => {
         client.smembers(keyNamespaceExchanges, (err, members) => {
           if (err) {
             this.logger.error(
@@ -198,12 +198,12 @@ export class Exchange {
         this.logger.error('getQueueBoundExchanges: invalid queue params');
         return callback(queueParams);
       }
-      const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
+      const { keyQueueExchangeBindings } = keys.getQueueKeys(
         queueParams.ns,
         queueParams.name,
         null,
       );
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         client.smembers(keyQueueExchangeBindings, (err, members) => {
           if (err) {
             this.logger.error(

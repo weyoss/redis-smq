@@ -14,7 +14,7 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import {
   EExchangeProperty,
   EExchangeQueuePolicy,
@@ -28,11 +28,9 @@ export function _saveExchange(
   exchangeQueuePolicy: EExchangeQueuePolicy,
   cb: ICallback,
 ) {
-  const { keyExchanges } = redisKeys.getMainKeys();
-  const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
-    exchangeParams.ns,
-  );
-  const { keyExchange } = redisKeys.getExchangeKeys(
+  const { keyExchanges } = keys.getMainKeys();
+  const { keyNamespaceExchanges } = keys.getNamespaceKeys(exchangeParams.ns);
+  const { keyExchange } = keys.getExchangeKeys(
     exchangeParams.ns,
     exchangeParams.name,
   );

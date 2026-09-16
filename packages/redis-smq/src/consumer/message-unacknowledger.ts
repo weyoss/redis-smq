@@ -10,7 +10,7 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { _getMessages } from '../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../message/message-envelope.js';
 import { IQueueParsedParams } from '../queue-manager/index.js';
@@ -22,7 +22,7 @@ import {
   TUnacknowledgementResolution,
   TUnacknowledgementResult,
 } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { IConsumerParsedOptions } from './types/index.js';
 import { _executeUnacknowledgementScript } from './_/_execute-unacknowledgement-script.js';
 
@@ -119,7 +119,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
   ): TUnacknowledgementBatch['messages'] {
     return messages.map((m) => {
       const resolution = this.getResolution(m, cause);
-      const { keyMessage } = redisKeys.getMessageKeys(m.getId());
+      const { keyMessage } = keys.getMessageKeys(m.getId());
       return {
         messageId: m.getId(),
         keyMessage,
@@ -172,7 +172,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     client: IRedisClient,
     cb: ICallback<MessageEnvelope[]>,
   ): void {
-    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
+    const { keyQueueProcessing } = keys.getQueueConsumerKeys(
       this.queue.queueParams,
       this.consumerId,
     );
@@ -339,7 +339,7 @@ export class MessageUnacknowledger extends Runnable<TMessageUnacknowledgerEvent>
     async.waterfall(
       [
         (next: ICallback<MessageEnvelope[]>) => {
-          withSharedPoolConnection((client, done) => {
+          withShared((client, done) => {
             this.getMessagesFromQueue(client, done);
           }, next);
         },

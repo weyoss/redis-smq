@@ -9,8 +9,8 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis/redis-client/redis-client.js';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { Client } from '../../../src/common/redis/client.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import {
   EMessagePriority,
   EQueueType,
@@ -30,7 +30,7 @@ const { promisifyAll } = bluebird;
 it('QueueStorageSortedSet: should fetch items with correct pagination', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
-  const redisClient = promisifyAll(new RedisClient(redisConfig));
+  const redisClient = promisifyAll(new Client(redisConfig));
   const queueMessagesStorageSortedSet = promisifyAll(
     new BrowserStorageSortedSet(),
   );
@@ -53,7 +53,7 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
   ids = ids.sort();
 
   const pageSize = 30;
-  const { keyQueuePriority } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import { EQueueType } from '../../../src/index.js';
 import { BrowserStorageSortedSet } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-sorted-set.js';
 import {
@@ -25,7 +25,7 @@ it('QueueStorageSortedSet: should return empty array for an empty list', async (
   const queueMessagesStorageSortedSet = promisifyAll(
     new BrowserStorageSortedSet(),
   );
-  const { keyQueuePriority } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

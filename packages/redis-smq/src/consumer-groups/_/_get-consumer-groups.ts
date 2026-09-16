@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 
 export function _getConsumerGroups(
@@ -16,7 +16,7 @@ export function _getConsumerGroups(
   queue: IQueueParams,
   cb: ICallback<string[]>,
 ): void {
-  const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(
+  const { keyQueueConsumerGroups } = keys.getQueueKeys(
     queue.ns,
     queue.name,
     null,

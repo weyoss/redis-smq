@@ -13,7 +13,7 @@ import {
   ICallback,
   ILogger,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 import { IMessageTransferable } from '../../message/index.js';
 import { _parseQueueExtendedParams } from '../../queue-manager/_/_parse-queue-extended-params.js';
 import {
@@ -23,7 +23,7 @@ import {
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
 import { IBrowserPage, IMessageBrowser } from './types/index.js';
 import { MessageManager } from '../../message-manager/index.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import { InvalidPurgeQueueJobIdError } from '../../errors/index.js';
 import { IBrowserStorage } from './browser-storage/browser-storage-abstract.js';
 import { EBackgroundJobStatus } from '../../common/index.js';
@@ -103,7 +103,7 @@ export class MessageBrowser implements IMessageBrowser {
     parsedParams: IQueueParsedParams,
     cb: ICallback,
   ): void {
-    withSharedPoolConnection((client, done) => {
+    withShared((client, done) => {
       _validateOperation(
         client,
         parsedParams.queueParams,
@@ -173,7 +173,7 @@ export class MessageBrowser implements IMessageBrowser {
       return;
     }
 
-    withSharedPoolConnection((client, done) => {
+    withShared((client, done) => {
       _validateQueueExtendedParams(
         client,
         parsedParams,
@@ -202,7 +202,7 @@ export class MessageBrowser implements IMessageBrowser {
     ) => void,
     cb: ICallback<T>,
   ): void {
-    withSharedPoolConnection((client, done) => {
+    withShared((client, done) => {
       async.waterfall(
         [
           (next: ICallback<PurgeQueueJobManager>) => {

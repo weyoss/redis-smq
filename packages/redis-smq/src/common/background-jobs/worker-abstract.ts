@@ -1,10 +1,5 @@
 /*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
+ * packages/redis-smq/src/common/background-jobs/workers-abstract.ts
  */
 
 import {
@@ -16,13 +11,13 @@ import {
   IRedisClient,
   PanicError,
 } from 'redis-smq-common';
-import { WorkerAbstract } from '../worker/worker-abstract.js';
-import { RedisConnectionPool } from '../../redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../../redis/redis-connection-pool/types/connection-pool.js';
-import { redisKeys } from '../../redis/redis-keys/redis-keys.js';
-import { IWorkerPayload } from '../worker/types/worker.js';
+import { WorkerAbstract as Worker } from '../workers/worker-abstract.js';
+import { Pool } from '../redis/connection-pool/pool.js';
+import { ERedisConnectionAcquisitionMode } from '../redis/connection-pool/types/connection-pool.js';
+import { keys } from '../redis/keys/keys.js';
+import { IWorkerPayload } from '../workers/types/worker.js';
 
-export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
+export abstract class WorkerAbstract extends Worker {
   protected override logger: ILogger;
   protected redisClient: IRedisClient | null = null;
   protected heartbeat: Heartbeat | null = null;
@@ -45,7 +40,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
       );
 
     try {
-      const { keyWorkerHeartbeat } = redisKeys.getWorkerKeys(this.id);
+      const { keyWorkerHeartbeat } = keys.getWorkerKeys(this.id);
       this.heartbeat = new Heartbeat(this.redisClient, this.logger, {
         heartbeatKey: keyWorkerHeartbeat,
         componentId: this.id,
@@ -71,7 +66,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback) => {
-        RedisConnectionPool.getInstance().acquire(
+        Pool.getInstance().acquire(
           ERedisConnectionAcquisitionMode.SHARED,
           (err, redisClient) => {
             if (err) return cb(err);
@@ -90,7 +85,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
       this.shutdownHeartbeat,
       (cb: ICallback) => {
         if (this.redisClient) {
-          RedisConnectionPool.getInstance().release(this.redisClient);
+          Pool.getInstance().release(this.redisClient);
           this.redisClient = null;
         }
         cb();
@@ -100,7 +95,7 @@ export abstract class BackgroundJobWorkerAbstract extends WorkerAbstract {
 
   protected getRedisClient(): IRedisClient {
     if (!this.redisClient)
-      throw new PanicError({ message: 'A RedisClient instance is required.' });
+      throw new PanicError({ message: 'A Client instance is required.' });
     return this.redisClient;
   }
 }

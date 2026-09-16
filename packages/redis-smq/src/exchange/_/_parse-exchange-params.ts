@@ -17,7 +17,7 @@ import {
   IExchangeParams,
   IExchangeParsedParams,
 } from '../types/index.js';
-import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../../common/redis/keys/validator.js';
 
 export function _parseExchangeParams(
   exchange: string | IExchangeParams,

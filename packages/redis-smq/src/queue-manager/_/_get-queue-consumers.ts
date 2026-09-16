@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { IQueueParams, TQueueConsumer } from '../types/index.js';
 import { _queueExists } from './_queue-exists.js';
 import { QueueNotFoundError } from '../../errors/index.js';
@@ -42,7 +42,7 @@ export function _getQueueConsumers(
           cb();
         }),
       (cb) => {
-        const { keyQueueConsumers } = redisKeys.getQueueKeys(
+        const { keyQueueConsumers } = keys.getQueueKeys(
           queue.ns,
           queue.name,
           null,

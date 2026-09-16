@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import { EQueueType } from '../../../src/index.js';
 import { BrowserStorageList } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-list.js';
 import {
@@ -25,7 +25,7 @@ it('QueueStorageList: should return 0 for an empty list', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
 
-  const { keyQueuePending } = redisKeys.getQueueKeys(
+  const { keyQueuePending } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,
@@ -39,7 +39,7 @@ it('should return the correct count after adding items', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
   await produceMessage(defaultQueue);
-  const { keyQueuePending } = redisKeys.getQueueKeys(
+  const { keyQueuePending } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

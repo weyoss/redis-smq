@@ -13,7 +13,7 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { _deleteQueue } from '../queue-manager/_/_delete-queue.js';
 import { IQueueParams } from '../queue-manager/index.js';
@@ -22,9 +22,9 @@ import {
   NamespaceNotFoundError,
   QueueNotFoundError,
 } from '../errors/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _getNamespaceQueues } from './_/_get-namespace-queues.js';
-import { validateRedisKey } from '../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../common/redis/keys/validator.js';
 
 /**
  * Manages message queue namespaces.
@@ -73,8 +73,8 @@ export class NamespaceManager {
   getNamespaces(cb?: ICallback<string[]>): Promise<string[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting all namespaces');
-      withSharedPoolConnection((client, cb) => {
-        const { keyNamespaces } = redisKeys.getMainKeys();
+      withShared((client, cb) => {
+        const { keyNamespaces } = keys.getMainKeys();
         this.logger.debug('Fetching namespaces from Redis', {
           key: keyNamespaces,
         });
@@ -129,9 +129,9 @@ export class NamespaceManager {
         this.logger.error('Invalid namespace', { namespace });
         return callback(new InvalidNamespaceError());
       }
-      withSharedPoolConnection((client, cb) => {
-        const { keyNamespaces } = redisKeys.getMainKeys();
-        const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
+      withShared((client, cb) => {
+        const { keyNamespaces } = keys.getMainKeys();
+        const { keyNamespaceQueues } = keys.getNamespaceKeys(ns);
         this.logger.debug('Checking if namespace exists', {
           namespace: ns,
           key: keyNamespaces,
@@ -220,8 +220,8 @@ export class NamespaceManager {
         return callback(new InvalidNamespaceError());
       }
 
-      withSharedPoolConnection((client, cb) => {
-        const { keyNamespaces } = redisKeys.getMainKeys();
+      withShared((client, cb) => {
+        const { keyNamespaces } = keys.getMainKeys();
         this.logger.debug('Checking if namespace exists before deletion', {
           namespace: ns,
           key: keyNamespaces,

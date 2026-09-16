@@ -22,7 +22,7 @@ import { MultiplexingController } from './multiplexing-controller.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { _generateEphemeralConsumerGroupId } from './_/_generate-ephemeral-consumer-group-id.js';
 import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { EQueueOperation } from '../queue-operation-validator/index.js';
 import { IConsumerQueuesWithStatus } from './types/index.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
@@ -847,7 +847,7 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
     async.series(
       [
         (cb) =>
-          withSharedPoolConnection((client, cb) => {
+          withShared((client, cb) => {
             _validateOperation(
               client,
               queue.queueParams,

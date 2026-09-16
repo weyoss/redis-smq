@@ -37,80 +37,62 @@ const dirname = env.getCurrentDir();
 
 export const scriptFileMap: Record<ERedisScriptName, string | string[]> = {
   [ERedisScriptName.PUBLISH_SCHEDULED]: [
-    resolve(dirname, './scripts/shared-procedures/publish-message.lua'),
-    resolve(dirname, './scripts/publish-scheduled.lua'),
+    resolve(dirname, './shared-procedures/publish-message.lua'),
+    resolve(dirname, './publish-scheduled.lua'),
   ],
   [ERedisScriptName.PUBLISH_MESSAGE]: [
-    resolve(dirname, './scripts/shared-procedures/publish-message.lua'),
-    resolve(dirname, './scripts/publish-message.lua'),
+    resolve(dirname, './shared-procedures/publish-message.lua'),
+    resolve(dirname, './publish-message.lua'),
   ],
   [ERedisScriptName.REQUEUE_MESSAGE]: [
-    resolve(dirname, './scripts/shared-procedures/publish-message.lua'),
-    resolve(dirname, './scripts/requeue-message.lua'),
+    resolve(dirname, './shared-procedures/publish-message.lua'),
+    resolve(dirname, './requeue-message.lua'),
   ],
   [ERedisScriptName.REQUEUE_IMMEDIATE]: resolve(
     dirname,
-    './scripts/requeue-immediate.lua',
+    './requeue-immediate.lua',
   ),
-  [ERedisScriptName.REQUEUE_DELAYED]: resolve(
-    dirname,
-    './scripts/requeue-delayed.lua',
-  ),
-  [ERedisScriptName.CREATE_QUEUE]: resolve(
-    dirname,
-    './scripts/create-queue.lua',
-  ),
+  [ERedisScriptName.REQUEUE_DELAYED]: resolve(dirname, './requeue-delayed.lua'),
+  [ERedisScriptName.CREATE_QUEUE]: resolve(dirname, './create-queue.lua'),
   [ERedisScriptName.SUBSCRIBE_CONSUMER]: resolve(
     dirname,
-    './scripts/subscribe-consumer.lua',
+    './subscribe-consumer.lua',
   ),
   [ERedisScriptName.UNSUBSCRIBE_CONSUMER]: resolve(
     dirname,
-    './scripts/unsubscribe-consumer.lua',
+    './unsubscribe-consumer.lua',
   ),
   [ERedisScriptName.UNACKNOWLEDGE_MESSAGE]: resolve(
     dirname,
-    './scripts/unacknowledge-message.lua',
+    './unacknowledge-message.lua',
   ),
   [ERedisScriptName.ACKNOWLEDGE_MESSAGE]: resolve(
     dirname,
-    './scripts/acknowledge-message.lua',
+    './acknowledge-message.lua',
   ),
-  [ERedisScriptName.DELETE_MESSAGE]: resolve(
-    dirname,
-    './scripts/delete-message.lua',
-  ),
+  [ERedisScriptName.DELETE_MESSAGE]: resolve(dirname, './delete-message.lua'),
   [ERedisScriptName.CHECKOUT_MESSAGE]: resolve(
     dirname,
-    './scripts/checkout-message.lua',
+    './checkout-message.lua',
   ),
   [ERedisScriptName.DELETE_CONSUMER_GROUP]: resolve(
     dirname,
-    './scripts/delete-consumer-group.lua',
+    './delete-consumer-group.lua',
   ),
   [ERedisScriptName.CHECK_QUEUE_RATE_LIMIT]: resolve(
     dirname,
-    './scripts/check-queue-rate-limit.lua',
+    './check-queue-rate-limit.lua',
   ),
   [ERedisScriptName.SET_QUEUE_RATE_LIMIT]: resolve(
     dirname,
-    './scripts/set-queue-rate-limit.lua',
+    './set-queue-rate-limit.lua',
   ),
-  [ERedisScriptName.DELETE_QUEUE]: resolve(
-    dirname,
-    './scripts/delete-queue.lua',
-  ),
+  [ERedisScriptName.DELETE_QUEUE]: resolve(dirname, './delete-queue.lua'),
   [ERedisScriptName.CLEAR_QUEUE_RATE_LIMIT]: resolve(
     dirname,
-    './scripts/clear-queue-rate-limit.lua',
+    './clear-queue-rate-limit.lua',
   ),
-  [ERedisScriptName.SET_QUEUE_STATE]: resolve(
-    dirname,
-    './scripts/set-queue-state.lua',
-  ),
-  [ERedisScriptName.GET_QUEUE_STATE]: resolve(
-    dirname,
-    './scripts/get-queue-state.lua',
-  ),
-  [ERedisScriptName.SAVE_CONFIG]: resolve(dirname, './scripts/save-config.lua'),
+  [ERedisScriptName.SET_QUEUE_STATE]: resolve(dirname, './set-queue-state.lua'),
+  [ERedisScriptName.GET_QUEUE_STATE]: resolve(dirname, './get-queue-state.lua'),
+  [ERedisScriptName.SAVE_CONFIG]: resolve(dirname, './save-config.lua'),
 };

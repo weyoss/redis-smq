@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../common/redis/keys/keys.js';
 import { _parseExchangeParams } from '../../_/_parse-exchange-params.js';
 import { EExchangeType, IExchangeParams } from '../../types/index.js';
 
@@ -20,7 +20,7 @@ export function _getRoutingPatterns(
   const exchangeParams = _parseExchangeParams(exchange, EExchangeType.TOPIC);
   if (exchangeParams instanceof Error) cb(exchangeParams);
   else {
-    const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+    const { keyExchangeBindingPatterns } = keys.getExchangeTopicKeys(
       exchangeParams.ns,
       exchangeParams.name,
     );

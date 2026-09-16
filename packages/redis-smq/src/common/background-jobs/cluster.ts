@@ -17,18 +17,18 @@ import {
   WorkerCluster,
 } from 'redis-smq-common';
 import { Configuration } from '../../config-manager/configuration.js';
-import { RedisConnectionPool } from '../redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../redis/redis-connection-pool/types/connection-pool.js';
+import { Pool } from '../redis/connection-pool/pool.js';
+import { ERedisConnectionAcquisitionMode } from '../redis/connection-pool/types/connection-pool.js';
 import path from 'path';
 import { isMainThread } from 'node:worker_threads';
-import { IWorkerPayload } from '../abstract/worker/types/worker.js';
-import { RedisConfig } from '../redis/redis-config.js';
+import { IWorkerPayload } from '../workers/types/worker.js';
+import { Config } from '../redis/config.js';
 
 const curDir = env.getCurrentDir();
 const workersPath = path.resolve(curDir, 'jobs');
 
-export class BackgroundJobCluster extends Runnable<never> {
-  protected static instance: BackgroundJobCluster | null = null;
+export class Cluster extends Runnable<never> {
+  protected static instance: Cluster | null = null;
   protected logger;
   protected config;
   protected workerCluster: WorkerCluster | null = null;
@@ -48,17 +48,17 @@ export class BackgroundJobCluster extends Runnable<never> {
       return cb();
     }
 
-    if (!BackgroundJobCluster.instance) {
-      BackgroundJobCluster.instance = new BackgroundJobCluster();
+    if (!Cluster.instance) {
+      Cluster.instance = new Cluster();
     }
 
-    BackgroundJobCluster.instance.run(cb);
+    Cluster.instance.run(cb);
   }
 
   static shutdown(cb: ICallback) {
-    if (BackgroundJobCluster.instance) {
-      BackgroundJobCluster.instance.shutdown(() => {
-        BackgroundJobCluster.instance = null;
+    if (Cluster.instance) {
+      Cluster.instance.shutdown(() => {
+        Cluster.instance = null;
         cb();
       });
       return;
@@ -69,7 +69,7 @@ export class BackgroundJobCluster extends Runnable<never> {
   protected override goingUp(): ((cb: ICallback) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback) => {
-        const redisConnectionPool = RedisConnectionPool.getInstance();
+        const redisConnectionPool = Pool.getInstance();
         redisConnectionPool.acquire(
           ERedisConnectionAcquisitionMode.SHARED,
           (err, redisClient) => {
@@ -89,7 +89,7 @@ export class BackgroundJobCluster extends Runnable<never> {
               workersPath,
               {
                 config: this.config,
-                redisConfig: RedisConfig.getConfig(),
+                redisConfig: Config.getConfig(),
                 loggerContext: { namespaces: this.logger.getNamespaces() },
               },
               (err) => {
@@ -114,7 +114,7 @@ export class BackgroundJobCluster extends Runnable<never> {
       },
       (cb: ICallback) => {
         if (this.redisClient) {
-          RedisConnectionPool.getInstance().release(this.redisClient);
+          Pool.getInstance().release(this.redisClient);
           this.redisClient = null;
         }
         cb();

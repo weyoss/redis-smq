@@ -8,14 +8,14 @@
  */
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
-import { RedisConnectionPool } from './redis-connection-pool.js';
+import { Pool } from './pool.js';
 import { ERedisConnectionAcquisitionMode } from './types/connection-pool.js';
 
-export function withExclusivePoolConnection<T>(
+export function withExclusive<T>(
   operation: (client: IRedisClient, cb: ICallback<T>) => void,
   callback: ICallback<T>,
 ): void {
-  const connectionPool = RedisConnectionPool.getInstance();
+  const connectionPool = Pool.getInstance();
   async.withCallback(
     (cb) =>
       connectionPool.acquire(ERedisConnectionAcquisitionMode.EXCLUSIVE, cb),

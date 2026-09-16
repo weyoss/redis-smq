@@ -8,7 +8,7 @@
  */
 
 import { createLogger, ILogger } from 'redis-smq-common';
-import { WorkerAbstract } from '../../common/abstract/worker/worker-abstract.js';
+import { WorkerAbstract } from '../../common/workers/worker-abstract.js';
 import { IQueueWorkerPayload } from '../types/queue-worker.js';
 
 export abstract class ConsumerWorkerAbstract extends WorkerAbstract {

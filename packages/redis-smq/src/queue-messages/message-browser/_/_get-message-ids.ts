@@ -10,7 +10,7 @@
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { async, ICallback, ILogger } from 'redis-smq-common';
 import { IBrowserPage } from '../types/index.js';
-import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
+import { keys as redisKeys } from '../../../common/redis/keys/keys.js';
 import { IBrowserStorage } from '../browser-storage/browser-storage-abstract.js';
 import { _getPaginationParameters } from './_get-pagination-parameters.js';
 

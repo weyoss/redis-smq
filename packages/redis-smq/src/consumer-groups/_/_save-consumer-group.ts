@@ -13,7 +13,7 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
 import {
   EQueueDeliveryModel,
@@ -26,7 +26,7 @@ import {
 import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
-import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../../common/redis/keys/validator.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,
@@ -55,7 +55,7 @@ export function _saveConsumerGroup(
             else cb();
           }),
         (cb: ICallback<number>) => {
-          const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(
+          const { keyQueueConsumerGroups } = keys.getQueueKeys(
             queue.ns,
             queue.name,
             gid,

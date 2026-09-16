@@ -9,7 +9,7 @@
 
 import { async, ICallback } from 'redis-smq-common';
 import { BrowserStorageAbstract } from './browser-storage-abstract.js';
-import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../../common/redis/connection-pool/with-shared.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis sorted sets.
@@ -28,7 +28,7 @@ export class BrowserStorageSortedSet extends BrowserStorageAbstract {
    */
   count(redisKey: string, cb: ICallback<number>): void {
     this.logger.debug(`Counting items in ${redisKey}`);
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       this.logger.debug(`Executing ZCARD on ${redisKey}`);
       client.zcard(redisKey, (err, count) => {
         if (err) {
@@ -73,7 +73,7 @@ export class BrowserStorageSortedSet extends BrowserStorageAbstract {
     this.logger.debug(
       `Fetching items from ${redisKey} range [${offsetStart}:${offsetEnd}]`,
     );
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       this.logger.debug(
         `Executing ZRANGE on ${redisKey} from ${offsetStart} to ${offsetEnd}`,
       );
@@ -116,7 +116,7 @@ export class BrowserStorageSortedSet extends BrowserStorageAbstract {
   fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
     this.logger.debug(`Fetching all items from ${redisKey} using ZSCAN`);
 
-    withSharedPoolConnection((client, cb) => {
+    withShared((client, cb) => {
       // Using recursive ZSCAN to get all items
       const allItems: string[] = [];
       let scanCount = 0;

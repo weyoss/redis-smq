@@ -1,10 +1,5 @@
 /*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
+ * packages/redis-smq/src/common/background-jobs/manager-abstract.ts
  */
 
 import { async, env, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
@@ -17,15 +12,15 @@ import {
   BackgroundJobNotFoundError,
   BackgroundJobNotStartableError,
   UnexpectedScriptReplyError,
-} from '../../../errors/index.js';
+} from '../../errors/index.js';
 import {
   EBackgroundJobStatus,
   IBackgroundJob,
   IBackgroundJobConfig,
 } from './types/index.js';
 import { resolve } from 'path';
-import { redisKeys } from '../../redis/redis-keys/redis-keys.js';
-import { _isBackgroundJobWorkerAlive } from './helpers/_is-background-job-worker-alive.js';
+import { keys } from '../redis/keys/keys.js';
+import { _isWorkerAlive } from './helpers/_is-worker-alive.js';
 
 const batchSize = 1000;
 const delay = 5000;
@@ -41,21 +36,18 @@ enum ELuaScript {
 
 const curDir = env.getCurrentDir();
 const luaScriptMap = {
-  [ELuaScript.CREATE_JOB]: resolve(curDir, './redis/scripts/create-job.lua'),
-  [ELuaScript.CANCEL_JOB]: resolve(curDir, './redis/scripts/cancel-job.lua'),
-  [ELuaScript.COMPLETE_JOB]: resolve(
-    curDir,
-    './redis/scripts/complete-job.lua',
-  ),
-  [ELuaScript.FAIL_JOB]: resolve(curDir, './redis/scripts/fail-job.lua'),
-  [ELuaScript.START_JOB]: resolve(curDir, './redis/scripts/start-job.lua'),
+  [ELuaScript.CREATE_JOB]: resolve(curDir, './scripts/create-job.lua'),
+  [ELuaScript.CANCEL_JOB]: resolve(curDir, './scripts/cancel-job.lua'),
+  [ELuaScript.COMPLETE_JOB]: resolve(curDir, './scripts/complete-job.lua'),
+  [ELuaScript.FAIL_JOB]: resolve(curDir, './scripts/fail-job.lua'),
+  [ELuaScript.START_JOB]: resolve(curDir, './scripts/start-job.lua'),
   [ELuaScript.RECOVER_STUCK_JOB]: resolve(
     curDir,
-    './redis/scripts/recover-stuck-job.lua',
+    './scripts/recover-stuck-job.lua',
   ),
 };
 
-export abstract class BackgroundJobManagerAbstract<
+export abstract class ManagerAbstract<
   Payload,
   Meta extends Record<string, unknown> = never,
 > {
@@ -232,7 +224,7 @@ export abstract class BackgroundJobManagerAbstract<
           backgroundJob: IBackgroundJob<Payload>,
           next: ICallback<IBackgroundJob<Payload>>,
         ) => {
-          const { keyJobWorker } = redisKeys.getJobKeys(jobId);
+          const { keyJobWorker } = keys.getJobKeys(jobId);
           const updatedJob = {
             ...backgroundJob,
             status: EBackgroundJobStatus.CANCELED,
@@ -308,7 +300,7 @@ export abstract class BackgroundJobManagerAbstract<
       if (!backgroundJob)
         return cb(new BackgroundJobNotFoundError({ metadata: { jobId } }));
 
-      const { keyJobWorker } = redisKeys.getJobKeys(jobId);
+      const { keyJobWorker } = keys.getJobKeys(jobId);
 
       const updatedJob = {
         ...backgroundJob,
@@ -412,7 +404,7 @@ export abstract class BackgroundJobManagerAbstract<
           backgroundJob: IBackgroundJob<Payload, Meta>,
           next: ICallback<IBackgroundJob<Payload, Meta>>,
         ) => {
-          const { keyJobWorker } = redisKeys.getJobKeys(jobId);
+          const { keyJobWorker } = keys.getJobKeys(jobId);
           const updatedJob = this.applyPartialUpdate(backgroundJob, {
             ...options,
             status: EBackgroundJobStatus.COMPLETED,
@@ -499,7 +491,7 @@ export abstract class BackgroundJobManagerAbstract<
           backgroundJob: IBackgroundJob<Payload>,
           next: ICallback<IBackgroundJob<Payload>>,
         ) => {
-          const { keyJobWorker } = redisKeys.getJobKeys(jobId);
+          const { keyJobWorker } = keys.getJobKeys(jobId);
           const updatedJob = {
             ...backgroundJob,
             status: EBackgroundJobStatus.FAILED,
@@ -651,9 +643,9 @@ export abstract class BackgroundJobManagerAbstract<
           (jobId, _, next) => {
             async.waterfall(
               [
-                // Step 1: Check if worker is alive
+                // Step 1: Check if workers is alive
                 (cb: ICallback<boolean>) => {
-                  _isBackgroundJobWorkerAlive(jobId, (err, isAlive) => {
+                  _isWorkerAlive(jobId, (err, isAlive) => {
                     if (err) {
                       this.logger.error(
                         `Error checking worker liveness for job ${jobId}:`,
@@ -703,8 +695,8 @@ export abstract class BackgroundJobManagerAbstract<
                       return;
                     }
 
-                    const { keyJobWorker } = redisKeys.getJobKeys(jobId);
-                    const recoveryMessage = 'Recovered from worker crash';
+                    const { keyJobWorker } = keys.getJobKeys(jobId);
+                    const recoveryMessage = 'Recovered from workers crash';
 
                     const updatedJob = {
                       ...job,

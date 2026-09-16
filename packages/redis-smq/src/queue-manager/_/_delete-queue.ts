@@ -8,7 +8,7 @@
  */
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
 import {
   ConsumerSetMismatchError,
@@ -25,7 +25,7 @@ import {
   IQueueParams,
 } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
 import { _getProcessingQueues } from './_get-processing-queues.js';
@@ -89,8 +89,8 @@ export function _deleteQueue(
 
       // All dynamic keys have been discovered. Now, generate all keys for the script.
 
-      const { keyQueues } = redisKeys.getMainKeys();
-      const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
+      const { keyQueues } = keys.getMainKeys();
+      const { keyNamespaceQueues } = keys.getNamespaceKeys(queueParams.ns);
       const {
         keyQueueProperties,
         keyQueuePending,
@@ -108,16 +108,16 @@ export function _deleteQueue(
         keyQueueWorkersLock,
         keyQueueExchangeBindings,
         keyQueueStateHistory,
-      } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      } = keys.getQueueKeys(queueParams.ns, queueParams.name, null);
 
       // Keys for consumer heartbeats
       const heartbeatKeys = consumerIds.map(
-        (id) => redisKeys.getConsumerKeys(id).keyConsumerHeartbeat,
+        (id) => keys.getConsumerKeys(id).keyConsumerHeartbeat,
       );
 
       // Keys for consumer group queues
       const consumerGroupKeys = consumerGroups.flatMap((groupId) => {
-        const { keyQueuePriority, keyQueuePending } = redisKeys.getQueueKeys(
+        const { keyQueuePriority, keyQueuePending } = keys.getQueueKeys(
           queueParams.ns,
           queueParams.name,
           groupId,

@@ -16,16 +16,16 @@ import {
 } from 'redis-smq-common';
 import { IRedisSMQParsedConfig } from './types/index.js';
 import { ConfigurationNotFoundError } from '../errors/configuration-not-found.error.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { parseConfig } from './parse-config.js';
 import { defaultConfig } from './default-config.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import {
   ConfigurationUpdateError,
   UnexpectedScriptReplyError,
 } from '../errors/index.js';
 import { TConfigurationEvent } from '../event-bus/index.js';
-import { ERedisScriptName } from '../common/redis/scripts.js';
+import { ERedisScriptName } from '../common/scripts/registry.js';
 
 enum EConfigurationField {
   VERSION = 'version',
@@ -169,8 +169,8 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
    * After successful reload, 'configuration.updated' is NOT emitted (intentional).
    */
   reload(cb: ICallback<IRedisSMQParsedConfigWithVersion>): void {
-    withSharedPoolConnection((client, done) => {
-      const key = redisKeys.getMainKeys().keyConfiguration;
+    withShared((client, done) => {
+      const key = keys.getMainKeys().keyConfiguration;
       client.hgetall(key, (err, result) => {
         if (err) return done(err);
 
@@ -192,8 +192,8 @@ export class Configuration extends EventEmitter<TConfigurationEvent> {
 
   save(config: IRedisSMQParsedConfig, cb: ICallback): void {
     this.runExclusive((done) => {
-      withSharedPoolConnection((client, cb) => {
-        const key = redisKeys.getMainKeys().keyConfiguration;
+      withShared((client, cb) => {
+        const key = keys.getMainKeys().keyConfiguration;
         const configData = JSON.stringify(config);
 
         client.runScript(

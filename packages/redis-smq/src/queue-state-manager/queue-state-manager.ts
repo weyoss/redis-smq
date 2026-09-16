@@ -18,9 +18,9 @@ import {
   IQueueParams,
 } from '../queue-manager/index.js';
 import { Configuration } from '../config-manager/configuration.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import {
   EStateTransitionReason,
   IQueueStateTransition,
@@ -84,7 +84,7 @@ export class QueueStateManager {
         typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
       this.logger.debug(`Getting operational state for queue: ${queueDesc}`);
 
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
           if (err) return done(err);
           if (!queueParams) return done(new CallbackEmptyReplyError());
@@ -311,12 +311,12 @@ export class QueueStateManager {
         typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
       this.logger.debug(`Getting state history for queue: ${queueDesc}`);
 
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
           if (err) return done(err);
           if (!queueParams) return done(new CallbackEmptyReplyError());
 
-          const { keyQueueStateHistory } = redisKeys.getQueueKeys(
+          const { keyQueueStateHistory } = keys.getQueueKeys(
             queueParams.ns,
             queueParams.name,
             null,

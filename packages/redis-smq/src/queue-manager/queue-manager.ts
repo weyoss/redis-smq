@@ -8,8 +8,8 @@
  */
 
 import { async, createLogger, ICallback } from 'redis-smq-common';
-import { ERedisScriptName } from '../common/redis/scripts.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { ERedisScriptName } from '../common/scripts/registry.js';
+import { keys as redisKeys } from '../common/redis/keys/keys.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueConsumerIds } from './_/_get-queue-consumer-ids.js';
@@ -31,7 +31,7 @@ import {
   IQueueProperties,
   TQueueConsumer,
 } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
 import { maxQueueStateHistorySize } from '../queue-state-manager/_/_set-queue-state.js';
 import {
@@ -121,7 +121,7 @@ export class QueueManager {
       const queueName = `${queueParams.name}@${queueParams.ns}`;
       this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         const { keyQueueProperties, keyQueueStateHistory } =
           redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
         const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
@@ -277,7 +277,7 @@ export class QueueManager {
       } else {
         const queueName = `${queueParams.name}@${queueParams.ns}`;
         this.logger.debug(`Parsed queue parameters: ${queueName}`);
-        withSharedPoolConnection((client, cb) => {
+        withShared((client, cb) => {
           this.logger.debug(`Checking if queue ${queueName} exists in Redis`);
           _queueExists(client, queueParams, (err, exists) => {
             if (err) {
@@ -332,7 +332,7 @@ export class QueueManager {
       const queueName = `${queueParams.name}@${queueParams.ns}`;
       this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         this.logger.debug(`Executing delete queue operation for ${queueName}`);
         _deleteQueue(client, queueParams, (err) => {
           if (err) {
@@ -398,7 +398,7 @@ export class QueueManager {
         const queueName = `${queueParams.name}@${queueParams.ns}`;
         this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-        withSharedPoolConnection((client, cb) => {
+        withShared((client, cb) => {
           this.logger.debug(`Retrieving properties for queue ${queueName}`);
           _getQueueProperties(client, queueParams, (err, properties) => {
             if (err) {
@@ -449,7 +449,7 @@ export class QueueManager {
   getQueues(cb?: ICallback<IQueueParams[]>): Promise<IQueueParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
       this.logger.debug('Getting all queues');
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         this.logger.debug('Retrieving all queues from Redis');
         _getQueues(client, (err, queues) => {
           if (err) {
@@ -511,7 +511,7 @@ export class QueueManager {
       const queueName = `${queueParams.name}@${queueParams.ns}`;
       this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _getQueueConsumers(client, queueParams, cb),
         callback,
       );
@@ -559,7 +559,7 @@ export class QueueManager {
       const queueName = `${queueParams.name}@${queueParams.ns}`;
       this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _getQueueConsumerIds(client, queueParams, cb),
         callback,
       );

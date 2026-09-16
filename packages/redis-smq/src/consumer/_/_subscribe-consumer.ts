@@ -9,15 +9,15 @@ import {
   TQueueConsumer,
 } from '../../queue-manager/index.js';
 import os from 'os';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import {
   QueueNotActiveError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 import { ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -38,7 +38,7 @@ export function _subscribeConsumer(
   queueParams: IQueueParsedParams,
   cb: ICallback,
 ) {
-  withSharedPoolConnection((redisClient, done) => {
+  withShared((redisClient, done) => {
     const { queueParams: queue, groupId } = queueParams;
     const consumerInfo: TQueueConsumer = {
       ipAddress: IPAddresses,

@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -20,7 +20,7 @@ export function _getMessageStatus(
   messageId: string,
   cb: ICallback<EMessagePropertyStatus>,
 ): void {
-  const { keyMessage } = redisKeys.getMessageKeys(messageId);
+  const { keyMessage } = keys.getMessageKeys(messageId);
   redisClient.hget(
     keyMessage,
     String(EMessageProperty.STATUS),

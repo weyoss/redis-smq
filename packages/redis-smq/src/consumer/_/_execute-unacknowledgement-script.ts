@@ -15,8 +15,8 @@ import {
   TUnacknowledgementResolution,
   TUnacknowledgementResult,
 } from '../types/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { keys } from '../../common/redis/keys/keys.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import {
   InvalidQueueStateError,
   QueueLockedError,
@@ -29,7 +29,7 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 
 export function _executeUnacknowledgementScript(
   queue: IQueueParsedParams,
@@ -39,9 +39,9 @@ export function _executeUnacknowledgementScript(
   cb: ICallback<TUnacknowledgementResult>,
 ): void {
   const { queueParams, groupId } = queue;
-  withSharedPoolConnection((client, done) => {
+  withShared((client, done) => {
     const { keyQueueRequeued, keyQueueDeadLetter, keyQueueProperties } =
-      redisKeys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
+      keys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
     const { enabled, expire, queueSize } =
       Configuration.getConfig().messageAudit.deadLetteredMessages;
 
@@ -87,8 +87,8 @@ export function _executeUnacknowledgementScript(
     for (const msg of messages) {
       const messageId = msg.message.getId();
       const { keyMessage, keyMessageUnacknowledgementHistory } =
-        redisKeys.getMessageKeys(messageId);
-      const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
+        keys.getMessageKeys(messageId);
+      const { keyQueueProcessing } = keys.getQueueConsumerKeys(
         queueParams,
         consumerId,
       );

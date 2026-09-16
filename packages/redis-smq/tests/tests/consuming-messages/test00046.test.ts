@@ -21,7 +21,7 @@ import {
   TQueueStateTransitionOptions,
 } from '../../../index.js';
 import { _setQueueState } from '../../../src/queue-state-manager/_/_set-queue-state.js';
-import { withSharedPoolConnection } from '../../../src/common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../../src/common/redis/connection-pool/with-shared.js';
 import { waitFor } from '../../common/wait-for.js';
 
 /**
@@ -43,7 +43,7 @@ async function setQueueStateDirectly(
   options: TQueueStateTransitionOptions | null,
 ): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    withSharedPoolConnection(
+    withShared(
       (client, done) => {
         _setQueueState(
           client,

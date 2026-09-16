@@ -15,8 +15,8 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { Configuration } from '../../config-manager/configuration.js';
 import {
   ExchangeHasBoundQueuesError,
@@ -42,7 +42,7 @@ import { _getRoutingKeyBoundQueues } from './_/_get-routing-key-bound-queues.js'
 import { _getRoutingKeys } from './_/_get-routing-keys.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import { EQueueOperation } from '../../queue-operation-validator/index.js';
-import { validateRedisKey } from '../../common/redis/redis-keys/validator.js';
+import { validateRedisKey } from '../../common/redis/keys/validator.js';
 
 /**
  * Direct exchange for exact routing key matching.
@@ -104,7 +104,7 @@ export class ExchangeDirect {
         EExchangeType.DIRECT,
       );
       if (exchangeParams instanceof Error) return callback(exchangeParams);
-      withSharedPoolConnection(
+      withShared(
         (client, done) => _getRoutingKeys(client, exchangeParams, done),
         callback,
       );
@@ -154,7 +154,7 @@ export class ExchangeDirect {
       if (validatedRoutingKey instanceof Error)
         return callback(new InvalidDirectExchangeParametersError());
 
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         _getRoutingKeyBoundQueues(
           client,
           exchangeParams,
@@ -221,7 +221,7 @@ export class ExchangeDirect {
         `matchQueues: resolving queues ns=${exchangeParams.ns} ex=${exchangeParams.name} rk=${validatedRoutingKey}`,
       );
 
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         const result: IQueueParams[] = [];
         async.series(
           [
@@ -286,7 +286,7 @@ export class ExchangeDirect {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error)
         return callback(new InvalidDirectExchangeParametersError());
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
         callback,
       );
@@ -354,24 +354,22 @@ export class ExchangeDirect {
       }
 
       const { keyQueueProperties, keyQueueExchangeBindings } =
-        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-      const { keyExchange } = redisKeys.getExchangeKeys(
+        keys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyExchangeRoutingKeys } = redisKeys.getExchangeDirectKeys(
+      const { keyExchangeRoutingKeys } = keys.getExchangeDirectKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyRoutingKeyQueues } = redisKeys.getExchangeDirectRoutingKeyKeys(
+      const { keyRoutingKeyQueues } = keys.getExchangeDirectRoutingKeyKeys(
         exchangeParams.ns,
         exchangeParams.name,
         validatedRoutingKey,
       );
-      const { keyExchanges } = redisKeys.getMainKeys();
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
-        queueParams.ns,
-      );
+      const { keyExchanges } = keys.getMainKeys();
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(queueParams.ns);
 
       const queueStr = JSON.stringify(queueParams);
       const exchangeStr = JSON.stringify(exchangeParams);
@@ -380,7 +378,7 @@ export class ExchangeDirect {
         `bindQueue: bind q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns} rk=${validatedRoutingKey}`,
       );
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         async.series(
           [
             (cb) =>
@@ -556,20 +554,20 @@ export class ExchangeDirect {
         return callback(new InvalidDirectExchangeParametersError());
       }
 
-      const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
+      const { keyQueueExchangeBindings } = keys.getQueueKeys(
         queueParams.ns,
         queueParams.name,
         null,
       );
-      const { keyExchange } = redisKeys.getExchangeKeys(
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyExchangeRoutingKeys } = redisKeys.getExchangeDirectKeys(
+      const { keyExchangeRoutingKeys } = keys.getExchangeDirectKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyRoutingKeyQueues } = redisKeys.getExchangeDirectRoutingKeyKeys(
+      const { keyRoutingKeyQueues } = keys.getExchangeDirectRoutingKeyKeys(
         exchangeParams.ns,
         exchangeParams.name,
         validatedRoutingKey,
@@ -582,7 +580,7 @@ export class ExchangeDirect {
         `unbindQueue: unbinding q=${queueParams.name} ns=${queueParams.ns} from ex=${exchangeParams.name} ns=${exchangeParams.ns} rk=${validatedRoutingKey}`,
       );
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         async.series(
           [
             (cb) =>
@@ -645,7 +643,7 @@ export class ExchangeDirect {
                         );
                         otherRoutingKeySets = others.map((rk) => {
                           const { keyRoutingKeyQueues: k } =
-                            redisKeys.getExchangeDirectRoutingKeyKeys(
+                            keys.getExchangeDirectRoutingKeyKeys(
                               exchangeParams.ns,
                               exchangeParams.name,
                               rk,
@@ -752,17 +750,17 @@ export class ExchangeDirect {
         return callback(exchangeParams);
       }
 
-      const { keyExchanges } = redisKeys.getMainKeys();
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+      const { keyExchanges } = keys.getMainKeys();
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(
         exchangeParams.ns,
       );
 
-      const { keyExchange } = redisKeys.getExchangeKeys(
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
 
-      const { keyExchangeRoutingKeys } = redisKeys.getExchangeDirectKeys(
+      const { keyExchangeRoutingKeys } = keys.getExchangeDirectKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
@@ -773,7 +771,7 @@ export class ExchangeDirect {
         `delete: direct exchange ex=${exchangeParams.name}@${exchangeParams.ns}`,
       );
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         withWatchTransaction(
           client,
           (client, watch, done) => {
@@ -809,7 +807,7 @@ export class ExchangeDirect {
                   if (!routingKeys.length) return cb1(null, routingKeys);
                   const derivedKeys = routingKeys.map((rk) => {
                     const { keyRoutingKeyQueues } =
-                      redisKeys.getExchangeDirectRoutingKeyKeys(
+                      keys.getExchangeDirectRoutingKeyKeys(
                         exchangeParams.ns,
                         exchangeParams.name,
                         rk,
@@ -827,7 +825,7 @@ export class ExchangeDirect {
                     routingKeys,
                     (rk, _idx, next) => {
                       const { keyRoutingKeyQueues } =
-                        redisKeys.getExchangeDirectRoutingKeyKeys(
+                        keys.getExchangeDirectRoutingKeyKeys(
                           exchangeParams.ns,
                           exchangeParams.name,
                           rk,
@@ -866,7 +864,7 @@ export class ExchangeDirect {
                   multi.srem(keyNamespaceExchanges, exchangeStr);
                   for (const rk of routingKeys) {
                     const { keyRoutingKeyQueues } =
-                      redisKeys.getExchangeDirectRoutingKeyKeys(
+                      keys.getExchangeDirectRoutingKeyKeys(
                         exchangeParams.ns,
                         exchangeParams.name,
                         rk,
@@ -936,7 +934,7 @@ export class ExchangeDirect {
         EExchangeType.DIRECT,
       );
       if (exchangeParams instanceof Error) return callback(exchangeParams);
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         async.waterfall(
           [
             (cb: ICallback<string[]>) => {

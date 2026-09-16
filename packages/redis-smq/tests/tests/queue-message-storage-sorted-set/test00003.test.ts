@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import {
   EMessagePriority,
   EQueueType,
@@ -45,7 +45,7 @@ it('QueueStorageSortedSet: should fetch all items for a large list (chunking tes
     ids.push(id);
   }
 
-  const { keyQueuePriority } = redisKeys.getQueueKeys(
+  const { keyQueuePriority } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

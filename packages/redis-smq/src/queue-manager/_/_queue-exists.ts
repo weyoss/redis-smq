@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { IQueueParams } from '../types/queue.js';
 
 export function _queueExists(
@@ -16,7 +16,7 @@ export function _queueExists(
   queue: IQueueParams,
   cb: ICallback<boolean>,
 ): void {
-  const { keyQueues } = redisKeys.getMainKeys();
+  const { keyQueues } = keys.getMainKeys();
   redisClient.sismember(keyQueues, JSON.stringify(queue), (err, reply) => {
     if (err) cb(err);
     else cb(null, !!reply);

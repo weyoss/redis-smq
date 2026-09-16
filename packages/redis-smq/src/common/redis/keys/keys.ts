@@ -12,7 +12,7 @@ import { exchange } from './domains/exchange.js';
 import { queue } from './domains/queue.js';
 import { namespace } from './domains/namespace.js';
 
-export const redisKeys = {
+export const keys = {
   ...namespace,
   ...queue,
   ...exchange,

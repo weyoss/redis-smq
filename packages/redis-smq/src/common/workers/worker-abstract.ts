@@ -8,7 +8,7 @@
  */
 
 import { ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
-import { RedisSMQ } from '../../../redis-smq/index.js';
+import { RedisSMQ } from '../../redis-smq/index.js';
 import { IWorkerPayload } from './types/worker.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
@@ -38,7 +38,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
         RedisSMQ.initialize(this.redisConfig, cb);
       },
       (cb) => {
-        this.logger.debug('Setting up worker timer');
+        this.logger.debug('Setting up workers timer');
         // TS2715: Abstract property logger in class WorkerAbstract cannot be accessed in the constructor.
         this.timer = new Timer(this.logger);
         this.timer.run(cb);
@@ -49,7 +49,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     return [
       (cb: ICallback) => {
-        this.logger.debug('Resetting worker timer');
+        this.logger.debug('Resetting workers timer');
         if (this.timer) {
           this.timer.shutdown(cb);
           return;
@@ -63,7 +63,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
     if (this.isOperational()) {
       this.work((err) => {
         if (err) {
-          this.logger.error('Error during worker execution', err);
+          this.logger.error('Error during workers execution', err);
           this.handleError(err);
           return;
         }
@@ -76,7 +76,7 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
   protected override handleError = (err: Error) => {
     if (this.isOperational()) {
       this.logger.error(`Fatal error in worker ${this.constructor.name}`, err);
-      // simply crashing the background worker
+      // simply crashing the background workers
       throw err;
     }
   };

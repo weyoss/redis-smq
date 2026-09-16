@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import { EQueueType } from '../../../src/index.js';
 import {
   createQueue,
@@ -23,7 +23,7 @@ it('QueueStorageList: should return empty array for an empty list', async () => 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const queueMessagesStorageList = promisifyAll(new BrowserStorageList());
-  const { keyQueuePending } = redisKeys.getQueueKeys(
+  const { keyQueuePending } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

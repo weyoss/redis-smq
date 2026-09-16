@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { BackgroundJobManagerAbstract } from '../../../abstract/background-job/background-job-manager-abstract.js';
+import { ManagerAbstract } from '../../manager-abstract.js';
 import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../../redis/redis-keys/redis-keys.js';
+import { keys as redisKeys } from '../../../redis/keys/keys.js';
 import {
   TPurgeQueueJob,
   TPurgeQueueJobMeta,
@@ -26,7 +26,7 @@ import { BackgroundJobNotFoundError } from '../../../../errors/index.js';
 import { _lockQueue } from '../../../../queue-state-manager/_/_lock-queue.js';
 import { _unlockQueue } from '../../../../queue-state-manager/_/_unlock-queue.js';
 
-export class PurgeQueueJobManager extends BackgroundJobManagerAbstract<
+export class PurgeQueueJobManager extends ManagerAbstract<
   TPurgeQueueJobPayload,
   TPurgeQueueJobMeta
 > {

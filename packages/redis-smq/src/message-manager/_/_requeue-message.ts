@@ -13,8 +13,8 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 import {
   EQueueOperationalState,
   EQueueProperty,

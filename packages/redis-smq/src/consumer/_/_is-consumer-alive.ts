@@ -8,13 +8,13 @@
  */
 
 import { Heartbeat, ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 
 export function _isConsumerAlive(
   redisClient: IRedisClient,
   consumerId: string,
   cb: ICallback<boolean>,
 ): void {
-  const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(consumerId);
+  const { keyConsumerHeartbeat } = keys.getConsumerKeys(consumerId);
   Heartbeat.isComponentAlive(redisClient, keyConsumerHeartbeat, cb);
 }

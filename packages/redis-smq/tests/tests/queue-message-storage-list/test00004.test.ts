@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import { EQueueType, ProducibleMessage } from '../../../src/index.js';
 import {
   createQueue,
@@ -36,7 +36,7 @@ it('QueueStorageList: should fetch items with correct pagination', async () => {
   }
 
   const pageSize = 30;
-  const { keyQueuePending } = redisKeys.getQueueKeys(
+  const { keyQueuePending } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

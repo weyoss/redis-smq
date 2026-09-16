@@ -13,7 +13,7 @@ import {
   IRedisClient,
   IRedisConfig,
 } from 'redis-smq-common';
-import { RedisClient } from '../redis-client/redis-client.js';
+import { Client } from '../client.js';
 import {
   ERedisConnectionAcquisitionMode,
   IConnectionPoolConfig,
@@ -44,7 +44,7 @@ import {
  *   idleTimeoutMillis: 30000
  * };
  *
- * const pool = new RedisConnectionPool(redisConfig, poolConfig);
+ * const pool = new Pool(redisConfig, poolConfig);
  *
  * pool.init((err) => {
  *   if (err) {
@@ -109,9 +109,9 @@ import {
  * });
  * ```
  */
-export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent> {
+export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
   /** Singleton instance of the connection pool */
-  protected static instance: RedisConnectionPool | null = null;
+  protected static instance: Pool | null = null;
 
   /** Redis client configuration used for creating new connections */
   protected readonly redisConfig: IRedisConfig;
@@ -166,7 +166,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    *
    * @example
    * ```typescript
-   * const pool = new RedisConnectionPool(
+   * const pool = new Pool(
    *   { client: ERedisConfigClient.IOREDIS, options: { host: 'localhost' } },
    *   { min: 2, max: 10, acquireTimeoutMillis: 5000 }
    * );
@@ -209,7 +209,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    *
    * @example
    * ```typescript
-   * RedisConnectionPool.initialize(
+   * Pool.initialize(
    *   { client: ERedisConfigClient.IOREDIS },
    *   { min: 3, max: 15 },
    *   (err, pool) => {
@@ -225,18 +225,18 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
   static initialize(
     redisConfig: IRedisConfig,
     poolConfig: IConnectionPoolConfig = {},
-    cb: ICallback<RedisConnectionPool>,
+    cb: ICallback<Pool>,
   ): void {
-    if (RedisConnectionPool.instance) {
-      throw new Error('RedisConnectionPool already initialized');
+    if (Pool.instance) {
+      throw new Error('Pool already initialized');
     }
-    const instance = new RedisConnectionPool(redisConfig, poolConfig);
+    const instance = new Pool(redisConfig, poolConfig);
     instance.createMinimumConnections((err) => {
       if (err) return cb(err);
 
       instance.initialized = true;
       instance.startReaper();
-      RedisConnectionPool.instance = instance;
+      Pool.instance = instance;
       cb(null, instance);
     });
   }
@@ -251,7 +251,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * @example
    * ```typescript
    * try {
-   *   const pool = RedisConnectionPool.getInstance();
+   *   const pool = Pool.getInstance();
    *   pool.acquire(ERedisConnectionAcquisitionMode.SHARED, (err, client) => {
    *     // Use the client
    *   });
@@ -260,13 +260,13 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * }
    * ```
    */
-  static getInstance(): RedisConnectionPool {
-    if (!RedisConnectionPool.instance) {
+  static getInstance(): Pool {
+    if (!Pool.instance) {
       throw new Error(
-        'RedisConnectionPool is not initialized. Use initialize() before calling getInstance()',
+        'Pool is not initialized. Use initialize() before calling getInstance()',
       );
     }
-    return RedisConnectionPool.instance;
+    return Pool.instance;
   }
 
   /**
@@ -279,7 +279,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    *
    * @example
    * ```typescript
-   * RedisConnectionPool.shutdown((err) => {
+   * Pool.shutdown((err) => {
    *   if (err) {
    *     console.error('Shutdown failed:', err);
    *   } else {
@@ -289,9 +289,9 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    * ```
    */
   static shutdown(cb: ICallback): void {
-    if (RedisConnectionPool.instance) {
-      return RedisConnectionPool.instance.shutdown(() => {
-        RedisConnectionPool.instance = null;
+    if (Pool.instance) {
+      return Pool.instance.shutdown(() => {
+        Pool.instance = null;
         cb();
       });
     }
@@ -380,7 +380,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
    *
    * This method:
    * 1. Reserves a capacity slot by incrementing `pendingCreations`
-   * 2. Instantiates a new RedisClient with the pool's configuration
+   * 2. Instantiates a new Client with the pool's configuration
    * 3. Initializes the client connection
    * 4. Releases the reservation (success or failure)
    * 5. On success, wraps the client in a pooled connection and adds it
@@ -398,7 +398,7 @@ export class RedisConnectionPool extends EventEmitter<TRedisConnectionPoolEvent>
     // racing to create.
     this.pendingCreations++;
 
-    const redisClient = new RedisClient(this.redisConfig);
+    const redisClient = new Client(this.redisConfig);
 
     redisClient.init((err) => {
       // Release the reservation unconditionally. On success, the connection

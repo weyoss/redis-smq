@@ -11,7 +11,7 @@ import {
 import { ConsumerGroups } from '../../consumer-groups/index.js';
 import { ConsumerGroupsNotSupportedError } from '../../errors/index.js';
 import { _generateEphemeralConsumerGroupId } from './_generate-ephemeral-consumer-group-id.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 
 export function _prepareConsumerGroup(
   queueParams: IQueueParsedParams,
@@ -19,7 +19,7 @@ export function _prepareConsumerGroup(
   cb: ICallback<string>,
   logger?: ILogger,
 ): void {
-  withSharedPoolConnection((redisClient, cb) => {
+  withShared((redisClient, cb) => {
     _getQueueProperties(redisClient, queueParams.queueParams, (err, props) => {
       if (err) return cb(err);
       if (!props) return cb(new CallbackEmptyReplyError());

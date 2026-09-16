@@ -3,22 +3,22 @@
  */
 
 import { IQueueParsedParams } from '../../queue-manager/index.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import {
   ProcessingQueueNotEmptyError,
   QueueNotFoundError,
   UnexpectedScriptReplyError,
 } from '../../errors/index.js';
 import { ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 
 export function _unsubscribeConsumer(
   consumerId: string,
   queueParams: IQueueParsedParams,
   cb: ICallback,
 ) {
-  withSharedPoolConnection((redisClient, cb) => {
+  withShared((redisClient, cb) => {
     const { queueParams: queue, groupId } = queueParams;
     const { keyQueueProcessingQueues, keyQueueConsumers, keyQueueProperties } =
       redisKeys.getQueueKeys(queue.ns, queue.name, groupId);

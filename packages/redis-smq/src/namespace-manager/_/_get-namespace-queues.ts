@@ -12,7 +12,7 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 
 export function _getNamespaceQueues(
@@ -20,7 +20,7 @@ export function _getNamespaceQueues(
   ns: string,
   cb: ICallback<IQueueParams[]>,
 ): void {
-  const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
+  const { keyNamespaceQueues } = keys.getNamespaceKeys(ns);
   client.sscanAll(keyNamespaceQueues, {}, (err, reply) => {
     if (err) cb(err);
     else if (!reply) cb(new CallbackEmptyReplyError());

@@ -14,7 +14,7 @@ import { IQueueParams } from '../queue-manager/index.js';
 import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
 import { _getConsumerGroups } from './_/_get-consumer-groups.js';
 import { _saveConsumerGroup } from './_/_save-consumer-group.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 
 /**
  * Manages consumer groups for PUB/SUB queues.
@@ -92,7 +92,7 @@ export class ConsumerGroups {
         `Parsed queue parameters: ${JSON.stringify(queueParams)}`,
       );
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _saveConsumerGroup(client, queueParams, groupId, (err, result) => {
           if (err) {
             this.logger.error(
@@ -158,7 +158,7 @@ export class ConsumerGroups {
         `Parsed queue parameters: ${JSON.stringify(queueParams)}`,
       );
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _deleteConsumerGroup(client, queueParams, groupId, (err) => {
           if (err) {
             this.logger.error(
@@ -219,7 +219,7 @@ export class ConsumerGroups {
         `Parsed queue parameters: ${JSON.stringify(queueParams)}`,
       );
 
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _getConsumerGroups(client, queueParams, (err, groups) => {
           if (err) {
             this.logger.error(`Failed to get consumer groups: ${err.message}`);

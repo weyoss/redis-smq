@@ -8,7 +8,7 @@
  */
 
 import { Heartbeat, ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 
 export function _isConsumerListAlive(
   redisClient: IRedisClient,
@@ -20,7 +20,7 @@ export function _isConsumerListAlive(
     return;
   }
   const heartbeatKeys = consumerIds.map((id) => {
-    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(id);
+    const { keyConsumerHeartbeat } = keys.getConsumerKeys(id);
     return keyConsumerHeartbeat;
   });
   Heartbeat.areComponentsAlive(redisClient, heartbeatKeys, cb);

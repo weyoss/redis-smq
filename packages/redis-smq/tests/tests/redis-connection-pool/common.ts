@@ -8,13 +8,13 @@
  */
 
 import bluebird from 'bluebird';
-import { ERedisConnectionAcquisitionMode } from '../../../src/common/redis/redis-connection-pool/types/connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../../src/common/redis/connection-pool/types/connection-pool.js';
 import { expect } from 'vitest';
 import { IRedisClient } from 'redis-smq-common';
-import { RedisConnectionPool } from '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
+import { Pool } from '../../../src/common/redis/connection-pool/pool.js';
 
 export const connectionAcquisitionAndRelease = async (
-  pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>,
+  pool: ReturnType<typeof bluebird.promisifyAll<Pool>>,
   acquisitionMode: ERedisConnectionAcquisitionMode,
 ) => {
   const redisClient = await pool.acquireAsync(acquisitionMode);
@@ -27,7 +27,7 @@ export const connectionAcquisitionAndRelease = async (
 };
 
 export const concurrentConnections = async (
-  pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>,
+  pool: ReturnType<typeof bluebird.promisifyAll<Pool>>,
   acquisitionMode: ERedisConnectionAcquisitionMode,
 ) => {
   const concurrentOperations = 10;
@@ -71,7 +71,7 @@ export const concurrentConnections = async (
 };
 
 export const poolLimitsEXCLUSIVE = async (
-  pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>,
+  pool: ReturnType<typeof bluebird.promisifyAll<Pool>>,
 ): Promise<void> => {
   const maxConnections = 5; // As configured in initialization
   const clients: IRedisClient[] = [];
@@ -97,7 +97,7 @@ export const poolLimitsEXCLUSIVE = async (
 };
 
 export const poolLimitsSHARED = async (
-  pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>,
+  pool: ReturnType<typeof bluebird.promisifyAll<Pool>>,
 ): Promise<void> => {
   const maxConnections = 5; // As configured in initialization
   const clients: IRedisClient[] = [];

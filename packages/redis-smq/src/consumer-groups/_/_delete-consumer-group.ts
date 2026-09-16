@@ -8,8 +8,8 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import {
   EQueueDeliveryModel,
   EQueueOperationalState,
@@ -38,10 +38,12 @@ export function _deleteConsumerGroup(
     keyQueuePending,
     keyQueuePriority,
     keyQueueProperties,
-  } = redisKeys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
+  } = keys.getQueueKeys(queueParams.ns, queueParams.name, groupId);
 
-  const { keyQueueConsumerGroupConsumers } =
-    redisKeys.getQueueConsumerGroupKeys(queueParams, groupId);
+  const { keyQueueConsumerGroupConsumers } = keys.getQueueConsumerGroupKeys(
+    queueParams,
+    groupId,
+  );
 
   const argv: (string | number)[] = [
     EQueueProperty.QUEUE_TYPE,

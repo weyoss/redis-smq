@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../../src/common/redis/keys/keys.js';
 import { EQueueType, ProducibleMessage } from '../../../src/index.js';
 import { BrowserStorageList } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-list.js';
 import {
@@ -35,7 +35,7 @@ it('QueueStorageList: should fetch all items for a small list', async () => {
     ids.unshift(id);
   }
 
-  const { keyQueuePending } = redisKeys.getQueueKeys(
+  const { keyQueuePending } = keys.getQueueKeys(
     defaultQueue.ns,
     defaultQueue.name,
     null,

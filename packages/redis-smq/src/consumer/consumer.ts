@@ -27,15 +27,15 @@ import { MessageHandlerRunner } from './message-handler-runner.js';
 import { consumerEventPublisher } from './consumer-event-publisher.js';
 import { TConsumerMessageHandler } from './types/index.js';
 import { IConsumerContext } from './types/consumer-context.js';
-import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../common/redis/keys/keys.js';
 import {
   IConsumerOptions,
   IConsumerParsedOptions,
   IConsumerQueuesWithStatus,
 } from './types/index.js';
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
-import { RedisConnectionPool } from '../common/redis/redis-connection-pool/redis-connection-pool.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis/redis-connection-pool/types/connection-pool.js';
+import { Pool } from '../common/redis/connection-pool/pool.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis/connection-pool/types/connection-pool.js';
 import { TConsumerEvent } from '../event-bus/index.js';
 
 /**
@@ -123,7 +123,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   protected initRedisClient = (cb: ICallback) => {
-    RedisConnectionPool.getInstance().acquire(
+    Pool.getInstance().acquire(
       ERedisConnectionAcquisitionMode.SHARED,
       (err, client) => {
         if (err) return cb(err);
@@ -136,7 +136,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
 
   protected releaseRedisClient = (cb: ICallback) => {
     if (this.redisClient) {
-      RedisConnectionPool.getInstance().release(this.redisClient);
+      Pool.getInstance().release(this.redisClient);
       this.redisClient = null;
     }
     cb();
@@ -151,7 +151,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
       );
 
     this.logger.debug('Setting up consumer heartbeat');
-    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(this.id);
+    const { keyConsumerHeartbeat } = keys.getConsumerKeys(this.id);
     try {
       this.heartbeat = new Heartbeat(this.redisClient, this.logger, {
         heartbeatKey: keyConsumerHeartbeat,

@@ -8,8 +8,8 @@
  */
 
 import { async, ICallback, PanicError } from 'redis-smq-common';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 import { _fromMessage } from '../../message-manager/_/_from-message.js';
 import { _getMessages } from '../../message-manager/_/_get-message.js';
 import {
@@ -22,13 +22,13 @@ import {
   EQueueProperty,
   EQueueType,
 } from '../../queue-manager/index.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import { UnexpectedScriptReplyError } from '../../errors/index.js';
 import { ConsumerWorkerAbstract } from './consumer-worker-abstract.js';
 
 export class PublishScheduledWorker extends ConsumerWorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
-    withSharedPoolConnection((redisClient, cb) => {
+    withShared((redisClient, cb) => {
       const { keyQueueScheduled } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams.ns,
         this.queueParsedParams.queueParams.name,
@@ -65,7 +65,7 @@ export class PublishScheduledWorker extends ConsumerWorkerAbstract {
 
     this.logger.debug(`Fetching ${ids.length} messages from storage`);
 
-    withSharedPoolConnection((redisClient, cb) => {
+    withShared((redisClient, cb) => {
       _getMessages(redisClient, ids, (err, messages) => {
         if (err) {
           this.logger.error('Error fetching messages', err);
@@ -87,7 +87,7 @@ export class PublishScheduledWorker extends ConsumerWorkerAbstract {
 
     this.logger.debug(`Preparing to enqueue ${messages.length} messages`);
 
-    withSharedPoolConnection((redisClient, cb) => {
+    withShared((redisClient, cb) => {
       const {
         keyQueueProperties,
         keyQueuePending,

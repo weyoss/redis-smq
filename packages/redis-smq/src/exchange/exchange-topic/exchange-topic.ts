@@ -15,7 +15,7 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
 import { _saveExchange } from '../_/_save-exchange.js';
 import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
@@ -29,7 +29,7 @@ import { Configuration } from '../../config-manager/configuration.js';
 import { _getRoutingPatterns } from './_/_get-routing-patterns.js';
 import { _getRoutingPatternBoundQueues } from './_/_get-routing-pattern-bound-queues.js';
 import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
 import {
   ExchangeHasBoundQueuesError,
@@ -125,7 +125,7 @@ export class ExchangeTopic {
         );
       }
 
-      withSharedPoolConnection((client, topCb) => {
+      withShared((client, topCb) => {
         _getRoutingPatterns(client, topicParams, (err, patterns) => {
           if (err) return topCb(err);
           const allPatterns = patterns ?? [];
@@ -182,7 +182,7 @@ export class ExchangeTopic {
     cb?: ICallback<string[]>,
   ): Promise<string[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _getRoutingPatterns(client, exchange, cb),
         callback,
       );
@@ -222,7 +222,7 @@ export class ExchangeTopic {
     cb?: ICallback<IQueueParams[]>,
   ): Promise<IQueueParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      withSharedPoolConnection(
+      withShared(
         (client, cb) =>
           _getRoutingPatternBoundQueues(client, bindingPattern, exchange, cb),
         callback,
@@ -284,30 +284,28 @@ export class ExchangeTopic {
       }
 
       const { keyQueueProperties, keyQueueExchangeBindings } =
-        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-      const { keyExchange } = redisKeys.getExchangeKeys(
+        keys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+      const { keyExchangeBindingPatterns } = keys.getExchangeTopicKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
       const { keyBindingPatternQueues } =
-        redisKeys.getExchangeTopicBindingPatternKeys(
+        keys.getExchangeTopicBindingPatternKeys(
           exchangeParams.ns,
           exchangeParams.name,
           routingPattern,
         );
-      const { keyExchanges } = redisKeys.getMainKeys();
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
-        queueParams.ns,
-      );
+      const { keyExchanges } = keys.getMainKeys();
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(queueParams.ns);
 
       const queueStr = JSON.stringify(queueParams);
       const exchangeStr = JSON.stringify(exchangeParams);
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         async.series(
           [
             (cb) =>
@@ -478,21 +476,21 @@ export class ExchangeTopic {
         );
       }
 
-      const { keyQueueExchangeBindings } = redisKeys.getQueueKeys(
+      const { keyQueueExchangeBindings } = keys.getQueueKeys(
         queueParams.ns,
         queueParams.name,
         null,
       );
-      const { keyExchange } = redisKeys.getExchangeKeys(
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+      const { keyExchangeBindingPatterns } = keys.getExchangeTopicKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
       const { keyBindingPatternQueues } =
-        redisKeys.getExchangeTopicBindingPatternKeys(
+        keys.getExchangeTopicBindingPatternKeys(
           exchangeParams.ns,
           exchangeParams.name,
           routingPattern,
@@ -501,7 +499,7 @@ export class ExchangeTopic {
       const queueStr = JSON.stringify(queueParams);
       const exchangeStr = JSON.stringify(exchangeParams);
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         async.series(
           [
             (cb) =>
@@ -563,7 +561,7 @@ export class ExchangeTopic {
 
                         const otherPatternSets = otherPatterns.map((p) => {
                           const { keyBindingPatternQueues: k } =
-                            redisKeys.getExchangeTopicBindingPatternKeys(
+                            keys.getExchangeTopicBindingPatternKeys(
                               exchangeParams.ns,
                               exchangeParams.name,
                               p,
@@ -688,7 +686,7 @@ export class ExchangeTopic {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error)
         return callback(new InvalidTopicExchangeParamsError());
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
         callback,
       );
@@ -721,22 +719,22 @@ export class ExchangeTopic {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-      const { keyExchanges } = redisKeys.getMainKeys();
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+      const { keyExchanges } = keys.getMainKeys();
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(
         exchangeParams.ns,
       );
-      const { keyExchange } = redisKeys.getExchangeKeys(
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyExchangeBindingPatterns } = redisKeys.getExchangeTopicKeys(
+      const { keyExchangeBindingPatterns } = keys.getExchangeTopicKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
 
       const exchangeStr = JSON.stringify(exchangeParams);
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         withWatchTransaction(
           client,
           (c, watch, done) => {
@@ -769,7 +767,7 @@ export class ExchangeTopic {
                   if (patterns.length === 0) return cb1();
                   const derivedKeys = patterns.map((p) => {
                     const { keyBindingPatternQueues } =
-                      redisKeys.getExchangeTopicBindingPatternKeys(
+                      keys.getExchangeTopicBindingPatternKeys(
                         exchangeParams.ns,
                         exchangeParams.name,
                         p,
@@ -787,7 +785,7 @@ export class ExchangeTopic {
                     patterns,
                     (p, _idx, next) => {
                       const { keyBindingPatternQueues } =
-                        redisKeys.getExchangeTopicBindingPatternKeys(
+                        keys.getExchangeTopicBindingPatternKeys(
                           exchangeParams.ns,
                           exchangeParams.name,
                           p,
@@ -819,7 +817,7 @@ export class ExchangeTopic {
                   multi.srem(keyNamespaceExchanges, exchangeStr);
                   for (const p of patterns) {
                     const { keyBindingPatternQueues } =
-                      redisKeys.getExchangeTopicBindingPatternKeys(
+                      keys.getExchangeTopicBindingPatternKeys(
                         exchangeParams.ns,
                         exchangeParams.name,
                         p,
@@ -881,7 +879,7 @@ export class ExchangeTopic {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-      withSharedPoolConnection((client, done) => {
+      withShared((client, done) => {
         async.waterfall(
           [
             (cb: ICallback<string[]>) => {

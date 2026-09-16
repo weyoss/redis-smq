@@ -11,7 +11,7 @@ import { QueueMessagesAbstract } from './queue-messages-abstract.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
-import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
 import {
   EQueueMessageType,
@@ -73,7 +73,7 @@ export class QueuePublishedMessages extends QueueMessagesAbstract {
       if (queueParams instanceof Error) {
         return callback(queueParams);
       }
-      withSharedPoolConnection((client, cb) => {
+      withShared((client, cb) => {
         _getQueueProperties(client, queueParams, (err, properties) => {
           if (err) {
             return cb(err);

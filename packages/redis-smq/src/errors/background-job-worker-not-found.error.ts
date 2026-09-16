@@ -15,7 +15,7 @@ export class BackgroundJobWorkerNotFoundError extends RedisSMQError<{
   getProps(): IRedisSMQErrorProperties {
     return {
       code: 'RedisSMQ.BackgroundJobs.WorkerNotFound',
-      defaultMessage: 'Background job is not linked to any worker.',
+      defaultMessage: 'Background job is not linked to any workers.',
     };
   }
 }

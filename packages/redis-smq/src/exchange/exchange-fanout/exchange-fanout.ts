@@ -15,8 +15,8 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
+import { keys } from '../../common/redis/keys/keys.js';
 import { Configuration } from '../../config-manager/configuration.js';
 import {
   ExchangeHasBoundQueuesError,
@@ -133,7 +133,7 @@ export class ExchangeFanout {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error)
         return callback(new InvalidFanoutExchangeParametersError());
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
         callback,
       );
@@ -166,22 +166,22 @@ export class ExchangeFanout {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error) return callback(exchangeParams);
 
-      const { keyExchanges } = redisKeys.getMainKeys();
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+      const { keyExchanges } = keys.getMainKeys();
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(
         exchangeParams.ns,
       );
-      const { keyExchange } = redisKeys.getExchangeKeys(
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+      const { keyFanoutQueues } = keys.getExchangeFanoutKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
 
       const exchangeStr = JSON.stringify(exchangeParams);
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         withWatchTransaction(
           client,
           (c, watch, done) => {
@@ -294,24 +294,22 @@ export class ExchangeFanout {
       );
 
       const { keyQueueProperties, keyQueueExchangeBindings } =
-        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-      const { keyExchange } = redisKeys.getExchangeKeys(
+        keys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+      const { keyFanoutQueues } = keys.getExchangeFanoutKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyExchanges } = redisKeys.getMainKeys();
-      const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
-        queueParams.ns,
-      );
+      const { keyExchanges } = keys.getMainKeys();
+      const { keyNamespaceExchanges } = keys.getNamespaceKeys(queueParams.ns);
 
       const exchangeStr = JSON.stringify(exchangeParams);
       const queueStr = JSON.stringify(queueParams);
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         async.series(
           [
             (cb) =>
@@ -471,12 +469,12 @@ export class ExchangeFanout {
       }
 
       const { keyQueueProperties, keyQueueExchangeBindings } =
-        redisKeys.getQueueKeys(queueParams.ns, queueParams.name, null);
-      const { keyExchange } = redisKeys.getExchangeKeys(
+        keys.getQueueKeys(queueParams.ns, queueParams.name, null);
+      const { keyExchange } = keys.getExchangeKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
-      const { keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+      const { keyFanoutQueues } = keys.getExchangeFanoutKeys(
         exchangeParams.ns,
         exchangeParams.name,
       );
@@ -484,7 +482,7 @@ export class ExchangeFanout {
       const queueStr = JSON.stringify(queueParams);
       const exchangeStr = JSON.stringify(exchangeParams);
 
-      withSharedPoolConnection((client, outerCb) => {
+      withShared((client, outerCb) => {
         async.series(
           [
             (cb) =>
@@ -585,7 +583,7 @@ export class ExchangeFanout {
     return async.withOptionalCallback(cb, (callback) => {
       const exchangeParams = _parseExchangeParams(exchange, this.type);
       if (exchangeParams instanceof Error) return callback(exchangeParams);
-      withSharedPoolConnection(
+      withShared(
         (client, cb) => _getBoundQueues(client, exchangeParams, cb),
         callback,
       );

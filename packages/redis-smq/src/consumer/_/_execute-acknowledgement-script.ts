@@ -5,7 +5,7 @@
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { ICallback } from 'redis-smq-common';
 import { Configuration } from '../../config-manager/configuration.js';
-import { ERedisScriptName } from '../../common/redis/scripts.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
 import {
   EQueueOperationalState,
   EQueueProperty,
@@ -15,7 +15,7 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import {
   InvalidQueueStateError,
   QueueLockedError,
@@ -23,7 +23,7 @@ import {
   QueueStoppedError,
   UnexpectedScriptReplyError,
 } from '../../errors/index.js';
-import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 
 function isValidAcknowledgementResult(
   reply: unknown,
@@ -41,7 +41,7 @@ export function _executeAcknowledgementScript(
   messages: MessageEnvelope[],
   cb: ICallback<TAcknowledgementResult>,
 ): void {
-  withSharedPoolConnection((client, done) => {
+  withShared((client, done) => {
     const { enabled, queueSize, expire } =
       Configuration.getConfig().messageAudit.acknowledgedMessages;
 
