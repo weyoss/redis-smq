@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParsedParams } from '../../../queue-manager/index.js';
+import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { async, ICallback, ILogger } from 'redis-smq-common';
 import { IBrowserPage } from '../types/index.js';
-import { keys as redisKeys } from '../../../common/redis/keys/keys.js';
-import { IBrowserStorage } from '../browser-storage/browser-storage-abstract.js';
+import { keys as redisKeys } from '../../common/redis/keys/keys.js';
+import { IBrowserStorage } from '../browser-storage-abstract.js';
 import { _getPaginationParameters } from './_get-pagination-parameters.js';
 
 export function _getMessageIds(

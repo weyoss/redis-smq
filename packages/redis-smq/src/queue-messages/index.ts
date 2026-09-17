@@ -13,4 +13,3 @@ export * from './queue-pending-messages.js';
 export * from './queue-scheduled-messages.js';
 export * from './queue-acknowledged-messages.js';
 export * from './queue-dead-lettered-messages.js';
-export * from './message-browser/types/index.js';

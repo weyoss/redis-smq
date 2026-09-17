@@ -9,3 +9,4 @@
 
 export * from './queue-messages.js';
 export * from './queue-messages-registry.js';
+export * from './message-browser.js';

@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { BrowserStorageSet } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-set.js';
+import { BrowserStorageSet } from '../../../src/queue-messages/browser-storage-set.js';
 import { getRedisInstance } from '../../common/redis.js';
 
 const { promisifyAll } = bluebird;

@@ -1,18 +1,13 @@
 /*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
+ * packages/redis-smq/src/queue-messages/types/message-browser.ts
  */
 
-import { TQueueExtendedParams } from '../../../queue-manager/index.js';
+import { TQueueExtendedParams } from '../../queue-manager/index.js';
 import { ICallback } from 'redis-smq-common';
-import { IMessageTransferable } from '../../../message/index.js';
-import { EBackgroundJobStatus } from '../../../common/index.js';
-import { EQueueMessageType } from '../../types/index.js';
-import { TPurgeQueueJob } from '../../../common/background-jobs/jobs/purge-queue/types/index.js';
+import { IMessageTransferable } from '../../message/index.js';
+import { EBackgroundJobStatus } from '../../common/index.js';
+import { EQueueMessageType } from './index.js';
+import { TPurgeQueueJob } from '../../common/background-jobs/jobs/purge-queue/types/index.js';
 
 export interface IMessageBrowser {
   readonly messageType: EQueueMessageType;

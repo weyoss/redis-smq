@@ -8,15 +8,15 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
+import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
 import {
   EQueueDeliveryModel,
   IQueueParsedParams,
-} from '../../../queue-manager/index.js';
+} from '../../queue-manager/index.js';
 import {
   ConsumerGroupRequiredError,
   ConsumerGroupsNotSupportedError,
-} from '../../../errors/index.js';
+} from '../../errors/index.js';
 
 export function _validateQueueExtendedParams(
   redisClient: IRedisClient,

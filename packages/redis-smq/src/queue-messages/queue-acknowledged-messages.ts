@@ -10,7 +10,7 @@
 import { QueueMessagesAbstract } from './queue-messages-abstract.js';
 import { EQueueMessageType } from './types/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
-import { IMessageBrowser } from './message-browser/types/index.js';
+import { IMessageBrowser } from './types/index.js';
 import { ICallback } from 'redis-smq-common';
 import { AcknowledgmentAuditDisabledError } from '../errors/index.js';
 import { Configuration } from '../config-manager/configuration.js';

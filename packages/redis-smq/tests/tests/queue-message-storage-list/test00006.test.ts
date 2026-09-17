@@ -11,7 +11,7 @@ import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
 import { keys } from '../../../src/common/redis/keys/keys.js';
 import { EQueueType, ProducibleMessage } from '../../../src/index.js';
-import { BrowserStorageList } from '../../../src/queue-messages/message-browser/browser-storage/browser-storage-list.js';
+import { BrowserStorageList } from '../../../src/queue-messages/browser-storage-list.js';
 import {
   createQueue,
   getDefaultQueue,

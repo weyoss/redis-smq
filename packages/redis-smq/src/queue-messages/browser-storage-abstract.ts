@@ -1,14 +1,9 @@
 /*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
+ * packages/redis-smq/src/queue-messages/browser-storage-abstract.ts
  */
 
 import { createLogger, ICallback, ILogger } from 'redis-smq-common';
-import { Configuration } from '../../../config-manager/configuration.js';
+import { Configuration } from '../config-manager/configuration.js';
 
 export interface IBrowserStorage {
   count(redisKey: string, cb: ICallback<number>): void;

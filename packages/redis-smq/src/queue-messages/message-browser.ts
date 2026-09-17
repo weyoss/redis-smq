@@ -1,10 +1,5 @@
 /*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
+ * packages/redis-smq/src/queue-messages/message-browser.ts
  */
 
 import {
@@ -13,29 +8,29 @@ import {
   ICallback,
   ILogger,
 } from 'redis-smq-common';
-import { keys as redisKeys } from '../../common/redis/keys/keys.js';
-import { IMessageTransferable } from '../../message/index.js';
-import { _parseQueueExtendedParams } from '../../queue-manager/_/_parse-queue-extended-params.js';
+import { keys as redisKeys } from '../common/redis/keys/keys.js';
+import { IMessageTransferable } from '../message/index.js';
+import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import {
   IQueueParsedParams,
   TQueueExtendedParams,
-} from '../../queue-manager/index.js';
+} from '../queue-manager/index.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
 import { IBrowserPage, IMessageBrowser } from './types/index.js';
-import { MessageManager } from '../../message-manager/index.js';
-import { withShared } from '../../common/redis/connection-pool/with-shared.js';
-import { InvalidPurgeQueueJobIdError } from '../../errors/index.js';
-import { IBrowserStorage } from './browser-storage/browser-storage-abstract.js';
-import { EBackgroundJobStatus } from '../../common/index.js';
-import { PurgeQueueJobManager } from '../../common/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
-import { EQueueOperation } from '../../queue-operation-validator/index.js';
-import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { MessageManager } from '../message-manager/index.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
+import { InvalidPurgeQueueJobIdError } from '../errors/index.js';
+import { IBrowserStorage } from './browser-storage-abstract.js';
+import { EBackgroundJobStatus } from '../common/index.js';
+import { PurgeQueueJobManager } from '../common/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
+import { EQueueOperation } from '../queue-operation-validator/index.js';
+import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
 import { _getMessageIds } from './_/_get-message-ids.js';
-import { EQueueMessageType } from '../types/index.js';
+import { EQueueMessageType } from './types/index.js';
 import {
   TPurgeQueueJob,
   TPurgeQueueJobPayload,
-} from '../../common/background-jobs/jobs/purge-queue/types/index.js';
+} from '../common/background-jobs/jobs/purge-queue/types/index.js';
 
 /**
  * Provides a base implementation for browsing and managing messages within a
