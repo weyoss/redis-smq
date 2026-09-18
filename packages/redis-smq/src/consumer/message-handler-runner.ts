@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/src/consumer/message-handler-runner.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import { async, ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
@@ -11,10 +16,11 @@ import {
 import { MessageHandlerAlreadyExistsError } from '../errors/index.js';
 import { MessageHandler } from './message-handler.js';
 import {
+  EMessageUnacknowledgementCause,
   IConsumerMessageHandlerParams,
+  IConsumerQueuesWithStatus,
   TConsumerMessageHandler,
 } from './types/index.js';
-import { EMessageUnacknowledgementCause } from './types/index.js';
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { IConsumerContext } from './types/consumer-context.js';
 import { HandlerRegistry } from './handler-registry.js';
@@ -24,7 +30,6 @@ import { _generateEphemeralConsumerGroupId } from './_/_generate-ephemeral-consu
 import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { EQueueOperation } from '../queue-operation-validator/index.js';
-import { IConsumerQueuesWithStatus } from './types/index.js';
 import { InternalEventBus } from '../event-bus/internal-event-bus.js';
 import { IQueueStateTransition } from '../queue-state-manager/index.js';
 import { messageHandlerEventPublisher } from './message-handler-event-publisher.js';

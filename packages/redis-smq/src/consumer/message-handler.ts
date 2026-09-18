@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/src/consumer/message-handler.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import path from 'path';
@@ -32,8 +37,6 @@ import { AcknowledgementPipeline } from './acknowledgement-pipeline.js';
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementCause,
-} from './types/index.js';
-import {
   IConsumerMessageHandlerParams,
   TConsumerMessageHandler,
 } from './types/index.js';

@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/src/queue-messages/message-browser.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import {
@@ -16,7 +21,11 @@ import {
   TQueueExtendedParams,
 } from '../queue-manager/index.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
-import { IBrowserPage, IMessageBrowser } from './types/index.js';
+import {
+  EQueueMessageType,
+  IBrowserPage,
+  IMessageBrowser,
+} from './types/index.js';
 import { MessageManager } from '../message-manager/index.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { InvalidPurgeQueueJobIdError } from '../errors/index.js';
@@ -26,7 +35,6 @@ import { PurgeQueueJobManager } from '../common/background-jobs/jobs/purge-queue
 import { EQueueOperation } from '../queue-operation-validator/index.js';
 import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
 import { _getMessageIds } from './_/_get-message-ids.js';
-import { EQueueMessageType } from './types/index.js';
 import {
   TPurgeQueueJob,
   TPurgeQueueJobPayload,

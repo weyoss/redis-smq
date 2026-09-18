@@ -1,11 +1,19 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 import { CallbackEmptyReplyError, ICallback, ILogger } from 'redis-smq-common';
 import { EQueueType, IQueueParams } from '../queue-manager/index.js';
-import { IMessageBrowser } from './types/index.js';
+import { EQueueMessageType, IMessageBrowser } from './types/index.js';
 import { MessageBrowser } from './message-browser.js';
 import { MessageManager } from '../message-manager/index.js';
 import { BrowserStorageSortedSet } from './browser-storage-sorted-set.js';
 import { BrowserStorageList } from './browser-storage-list.js';
-import { EQueueMessageType } from './types/index.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
 

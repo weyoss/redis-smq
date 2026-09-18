@@ -1,7 +1,3 @@
-/*
- * packages/redis-smq/src/common/background-jobs/manager-abstract.ts
- */
-
 import { async, env, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
 import { randomUUID } from 'node:crypto';
 import {

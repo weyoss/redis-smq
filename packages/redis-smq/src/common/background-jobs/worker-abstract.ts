@@ -1,7 +1,3 @@
-/*
- * packages/redis-smq/src/common/background-jobs/workers-abstract.ts
- */
-
 import {
   CallbackEmptyReplyError,
   createLogger,

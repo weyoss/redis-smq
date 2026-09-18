@@ -1,7 +1,3 @@
-/*
- * packages/redis-smq/src/consumer/_/_delete-ephemeral-consumer-group.ts
- */
-
 import { ConsumerGroups } from '../../consumer-groups/index.js';
 import { ICallback } from 'redis-smq-common';
 import { IQueueParams } from '../../queue-manager/index.js';

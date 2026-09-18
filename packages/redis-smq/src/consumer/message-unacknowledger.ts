@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/src/consumer/message-unacknowledger.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import {
@@ -18,12 +23,12 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementAction,
   EMessageUnacknowledgementCause,
+  IConsumerParsedOptions,
   TUnacknowledgementBatch,
   TUnacknowledgementResolution,
   TUnacknowledgementResult,
 } from './types/index.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
-import { IConsumerParsedOptions } from './types/index.js';
 import { _executeUnacknowledgementScript } from './_/_execute-unacknowledgement-script.js';
 
 export type TMessageUnacknowledgerEvent = {

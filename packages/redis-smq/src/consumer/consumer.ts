@@ -25,14 +25,14 @@ import {
 } from '../queue-manager/index.js';
 import { MessageHandlerRunner } from './message-handler-runner.js';
 import { consumerEventPublisher } from './consumer-event-publisher.js';
-import { TConsumerMessageHandler } from './types/index.js';
-import { IConsumerContext } from './types/consumer-context.js';
-import { keys } from '../common/redis/keys/keys.js';
 import {
   IConsumerOptions,
   IConsumerParsedOptions,
   IConsumerQueuesWithStatus,
+  TConsumerMessageHandler,
 } from './types/index.js';
+import { IConsumerContext } from './types/consumer-context.js';
+import { keys } from '../common/redis/keys/keys.js';
 import { _parseConsumerOptions } from './_/_parse-consumer-options.js';
 import { Pool } from '../common/redis/connection-pool/pool.js';
 import { ERedisConnectionAcquisitionMode } from '../common/redis/connection-pool/types/connection-pool.js';

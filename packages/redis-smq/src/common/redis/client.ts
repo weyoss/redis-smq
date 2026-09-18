@@ -1,7 +1,3 @@
-/*
- * packages/redis-smq/src/common/redis/client.ts
- */
-
 import { ICallback, IRedisClient, RedisClientFactory } from 'redis-smq-common';
 import { scriptFileMap } from '../scripts/registry.js';
 

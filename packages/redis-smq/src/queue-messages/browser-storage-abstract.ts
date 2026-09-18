@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/src/queue-messages/browser-storage-abstract.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import { createLogger, ICallback, ILogger } from 'redis-smq-common';

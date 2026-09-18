@@ -1,7 +1,3 @@
-/*
- * packages/redis-smq/src/consumer/types/message-unacknowledgement.ts
- */
-
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { ICallback } from 'redis-smq-common';
 

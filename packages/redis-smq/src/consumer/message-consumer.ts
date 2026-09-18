@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq/src/consumer/message-consumer.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import path from 'path';
@@ -20,7 +25,7 @@ import {
   MessageHandlerFileError,
   MessageHandlerFilenameExtensionError,
 } from '../errors/index.js';
-import { TConsumerMessageHandler } from './types/message-handler.js';
+import { TConsumerMessageHandler } from './types/index.js';
 
 /**
  * The control interface MessageConsumer uses to record the outcome of a

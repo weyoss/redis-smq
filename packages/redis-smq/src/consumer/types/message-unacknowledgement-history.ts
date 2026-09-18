@@ -1,7 +1,3 @@
-/*
- * packages/redis-smq/src/consumer/types/message-unacknowledgement-history.ts
- */
-
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementAction,

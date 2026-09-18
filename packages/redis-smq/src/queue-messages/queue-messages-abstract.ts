@@ -13,13 +13,16 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { IBrowserPage, IMessageBrowser } from './types/index.js';
+import {
+  EQueueMessageType,
+  IBrowserPage,
+  IMessageBrowser,
+} from './types/index.js';
 import { EBackgroundJobStatus } from '../common/index.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { TPurgeQueueJob } from '../common/background-jobs/jobs/purge-queue/types/index.js';
-import { EQueueMessageType } from './types/index.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import { MessageBrowserFactory } from './message-browser-factory.js';
 

@@ -1,19 +1,24 @@
 /*
- * packages/redis-smq/src/consumer/acknowledgement-pipeline.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import { ICallback, ILogger, Runnable } from 'redis-smq-common';
 import { MessageEnvelope } from '../message/message-envelope.js';
 import { IQueueParsedParams } from '../queue-manager/index.js';
-import { IConsumerParsedOptions } from './types/index.js';
-import { MessageAcknowledger } from './message-acknowledger.js';
-import { MessageUnacknowledger } from './message-unacknowledger.js';
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgementAction,
   EMessageUnacknowledgementCause,
+  IConsumerParsedOptions,
   TUnacknowledgementResult,
 } from './types/index.js';
+import { MessageAcknowledger } from './message-acknowledger.js';
+import { MessageUnacknowledger } from './message-unacknowledger.js';
 import { IMessageControl } from './message-consumer.js';
 
 /**
