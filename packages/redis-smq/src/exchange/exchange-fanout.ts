@@ -15,31 +15,31 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withShared } from '../../common/redis/connection-pool/with-shared.js';
-import { keys } from '../../common/redis/keys/keys.js';
-import { Configuration } from '../../config-manager/configuration.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
+import { keys } from '../common/redis/keys/keys.js';
+import { Configuration } from '../config-manager/configuration.js';
 import {
   ExchangeHasBoundQueuesError,
   InvalidFanoutExchangeParametersError,
   NamespaceMismatchError,
   QueueAlreadyBound,
   QueueNotBoundError,
-} from '../../errors/index.js';
-import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
-import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
-import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
-import { _saveExchange } from '../_/_save-exchange.js';
-import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
-import { _validateExchange } from '../_/_validate-exchange.js';
+} from '../errors/index.js';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
+import { EQueueType, IQueueParams } from '../queue-manager/index.js';
+import { _parseExchangeParams } from './_/_parse-exchange-params.js';
+import { _saveExchange } from './_/_save-exchange.js';
+import { _validateQueueBinding } from './_/_validate-queue-binding.js';
+import { _validateExchange } from './_/_validate-exchange.js';
 import {
   EExchangeProperty,
   EExchangeQueuePolicy,
   EExchangeType,
   IExchangeParams,
-} from '../types/index.js';
+} from './types/index.js';
 import { _getBoundQueues } from './_/_get-bound-queues.js';
-import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
-import { EQueueOperation } from '../../queue-operation-validator/index.js';
+import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../queue-operation-validator/index.js';
 
 /**
  * Fanout exchange for broadcasting messages to all bound queues.

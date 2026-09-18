@@ -15,22 +15,22 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withShared } from '../../common/redis/connection-pool/with-shared.js';
-import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
-import { _saveExchange } from '../_/_save-exchange.js';
-import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
+import { EQueueType, IQueueParams } from '../queue-manager/index.js';
+import { _saveExchange } from './_/_save-exchange.js';
+import { _validateQueueBinding } from './_/_validate-queue-binding.js';
 import {
   EExchangeProperty,
   EExchangeQueuePolicy,
   EExchangeType,
   IExchangeParams,
-} from '../index.js';
-import { Configuration } from '../../config-manager/configuration.js';
+} from './index.js';
+import { Configuration } from '../config-manager/configuration.js';
 import { _getRoutingPatterns } from './_/_get-routing-patterns.js';
 import { _getRoutingPatternBoundQueues } from './_/_get-routing-pattern-bound-queues.js';
-import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
-import { keys } from '../../common/redis/keys/keys.js';
-import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
+import { _parseExchangeParams } from './_/_parse-exchange-params.js';
+import { keys } from '../common/redis/keys/keys.js';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import {
   ExchangeHasBoundQueuesError,
   InvalidExchangeRoutingKeyError,
@@ -39,12 +39,12 @@ import {
   NamespaceMismatchError,
   QueueAlreadyBound,
   QueueNotBoundError,
-} from '../../errors/index.js';
+} from '../errors/index.js';
 import { _validateRoutingPattern } from './_/_validate-routing-pattern.js';
 import { _matchRoutingKey } from './_/_match-routing-key.js';
-import { _validateExchange } from '../_/_validate-exchange.js';
-import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
-import { EQueueOperation } from '../../queue-operation-validator/index.js';
+import { _validateExchange } from './_/_validate-exchange.js';
+import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../queue-operation-validator/index.js';
 
 /**
  * Topic exchange for pattern-based message routing.

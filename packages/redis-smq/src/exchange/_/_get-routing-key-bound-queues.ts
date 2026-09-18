@@ -12,9 +12,9 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { keys } from '../../../common/redis/keys/keys.js';
-import { IQueueParams } from '../../../queue-manager/index.js';
-import { IExchangeParams } from '../../types/index.js';
+import { IExchangeParams } from '../types/index.js';
+import { IQueueParams } from '../../queue-manager/index.js';
+import { keys } from '../../common/redis/keys/keys.js';
 
 export function _getRoutingKeyBoundQueues(
   client: IRedisClient,

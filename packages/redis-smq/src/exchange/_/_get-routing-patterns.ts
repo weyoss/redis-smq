@@ -8,9 +8,9 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { keys } from '../../../common/redis/keys/keys.js';
-import { _parseExchangeParams } from '../../_/_parse-exchange-params.js';
-import { EExchangeType, IExchangeParams } from '../../types/index.js';
+import { keys } from '../../common/redis/keys/keys.js';
+import { _parseExchangeParams } from './_parse-exchange-params.js';
+import { EExchangeType, IExchangeParams } from '../types/index.js';
 
 export function _getRoutingPatterns(
   redisClient: IRedisClient,

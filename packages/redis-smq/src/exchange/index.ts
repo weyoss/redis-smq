@@ -9,6 +9,6 @@
 
 export * from './types/index.js';
 export * from './exchange.js';
-export * from './exchange-direct/index.js';
-export * from './exchange-topic/index.js';
-export * from './exchange-fanout/index.js';
+export * from './exchange-direct.js';
+export * from './exchange-topic.js';
+export * from './exchange-fanout.js';

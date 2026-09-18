@@ -8,9 +8,9 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { keys } from '../../../common/redis/keys/keys.js';
-import { IQueueParams } from '../../../queue-manager/index.js';
-import { IExchangeParams } from '../../types/index.js';
+import { keys } from '../../common/redis/keys/keys.js';
+import { IQueueParams } from '../../queue-manager/index.js';
+import { IExchangeParams } from '../types/index.js';
 
 export function _getBoundQueues(
   client: IRedisClient,

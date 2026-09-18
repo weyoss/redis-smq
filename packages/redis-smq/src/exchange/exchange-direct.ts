@@ -15,9 +15,9 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { withShared } from '../../common/redis/connection-pool/with-shared.js';
-import { keys } from '../../common/redis/keys/keys.js';
-import { Configuration } from '../../config-manager/configuration.js';
+import { withShared } from '../common/redis/connection-pool/with-shared.js';
+import { keys } from '../common/redis/keys/keys.js';
+import { Configuration } from '../config-manager/configuration.js';
 import {
   ExchangeHasBoundQueuesError,
   InvalidDirectExchangeParametersError,
@@ -25,24 +25,24 @@ import {
   NamespaceMismatchError,
   QueueAlreadyBound,
   QueueNotBoundError,
-} from '../../errors/index.js';
-import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
-import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
-import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
-import { _saveExchange } from '../_/_save-exchange.js';
-import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
-import { _validateExchange } from '../_/_validate-exchange.js';
+} from '../errors/index.js';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
+import { EQueueType, IQueueParams } from '../queue-manager/index.js';
+import { _parseExchangeParams } from './_/_parse-exchange-params.js';
+import { _saveExchange } from './_/_save-exchange.js';
+import { _validateQueueBinding } from './_/_validate-queue-binding.js';
+import { _validateExchange } from './_/_validate-exchange.js';
 import {
   EExchangeProperty,
   EExchangeQueuePolicy,
   EExchangeType,
   IExchangeParams,
-} from '../types/index.js';
+} from './types/index.js';
 import { _getRoutingKeyBoundQueues } from './_/_get-routing-key-bound-queues.js';
 import { _getRoutingKeys } from './_/_get-routing-keys.js';
-import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
-import { EQueueOperation } from '../../queue-operation-validator/index.js';
-import { validateRedisKey } from '../../common/redis/keys/validator.js';
+import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
+import { EQueueOperation } from '../queue-operation-validator/index.js';
+import { validateRedisKey } from '../common/redis/keys/validator.js';
 
 /**
  * Direct exchange for exact routing key matching.
