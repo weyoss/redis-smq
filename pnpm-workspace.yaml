@@ -1,2 +1,10 @@
 packages:
   - 'packages/*'
+allowBuilds:
+  '@scarf/scarf': true
+  esbuild: true
+  nx: true
+  vue-demi: true
+minimumReleaseAgeExclude:
+  - '@tanstack/query-core@5.104.0'
+  - '@tanstack/vue-query@5.104.0'

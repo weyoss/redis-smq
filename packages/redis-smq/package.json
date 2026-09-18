@@ -68,9 +68,9 @@
     }
   },
   "dependencies": {
-    "cron-parser": "5.4.0",
-    "lodash": "4.17.23",
-    "uuid": "13.0.0"
+    "cron-parser": "5.10.1",
+    "lodash": "4.18.1",
+    "uuid": "14.0.2"
   },
   "scripts": {
     "build": "scripts/build.sh",

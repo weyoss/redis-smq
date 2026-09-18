@@ -8,7 +8,6 @@
   -->
 
 <script setup lang="ts">
-import { defineEmits, defineProps } from 'vue';
 import BaseModal from '@/components/modals/BaseModal.vue';
 
 const props = defineProps<{

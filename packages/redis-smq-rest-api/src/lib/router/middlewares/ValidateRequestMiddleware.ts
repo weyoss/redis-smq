@@ -31,7 +31,13 @@ export function ValidateRequestMiddleware(
         });
       }
       if (src === ERequestPayload.BODY) {
-        const body: Record<string, unknown> = ctx.request['body'] ?? {};
+        const body: Record<string, unknown> = {};
+        const raw = ctx.request['body'];
+        if (raw && typeof raw === 'object') {
+          for (const [key, value] of Object.entries(raw)) {
+            body[key] = value;
+          }
+        }
         validator(body);
         ctx.scope.register({
           requestBodyDTO: asValue(body),

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Middleware } from '@koa/router';
+import type { RouterMiddleware } from '@koa/router';
 import { AwilixContainer } from 'awilix';
 import { IContextScope } from '../../container/types/container.js';
 
@@ -30,7 +30,7 @@ export type TApplicationMiddleware<
   RequestPathDTO = unknown,
   RequestQueryDTO = unknown,
   RequestBodyDTO = unknown,
-> = Middleware<
+> = RouterMiddleware<
   IApplicationMiddlewareState,
   IApplicationMiddlewareContext<RequestPathDTO, RequestQueryDTO, RequestBodyDTO>
 >;

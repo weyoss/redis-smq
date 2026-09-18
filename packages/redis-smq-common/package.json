@@ -74,12 +74,12 @@
     }
   },
   "dependencies": {
-    "axios": "1.13.5",
+    "axios": "1.20.0",
     "bluebird": "3.7.2",
-    "commander": "14.0.2",
-    "lodash": "4.17.23",
-    "tar": "7.5.12",
-    "uuid": "13.0.0"
+    "commander": "15.0.0",
+    "lodash": "4.18.1",
+    "tar": "7.5.22",
+    "uuid": "14.0.2"
   },
   "scripts": {
     "test": "../../scripts/test_workspace_esm.sh",

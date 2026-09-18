@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import BaseModal from './BaseModal.vue';
 import { useCreateConsumerGroupForm } from '@/composables/useCreateConsumerGroupForm.ts';
-import { defineProps, defineEmits, watch } from 'vue';
+import { watch } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate';
 
 // Custom focus directive (used on the first field)
