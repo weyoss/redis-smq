@@ -15,8 +15,8 @@ rm -rf ./dist
 
 # esm
 tsc -p ./tsconfig.json
-cp -r ./src/common/scripts ./dist/esm/src/common/
-cp -r ./src/common/background-jobs/scripts ./dist/esm/src/common/background-jobs/
+cp -r ./src/core/common/scripts ./dist/esm/src/core/common/
+cp -r ./src/core/common/background-jobs/scripts ./dist/esm/src/core/common/background-jobs/
 
 # cjs
 tsc -p ./tsconfig.cjs.json
@@ -25,5 +25,5 @@ cat >dist/cjs/package.json <<!EOF
     "type": "commonjs"
 }
 !EOF
-cp -r ./src/common/scripts dist/cjs/src/common/
-cp -r ./src/common/background-jobs/scripts ./dist/cjs/src/common/background-jobs/
+cp -r ./src/core/common/scripts dist/cjs/src/core/common/
+cp -r ./src/core/common/background-jobs/scripts ./dist/cjs/src/core/common/background-jobs/
