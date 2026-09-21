@@ -7,5 +7,7 @@
  * in the root directory of this source tree.
  */
 
+export * from './component-registry.js';
+export * from './lifecycle-manager.js';
 export * from './redis-smq.js';
-export * from '../common/background-jobs/jobs/purge-queue/types/index.js';
+export * from './state-manager.js';

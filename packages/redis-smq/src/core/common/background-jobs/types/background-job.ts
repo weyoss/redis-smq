@@ -1,0 +1,41 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+export enum EBackgroundJobStatus {
+  PENDING,
+  PROCESSING,
+  COMPLETED,
+  FAILED,
+  CANCELED,
+}
+
+export interface IBackgroundJob<
+  Payload,
+  Meta extends Record<string, unknown> = never,
+> {
+  id: string;
+  payload: Payload;
+  status: EBackgroundJobStatus;
+  createdAt: number;
+  updatedAt?: number;
+  startedAt?: number;
+  completedAt?: number;
+
+  // Job-specific fields (for queue purge jobs)
+  batchSize?: number;
+  delay?: number;
+  error?: string;
+  meta?: Meta;
+}
+
+export interface IBackgroundJobConfig {
+  keyBackgroundJobs: string;
+  keyBackgroundJobsPending: string;
+  keyBackgroundJobsProcessing: string;
+}

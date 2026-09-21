@@ -8,16 +8,16 @@
  */
 
 import { async, ICallback, IRedisConfig, PanicError } from 'redis-smq-common';
-import { Configuration } from '../config-manager/configuration.js';
-import { Pool } from '../common/redis/connection-pool/pool.js';
-import { InternalEventBus } from '../event-bus/internal-event-bus.js';
-import { Cluster } from '../common/background-jobs/cluster.js';
+import { Configuration } from '../core/config-manager/configuration.js';
+import { Pool } from '../core/common/redis/connection-pool/pool.js';
+import { InternalEventBus } from '../core/event-bus/internal-event-bus.js';
+import { Cluster } from '../core/common/background-jobs/cluster.js';
 import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
-import { EventBus } from '../event-bus/index.js';
-import { EventMultiplexer } from '../event-bus/event-multiplexer.js';
-import { ConfigSync } from '../config-manager/config-sync.js';
-import { Config } from '../common/redis/config.js';
+import { EventBus } from '../core/event-bus/index.js';
+import { EventMultiplexer } from '../core/event-bus/event-multiplexer.js';
+import { ConfigSync } from '../core/config-manager/config-sync.js';
+import { Config } from '../core/common/redis/config.js';
 
 /**
  * Manages RedisSMQ system lifecycle (initialization and shutdown).

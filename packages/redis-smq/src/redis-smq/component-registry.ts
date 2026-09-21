@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-// redis-smq/component-registry.ts
-import { Disposable } from '../common/types/disposable.js';
+import { Disposable } from '../core/common/types/disposable.js';
 import { ICallback } from 'redis-smq-common';
 
 function isDisposable(disposable: unknown): disposable is Disposable {

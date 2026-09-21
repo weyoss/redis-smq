@@ -1,0 +1,85 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+import { ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
+import { RedisSMQ } from '../../../redis-smq/index.js';
+import { IWorkerPayload } from './types/worker.js';
+
+export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
+  private timer: Timer | null = null;
+  protected initialized = false;
+  protected config;
+  protected redisConfig;
+
+  protected abstract override readonly logger: ILogger;
+
+  constructor(payload: IWorkerPayload) {
+    super();
+    const { redisConfig, config } = payload;
+    this.redisConfig = redisConfig;
+    this.config = config;
+  }
+
+  protected override finalizeUp() {
+    this.timer?.schedule(this.onTick, 1000);
+    super.finalizeUp();
+  }
+
+  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+    return super.goingUp().concat([
+      (cb) => {
+        if (RedisSMQ.isRunning()) return cb();
+        RedisSMQ.initialize(this.redisConfig, cb);
+      },
+      (cb) => {
+        this.logger.debug('Setting up workers timer');
+        // TS2715: Abstract property logger in class WorkerAbstract cannot be accessed in the constructor.
+        this.timer = new Timer(this.logger);
+        this.timer.run(cb);
+      },
+    ]);
+  }
+
+  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    return [
+      (cb: ICallback) => {
+        this.logger.debug('Resetting workers timer');
+        if (this.timer) {
+          this.timer.shutdown(cb);
+          return;
+        }
+        cb();
+      },
+    ].concat(super.goingDown());
+  }
+
+  protected onTick = () => {
+    if (this.isOperational()) {
+      this.work((err) => {
+        if (err) {
+          this.logger.error('Error during workers execution', err);
+          this.handleError(err);
+          return;
+        }
+
+        this.timer?.schedule(this.onTick, 1000);
+      });
+    }
+  };
+
+  protected override handleError = (err: Error) => {
+    if (this.isOperational()) {
+      this.logger.error(`Fatal error in worker ${this.constructor.name}`, err);
+      // simply crashing the background workers
+      throw err;
+    }
+  };
+
+  abstract work(cb: ICallback<void>): void;
+}

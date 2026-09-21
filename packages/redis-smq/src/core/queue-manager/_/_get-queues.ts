@@ -1,0 +1,31 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+import {
+  CallbackEmptyReplyError,
+  ICallback,
+  IRedisClient,
+} from 'redis-smq-common';
+import { keys } from '../../common/redis/keys/keys.js';
+import { IQueueParams } from '../../../contracts/index.js';
+
+export function _getQueues(
+  client: IRedisClient,
+  cb: ICallback<IQueueParams[]>,
+): void {
+  const { keyQueues } = keys.getMainKeys();
+  client.sscanAll(keyQueues, {}, (err, reply) => {
+    if (err) cb(err);
+    else if (!reply) cb(new CallbackEmptyReplyError());
+    else {
+      const queues: IQueueParams[] = reply.map((i) => JSON.parse(i));
+      cb(null, queues);
+    }
+  });
+}

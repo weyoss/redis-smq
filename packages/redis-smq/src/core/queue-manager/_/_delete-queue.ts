@@ -1,0 +1,229 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+import { async, ICallback, IRedisClient } from 'redis-smq-common';
+import { keys } from '../../common/redis/keys/keys.js';
+import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
+import {
+  ConsumerSetMismatchError,
+  QueueHasActiveConsumersError,
+  QueueHasBoundExchangesError,
+  QueueLockedError,
+  QueueNotEmptyError,
+  QueueNotFoundError,
+  UnexpectedScriptReplyError,
+} from '../../errors/index.js';
+import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
+import { ERedisScriptName } from '../../common/scripts/registry.js';
+import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
+import { _getProcessingQueues } from './_get-processing-queues.js';
+import {
+  EQueueOperation,
+  EQueueOperationalState,
+  EQueueProperty,
+  IQueueParams,
+} from '../../../contracts/index.js';
+import { _stringifyQueueParams } from './_stringify-queue-params.js';
+
+export function _deleteQueue(
+  redisClient: IRedisClient,
+  queueParams: IQueueParams,
+  cb: ICallback<void>,
+): void {
+  let consumerIds: string[] = [];
+  let consumerGroups: string[] = [];
+  let processingQueues: string[] = [];
+
+  async.series(
+    [
+      // Step 0: Validate queue operation
+      (cb: ICallback<void>) => {
+        _validateOperation(
+          redisClient,
+          queueParams,
+          EQueueOperation.DELETE,
+          cb,
+        );
+      },
+
+      // Step 1: Get consumer IDs for the queue.
+      (cb: ICallback<void>) => {
+        _getQueueConsumerIds(redisClient, queueParams, (err, reply) => {
+          if (err) cb(err);
+          else {
+            consumerIds = reply ?? [];
+            cb();
+          }
+        });
+      },
+
+      // Step 2: Get consumer groups for the queue.
+      (cb: ICallback<void>) => {
+        _getConsumerGroups(redisClient, queueParams, (err, reply) => {
+          if (err) cb(err);
+          else {
+            consumerGroups = reply ?? [];
+            cb();
+          }
+        });
+      },
+
+      // Step 3: Get processing queues.
+      (cb: ICallback<void>) => {
+        _getProcessingQueues(redisClient, queueParams, (err, reply) => {
+          if (err) cb(err);
+          else {
+            processingQueues = Object.keys(reply ?? {});
+            cb();
+          }
+        });
+      },
+    ],
+    (err) => {
+      if (err) return cb(err);
+
+      // All dynamic keys have been discovered. Now, generate all keys for the script.
+
+      const { keyQueues } = keys.getMainKeys();
+      const { keyNamespaceQueues } = keys.getNamespaceKeys(queueParams.ns);
+      const {
+        keyQueueProperties,
+        keyQueuePending,
+        keyQueueDeadLetter,
+        keyQueueProcessingQueues,
+        keyQueuePriority,
+        keyQueueAcknowledged,
+        keyQueueConsumers,
+        keyQueueRateLimit,
+        keyQueueScheduled,
+        keyQueueDelayed,
+        keyQueueRequeued,
+        keyQueuePublished,
+        keyQueueConsumerGroups,
+        keyQueueWorkersLock,
+        keyQueueExchangeBindings,
+        keyQueueStateHistory,
+      } = keys.getQueueKeys(queueParams.ns, queueParams.name, null);
+
+      // Keys for consumer heartbeats
+      const heartbeatKeys = consumerIds.map(
+        (id) => keys.getConsumerKeys(id).keyConsumerHeartbeat,
+      );
+
+      // Keys for consumer group queues
+      const consumerGroupKeys = consumerGroups.flatMap((groupId) => {
+        const { keyQueuePriority, keyQueuePending } = keys.getQueueKeys(
+          queueParams.ns,
+          queueParams.name,
+          groupId,
+        );
+        return [keyQueuePending, keyQueuePriority];
+      });
+
+      // A set is used to ensure all keys are unique before passing them to the script.
+      const keysToDelete = new Set([
+        keyQueueProperties,
+        keyQueuePending,
+        keyQueueDeadLetter,
+        keyQueueProcessingQueues,
+        keyQueuePriority,
+        keyQueueAcknowledged,
+        keyQueueConsumers,
+        keyQueueRateLimit,
+        keyQueueScheduled,
+        keyQueueDelayed,
+        keyQueueRequeued,
+        keyQueuePublished,
+        keyQueueConsumerGroups,
+        keyQueueWorkersLock,
+        keyQueueExchangeBindings,
+        keyQueueStateHistory,
+        ...consumerGroupKeys,
+        ...processingQueues,
+      ]);
+
+      const scriptKeys = [
+        // Fixed position keys for script logic
+        keyQueues, // KEYS[1]
+        keyNamespaceQueues, // KEYS[2]
+        keyQueueProperties, // KEYS[3]
+        keyQueueExchangeBindings, // KEYS[4]
+        keyQueueConsumers, // KEYS[5]
+
+        // Dynamic keys for checks
+        ...heartbeatKeys,
+
+        // All other keys to be deleted (excluding those already in fixed positions)
+        ...Array.from(keysToDelete).filter(
+          (k) =>
+            k !== keyQueueProperties &&
+            k !== keyQueueExchangeBindings &&
+            k !== keyQueueConsumers,
+        ),
+      ];
+
+      const queueParamsStr = _stringifyQueueParams(queueParams);
+      const scriptArgs = [
+        queueParamsStr,
+        EQueueProperty.MESSAGES_COUNT,
+        String(heartbeatKeys.length),
+        EQueueProperty.OPERATIONAL_STATE,
+        EQueueOperationalState.LOCKED,
+        EQueueProperty.LOCK_ID,
+        '', // lockID
+        ...consumerIds,
+      ];
+
+      redisClient.runScript(
+        ERedisScriptName.DELETE_QUEUE,
+        scriptKeys,
+        scriptArgs,
+        (err, reply) => {
+          if (err) cb(err);
+          else if (reply !== 'OK') {
+            // Handle queue state errors
+            if (reply === 'QUEUE_LOCKED') {
+              cb(
+                new QueueLockedError({
+                  metadata: {
+                    queue: queueParams,
+                  },
+                  message: `Cannot delete queue ${queueParams.name}: Queue is locked.`,
+                }),
+              );
+            }
+            // Handle other error cases
+            else if (reply === 'QUEUE_NOT_FOUND')
+              cb(
+                new QueueNotFoundError({
+                  metadata: {
+                    queue: queueParams,
+                  },
+                }),
+              );
+            else if (reply === 'QUEUE_NOT_EMPTY') cb(new QueueNotEmptyError());
+            else if (reply === 'QUEUE_HAS_ACTIVE_CONSUMERS')
+              cb(
+                new QueueHasActiveConsumersError({
+                  metadata: {
+                    queue: queueParams,
+                  },
+                }),
+              );
+            else if (reply === 'QUEUE_HAS_BOUND_EXCHANGE')
+              cb(new QueueHasBoundExchangesError());
+            else if (reply === 'CONSUMER_SET_MISMATCH')
+              cb(new ConsumerSetMismatchError());
+            else cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
+          } else cb();
+        },
+      );
+    },
+  );
+}
