@@ -288,24 +288,6 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
   protected override goingDown(): ((cb: ICallback) => void)[] {
     return [
       (cb: ICallback) => this.timer.shutdown(cb),
-      (cb: ICallback): void => {
-        const ephemeral = this.ephemeralConsumerGroupId;
-        if (!ephemeral) return cb();
-        _deleteEphemeralConsumerGroup(
-          this.queue.queueParams,
-          this.consumerContext.consumerId,
-          ephemeral,
-          (err) => {
-            if (err) {
-              this.logger.warn(
-                `Failed to delete ephemeral consumer group '${ephemeral}': ${err.message}`,
-              );
-            }
-            this.ephemeralConsumerGroupId = null;
-            cb();
-          },
-        );
-      },
       this.shutdownWorkerCluster,
 
       // stop dequeuing messages
@@ -345,6 +327,25 @@ export class MessageHandler extends Runnable<TMessageHandlerEvent> {
       // unsubscribe from queue
       (cb: ICallback) => {
         _unsubscribeConsumer(this.consumerContext.consumerId, this.queue, cb);
+      },
+
+      (cb: ICallback): void => {
+        const ephemeral = this.ephemeralConsumerGroupId;
+        if (!ephemeral) return cb();
+        _deleteEphemeralConsumerGroup(
+          this.queue.queueParams,
+          this.consumerContext.consumerId,
+          ephemeral,
+          (err) => {
+            if (err) {
+              this.logger.warn(
+                `Failed to delete ephemeral consumer group '${ephemeral}': ${err.message}`,
+              );
+            }
+            this.ephemeralConsumerGroupId = null;
+            cb();
+          },
+        );
       },
 
       (cb: ICallback) => {

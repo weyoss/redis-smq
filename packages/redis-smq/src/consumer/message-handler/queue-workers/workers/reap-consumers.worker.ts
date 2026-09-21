@@ -103,7 +103,20 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
           );
         },
 
-        // Step 3: Clean up ephemeral consumer groups
+        // Step 3: Unsubscribe consumer from queue
+        (done: ICallback) => {
+          _unsubscribeConsumer(consumerId, this.queueParsedParams, (err) => {
+            if (err) {
+              const queue = this.queueParsedParams.queueParams;
+              this.logger.error(
+                `Failed to unsubscribe consumer ${consumerId} from queue ${queue.name}@${queue.ns}: ${err.message}`,
+              );
+            }
+            done(err); // pass the error so the next time we try again
+          });
+        },
+
+        // Step 4: Clean up ephemeral consumer groups
         (done: ICallback) => {
           this.logger.debug(
             `Cleaning up ephemeral groups for consumer ${consumerId}`,
@@ -120,19 +133,6 @@ export class ReapConsumersWorker extends QueueWorkerAbstract {
               );
             }
             done();
-          });
-        },
-
-        // Step 4: Unsubscribe consumer from queue
-        (done: ICallback) => {
-          _unsubscribeConsumer(consumerId, this.queueParsedParams, (err) => {
-            if (err) {
-              const queue = this.queueParsedParams.queueParams;
-              this.logger.error(
-                `Failed to unsubscribe consumer ${consumerId} from queue ${queue.name}@${queue.ns}: ${err.message}`,
-              );
-            }
-            done(err); // pass the error so the next time we try again
           });
         },
       ],
