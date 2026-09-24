@@ -15,7 +15,7 @@ export default defineConfig({
     deps: {
       moduleDirectories: ['packages'],
     },
-    setupFiles: './tests/setup.js',
+    setupFiles: './tests/setup/vitest.setup.js',
     testTimeout: 120000,
     hookTimeout: 120000,
     environment: 'node',
