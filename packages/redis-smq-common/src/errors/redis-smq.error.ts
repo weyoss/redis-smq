@@ -7,60 +7,67 @@
  * in the root directory of this source tree.
  */
 
-import {
-  IRedisSMQErrorOptions,
-  IRedisSMQErrorProperties,
-} from './types/index.js';
+import { IRedisSMQErrorOptions } from './types/index.js';
 
-export abstract class RedisSMQError<
-  Metadata extends Record<string, unknown> = never,
-> extends Error {
-  protected readonly code: string;
-  protected readonly metadata: Metadata | null;
+export abstract class RedisSMQError<Metadata = never> extends Error {
+  /** Stable machine-readable code. Must be overridden. */
+  static readonly code: string = 'RedisSMQ.Unknown';
 
-  // The constructor uses a conditional type on its arguments.
-  // If Metadata is 'never', the 'options' argument is optional.
-  // If Metadata is a specific type, the 'options' argument is required.
+  /** Human-readable fallback used when the caller does not pass a message. */
+  static readonly defaultMessage: string = 'Unknown error.';
+
+  public readonly metadata: Metadata | null;
+
   constructor(
     ...args: [Metadata] extends [never]
       ? [options?: IRedisSMQErrorOptions<Metadata>]
       : [options: IRedisSMQErrorOptions<Metadata>]
   ) {
     const ctor = new.target;
-    const { defaultMessage, code } = ctor.props();
+    const options = (args[0] ?? {}) as IRedisSMQErrorOptions<Metadata>;
 
-    const options = args[0] ?? {};
-    super(options.message ?? defaultMessage);
+    super(options.message ?? ctor.defaultMessage);
 
-    this.code = code;
-    this.metadata = options.metadata ?? null;
+    this.metadata = (options.metadata as Metadata | undefined) ?? null;
+
+    if ('cause' in options && options.cause !== undefined) {
+      (this as { cause?: unknown }).cause = options.cause;
+    }
+
+    // Match Error's name semantics: own, non-enumerable, writable.
+    Object.defineProperty(this, 'name', {
+      value: ctor.name,
+      writable: true,
+      enumerable: false,
+      configurable: true,
+    });
+
+    // Trim internal frames from the stack when running on V8.
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, ctor);
+    }
   }
 
-  getMetadata(): Metadata | null {
-    return this.metadata;
+  /** Stable code, derived from the class. */
+  get code(): string {
+    return (this.constructor as typeof RedisSMQError).code;
   }
 
-  override get name(): string {
-    return this.constructor.name;
+  get [Symbol.toStringTag](): string {
+    return this.name;
   }
 
-  static get props() {
-    // type-coverage:ignore-next-line
-    return this.prototype.getProps;
-  }
-
-  abstract getProps(): IRedisSMQErrorProperties;
-
-  /**
-   * Provides a stable, JSON-friendly representation for logs or network transport.
-   */
   toJSON(): Record<string, unknown> {
     return {
       name: this.name,
       code: this.code,
       message: this.message,
       metadata: this.metadata,
-      stack: this.stack,
+      cause: this.cause,
     };
+  }
+
+  static isRedisSMQError(value: unknown): value is RedisSMQError {
+    return value instanceof RedisSMQError;
   }
 }

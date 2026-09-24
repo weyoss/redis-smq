@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from '../../async/index.js';
-import { AbortError } from '../../errors/index.js';
+import { OperationAbortedError } from '../../errors/index.js';
 import { LockNotAcquiredError, RedisLock } from '../../redis-lock/index.js';
 import { ILogger } from '../../logger/index.js';
 import { IRedisClient } from '../../redis-client/index.js';
@@ -100,7 +100,7 @@ export class WorkerCluster extends Runnable<TWorkerClusterEvent> {
         this.logger.warn(
           'Could not acquire lock (already locked by another instance)',
         );
-        return cb(new AbortError());
+        return cb(new OperationAbortedError());
       }
 
       this.logger.error(`Failed to acquire lock: ${err.message}`, err);

@@ -8,13 +8,8 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
 export class WorkerIsShuttingDownError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.Worker.ShuttingDown',
-      defaultMessage: 'Worker is shutting down.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Worker.ShuttingDown';
+  static override readonly defaultMessage = 'Worker is shutting down.';
 }

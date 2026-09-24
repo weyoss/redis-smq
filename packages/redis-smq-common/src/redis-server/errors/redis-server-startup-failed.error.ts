@@ -10,10 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class RedisServerStartupFailedError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisServer.StartupFailed',
-      defaultMessage: 'An error occurred during Redis server startup',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisServer.StartupFailed';
+  static override readonly defaultMessage =
+    'An error occurred during Redis server startup.';
 }

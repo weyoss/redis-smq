@@ -8,4 +8,4 @@
  */
 
 export * from './event-bus-not-connected.error.js';
-export * from './event-bus-message-parse.error.js';
+export * from './event-bus-message-json-parse.error.js';

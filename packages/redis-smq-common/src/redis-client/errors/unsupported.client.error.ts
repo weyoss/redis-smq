@@ -10,11 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class UnsupportedClientError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisClient.UnsupportedClient',
-      defaultMessage:
-        'Unsupported Redis client type. Supported types are: REDIS, IOREDIS.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisClient.UnsupportedClient';
+  static override readonly defaultMessage =
+    'Unsupported Redis client type. Supported types are: REDIS, IOREDIS.';
 }

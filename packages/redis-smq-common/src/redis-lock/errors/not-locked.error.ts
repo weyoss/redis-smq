@@ -10,11 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class NotLockedError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisLock.ExtendLock.Failed',
-      defaultMessage:
-        'Can not extend a lock which has not been yet acquired. Maybe a pending operation is in progress.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisLock.NotLocked';
+  static override readonly defaultMessage =
+    'Cannot extend a lock which has not been acquired yet. A pending operation may be in progress.';
 }

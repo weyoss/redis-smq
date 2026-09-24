@@ -13,10 +13,7 @@ export class AttemptsExhaustedError extends RedisSMQError<{
   lockFile: string;
   retries: number;
 }> {
-  getProps() {
-    return {
-      code: 'RedisSMQ.FileLock.AcquireLock.AttemptsExhausted',
-      defaultMessage: 'Failed to acquire a file lock after multiple attempts.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.FileLock.AttemptsExhausted';
+  static override readonly defaultMessage =
+    'Failed to acquire a file lock after multiple attempts.';
 }

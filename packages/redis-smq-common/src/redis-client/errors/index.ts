@@ -14,4 +14,4 @@ export { RedisClientNotInstalledError } from './redis-client-not-installed.error
 export { CommandNotSupportedError } from './command-not-supported.error.js';
 export { UnsupportedRedisServerVersionError } from './unsupported-redis-server-version.error.js';
 export { UnknownRedisServerVersionError } from './unknown-redis-server-version.error.js';
-export { WatchTransactionMaxRetriesExceeded } from './watch-transaction-max-retries-exceeded.error.js';
+export { WatchTransactionMaxRetriesExceededError } from './watch-transaction-max-retries-exceeded.error.js';

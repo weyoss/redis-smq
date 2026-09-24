@@ -8,13 +8,8 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 
 export class WorkerPayloadRequiredError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.Worker.PayloadRequired',
-      defaultMessage: 'Worker payload is required.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Worker.PayloadRequired';
+  static override readonly defaultMessage = 'Worker payload is required.';
 }

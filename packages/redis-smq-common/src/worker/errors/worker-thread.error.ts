@@ -7,15 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { TWorkerThreadChildMessage } from '../types/index.js';
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
+import { TWorkerThreadChildMessage } from '../../worker/types/index.js';
 
 export class WorkerThreadError extends RedisSMQError<TWorkerThreadChildMessage> {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.Worker.WorkerThreadError',
-      defaultMessage: 'A worker thread has encountered an error.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Worker.ThreadError';
+  static override readonly defaultMessage =
+    'A worker thread has encountered an error.';
 }

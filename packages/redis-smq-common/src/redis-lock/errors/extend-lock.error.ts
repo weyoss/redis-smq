@@ -10,10 +10,6 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class ExtendLockError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisLock.Extend.Failed',
-      defaultMessage: 'Failed to extend a lock.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisLock.ExtendFailed';
+  static override readonly defaultMessage = 'Failed to extend a lock.';
 }

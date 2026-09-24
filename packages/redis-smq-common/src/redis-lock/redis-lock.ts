@@ -10,7 +10,7 @@
 import { resolve } from 'path';
 import { ICallback } from '../async/index.js';
 import { env } from '../env/index.js';
-import { AbortError } from '../errors/index.js';
+import { OperationAbortedError } from '../errors/index.js';
 import { ILogger } from '../logger/index.js';
 import { IRedisClient } from '../redis-client/index.js';
 import {
@@ -114,13 +114,13 @@ export class RedisLock extends Runnable<TLockerEvent> {
             this.logger.warn(
               'Lock acquisition aborted: instance is no longer in going-up state',
             );
-            return done(new AbortError());
+            return done(new OperationAbortedError());
           }
 
           if (err) {
             this.logger.error(`Error acquiring lock: ${err.message}`, err);
             return done(
-              new AbortError({
+              new OperationAbortedError({
                 message: err.message,
               }),
             );
@@ -177,7 +177,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
           this.logger.warn(
             'Lock extension aborted: instance is no longer in running state',
           );
-          return cb(new AbortError());
+          return cb(new OperationAbortedError());
         }
 
         if (reply !== 1) {
@@ -232,7 +232,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
     this.timer.schedule(() => {
       this.extend((err) => {
         if (err) {
-          if (err instanceof AbortError) return;
+          if (err instanceof OperationAbortedError) return;
           this.handleError(err);
         }
         this.autoExtendLock();

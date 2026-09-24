@@ -10,11 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class WatchedKeysChangedError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisClient.WatchedKeysChanged',
-      defaultMessage:
-        'Redis transaction failed. One or more watched keys were modified by another client.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisClient.WatchedKeysChanged';
+  static override readonly defaultMessage =
+    'Redis transaction failed. One or more watched keys were modified by another client.';
 }

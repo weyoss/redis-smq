@@ -10,10 +10,6 @@
 import { RedisSMQError } from './redis-smq.error.js';
 
 export class InvalidArgumentsError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.InvalidArguments',
-      defaultMessage: 'Invalid arguments provided.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Arguments.Invalid';
+  static override readonly defaultMessage = 'Invalid arguments provided.';
 }

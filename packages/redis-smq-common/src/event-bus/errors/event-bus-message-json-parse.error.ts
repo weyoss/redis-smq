@@ -18,7 +18,10 @@
 
 import { RedisSMQError } from '../../errors/index.js';
 
-export class EventBusNotConnectedError extends RedisSMQError {
-  static override readonly code = 'RedisSMQ.EventBus.NotConnected';
-  static override readonly defaultMessage = 'Event bus is not connected.';
+export class EventBusMessageJSONParseError extends RedisSMQError<{
+  error: string;
+}> {
+  static override readonly code = 'RedisSMQ.EventBus.MessageJSONParseFailed';
+  static override readonly defaultMessage =
+    'Failed to parse an incoming message from the event bus.';
 }

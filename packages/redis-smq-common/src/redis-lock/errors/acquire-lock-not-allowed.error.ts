@@ -10,10 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class AcquireLockNotAllowedError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisLock.AcquireLock.NotAllowed',
-      defaultMessage: 'This method can not be used when autoExtend is enabled.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisLock.AcquireNotAllowed';
+  static override readonly defaultMessage =
+    'This method cannot be used when autoExtend is enabled.';
 }

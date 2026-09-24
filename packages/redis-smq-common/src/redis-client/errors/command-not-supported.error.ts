@@ -12,11 +12,7 @@ import { RedisSMQError } from '../../errors/index.js';
 export class CommandNotSupportedError extends RedisSMQError<{
   command: string;
 }> {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisClient.CommandNotSupported',
-      defaultMessage:
-        'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisClient.CommandNotSupported';
+  static override readonly defaultMessage =
+    'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.';
 }

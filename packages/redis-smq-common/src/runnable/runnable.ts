@@ -10,7 +10,7 @@
 import { v4 as uuid } from 'uuid';
 import { async } from '../async/index.js';
 import { ICallback } from '../async/index.js';
-import { AbortError } from '../errors/index.js';
+import { OperationAbortedError } from '../errors/index.js';
 import { EventEmitter, TEventEmitterEvent } from '../event/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import { ILogger } from '../logger/index.js';
@@ -150,12 +150,18 @@ export abstract class Runnable<
   protected executeGoingUpTasks(): void {
     const tasks = this.goingUp().map((task) => (taskCb: ICallback<void>) => {
       if (!this.isGoingUp()) {
-        return taskCb(new AbortError({ message: 'Startup aborted' }));
+        return taskCb(
+          new OperationAbortedError({ message: 'Startup aborted' }),
+        );
       }
 
       task((err) => {
         if (!this.isGoingUp()) {
-          taskCb(new AbortError({ message: 'Startup aborted by shutdown' }));
+          taskCb(
+            new OperationAbortedError({
+              message: 'Startup aborted by shutdown',
+            }),
+          );
         } else {
           taskCb(err);
         }
@@ -165,7 +171,7 @@ export abstract class Runnable<
     async.series(tasks, (err) => {
       if (!this.isGoingUp()) {
         return this.flushWaitingForUp(
-          new AbortError({ message: 'Startup aborted by shutdown' }),
+          new OperationAbortedError({ message: 'Startup aborted by shutdown' }),
         );
       }
 
@@ -391,7 +397,7 @@ export abstract class Runnable<
       if (this.isGoingUp()) {
         this.powerSwitch.rollback();
         this.flushWaitingForUp(
-          new AbortError({ message: 'Startup aborted by shutdown' }),
+          new OperationAbortedError({ message: 'Startup aborted by shutdown' }),
         );
         this.executeGoingDownTasks();
         return;
@@ -433,7 +439,7 @@ export abstract class Runnable<
    *   - If not provided, the method returns a Promise that resolves when operational or rejects with any error.
    * @returns {Promise<void> | void} - Returns a Promise if no callback is provided, otherwise returns void.
    *
-   * @throws {AbortError} When called while the instance is shutting down.
+   * @throws {OperationAbortedError} When called while the instance is shutting down.
    * @throws {Error} Any error that occurs during startup if the instance was down.
    *
    * @example
@@ -473,7 +479,9 @@ export abstract class Runnable<
   ensureIsOperational(cb?: ICallback): Promise<void> | void {
     return withOptionalCallback(cb, (callback) => {
       if (this.isGoingDown()) {
-        return callback(new AbortError({ message: 'Shutdown in progress' }));
+        return callback(
+          new OperationAbortedError({ message: 'Shutdown in progress' }),
+        );
       }
       if (this.isRunning()) {
         return callback(null);

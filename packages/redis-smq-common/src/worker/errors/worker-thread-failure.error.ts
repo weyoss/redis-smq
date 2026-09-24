@@ -8,15 +8,9 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
-export class WorkerThreadFailureError extends RedisSMQError<{
-  code: number;
-}> {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.Worker.Failure',
-      defaultMessage: 'A worker thread has encountered an error.',
-    };
-  }
+export class WorkerThreadFailureError extends RedisSMQError<{ code: number }> {
+  static override readonly code = 'RedisSMQ.Worker.Failure';
+  static override readonly defaultMessage =
+    'A worker thread has encountered an error.';
 }

@@ -10,10 +10,6 @@
 import { RedisSMQError } from './redis-smq.error.js';
 
 export class OperationNotAllowedError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.OperationNotAllowed',
-      defaultMessage: 'Operation not allowed.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Operation.NotAllowed';
+  static override readonly defaultMessage = 'Operation not allowed.';
 }

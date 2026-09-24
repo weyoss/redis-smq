@@ -10,10 +10,6 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class LockNotAcquiredError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisLock.AcquireLock.Failed',
-      defaultMessage: 'Failed to acquire a lock.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisLock.AcquireFailed';
+  static override readonly defaultMessage = 'Failed to acquire a lock.';
 }

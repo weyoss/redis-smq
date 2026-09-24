@@ -10,11 +10,7 @@
 import { RedisSMQError } from './redis-smq.error.js';
 
 export class PanicError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.Panic',
-      defaultMessage:
-        'Fatal error. The system may be in an inconsistent state.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Panic';
+  static override readonly defaultMessage =
+    'Fatal error. The system may be in an inconsistent state.';
 }

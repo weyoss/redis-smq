@@ -13,10 +13,7 @@ export class ReleaseLockError extends RedisSMQError<{
   lockFile: string;
   error: string;
 }> {
-  getProps() {
-    return {
-      code: 'RedisSMQ.FileLock.releaseLock.Failed',
-      defaultMessage: 'Failed to release a previously acquired lock file',
-    };
-  }
+  static override readonly code = 'RedisSMQ.FileLock.ReleaseFailed';
+  static override readonly defaultMessage =
+    'Failed to release a previously acquired lock file.';
 }

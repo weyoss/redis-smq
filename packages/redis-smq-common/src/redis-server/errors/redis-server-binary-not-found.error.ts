@@ -10,11 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class RedisServerBinaryNotFoundError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisServer.BinaryNotFound',
-      defaultMessage:
-        'A Redis server binary could not be found. Please set up Redis server first.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisServer.BinaryNotFound';
+  static override readonly defaultMessage =
+    'A Redis server binary could not be found. Please set up Redis server first.';
 }

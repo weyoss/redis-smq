@@ -8,13 +8,8 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/index.js';
 
 export class AsyncCallbackTimeoutError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.Async.CallbackTimeout',
-      defaultMessage: 'Callback has timed out.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Async.CallbackTimeout';
+  static override readonly defaultMessage = 'Callback has timed out.';
 }

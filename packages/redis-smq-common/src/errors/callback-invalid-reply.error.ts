@@ -10,10 +10,7 @@
 import { RedisSMQError } from './redis-smq.error.js';
 
 export class CallbackInvalidReplyError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.Callback.InvalidReply',
-      defaultMessage: 'Callback returned an invalid reply.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Callback.InvalidReply';
+  static override readonly defaultMessage =
+    'Callback returned an invalid reply.';
 }

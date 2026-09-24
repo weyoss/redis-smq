@@ -7,18 +7,16 @@
  * in the root directory of this source tree.
  */
 
-export interface IRedisSMQErrorProperties {
-  code: string;
-  defaultMessage: string;
+export interface IBaseErrorOptions {
+  message?: string;
+  cause?: unknown;
 }
 
-// Base properties for error options
-type TBaseErrorOptions = {
-  message?: string;
-};
-
-// Conditionally define the options type.
-// If M is 'never', metadata is optional and can be undefined.
-// If M is a specific type, metadata is required.
-export type IRedisSMQErrorOptions<M> = TBaseErrorOptions &
-  ([M] extends [never] ? { metadata?: never } : { metadata: M });
+/**
+ * Options accepted by every RedisSMQError.
+ *
+ * - When `Metadata` is `never` (default), `metadata` is disallowed.
+ * - When `Metadata` is any other type, `metadata` is required.
+ */
+export type IRedisSMQErrorOptions<Metadata = never> = IBaseErrorOptions &
+  ([Metadata] extends [never] ? { metadata?: never } : { metadata: Metadata });

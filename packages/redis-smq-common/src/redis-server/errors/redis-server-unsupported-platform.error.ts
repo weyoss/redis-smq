@@ -10,10 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class RedisServerUnsupportedPlatformError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisServer.UnsupportedPlatform',
-      defaultMessage: 'Unsupported platform/architecture.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisServer.UnsupportedPlatform';
+  static override readonly defaultMessage =
+    'Unsupported platform/architecture.';
 }

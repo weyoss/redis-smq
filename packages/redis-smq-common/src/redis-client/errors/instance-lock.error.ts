@@ -10,11 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class InstanceLockError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisClient.InstanceLock.Failed',
-      defaultMessage:
-        'Failed to acquire instance lock. Another operation may be running concurrently.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisClient.InstanceLockFailed';
+  static override readonly defaultMessage =
+    'Failed to acquire instance lock. Another operation may be running concurrently.';
 }

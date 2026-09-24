@@ -10,10 +10,7 @@
 import { RedisSMQError } from '../../errors/index.js';
 
 export class UnknownRedisServerVersionError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisClient.UnknownRedisServerVersion',
-      defaultMessage: 'Could not determine Redis server version.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisClient.UnknownServerVersion';
+  static override readonly defaultMessage =
+    'Could not determine Redis server version.';
 }

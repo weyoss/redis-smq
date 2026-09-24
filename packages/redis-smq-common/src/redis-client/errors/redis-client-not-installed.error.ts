@@ -12,11 +12,7 @@ import { RedisSMQError } from '../../errors/index.js';
 export class RedisClientNotInstalledError extends RedisSMQError<{
   clientId: string;
 }> {
-  getProps() {
-    return {
-      code: 'RedisSMQ.RedisClient.ClientNotInstalled',
-      defaultMessage:
-        'REDIS client is not available. Please install your selected client first.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.RedisClient.ClientNotInstalled';
+  static override readonly defaultMessage =
+    'REDIS client is not available. Please install your selected client first.';
 }

@@ -8,14 +8,10 @@
  */
 
 import { RedisSMQError } from '../../errors/index.js';
-import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 
-export class WatchTransactionMaxRetriesExceeded extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.RedisClient.WatchTransaction.MaxRetriesExceeded',
-      defaultMessage:
-        'Watch transaction has failed after reaching the maximum number of retries.',
-    };
-  }
+export class WatchTransactionMaxRetriesExceededError extends RedisSMQError {
+  static override readonly code =
+    'RedisSMQ.RedisClient.WatchTransactionMaxRetriesExceeded';
+  static override readonly defaultMessage =
+    'Watch transaction has failed after reaching the maximum number of retries.';
 }

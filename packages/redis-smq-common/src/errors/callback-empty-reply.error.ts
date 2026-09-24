@@ -10,10 +10,7 @@
 import { RedisSMQError } from './redis-smq.error.js';
 
 export class CallbackEmptyReplyError extends RedisSMQError {
-  getProps() {
-    return {
-      code: 'RedisSMQ.Callback.EmptyReply',
-      defaultMessage: 'Callback returned an empty reply. A reply is required.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Callback.EmptyReply';
+  static override readonly defaultMessage =
+    'Callback returned an empty reply. A reply is required.';
 }

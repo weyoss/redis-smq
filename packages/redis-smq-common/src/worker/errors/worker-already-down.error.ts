@@ -7,14 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQErrorProperties } from '../../errors/types/index.js';
 import { RedisSMQError } from '../../errors/index.js';
 
 export class WorkerAlreadyDownError extends RedisSMQError {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQ.Worker.AlreadyDown',
-      defaultMessage: 'Worker is already down.',
-    };
-  }
+  static override readonly code = 'RedisSMQ.Worker.AlreadyDown';
+  static override readonly defaultMessage = 'Worker is already down.';
 }

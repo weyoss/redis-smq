@@ -10,7 +10,7 @@
 import { ICallback } from '../async/index.js';
 import { Runnable } from '../runnable/index.js';
 import { ILogger } from '../logger/index.js';
-import { AbortError } from '../errors/index.js';
+import { OperationAbortedError } from '../errors/index.js';
 import { Timer } from '../timer/index.js';
 import { IBackoffConfig, IBackoffParsedConfig } from './types/index.js';
 import { BackoffConfig } from './backoff-config.js';
@@ -44,7 +44,7 @@ export abstract class Backoff extends Runnable {
 
     task((err, result) => {
       if (err) {
-        if (err instanceof AbortError) {
+        if (err instanceof OperationAbortedError) {
           return callback(err);
         }
 
