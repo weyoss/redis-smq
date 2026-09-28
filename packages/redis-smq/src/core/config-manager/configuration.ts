@@ -14,7 +14,7 @@ import {
   PanicError,
   PowerSwitch,
 } from 'redis-smq-common';
-import { ConfigurationNotFoundError } from '../errors/configuration-not-found.error.js';
+import { ConfigurationNotFoundError } from '../errors/configuration/configuration-not-found.error.js';
 import { keys } from '../common/redis/keys/keys.js';
 import { parseConfig } from './parse-config.js';
 import { defaultConfig } from './default-config.js';

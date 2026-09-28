@@ -14,7 +14,7 @@ import {
 import { keys } from '../../common/redis/keys/keys.js';
 import {
   InvalidExchangeParametersError,
-  QueueAlreadyBound,
+  QueueAlreadyBoundError,
 } from '../../errors/index.js';
 import { _validateQueueBinding } from './_validate-queue-binding.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
@@ -47,7 +47,7 @@ import {
  *     `null` for fanout.
  *   - `getBindingQueuesKey` — the queue set for a specific binding.
  *
- * `QueueAlreadyBound` is a successful outcome: the caller's intent
+ * `QueueAlreadyBoundError` is a successful outcome: the caller's intent
  * ("this queue is bound under this binding") is satisfied whether
  * the binding was created now or existed before.
  */
@@ -147,7 +147,7 @@ export function _bindQueue(
                 (_: void, w: ICallback<void>) =>
                   c.sismember(bindingQueuesKey, queueStr, (err, reply) => {
                     if (err) return w(err);
-                    if (reply === 1) return w(new QueueAlreadyBound());
+                    if (reply === 1) return w(new QueueAlreadyBoundError());
                     w();
                   }),
 
@@ -175,7 +175,7 @@ export function _bindQueue(
             );
           },
           (err) => {
-            if (err instanceof QueueAlreadyBound) return next();
+            if (err instanceof QueueAlreadyBoundError) return next();
             if (err) return next(err);
             logger.info(
               `bindQueue: bound queue=${queueParams.name}@${queueParams.ns} -> ex=${exchangeParams.name}@${exchangeParams.ns}${bindingLabel}`,
