@@ -23,4 +23,6 @@ export interface IEventEmitter<Events extends TEventEmitterEvent> {
   removeAllListeners<E extends keyof Events>(event?: E): this;
 
   removeListener<E extends keyof Events>(event: E, listener: Events[E]): this;
+
+  listenerCount<E extends keyof Events>(event: E): number;
 }

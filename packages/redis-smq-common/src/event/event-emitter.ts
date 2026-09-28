@@ -47,4 +47,8 @@ export class EventEmitter<
     this.eventEmitter.removeListener(String(event), listener);
     return this;
   }
+
+  listenerCount<E extends keyof Events>(event: E): number {
+    return this.eventEmitter.listenerCount(String(event));
+  }
 }
