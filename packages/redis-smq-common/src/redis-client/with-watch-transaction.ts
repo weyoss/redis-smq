@@ -10,7 +10,7 @@
 import { ICallback } from '../async/index.js';
 import {
   WatchedKeysChangedError,
-  WatchTransactionMaxRetriesExceeded,
+  WatchTransactionMaxRetriesExceededError,
 } from './errors/index.js';
 import { IRedisClient } from './types/index.js';
 import {
@@ -47,7 +47,7 @@ export function withWatchTransaction(
     if (attemptNo > maxAttempts) {
       const err =
         options?.makeRetryExceededError?.() ??
-        new WatchTransactionMaxRetriesExceeded();
+        new WatchTransactionMaxRetriesExceededError();
       return callback(err);
     }
 

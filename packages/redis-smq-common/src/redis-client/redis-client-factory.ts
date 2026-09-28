@@ -24,9 +24,19 @@ export class RedisClientFactory extends EventEmitter<
   protected locked = false;
   protected config: IRedisConfig;
 
+  // private static nextId = 0;
+  // private readonly id: number;
+
   constructor(config: IRedisConfig) {
     super();
     this.config = config;
+    // this.id = ++RedisClientFactory.nextId;
+    // console.error(
+    //   `[redis-factory] created id=${this.id} port=${(config.options as { port?: number }).port}`,
+    // );
+    // console.error(
+    //   new Error().stack?.split('\n').slice(2, 10).join('\n') ?? '(no stack)',
+    // );
   }
 
   protected createClient(
@@ -48,6 +58,20 @@ export class RedisClientFactory extends EventEmitter<
     this.getSetInstance((err) => cb(err));
   };
 
+  protected onClientError = (err: Error): void => {
+    // Match ioredis's own behavior: an unhandled 'error' is informational,
+    // not fatal. The client is already being torn down or has been
+    // orphaned; there is no listener to handle the error and no one to
+    // report it to. Throwing here terminates the process for a condition
+    // the framework has already decided is recoverable.
+    // const count = this.instance?.listenerCount('error') ?? 0;
+    // if (count > 0) {
+    //   this.emit('error', err);
+    // }
+
+    this.emit('error', err);
+  };
+
   getSetInstance = (cb: ICallback<IRedisClient>): void => {
     if (!this.locked) {
       if (!this.instance) {
@@ -57,7 +81,7 @@ export class RedisClientFactory extends EventEmitter<
           if (err) return cb(err);
           if (!client) return cb(new CallbackEmptyReplyError());
           this.instance = client;
-          this.instance.on('error', (err) => this.emit('error', err));
+          this.instance.on('error', this.onClientError);
           cb(null, this.instance);
         });
       } else cb(null, this.instance);
@@ -66,6 +90,7 @@ export class RedisClientFactory extends EventEmitter<
 
   shutdown = (cb: ICallback): void => {
     if (this.instance) {
+      this.instance.removeListener('error', this.onClientError);
       this.instance.halt(() => {
         this.instance = null;
         cb();
