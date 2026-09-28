@@ -17,7 +17,7 @@ rm -rf dist
 tsc -p ./tsconfig.json
 cp -r src/redis-client/lua-scripts dist/esm/src/redis-client/
 cp -r src/redis-lock/lua-scripts dist/esm/src/redis-lock/
-cp -r tests/redis-client/lua-scripts dist/esm/tests/redis-client/
+cp -r tests/integration/redis-client/lua-scripts dist/esm/tests/integration/redis-client/
 chmod +x dist/esm/bin/cli.js
 
 # cjs
@@ -29,6 +29,6 @@ cat >dist/cjs/package.json <<!EOF
 !EOF
 cp -r src/redis-client/lua-scripts dist/cjs/src/redis-client/
 cp -r src/redis-lock/lua-scripts dist/cjs/src/redis-lock/
-cp -r tests/redis-client/lua-scripts dist/cjs/tests/redis-client/
+cp -r tests/integration/redis-client/lua-scripts dist/cjs/tests/integration/redis-client/
 chmod +x dist/cjs/bin/cli.js
 
