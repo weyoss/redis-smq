@@ -9,29 +9,11 @@
 
 import {
   asClass,
+  asFunction,
   AwilixContainer,
   createContainer,
   InjectionMode,
 } from 'awilix';
-import {
-  ConsumerGroups,
-  ExchangeFanout,
-  MessageManager,
-  NamespaceManager,
-  Producer,
-  QueueManager,
-  QueueAcknowledgedMessages,
-  QueueDeadLetteredMessages,
-  QueuePublishedMessages,
-  QueuePendingMessages,
-  QueueRateLimit,
-  QueueScheduledMessages,
-  ExchangeTopic,
-  ExchangeDirect,
-  Exchange,
-  ConfigManager,
-  QueueStateManager,
-} from 'redis-smq';
 import { ConsumerGroupsService } from '../services/ConsumerGroupsService.js';
 import { ExchangesService } from '../services/ExchangesService.js';
 import { MessagesService } from '../services/MessagesService.js';
@@ -42,6 +24,7 @@ import { QueuesService } from '../services/QueuesService.js';
 import { IContainer } from './types/container.js';
 import { ConfigurationService } from '../services/ConfigurationService.js';
 import { QueueOperationalStateService } from '../services/QueueOperationalStateService.js';
+import { RedisSMQ } from 'redis-smq';
 
 export class Container {
   private static instance: AwilixContainer<IContainer> | null = null;
@@ -50,25 +33,56 @@ export class Container {
     const instance = this.getInstance();
     instance.register({
       // RedisSMQ classes
-      queueManager: asClass(QueueManager).singleton(),
-      queueStateManager: asClass(QueueStateManager).singleton(),
-      queuePublishedMessages: asClass(QueuePublishedMessages).singleton(),
-      queuePendingMessages: asClass(QueuePendingMessages).singleton(),
-      queueAcknowledgedMessages: asClass(QueueAcknowledgedMessages).singleton(),
-      queueDeadLetteredMessages: asClass(QueueDeadLetteredMessages).singleton(),
-      queueScheduledMessages: asClass(QueueScheduledMessages).singleton(),
-      messageManager: asClass(MessageManager).singleton(),
-      queueRateLimit: asClass(QueueRateLimit).singleton(),
-      namespaceManager: asClass(NamespaceManager).singleton(),
-      exchangeFanout: asClass(ExchangeFanout).singleton(),
-      exchangeTopic: asClass(ExchangeTopic).singleton(),
-      exchangeDirect: asClass(ExchangeDirect).singleton(),
-      exchange: asClass(Exchange).singleton(),
-      consumerGroups: asClass(ConsumerGroups).singleton(),
-      producer: asClass(Producer)
+      queueManager: asFunction(() => RedisSMQ.createQueueManager()).singleton(),
+      queueStateManager: asFunction(() =>
+        RedisSMQ.createQueueStateManager(),
+      ).singleton(),
+      queuePublishedMessages: asFunction(() =>
+        RedisSMQ.createQueuePublishedMessages(),
+      ).singleton(),
+      queuePendingMessages: asFunction(() =>
+        RedisSMQ.createQueuePendingMessages(),
+      ).singleton(),
+      queueAcknowledgedMessages: asFunction(() =>
+        RedisSMQ.createQueueAcknowledgedMessages(),
+      ).singleton(),
+      queueDeadLetteredMessages: asFunction(() =>
+        RedisSMQ.createQueueDeadLetteredMessages(),
+      ).singleton(),
+      queueScheduledMessages: asFunction(() =>
+        RedisSMQ.createQueueScheduledMessages(),
+      ).singleton(),
+      messageManager: asFunction(() =>
+        RedisSMQ.createMessageManager(),
+      ).singleton(),
+      queueRateLimit: asFunction(() =>
+        RedisSMQ.createQueueRateLimitManager(),
+      ).singleton(),
+      namespaceManager: asFunction(() =>
+        RedisSMQ.createNamespaceManager(),
+      ).singleton(),
+      exchangeManager: asFunction(() =>
+        RedisSMQ.createExchangeManager(),
+      ).singleton(),
+      exchangeFanout: asFunction(() =>
+        RedisSMQ.createFanoutExchange(),
+      ).singleton(),
+      exchangeTopic: asFunction(() =>
+        RedisSMQ.createTopicExchange(),
+      ).singleton(),
+      exchangeDirect: asFunction(() =>
+        RedisSMQ.createDirectExchange(),
+      ).singleton(),
+      exchange: asFunction(() => RedisSMQ.createExchangeManager()).singleton(),
+      consumerGroups: asFunction(() =>
+        RedisSMQ.createConsumerGroupsManager(),
+      ).singleton(),
+      producer: asFunction(() => RedisSMQ.createProducer())
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      configManager: asClass(ConfigManager).singleton(),
+      configManager: asFunction(() =>
+        RedisSMQ.createConfigManager(),
+      ).singleton(),
 
       // Services
       queuesService: asClass(QueuesService),

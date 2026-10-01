@@ -7,16 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams, QueueStateManager } from 'redis-smq';
-import bluebird from 'bluebird';
+import { IQueueParams, IQueueStateManager } from 'redis-smq';
 import { TransitQueueStateControllerRequestBodyDTO } from '../controllers/namespaces/namespace/queues/queue/state/TransitQueueStateControllerRequestBodyDTO.js';
 
 export class QueueOperationalStateService {
-  protected queueStateManager;
-
-  constructor(queueStateManager: QueueStateManager) {
-    this.queueStateManager = bluebird.promisifyAll(queueStateManager);
-  }
+  constructor(protected queueStateManager: IQueueStateManager) {}
 
   async transitQueueState(
     queue: IQueueParams,
@@ -24,19 +19,19 @@ export class QueueOperationalStateService {
   ) {
     const { state, options } = queueStateAction;
     if (state === 'resume') {
-      return this.queueStateManager.resumeAsync(queue, options);
+      return this.queueStateManager.resume(queue, options);
     }
     if (state === 'stop') {
-      return this.queueStateManager.stopAsync(queue, options);
+      return this.queueStateManager.stop(queue, options);
     }
-    return this.queueStateManager.pauseAsync(queue, options);
+    return this.queueStateManager.pause(queue, options);
   }
 
   async getState(queueParams: IQueueParams) {
-    return this.queueStateManager.getStateAsync(queueParams);
+    return this.queueStateManager.getState(queueParams);
   }
 
   async getStateHistory(queueParams: IQueueParams) {
-    return this.queueStateManager.getStateHistoryAsync(queueParams);
+    return this.queueStateManager.getStateHistory(queueParams);
   }
 }

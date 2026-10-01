@@ -7,52 +7,41 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import {
   EQueueDeliveryModel,
   EQueueType,
+  IQueueManager,
   IQueueParams,
-  QueueManager,
 } from 'redis-smq';
 
-const { promisifyAll } = bluebird;
-
 export class QueuesService {
-  protected queueManager;
-
-  constructor(queueManager: QueueManager) {
-    this.queueManager = promisifyAll(queueManager);
-  }
+  constructor(protected queueManager: IQueueManager) {}
 
   async createQueue(
     queueParams: IQueueParams,
     queueType: EQueueType,
     queueDeliveryModel: EQueueDeliveryModel,
   ) {
-    return this.queueManager.saveAsync(
-      queueParams,
-      queueType,
-      queueDeliveryModel,
-    );
+    return this.queueManager.save(queueParams, queueType, queueDeliveryModel);
   }
 
   async exists(queueParams: IQueueParams) {
-    return this.queueManager.existsAsync(queueParams);
+    return this.queueManager.exists(queueParams);
   }
 
   async getProperties(queueParams: IQueueParams) {
-    return this.queueManager.getPropertiesAsync(queueParams);
+    return this.queueManager.getProperties(queueParams);
   }
 
   async getConsumers(queueParams: IQueueParams) {
-    return this.queueManager.getConsumersAsync(queueParams);
+    return this.queueManager.getConsumers(queueParams);
   }
 
   async delete(queueParams: IQueueParams) {
-    return this.queueManager.deleteAsync(queueParams);
+    return this.queueManager.delete(queueParams);
   }
 
   async getQueues() {
-    return this.queueManager.getQueuesAsync();
+    return this.queueManager.getQueues();
   }
 }

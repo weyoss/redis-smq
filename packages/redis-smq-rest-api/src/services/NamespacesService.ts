@@ -7,27 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { NamespaceManager } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
+import { INamespaceManager } from 'redis-smq';
 
 export class NamespacesService {
-  protected namespaceManager;
-
-  constructor(namespaceManager: NamespaceManager) {
-    this.namespaceManager = promisifyAll(namespaceManager);
-  }
+  constructor(protected namespaceManager: INamespaceManager) {}
 
   getNamespaces() {
-    return this.namespaceManager.getNamespacesAsync();
+    return this.namespaceManager.getNamespaces();
   }
 
   getNamespaceQueues(ns: string) {
-    return this.namespaceManager.getNamespaceQueuesAsync(ns);
+    return this.namespaceManager.getNamespaceQueues(ns);
   }
 
   deleteNamespace(ns: string) {
-    return this.namespaceManager.deleteAsync(ns);
+    return this.namespaceManager.delete(ns);
   }
 }

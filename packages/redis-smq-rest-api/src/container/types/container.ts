@@ -7,25 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import {
-  ConsumerGroups,
-  ExchangeFanout,
-  MessageManager,
-  NamespaceManager,
-  Producer,
-  QueueManager,
-  QueueAcknowledgedMessages,
-  QueueDeadLetteredMessages,
-  QueuePublishedMessages,
-  QueuePendingMessages,
-  QueueRateLimit,
-  QueueScheduledMessages,
-  Exchange,
-  ExchangeDirect,
-  ExchangeTopic,
-  ConfigManager,
-  QueueStateManager,
-} from 'redis-smq';
 import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
 import { ConsumerGroupsService } from '../../services/ConsumerGroupsService.js';
 import { ExchangesService } from '../../services/ExchangesService.js';
@@ -36,25 +17,45 @@ import { QueueRateLimitService } from '../../services/QueueRateLimitService.js';
 import { QueuesService } from '../../services/QueuesService.js';
 import { ConfigurationService } from '../../services/ConfigurationService.js';
 import { QueueOperationalStateService } from '../../services/QueueOperationalStateService.js';
+import {
+  IConfigManager,
+  IConsumerGroupsManager,
+  IExchangeDirect,
+  IExchangeFanout,
+  IExchangeManager,
+  IExchangeTopic,
+  IMessageManager,
+  INamespaceManager,
+  IProducer,
+  IQueueAcknowledgedMessages,
+  IQueueDeadLetteredMessages,
+  IQueueManager,
+  IQueuePendingMessages,
+  IQueuePublishedMessages,
+  IQueueRateLimitManager,
+  IQueueScheduledMessages,
+  IQueueStateManager,
+} from 'redis-smq';
 
 export interface IContainer {
-  queueManager: QueueManager;
-  queueStateManager: QueueStateManager;
-  queuePublishedMessages: QueuePublishedMessages;
-  queuePendingMessages: QueuePendingMessages;
-  queueAcknowledgedMessages: QueueAcknowledgedMessages;
-  queueDeadLetteredMessages: QueueDeadLetteredMessages;
-  queueScheduledMessages: QueueScheduledMessages;
-  messageManager: MessageManager;
-  queueRateLimit: QueueRateLimit;
-  namespaceManager: NamespaceManager;
-  exchange: Exchange;
-  exchangeDirect: ExchangeDirect;
-  exchangeFanout: ExchangeFanout;
-  exchangeTopic: ExchangeTopic;
-  consumerGroups: ConsumerGroups;
-  producer: Producer;
-  configManager: ConfigManager;
+  queueManager: IQueueManager;
+  queueStateManager: IQueueStateManager;
+  queuePublishedMessages: IQueuePublishedMessages;
+  queuePendingMessages: IQueuePendingMessages;
+  queueAcknowledgedMessages: IQueueAcknowledgedMessages;
+  queueDeadLetteredMessages: IQueueDeadLetteredMessages;
+  queueScheduledMessages: IQueueScheduledMessages;
+  messageManager: IMessageManager;
+  queueRateLimit: IQueueRateLimitManager;
+  namespaceManager: INamespaceManager;
+  exchange: IExchangeManager;
+  exchangeDirect: IExchangeDirect;
+  exchangeFanout: IExchangeFanout;
+  exchangeTopic: IExchangeTopic;
+  exchangeManager: IExchangeManager;
+  consumerGroups: IConsumerGroupsManager;
+  producer: IProducer;
+  configManager: IConfigManager;
   config: IRedisSMQRestApiParsedConfig;
 
   queuesService: QueuesService;

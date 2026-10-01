@@ -8,14 +8,14 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createQueue } from '../../../../../../../tests/common/create-queue.js';
-import { publishAndAcknowledgeMessage } from '../../../../../../../tests/common/publish-and-acknowledge-message.js';
+import { createQueue } from '../../../../../../../tests/helpers/create-queue.js';
+import { publishAndAcknowledgeMessage } from '../../../../../../../tests/helpers/publish-and-acknowledge-message.js';
 import supertest from 'supertest';
-import { config } from '../../../../../../../tests/common/config.js';
-import { TResponse } from '../../../../../../../tests/types/index.js';
-import { publishAndDeadLetterMessage } from '../../../../../../../tests/common/publish-and-dead-letter-message.js';
-import { publishMessage } from '../../../../../../../tests/common/publish-message.js';
-import { scheduleMessage } from '../../../../../../../tests/common/schedule-message.js';
+import { config } from '../../../../../../../tests/helpers/config.js';
+import { TResponse } from '../../../../../../../tests/helpers/types.js';
+import { publishAndDeadLetterMessage } from '../../../../../../../tests/helpers/publish-and-dead-letter-message.js';
+import { publishMessage } from '../../../../../../../tests/helpers/publish-message.js';
+import { scheduleMessage } from '../../../../../../../tests/helpers/schedule-message.js';
 import { CountQueueMessagesControllerResponseDTO } from './CountQueueMessagesControllerResponseDTO.js';
 
 describe('countQueueMessagesController', () => {

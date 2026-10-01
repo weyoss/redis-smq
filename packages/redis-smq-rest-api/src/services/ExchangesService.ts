@@ -7,19 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import {
-  Exchange,
-  ExchangeDirect,
-  ExchangeFanout,
-  ExchangeTopic,
   IExchangeParams,
   IQueueParams,
   errors,
   EExchangeType,
+  IExchangeDirect,
+  IExchangeFanout,
+  IExchangeTopic,
+  IExchangeManager,
 } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
 
 export class ExchangesService {
   protected exchange;
@@ -28,19 +25,19 @@ export class ExchangesService {
   protected exchangeTopic;
 
   constructor(
-    exchange: Exchange,
-    exchangeDirect: ExchangeDirect,
-    exchangeFanout: ExchangeFanout,
-    exchangeTopic: ExchangeTopic,
+    exchangeManager: IExchangeManager,
+    exchangeDirect: IExchangeDirect,
+    exchangeFanout: IExchangeFanout,
+    exchangeTopic: IExchangeTopic,
   ) {
-    this.exchange = promisifyAll(exchange);
-    this.exchangeDirect = promisifyAll(exchangeDirect);
-    this.exchangeFanout = promisifyAll(exchangeFanout);
-    this.exchangeTopic = promisifyAll(exchangeTopic);
+    this.exchange = exchangeManager;
+    this.exchangeDirect = exchangeDirect;
+    this.exchangeFanout = exchangeFanout;
+    this.exchangeTopic = exchangeTopic;
   }
 
   async getExchange(exchangeParams: IExchangeParams) {
-    const exchanges = await this.exchange.getAllExchangesAsync();
+    const exchanges = await this.exchange.getAllExchanges();
     const exchange = exchanges.find(
       (i) => i.ns === exchangeParams.ns && i.name === exchangeParams.name,
     );
@@ -56,18 +53,18 @@ export class ExchangesService {
   ) {
     const exchange = await this.getExchange(exchangeParams);
     if (exchange.type === EExchangeType.DIRECT) {
-      return this.exchangeDirect.matchQueuesAsync(
+      return this.exchangeDirect.matchQueues(
         exchangeParams,
         params.routingKey ?? '', // will throw an error if empty or invalid
       );
     }
     if (exchange.type === EExchangeType.TOPIC) {
-      return this.exchangeTopic.matchQueuesAsync(
+      return this.exchangeTopic.matchQueues(
         exchangeParams,
         params.routingKey ?? '', // will throw an error if empty or invalid
       );
     }
-    return this.exchangeFanout.matchQueuesAsync(exchangeParams);
+    return this.exchangeFanout.matchQueues(exchangeParams);
   }
 
   async bindQueue(
@@ -76,20 +73,20 @@ export class ExchangesService {
     params: { routingKey?: string; routingPattern?: string },
   ) {
     if (params.routingKey) {
-      return this.exchangeDirect.bindQueueAsync(
+      return this.exchangeDirect.bindQueue(
         queueParams,
         exchangeParams,
         params.routingKey ?? '', // will throw an error if empty or invalid
       );
     }
     if (params.routingPattern) {
-      return this.exchangeTopic.bindQueueAsync(
+      return this.exchangeTopic.bindQueue(
         queueParams,
         exchangeParams,
         params.routingPattern ?? '', // will throw an error if empty or invalid
       );
     }
-    return this.exchangeFanout.bindQueueAsync(queueParams, exchangeParams);
+    return this.exchangeFanout.bindQueue(queueParams, exchangeParams);
   }
 
   async unbindQueue(
@@ -99,20 +96,20 @@ export class ExchangesService {
   ) {
     const exchange = await this.getExchange(exchangeParams);
     if (exchange.type === EExchangeType.DIRECT) {
-      return this.exchangeDirect.unbindQueueAsync(
+      return this.exchangeDirect.unbindQueue(
         queueParams,
         exchangeParams,
         params.routingKey ?? '', // will throw an error if empty or invalid
       );
     }
     if (exchange.type === EExchangeType.TOPIC) {
-      return this.exchangeTopic.unbindQueueAsync(
+      return this.exchangeTopic.unbindQueue(
         queueParams,
         exchangeParams,
         params.routingPattern ?? '', // will throw an error if empty or invalid
       );
     }
-    return this.exchangeFanout.unbindQueueAsync(queueParams, exchangeParams);
+    return this.exchangeFanout.unbindQueue(queueParams, exchangeParams);
   }
 
   async getRoutingKeys(exchangeParams: IExchangeParams) {
@@ -122,7 +119,7 @@ export class ExchangesService {
         message: 'Provided exchange is not a DIRECT exchange',
       });
     }
-    return this.exchangeDirect.getRoutingKeysAsync(exchangeParams);
+    return this.exchangeDirect.getRoutingKeys(exchangeParams);
   }
 
   async getRoutingPatterns(exchangeParams: IExchangeParams) {
@@ -132,7 +129,7 @@ export class ExchangesService {
         message: 'Provided exchange is not a TOPIC exchange',
       });
     }
-    return this.exchangeTopic.getRoutingPatternsAsync(exchangeParams);
+    return this.exchangeTopic.getRoutingPatterns(exchangeParams);
   }
 
   async getBindings(
@@ -142,45 +139,45 @@ export class ExchangesService {
     const exchange = await this.getExchange(exchangeParams);
     if (exchange.type === EExchangeType.DIRECT) {
       if (!params.routingKey) {
-        return this.exchangeDirect.getBindingsAsync(exchangeParams);
+        return this.exchangeDirect.getBindings(exchangeParams);
       }
-      return this.exchangeDirect.getRoutingKeyBoundQueuesAsync(
+      return this.exchangeDirect.getRoutingKeyBoundQueues(
         exchangeParams,
         params.routingKey ?? '', // will throw an error if empty or invalid
       );
     }
     if (exchange.type === EExchangeType.TOPIC) {
       if (!params.routingPattern) {
-        return this.exchangeTopic.getBindingsAsync(exchangeParams);
+        return this.exchangeTopic.getBindings(exchangeParams);
       }
-      return this.exchangeTopic.getRoutingPatternBoundQueuesAsync(
+      return this.exchangeTopic.getRoutingPatternBoundQueues(
         exchangeParams,
         params.routingPattern ?? '', // will throw an error if empty or invalid
       );
     }
-    return this.exchangeFanout.getBindingsAsync(exchangeParams);
+    return this.exchangeFanout.getBindings(exchangeParams);
   }
 
   async deleteExchange(exchangeParams: IExchangeParams) {
     const exchange = await this.getExchange(exchangeParams);
     if (exchange.type === EExchangeType.DIRECT) {
-      return this.exchangeDirect.deleteAsync(exchangeParams);
+      return this.exchangeDirect.delete(exchangeParams);
     }
     if (exchange.type === EExchangeType.TOPIC) {
-      return this.exchangeTopic.deleteAsync(exchangeParams);
+      return this.exchangeTopic.delete(exchangeParams);
     }
-    return this.exchangeFanout.deleteAsync(exchangeParams);
+    return this.exchangeFanout.delete(exchangeParams);
   }
 
   async getQueueExchanges(queue: IQueueParams) {
-    return this.exchange.getQueueExchangesAsync(queue);
+    return this.exchange.getQueueExchanges(queue);
   }
 
   async getNamespaceExchanges(ns: string) {
-    return this.exchange.getNamespaceExchangesAsync(ns);
+    return this.exchange.getNamespaceExchanges(ns);
   }
 
   async getAllExchanges() {
-    return this.exchange.getAllExchangesAsync();
+    return this.exchange.getAllExchanges();
   }
 }

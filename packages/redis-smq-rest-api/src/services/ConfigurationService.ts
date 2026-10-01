@@ -7,12 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigManager, IRedisSMQConfig } from 'redis-smq';
+import { IConfigManager, IRedisSMQConfig } from 'redis-smq';
 
 export class ConfigurationService {
   protected configManager;
 
-  constructor(configManager: ConfigManager) {
+  constructor(configManager: IConfigManager) {
     this.configManager = configManager;
   }
 

@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { TQueueConsumer } from 'redis-smq';
+import { IQueueConsumer } from 'redis-smq';
 import { TErrors } from '../../../../../../errors/errors.js';
 
 export type GetQueueConsumersControllerResponseDTO =
-  | readonly [200, { [key: string]: TQueueConsumer }]
+  | readonly [200, { [key: string]: IQueueConsumer }]
   | TErrors['InvalidQueueParametersError']
   | TErrors['QueueNotFoundError'];

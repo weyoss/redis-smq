@@ -10,13 +10,13 @@
 import { EExchangeType, IExchangeParams } from 'redis-smq';
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { config } from '../../../tests/common/config.js';
+import { config } from '../../../tests/helpers/config.js';
 import {
   createDirectExchange,
   createFanoutExchange,
   createTopicExchange,
-} from '../../../tests/common/create-exchange.js';
-import { TResponse } from '../../../tests/types/index.js';
+} from '../../../tests/helpers/create-exchange.js';
+import { TResponse } from '../../../tests/helpers/types.js';
 import { GetExchangesControllerResponseDTO } from './GetExchangesControllerResponseDTO.js';
 
 describe('getExchangesController', () => {

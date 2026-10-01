@@ -7,24 +7,21 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { IQueueParams, IQueueRateLimit, QueueRateLimit } from 'redis-smq';
+import {
+  IQueueParams,
+  IQueueRateLimit,
+  IQueueRateLimitManager,
+} from 'redis-smq';
 import { CallbackEmptyReplyError } from 'redis-smq-common';
 
-const { promisifyAll } = bluebird;
-
 export class QueueRateLimitService {
-  protected queueRateLimit;
-
-  constructor(queueRateLimit: QueueRateLimit) {
-    this.queueRateLimit = promisifyAll(queueRateLimit);
-  }
+  constructor(protected queueRateLimit: IQueueRateLimitManager) {}
 
   async setRateLimit(
     queueParams: IQueueParams,
     queueRateLimit: IQueueRateLimit,
   ) {
-    await this.queueRateLimit.setAsync(queueParams, queueRateLimit);
+    await this.queueRateLimit.set(queueParams, queueRateLimit);
     const rateLimit = await this.getRateLimit(queueParams);
     if (!rateLimit) {
       throw new CallbackEmptyReplyError();
@@ -33,10 +30,10 @@ export class QueueRateLimitService {
   }
 
   async getRateLimit(queueParams: IQueueParams) {
-    return this.queueRateLimit.getAsync(queueParams);
+    return this.queueRateLimit.get(queueParams);
   }
 
   async clearRateLimit(queueParams: IQueueParams) {
-    return this.queueRateLimit.clearAsync(queueParams);
+    return this.queueRateLimit.clear(queueParams);
   }
 }

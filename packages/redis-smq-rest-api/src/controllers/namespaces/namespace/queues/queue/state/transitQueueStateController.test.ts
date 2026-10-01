@@ -8,13 +8,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createQueue } from '../../../../../../../tests/common/create-queue.js';
+import { createQueue } from '../../../../../../../tests/helpers/create-queue.js';
 import supertest from 'supertest';
-import { config } from '../../../../../../../tests/common/config.js';
-import { TResponse } from '../../../../../../../tests/types/index.js';
+import { config } from '../../../../../../../tests/helpers/config.js';
+import { TResponse } from '../../../../../../../tests/helpers/types.js';
 import { TransitQueueStateControllerRequestBodyDTO } from './TransitQueueStateControllerRequestBodyDTO.js';
 import { TransitQueueStateControllerResponseDTO } from './TransitQueueStateControllerResponseDTO.js';
-import { pauseQueue } from '../../../../../../../tests/common/pause-queue.js';
+import { pauseQueue } from '../../../../../../../tests/helpers/pause-queue.js';
 import { EQueueOperationalState } from 'redis-smq';
 
 describe('transitQueueStateController', () => {

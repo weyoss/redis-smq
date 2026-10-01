@@ -9,10 +9,10 @@
 
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { config } from '../../../tests/common/config.js';
-import { TResponse } from '../../../tests/types/index.js';
+import { config } from '../../../tests/helpers/config.js';
+import { TResponse } from '../../../tests/helpers/types.js';
 import { UpdateConfigurationControllerResponseDTO } from './UpdateConfigurationControllerResponseDTO.js';
-import { ConfigManager } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
 
 describe('updateConfigurationController', () => {
   it('HTTP 200 OK', async () => {
@@ -23,7 +23,7 @@ describe('updateConfigurationController', () => {
       });
     expect(response1.status).toEqual(200);
 
-    const cfgManager = new ConfigManager();
+    const cfgManager = RedisSMQ.createConfigManager();
     const cfg = cfgManager.getConfig();
 
     expect(response1.body?.data).toEqual(cfg);

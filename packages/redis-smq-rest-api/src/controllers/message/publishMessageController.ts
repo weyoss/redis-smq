@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
 import {
   TControllerRequestHandler,
   TControllerRequestPayloadEmpty,
@@ -24,7 +24,7 @@ export const publishMessageController: TControllerRequestHandler<
 > = async (ctx) => {
   const messagesService = Container.getInstance().resolve('messagesService');
   const { message, exchange } = ctx.scope.resolve('requestBodyDTO');
-  const msg = new ProducibleMessage();
+  const msg = RedisSMQ.newProducibleMessage();
   const {
     ttl,
     body,

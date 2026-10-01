@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageManager, Producer, ProducibleMessage } from 'redis-smq';
+import { IMessageManager, IProducer, IProducibleMessage } from 'redis-smq';
 
 export class MessagesService {
   protected messageManager;
   protected producer;
 
-  constructor(messageManager: MessageManager, producer: Producer) {
+  constructor(messageManager: IMessageManager, producer: IProducer) {
     this.messageManager = messageManager;
     this.producer = producer;
   }
@@ -46,7 +46,7 @@ export class MessagesService {
     return this.messageManager.getMessageUnacknowledgementHistory(messageId);
   }
 
-  async publishMessage(message: ProducibleMessage) {
+  async publishMessage(message: IProducibleMessage) {
     await this.producer.run();
     return this.producer.produce(message);
   }

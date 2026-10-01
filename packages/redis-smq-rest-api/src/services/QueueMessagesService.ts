@@ -7,41 +7,26 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import {
+  IQueueAcknowledgedMessages,
+  IQueueDeadLetteredMessages,
   IQueueParams,
-  QueueAcknowledgedMessages,
-  QueueDeadLetteredMessages,
-  QueuePendingMessages,
-  QueuePublishedMessages,
-  QueueScheduledMessages,
+  IQueuePendingMessages,
+  IQueuePublishedMessages,
+  IQueueScheduledMessages,
 } from 'redis-smq';
 import { GetQueueMessagesControllerRequestQueryDTO } from '../controllers/namespaces/namespace/queues/queue/messages/GetQueueMessagesControllerRequestQueryDTO.js';
 import { CountQueueMessagesControllerRequestQueryDTO } from '../controllers/namespaces/namespace/queues/queue/messages/CountQueueMessagesControllerRequestQueryDTO.js';
 import { PurgeQueueMessagesControllerRequestQueryDTO } from '../controllers/namespaces/namespace/queues/queue/messages/PurgeQueueMessagesControllerRequestQueryDTO.js';
 
-const { promisifyAll } = bluebird;
-
 export class QueueMessagesService {
-  protected queuePublishedMessages;
-  protected queueScheduledMessages;
-  protected queueAcknowledgedMessages;
-  protected queuePendingMessages;
-  protected queueDeadLetteredMessages;
-
   constructor(
-    queuePublishedMessages: QueuePublishedMessages,
-    queueScheduledMessages: QueueScheduledMessages,
-    queueAcknowledgedMessages: QueueAcknowledgedMessages,
-    queuePendingMessages: QueuePendingMessages,
-    queueDeadLetteredMessages: QueueDeadLetteredMessages,
-  ) {
-    this.queuePublishedMessages = promisifyAll(queuePublishedMessages);
-    this.queueScheduledMessages = promisifyAll(queueScheduledMessages);
-    this.queueAcknowledgedMessages = promisifyAll(queueAcknowledgedMessages);
-    this.queueDeadLetteredMessages = promisifyAll(queueDeadLetteredMessages);
-    this.queuePendingMessages = promisifyAll(queuePendingMessages);
-  }
+    protected queuePublishedMessages: IQueuePublishedMessages,
+    protected queueScheduledMessages: IQueueScheduledMessages,
+    protected queueAcknowledgedMessages: IQueueAcknowledgedMessages,
+    protected queuePendingMessages: IQueuePendingMessages,
+    protected queueDeadLetteredMessages: IQueueDeadLetteredMessages,
+  ) {}
 
   protected getMessageBrowser(
     status: GetQueueMessagesControllerRequestQueryDTO['status'],
@@ -58,7 +43,7 @@ export class QueueMessagesService {
     params: GetQueueMessagesControllerRequestQueryDTO,
   ) {
     const { page, pageSize, status } = params;
-    return this.getMessageBrowser(status).getMessagesAsync(
+    return this.getMessageBrowser(status).getMessages(
       queueParams,
       page,
       pageSize,
@@ -71,15 +56,15 @@ export class QueueMessagesService {
   ) {
     const { status, groupBy } = params;
     if (groupBy === 'status') {
-      return this.queuePublishedMessages.countMessagesByStatusAsync(queue);
+      return this.queuePublishedMessages.countMessagesByStatus(queue);
     }
-    return this.getMessageBrowser(status).countMessagesAsync(queue);
+    return this.getMessageBrowser(status).countMessages(queue);
   }
 
   async purge(
     queueParams: IQueueParams,
     params: PurgeQueueMessagesControllerRequestQueryDTO,
   ) {
-    return this.getMessageBrowser(params.status).purgeAsync(queueParams);
+    return this.getMessageBrowser(params.status).purge(queueParams);
   }
 }

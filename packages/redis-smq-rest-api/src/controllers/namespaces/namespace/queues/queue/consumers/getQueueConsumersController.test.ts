@@ -7,24 +7,22 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { Consumer } from 'redis-smq';
 import { ICallback } from 'redis-smq-common';
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { config } from '../../../../../../../tests/common/config.js';
-import { createQueue } from '../../../../../../../tests/common/create-queue.js';
-import { TResponse } from '../../../../../../../tests/types/index.js';
+import { config } from '../../../../../../../tests/helpers/config.js';
+import { createQueue } from '../../../../../../../tests/helpers/create-queue.js';
+import { TResponse } from '../../../../../../../tests/helpers/types.js';
 import { GetQueueConsumersControllerResponseDTO } from './GetQueueConsumersControllerResponseDTO.js';
+import { RedisSMQ } from 'redis-smq';
 
 describe('getQueueConsumersController', () => {
   it('HTTP 200 OK', async () => {
     const { queue } = await createQueue('my-queue');
-    const consumer = bluebird.promisifyAll(new Consumer());
-    await consumer.consumeAsync(queue, (msg, cb: ICallback<void>) => {
+    const consumer = await RedisSMQ.startConsumer();
+    await consumer.consume(queue, (msg, cb: ICallback<void>) => {
       cb();
     });
-    await consumer.runAsync();
 
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<GetQueueConsumersControllerResponseDTO> =
@@ -39,6 +37,6 @@ describe('getQueueConsumersController', () => {
       ['pid', 'ipAddress', 'hostname', 'createdAt'].sort(),
     );
 
-    await consumer.shutdownAsync();
+    await consumer.shutdown();
   });
 });

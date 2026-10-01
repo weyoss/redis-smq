@@ -9,9 +9,9 @@
 
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { config } from '../../../../../tests/common/config.js';
-import { TResponse } from '../../../../../tests/types/index.js';
-import { createDirectExchange } from '../../../../../tests/common/create-exchange.js';
+import { config } from '../../../../../tests/helpers/config.js';
+import { TResponse } from '../../../../../tests/helpers/types.js';
+import { createDirectExchange } from '../../../../../tests/helpers/create-exchange.js';
 import { GetNamespaceExchangesControllerResponseDTO } from './GetNamespaceExchangesControllerResponseDTO.js';
 import { EExchangeType } from 'redis-smq';
 

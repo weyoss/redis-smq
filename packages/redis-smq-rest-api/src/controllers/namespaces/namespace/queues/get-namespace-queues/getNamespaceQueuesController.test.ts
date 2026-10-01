@@ -9,9 +9,9 @@
 
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { config } from '../../../../../../tests/common/config.js';
-import { createQueue } from '../../../../../../tests/common/create-queue.js';
-import { TResponse } from '../../../../../../tests/types/index.js';
+import { config } from '../../../../../../tests/helpers/config.js';
+import { createQueue } from '../../../../../../tests/helpers/create-queue.js';
+import { TResponse } from '../../../../../../tests/helpers/types.js';
 import { GetNamespacesControllerResponseDTO } from '../../../get-namespaces/GetNamespacesControllerResponseDTO.js';
 
 describe('getNamespaceQueuesController', () => {

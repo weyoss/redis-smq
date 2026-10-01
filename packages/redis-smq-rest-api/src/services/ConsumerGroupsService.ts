@@ -8,7 +8,11 @@
  */
 
 import bluebird from 'bluebird';
-import { ConsumerGroups, IQueueParams, QueuePendingMessages } from 'redis-smq';
+import {
+  IConsumerGroupsManager,
+  IQueueParams,
+  IQueuePendingMessages,
+} from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
@@ -17,8 +21,8 @@ export class ConsumerGroupsService {
   protected queuePendingMessages;
 
   constructor(
-    consumerGroups: ConsumerGroups,
-    queuePendingMessages: QueuePendingMessages,
+    consumerGroups: IConsumerGroupsManager,
+    queuePendingMessages: IQueuePendingMessages,
   ) {
     this.consumerGroups = promisifyAll(consumerGroups);
     this.queuePendingMessages = promisifyAll(queuePendingMessages);

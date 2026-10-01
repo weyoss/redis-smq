@@ -10,11 +10,11 @@
 import { EExchangeType, IExchangeParams } from 'redis-smq';
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { bindQueueFanout } from '../../../../../../../tests/common/bind-queue.js';
-import { config } from '../../../../../../../tests/common/config.js';
-import { createFanoutExchange } from '../../../../../../../tests/common/create-exchange.js';
-import { createQueue } from '../../../../../../../tests/common/create-queue.js';
-import { TResponse } from '../../../../../../../tests/types/index.js';
+import { bindQueueFanout } from '../../../../../../../tests/helpers/bind-queue.js';
+import { config } from '../../../../../../../tests/helpers/config.js';
+import { createFanoutExchange } from '../../../../../../../tests/helpers/create-exchange.js';
+import { createQueue } from '../../../../../../../tests/helpers/create-queue.js';
+import { TResponse } from '../../../../../../../tests/helpers/types.js';
 import { GetQueueExchangesControllerResponseDTO } from './GetQueueExchangesControllerResponseDTO.js';
 
 describe('getQueueExchangesController', () => {
