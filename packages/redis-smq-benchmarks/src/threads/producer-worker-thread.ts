@@ -8,7 +8,7 @@
  */
 
 import { parentPort, workerData } from 'worker_threads';
-import { ProducibleMessage, RedisSMQ } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
 import { async } from 'redis-smq-common';
 import {
   EWorkerMessageType,
@@ -35,7 +35,7 @@ RedisSMQ.initialize(redisConfig, (err) => {
         const pump = () => {
           if (producedCount < expectedMessages) {
             producedCount++;
-            const msg = new ProducibleMessage()
+            const msg = RedisSMQ.newProducibleMessage()
               .setQueue(queue)
               .setBody(`m${producedCount}`);
             producer.produce(msg, (perr) => {

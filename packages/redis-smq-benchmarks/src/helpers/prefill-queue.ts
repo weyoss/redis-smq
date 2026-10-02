@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IQueueParams, ProducibleMessage, RedisSMQ } from 'redis-smq';
+import { IQueueParams, RedisSMQ } from 'redis-smq';
 
 export function prefillQueue(
   queue: IQueueParams,
@@ -21,7 +21,9 @@ export function prefillQueue(
     const pump = () => {
       if (sent < count) {
         sent++;
-        const msg = new ProducibleMessage().setQueue(queue).setBody(`m${sent}`);
+        const msg = RedisSMQ.newProducibleMessage()
+          .setQueue(queue)
+          .setBody(`m${sent}`);
         producer.produce(msg, (perr) => {
           if (perr) return cb(perr);
           pump();
