@@ -12,13 +12,8 @@ import { computed, type ComputedRef } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import type { IQueuePublishedMessagesCountByStatus } from '@/api/model';
 
-// Type for consumer group pending counts
-export interface IQueueGroupConsumersPendingCount {
-  [consumerGroupId: string]: number;
-}
-
 export interface QueueStats {
-  pending: number | IQueueGroupConsumersPendingCount;
+  pending: number;
   acknowledged: number;
   deadLettered: number;
   scheduled: number;
@@ -66,13 +61,13 @@ function processMessageCount(
   // Case 2: data is an object with status counts
   if (typeof data === 'object' && data !== null) {
     // Handle pending which could be number or consumer group object
-    let pendingValue: number | IQueueGroupConsumersPendingCount = 0;
+    let pendingValue: number = 0;
 
     if (typeof data.pending === 'number') {
       pendingValue = data.pending;
     } else if (typeof data.pending === 'object' && data.pending !== null) {
       // It's a consumer group pending count object
-      pendingValue = { ...data.pending } as IQueueGroupConsumersPendingCount;
+      pendingValue = data.pending;
     }
 
     return {
@@ -146,14 +141,7 @@ export function useQueueStats(): QueueStatsState {
 
   // Get total pending count (sum of all consumer groups if needed)
   const getTotalPendingCount = computed<number>(() => {
-    if (typeof stats.value.pending === 'number') {
-      return stats.value.pending;
-    }
-    // Sum all consumer group pending counts
-    return Object.values(stats.value.pending).reduce(
-      (sum, count) => sum + count,
-      0,
-    );
+    return stats.value.pending;
   });
 
   // Get pending count for a specific consumer group
@@ -191,10 +179,7 @@ export function useQueueStats(): QueueStatsState {
       if (typeof data.pending === 'number') {
         total += data.pending;
       } else if (typeof data.pending === 'object' && data.pending !== null) {
-        total += Object.values(data.pending).reduce(
-          (sum, count) => sum + count,
-          0,
-        );
+        total += data.pending;
       }
 
       return total;
