@@ -7,16 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { IQueueParams, IQueueRateLimit, RedisSMQ } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
 
 export async function setRateLimit(
   queue: IQueueParams,
   rateLimit: IQueueRateLimit,
 ) {
-  const r = promisifyAll(RedisSMQ.createQueueRateLimit());
-  await r.setAsync(queue, rateLimit);
+  const r = RedisSMQ.createQueueRateLimitManager();
+  await r.set(queue, rateLimit);
   return rateLimit;
 }

@@ -7,21 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  QueueManager,
+  RedisSMQ,
 } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
 
 export async function createQueue(
   queue: string | IQueueParams,
   queueType: EQueueType = EQueueType.LIFO_QUEUE,
   deliveryModel: EQueueDeliveryModel = EQueueDeliveryModel.POINT_TO_POINT,
 ) {
-  const queueInstance = promisifyAll(new QueueManager());
-  return queueInstance.saveAsync(queue, queueType, deliveryModel);
+  const queueInstance = RedisSMQ.createQueueManager();
+  return queueInstance.save(queue, queueType, deliveryModel);
 }

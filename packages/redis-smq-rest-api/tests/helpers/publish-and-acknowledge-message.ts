@@ -8,37 +8,29 @@
  */
 
 import bluebird from 'bluebird';
-import {
-  Consumer,
-  EventBus,
-  IQueueParams,
-  Producer,
-  ProducibleMessage,
-} from 'redis-smq';
+import { IQueueParams, RedisSMQ } from 'redis-smq';
 import { ICallback } from 'redis-smq-common';
 
-const { promisifyAll, delay } = bluebird;
+const { delay } = bluebird;
 
 export async function publishAndAcknowledgeMessage(
   queue: string | IQueueParams,
 ) {
-  const producer = promisifyAll(new Producer());
-  await producer.runAsync();
+  const producer = await RedisSMQ.startProducer();
 
-  const consumer = promisifyAll(new Consumer());
-  await consumer.runAsync();
+  const consumer = await RedisSMQ.startConsumer();
 
-  const message = new ProducibleMessage();
+  const message = RedisSMQ.newProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const ids = await producer.produceAsync(message);
+  const ids = await producer.produce(message);
 
   const acknowledgedMessages: string[] = [];
-  const eventBusInstance = EventBus.getInstance();
+  const eventBusInstance = RedisSMQ.getEventBus();
   eventBusInstance.on('consumer.messageAcknowledged', (messageId) => {
     acknowledgedMessages.push(messageId);
   });
 
-  await consumer.consumeAsync(queue, (msg, cb: ICallback<void>) => {
+  await consumer.consume(queue, (msg, cb: ICallback<void>) => {
     cb();
   });
 
@@ -48,7 +40,7 @@ export async function publishAndAcknowledgeMessage(
     await delay(1000);
   }
 
-  await producer.shutdownAsync();
-  await consumer.shutdownAsync();
+  await producer.shutdown();
+  await consumer.shutdown();
   return ids;
 }

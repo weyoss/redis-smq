@@ -7,19 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { IQueueParams, ProducibleMessage, RedisSMQ } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
+import { IQueueParams, RedisSMQ } from 'redis-smq';
 
 export async function scheduleMessage(queue: string | IQueueParams) {
-  const producer = promisifyAll(RedisSMQ.createProducer());
-  await producer.runAsync();
+  const producer = await RedisSMQ.startProducer();
 
-  const message = new ProducibleMessage();
+  const message = RedisSMQ.newProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue).setScheduledDelay(15000);
-  const ids = await producer.produceAsync(message);
+  const ids = await producer.produce(message);
 
-  await producer.shutdownAsync();
+  await producer.shutdown();
   return ids;
 }

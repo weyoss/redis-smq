@@ -7,16 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
 import { IQueueParams, RedisSMQ } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
 
 export async function saveConsumerGroup(
   queue: IQueueParams,
   consumerGroup: string,
 ) {
-  const c = promisifyAll(RedisSMQ.createConsumerGroups());
-  await c.saveConsumerGroupAsync(queue, consumerGroup);
+  const c = RedisSMQ.createConsumerGroupsManager();
+  await c.saveConsumerGroup(queue, consumerGroup);
   return consumerGroup;
 }

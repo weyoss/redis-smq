@@ -7,23 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import {
-  ExchangeDirect,
-  ExchangeFanout,
-  ExchangeTopic,
-  IExchangeParams,
-  IQueueParams,
-} from 'redis-smq';
-
-const { promisifyAll } = bluebird;
+import { IExchangeParams, IQueueParams, RedisSMQ } from 'redis-smq';
 
 export async function bindQueueFanout(
   queue: IQueueParams,
   fanout: string | IExchangeParams,
 ) {
-  const exchange = promisifyAll(new ExchangeFanout());
-  await exchange.bindQueueAsync(queue, fanout);
+  const exchange = RedisSMQ.createFanoutExchange();
+  await exchange.bindQueue(queue, fanout);
 }
 
 export async function bindQueueDirect(
@@ -31,8 +22,8 @@ export async function bindQueueDirect(
   direct: string | IExchangeParams,
   routingKey: string,
 ) {
-  const exchange = promisifyAll(new ExchangeDirect());
-  await exchange.bindQueueAsync(queue, direct, routingKey);
+  const exchange = RedisSMQ.createDirectExchange();
+  await exchange.bindQueue(queue, direct, routingKey);
 }
 
 export async function bindQueueTopic(
@@ -40,6 +31,6 @@ export async function bindQueueTopic(
   topic: string | IExchangeParams,
   bindingPattern: string,
 ) {
-  const exchange = promisifyAll(new ExchangeTopic());
-  await exchange.bindQueueAsync(queue, topic, bindingPattern);
+  const exchange = RedisSMQ.createTopicExchange();
+  await exchange.bindQueue(queue, topic, bindingPattern);
 }

@@ -1,25 +1,20 @@
 /*
- * Copyright (c)
- * Weyoss <weyoss@outlook.com>
- * https://github.com/weyoss
- *
- * This source code is licensed under the MIT license found in the LICENSE file
- * in the root directory of this source tree.
+ * packages/redis-smq-rest-api/tests/setup/vitest.setup.ts
  */
 
-import { Consumer, EventBus, ProducibleMessage, RedisSMQ } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
-import { config } from './common/config.js';
+import { config } from '../helpers/config.js';
 import {
   getRedisClientInstance,
   shutdownRedisClient,
-} from './common/redis-client.js';
-import { redisSMQConfig } from './common/redis-smq-config.js';
-import { startApiServer, stopApiServer } from './common/start-api-server.js';
+} from '../helpers/redis-client.js';
+import { redisSMQConfig } from '../helpers/redis-smq-config.js';
+import { startApiServer, stopApiServer } from '../helpers/start-api-server.js';
 import {
   initializeRedis,
   shutDownRedisServer,
-} from './common/start-redis-server.js';
+} from '../helpers/start-redis-server.js';
 import { BackoffConfig } from 'redis-smq-common';
 
 beforeAll(async () => {
@@ -37,14 +32,14 @@ beforeEach(async () => {
   await RedisSMQ.initialize(config.redis!);
   await RedisSMQ.createConfigManager().updateConfig(redisSMQConfig);
   await RedisSMQ.shutdown();
-  ProducibleMessage.setDefaultConsumeOptions({
+  RedisSMQ.setDefaultMessageConsumeOptions({
     ttl: 0,
     retryThreshold: 3,
     retryDelay: 0,
     consumeTimeout: 0,
   });
 
-  Consumer.setDefaultOptions({
+  RedisSMQ.setDefaultConsumerOptions({
     heartbeatTTL: 3_000,
     batchAcks: {
       enabled: true,
@@ -65,7 +60,7 @@ beforeEach(async () => {
   });
 
   await startApiServer();
-  await EventBus.getInstance().run();
+  await RedisSMQ.getEventBus().run();
 });
 
 afterEach(async () => {

@@ -7,12 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import bluebird from 'bluebird';
-import { IQueueParams, QueueStateManager } from 'redis-smq';
-
-const { promisifyAll } = bluebird;
+import { IQueueParams, RedisSMQ } from 'redis-smq';
 
 export async function pauseQueue(queue: IQueueParams) {
-  const sm = promisifyAll(new QueueStateManager());
-  return sm.pauseAsync(queue, {});
+  const sm = RedisSMQ.createQueueStateManager();
+  return sm.pause(queue, {});
 }
