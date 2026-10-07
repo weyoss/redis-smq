@@ -19,7 +19,6 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  ProducibleMessage,
   RedisSMQ,
 } from 'redis-smq';
 import { mockWorkerThread } from './mock-worker-thread.js';
@@ -79,7 +78,7 @@ describe('consumer-worker-thread.ts', () => {
     const producer = bluebird.promisifyAll(RedisSMQ.createProducer());
     await producer.runAsync();
     for (let i = 0; i < workerData.expectedMessages; i++) {
-      const msg = new ProducibleMessage()
+      const msg = RedisSMQ.newProducibleMessage()
         .setQueue(workerData.queue)
         .setBody(`m${i}`);
       await producer.produceAsync(msg);
