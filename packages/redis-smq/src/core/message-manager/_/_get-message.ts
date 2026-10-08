@@ -7,7 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, IRedisClient } from 'redis-smq-common';
+import {
+  async,
+  CallbackEmptyReplyError,
+  ICallback,
+  IRedisClient,
+} from 'redis-smq-common';
 import { keys } from '../../common/redis/keys/keys.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { _parseMessage } from './_parse-message.js';
@@ -32,22 +37,25 @@ export function _getMessages(
   messageIds: string[],
   cb: ICallback<MessageEnvelope[]>,
 ): void {
-  const messages: MessageEnvelope[] = [];
+  // Pre-size the result array and assign by input index so the output
+  // order is deterministic regardless of the order in which the
+  // concurrent Redis reads complete. The public contract for
+  // IMessageManager.getMessagesByIds guarantees that the nth result
+  // corresponds to the nth input ID.
+  const messages = new Array<MessageEnvelope>(messageIds.length);
   async.eachOf(
     messageIds,
-    (id, _, done) => {
-      async.withCallback(
-        (cb: ICallback<MessageEnvelope>) => _getMessage(redisClient, id, cb),
-        (message, cb) => {
-          messages.push(message);
-          cb();
-        },
-        done,
-      );
+    (id, index, done) => {
+      _getMessage(redisClient, id, (err, message) => {
+        if (err) return done(err);
+        if (!message) return done(new CallbackEmptyReplyError());
+        messages[index] = message;
+        done();
+      });
     },
     (err) => {
-      if (err) cb(err);
-      else cb(null, messages);
+      if (err) return cb(err);
+      cb(null, messages);
     },
   );
 }
