@@ -7,7 +7,7 @@ export class Client extends RedisClientFactory {
     cb: ICallback<IRedisClient>,
   ) {
     client.loadScriptFiles(scriptFileMap, (err) => {
-      if (err) cb(err);
+      if (err) return cb(err);
       cb(null, client);
     });
   }
