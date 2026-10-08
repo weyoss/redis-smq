@@ -13,11 +13,11 @@ import { QueueNotFoundError } from '../../errors/index.js';
 import {
   EQueueDeliveryModel,
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
   IQueueParams,
   IQueueProperties,
 } from '../../../contracts/index.js';
+import { EQueueProperty } from '../types/queue-property.js';
 
 function parseProperties(
   raw: Record<string, string>,

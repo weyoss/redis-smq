@@ -31,12 +31,12 @@ import { getRedisForQueueOperation } from '../common/helpers/get-redis-for-queue
 import { QueueManager } from '../queue-manager/index.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   IQueueParams,
   IQueueRateLimit,
 } from '../../contracts/index.js';
 import { EQueueOperation } from '../../contracts/index.js';
 import { IQueueRateLimitManager } from '../../contracts/index.js';
+import { EQueueProperty } from '../queue-manager/types/queue-property.js';
 
 /**
  * Manages queue rate limiting.

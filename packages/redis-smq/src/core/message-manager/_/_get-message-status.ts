@@ -10,10 +10,8 @@
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { keys } from '../../common/redis/keys/keys.js';
 import { MessageNotFoundError } from '../../errors/index.js';
-import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../contracts/index.js';
+import { EMessagePropertyStatus } from '../../../contracts/index.js';
+import { EMessageProperty } from '../../message/message-property.js';
 
 export function _getMessageStatus(
   redisClient: IRedisClient,

@@ -36,16 +36,16 @@ import { IQueueWorkerPayload } from './types/queue-worker.js';
 import { Config } from '../common/redis/config.js';
 import {
   EMessageDeadLetterCause,
-  EMessageProperty,
   EMessagePropertyStatus,
   EMessageUnacknowledgementCause,
   EQueueOperationalState,
-  EQueueProperty,
   IConsumerMessageHandlerParams,
   IQueueParsedParams,
   IRedisSMQParsedConfig,
   TConsumerMessageHandler,
 } from '../../contracts/index.js';
+import { EMessageProperty } from '../message/message-property.js';
+import { EQueueProperty } from '../queue-manager/types/queue-property.js';
 
 /**
  * Events emitted by a MessageHandler.

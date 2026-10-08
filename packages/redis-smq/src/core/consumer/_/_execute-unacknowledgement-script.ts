@@ -21,7 +21,6 @@ import { Configuration } from '../../config-manager/configuration.js';
 import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   IQueueParsedParams,
 } from '../../../contracts/index.js';
 import {
@@ -30,11 +29,12 @@ import {
   TUnacknowledgementResult,
 } from '../types/message-unacknowledgement.js';
 import {
-  EMessageProperty,
   EMessagePropertyStatus,
   EMessageUnacknowledgementAction,
   IMessageUnacknowledgementRecord,
 } from '../../../contracts/index.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
+import { EMessageProperty } from '../../message/message-property.js';
 
 export function _executeUnacknowledgementScript(
   queue: IQueueParsedParams,

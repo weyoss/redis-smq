@@ -23,15 +23,13 @@ import {
   QueueStoppedError,
   UnexpectedScriptReplyError,
 } from '../../errors/index.js';
-import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../contracts/index.js';
+import { EMessagePropertyStatus } from '../../../contracts/index.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
 } from '../../../contracts/index.js';
+import { EMessageProperty } from '../../message/message-property.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 /**
  * Enqueues/schedules a message onto the specified queue in Redis.

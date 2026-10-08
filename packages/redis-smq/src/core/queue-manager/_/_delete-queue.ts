@@ -26,10 +26,10 @@ import { _getProcessingQueues } from './_get-processing-queues.js';
 import {
   EQueueOperation,
   EQueueOperationalState,
-  EQueueProperty,
   IQueueParams,
 } from '../../../contracts/index.js';
 import { _stringifyQueueParams } from './_stringify-queue-params.js';
+import { EQueueProperty } from '../types/queue-property.js';
 
 export function _deleteQueue(
   redisClient: IRedisClient,

@@ -22,10 +22,10 @@ import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 import {
   EQueueDeliveryModel,
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
   IQueueParams,
 } from '../../../contracts/index.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,

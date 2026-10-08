@@ -17,13 +17,11 @@ import { UnexpectedScriptReplyError } from '../../errors/index.js';
 import { ConsumerWorkerAbstract } from './consumer-worker-abstract.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
 } from '../../../contracts/index.js';
-import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../contracts/index.js';
+import { EMessagePropertyStatus } from '../../../contracts/index.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
+import { EMessageProperty } from '../../message/message-property.js';
 
 export class RequeueImmediateWorker extends ConsumerWorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {

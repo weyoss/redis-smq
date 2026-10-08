@@ -26,13 +26,13 @@ import { _getMessage } from './_get-message.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { _validateOperation } from '../../queue-operation-validator/_/_validate-operation.js';
 import {
-  EMessageProperty,
   EMessagePropertyStatus,
   EQueueOperation,
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
 } from '../../../contracts/index.js';
+import { EMessageProperty } from '../../message/message-property.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 export function _requeueMessage(
   redisClient: IRedisClient,

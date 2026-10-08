@@ -19,11 +19,11 @@ import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 import { withShared } from '../../common/redis/connection-pool/with-shared.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   IQueueConsumer,
   IQueueParsedParams,
 } from '../../../contracts/index.js';
 import { _stringifyQueueParams } from '../../queue-manager/_/_stringify-queue-params.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();

@@ -10,7 +10,8 @@
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { ProducibleMessage } from '../../message/index.js';
 import { _parseMessageState } from './_parse-message-state.js';
-import { EMessageProperty, IMessageParams } from '../../../contracts/index.js';
+import { IMessageParams } from '../../../contracts/index.js';
+import { EMessageProperty } from '../../message/message-property.js';
 
 /**
  * Transforms Redis HGETALL result (string array) to Record<string, string>

@@ -13,7 +13,7 @@ import { propertyConfigs } from './_parse-message-state.js';
 import {
   TMessageStateProperty,
   TMessageStatePropertyType,
-} from '../../../contracts/index.js';
+} from '../../message/message-property.js';
 
 /**
  * Retrieves and parses a message state property from Redis.

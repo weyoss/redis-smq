@@ -14,13 +14,13 @@ import { ERedisScriptName } from '../../common/scripts/registry.js';
 import { QueueNotFoundError } from '../../errors/index.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   IQueueParams,
 } from '../../../contracts/index.js';
 import {
   ESystemStateTransitionReason,
   IQueueStateTransition,
 } from '../../../contracts/index.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 export function _getQueueState(
   client: IRedisClient,

@@ -26,14 +26,12 @@ import {
 import { IMessageManagerDeleteResponse } from '../../../contracts/index.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
   IQueueParams,
 } from '../../../contracts/index.js';
-import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../contracts/index.js';
+import { EMessagePropertyStatus } from '../../../contracts/index.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
+import { EMessageProperty } from '../../message/message-property.js';
 
 export function _deleteMessage(
   redisClient: IRedisClient,

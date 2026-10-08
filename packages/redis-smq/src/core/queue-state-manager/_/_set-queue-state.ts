@@ -18,7 +18,6 @@ import {
 } from '../../errors/index.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   IQueueParams,
 } from '../../../contracts/index.js';
 import {
@@ -26,6 +25,7 @@ import {
   IQueueStateTransition,
   TQueueStateTransitionOptions,
 } from '../../../contracts/index.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 export const maxQueueStateHistorySize = 50;
 

@@ -13,7 +13,7 @@ import {
   EMessageProperty,
   TMessageStateProperty,
   TMessageStatePropertyType,
-} from '../../../contracts/index.js';
+} from '../../message/message-property.js';
 
 /**
  * Parses a value into a number.

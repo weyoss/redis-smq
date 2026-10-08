@@ -22,13 +22,11 @@ import {
 import { keys as redisKeys } from '../../common/redis/keys/keys.js';
 import {
   EQueueOperationalState,
-  EQueueProperty,
   IQueueParsedParams,
 } from '../../../contracts/index.js';
-import {
-  EMessageProperty,
-  EMessagePropertyStatus,
-} from '../../../contracts/index.js';
+import { EMessagePropertyStatus } from '../../../contracts/index.js';
+import { EMessageProperty } from '../../message/message-property.js';
+import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 
 function isValidAcknowledgementResult(
   reply: unknown,

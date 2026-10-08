@@ -28,7 +28,6 @@ import { maxQueueStateHistorySize } from '../queue-state-manager/_/_set-queue-st
 import {
   EQueueDeliveryModel,
   EQueueOperationalState,
-  EQueueProperty,
   EQueueType,
   ESystemStateTransitionReason,
   IQueueConsumer,
@@ -38,6 +37,7 @@ import {
   IQueueStateTransition,
 } from '../../contracts/index.js';
 import { _stringifyQueueParams } from './_/_stringify-queue-params.js';
+import { EQueueProperty } from './types/queue-property.js';
 
 /**
  * Manages queue lifecycle and metadata operations.
