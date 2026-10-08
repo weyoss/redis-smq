@@ -64,8 +64,8 @@ export class PurgeQueueJobManager extends ManagerAbstract<
         (_, next: ICallback<TPurgeQueueJob>) => {
           super.create(payload, { ...options, id: jobId }, (err, job) => {
             if (err) {
-              // If job creation fails, unlock the queue
-              _unlockQueue(
+              // If job creation fails, unlock the queue, then surface the error.
+              return _unlockQueue(
                 payload.queue.queueParams,
                 EQueueStateLockOwner.PURGE_JOB,
                 jobId,
