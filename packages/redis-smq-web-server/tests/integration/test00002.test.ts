@@ -12,9 +12,9 @@ import request from 'supertest';
 import {
   startApiServer,
   shutdownApiServer,
-} from '../common/start-api-server.js';
+} from '../helpers/start-api-server.js';
 import { RedisSMQWebServer } from '../../index.js';
-import { config } from '../common/config.js';
+import { config } from '../helpers/config.js';
 import { net } from 'redis-smq-common';
 import path from 'path';
 

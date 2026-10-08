@@ -9,7 +9,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { startCliWithArgs, StartedProcess } from '../common/start-cli.js';
+import { startCliWithArgs, StartedProcess } from '../helpers/start-cli.js';
 import path from 'path';
 
 describe('CLI: serves SPA with default basePath "/"', () => {

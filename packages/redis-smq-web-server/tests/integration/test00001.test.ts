@@ -9,11 +9,11 @@
 
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import { config } from '../common/config.js';
+import { config } from '../helpers/config.js';
 import {
   shutdownWebServer,
   startWebServer,
-} from '../common/start-web-server.js';
+} from '../helpers/start-web-server.js';
 import path from 'path';
 
 describe('RedisSMQWebServer E2E Tests', () => {

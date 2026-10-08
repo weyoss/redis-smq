@@ -140,7 +140,7 @@ export class RedisSMQWebServer {
     }
 
     // SPA Fallback: Serve index.html for any non-API, non-file GET request.
-    this.app.get('*', (req: TRequest, res: TResponse, next: TNextFn) => {
+    this.app.get(/(.*)/, (req: TRequest, res: TResponse, next: TNextFn) => {
       if (
         req.path.startsWith(path.posix.join(basePath, 'api')) ||
         req.path.startsWith(path.posix.join(basePath, 'swagger'))

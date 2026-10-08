@@ -8,7 +8,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { startCliWithArgs, StartedProcess } from '../common/start-cli.js';
+import { startCliWithArgs, StartedProcess } from '../helpers/start-cli.js';
 import request from 'supertest';
 
 describe('CLI: respects custom basePath "/ui"', () => {
