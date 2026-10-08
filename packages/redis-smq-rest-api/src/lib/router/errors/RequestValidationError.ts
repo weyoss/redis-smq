@@ -9,15 +9,10 @@
 
 import { RedisSMQRestApiError } from '../../errors/errors/RedisSMQRestApiError.js';
 import { ErrorObject } from 'ajv';
-import { IRedisSMQErrorProperties } from 'redis-smq-common';
 
 export class RequestValidationError extends RedisSMQRestApiError<{
   errorObjects: Partial<ErrorObject>[];
 }> {
-  getProps(): IRedisSMQErrorProperties {
-    return {
-      code: 'RedisSMQRestApi.RequestDTO.ValidationFailed',
-      defaultMessage: 'Request validation failed.',
-    };
-  }
+  static override readonly code = 'RedisSMQRestApi.RequestDTO.ValidationFailed';
+  static override readonly defaultMessage = 'Request validation failed.';
 }

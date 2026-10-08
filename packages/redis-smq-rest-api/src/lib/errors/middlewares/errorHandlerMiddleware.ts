@@ -48,7 +48,7 @@ function handleRedisSMQError(
 
   const details =
     error instanceof RequestValidationError
-      ? error.getMetadata()?.errorObjects
+      ? error.metadata?.errorObjects
       : undefined;
 
   ctx.status = statusCode;

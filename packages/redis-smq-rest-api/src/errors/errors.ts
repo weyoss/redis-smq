@@ -55,6 +55,7 @@ export const errors = {
     'ConfigurationMessageAuditExpireError',
   ] as const,
   ConfigurationNamespaceError: [422, 'ConfigurationNamespaceError'] as const,
+  ConfigurationNotFoundError: [400, 'ConfigurationNotFoundError'] as const,
   ConfigurationUpdateError: [422, 'ConfigurationUpdateError'] as const,
   ConsumerGroupHasActiveConsumersError: [
     409,
@@ -173,7 +174,7 @@ export const errors = {
   ProcessingQueueNotEmptyError: [412, 'ProcessingQueueNotEmptyError'] as const,
   ProducerNotRunningError: [400, 'ProducerNotRunningError'] as const,
   QueueAlreadyBeingPurgedError: [409, 'QueueAlreadyBeingPurgedError'] as const,
-  QueueAlreadyBound: [400, 'QueueAlreadyBound'] as const,
+  QueueAlreadyBoundError: [409, 'QueueAlreadyBoundError'] as const,
   QueueAlreadyExistsError: [409, 'QueueAlreadyExistsError'] as const,
   QueueHasActiveConsumersError: [412, 'QueueHasActiveConsumersError'] as const,
   QueueHasBoundExchangesError: [409, 'QueueHasBoundExchangesError'] as const,

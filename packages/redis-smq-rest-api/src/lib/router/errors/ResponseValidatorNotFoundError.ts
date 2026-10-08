@@ -10,10 +10,7 @@
 import { RedisSMQRestApiError } from '../../errors/errors/RedisSMQRestApiError.js';
 
 export class ResponseValidatorNotFoundError extends RedisSMQRestApiError {
-  getProps() {
-    return {
-      code: 'RedisSMQRestApi.ResponseDTO.ResponseValidatorNotFound',
-      defaultMessage: 'Response validator not found.',
-    };
-  }
+  static override readonly code =
+    'RedisSMQRestApi.ResponseDTO.ResponseValidatorNotFound';
+  static override readonly defaultMessage = 'Response validator not found.';
 }
