@@ -590,9 +590,16 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
   }
 
   /**
-   * Identifies and destroys idle connections that exceed the configured timeout.
+   * Identifies and destroys idle connections that exceed the configured
+   * timeout.
    *
-   * Only destroys connections when the pool size is above the minimum threshold.
+   * Only destroys connections while the pool remains at or above `min`.
+   * The budget is computed once from the pool's current size; it is
+   * decremented per collected candidate so a batch of idle connections
+   * cannot collectively drop the pool below its floor. This is the same
+   * class of guard as the `pendingCreations` accounting in `acquire()`
+   * and `destroy()` — without it, every candidate in the iteration sees
+   * the same un-decremented size and all of them pass.
    */
   protected reapIdleConnections(): void {
     if (this.shuttingDown) return;
@@ -600,7 +607,15 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
     const now = Date.now();
     const connectionsToDestroy: string[] = [];
 
+    // Number of connections we may destroy while leaving the pool at or
+    // above `min`. Zero means there is no headroom this cycle.
+    let budget = Math.max(0, this.connections.size - this.poolConfig.min);
+
+    if (budget === 0) return;
+
     for (const [connectionId, connection] of this.connections) {
+      if (budget === 0) break;
+
       const isIdle =
         !connection.inUse &&
         !connection.exclusivelyAcquired &&
@@ -608,16 +623,16 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
 
       if (
         isIdle &&
-        this.connections.size > this.poolConfig.min &&
         now - connection.lastUsed > this.poolConfig.idleTimeoutMillis
       ) {
         connectionsToDestroy.push(connectionId);
+        budget--;
       }
     }
 
-    connectionsToDestroy.forEach((connectionId) => {
+    for (const connectionId of connectionsToDestroy) {
       this.destroyConnection(connectionId);
-    });
+    }
   }
 
   /**
