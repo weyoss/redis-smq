@@ -32,30 +32,78 @@ export function _getMessage(
   });
 }
 
+/**
+ * Strict variant: every ID must resolve to a message. A single missing
+ * ID rejects the whole call with `MessageNotFoundError`.
+ *
+ * Used by `IMessageManager.getMessagesByIds`, whose documented contract
+ * requires this behaviour. Preserves the caller's input order in the
+ * result.
+ */
 export function _getMessages(
   redisClient: IRedisClient,
   messageIds: string[],
   cb: ICallback<MessageEnvelope[]>,
 ): void {
-  // Pre-size the result array and assign by input index so the output
-  // order is deterministic regardless of the order in which the
-  // concurrent Redis reads complete. The public contract for
-  // IMessageManager.getMessagesByIds guarantees that the nth result
-  // corresponds to the nth input ID.
-  const messages = new Array<MessageEnvelope>(messageIds.length);
+  _fetchMessages(redisClient, messageIds, false, cb);
+}
+
+/**
+ * Lenient variant: a missing ID is skipped rather than rejecting the
+ * call, so the result may be shorter than the input. Preserves the
+ * relative order of the messages that *were* fetched.
+ *
+ * Used by `MessageBrowser.getMessages`, whose contract states that a
+ * message deleted between the ID read and the payload read is omitted
+ * from the page.
+ */
+export function _getMessagesLenient(
+  redisClient: IRedisClient,
+  messageIds: string[],
+  cb: ICallback<MessageEnvelope[]>,
+): void {
+  _fetchMessages(redisClient, messageIds, true, cb);
+}
+
+/**
+ * Shared implementation of the strict and lenient variants.
+ *
+ * Assigns each result to the slot at its input index so the output
+ * order is deterministic regardless of the order in which the
+ * concurrent Redis reads complete (see I1). When `skipMissing` is true,
+ * a `MessageNotFoundError` from a single read records an empty slot and
+ * the loop continues; otherwise the error short-circuits. Empty slots
+ * are filtered out at the end.
+ */
+function _fetchMessages(
+  redisClient: IRedisClient,
+  messageIds: string[],
+  skipMissing: boolean,
+  cb: ICallback<MessageEnvelope[]>,
+): void {
+  const slots = new Array<MessageEnvelope | null>(messageIds.length);
   async.eachOf(
     messageIds,
     (id, index, done) => {
       _getMessage(redisClient, id, (err, message) => {
-        if (err) return done(err);
-        if (!message) return done(new CallbackEmptyReplyError());
-        messages[index] = message;
+        if (err) {
+          if (skipMissing && err instanceof MessageNotFoundError) {
+            slots[index] = null;
+            return done();
+          }
+          return done(err);
+        }
+        if (!message) return cb(new CallbackEmptyReplyError());
+        slots[index] = message;
         done();
       });
     },
     (err) => {
       if (err) return cb(err);
-      cb(null, messages);
+      cb(
+        null,
+        slots.filter((m): m is MessageEnvelope => m !== null),
+      );
     },
   );
 }

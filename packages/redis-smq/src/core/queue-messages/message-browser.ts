@@ -16,7 +16,7 @@ import {
 import { keys as redisKeys } from '../common/redis/keys/keys.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
-import { MessageManager } from '../message-manager/index.js';
+import { _getMessagesLenient } from '../message-manager/_/_get-message.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { InvalidPurgeQueueJobIdError } from '../errors/index.js';
 import { IBrowserStorage } from './browser-storage-abstract.js';
@@ -48,7 +48,7 @@ import { EQueueOperation } from '../../contracts/index.js';
  * strategy for the message category they represent.
  *
  * @abstract
- * @implements {MessageBrowser}
+ * @implements {IMessageBrowser}
  */
 export class MessageBrowser implements IMessageBrowser {
   /**
@@ -67,11 +67,6 @@ export class MessageBrowser implements IMessageBrowser {
   protected requireGroupId: boolean;
 
   /**
-   * Message manager for retrieving detailed message information.
-   */
-  protected readonly messageManager: MessageManager;
-
-  /**
    * Storage implementation for the specific Redis data structure.
    */
   protected readonly messageStorage: IBrowserStorage;
@@ -82,14 +77,12 @@ export class MessageBrowser implements IMessageBrowser {
   public readonly messageType: EQueueMessageType;
 
   constructor(
-    messageManager: MessageManager,
     messageStorage: IBrowserStorage,
     messageType: EQueueMessageType,
     redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
     requireGroupId: boolean,
     logger: ILogger,
   ) {
-    this.messageManager = messageManager;
     this.messageStorage = messageStorage;
     this.messageType = messageType;
     this.logger = logger;
@@ -383,16 +376,29 @@ export class MessageBrowser implements IMessageBrowser {
                 return;
               }
 
-              this.messageManager.getMessagesByIds(
-                pageResult.items,
-                (err, messages) => {
-                  if (err) {
-                    next(err);
-                    return;
-                  }
+              // Fetch each ID individually and skip MessageNotFoundError
+              // so a message deleted between the ID read and the payload
+              // read is omitted from the page rather than rejecting the
+              // whole call. This is what the documented contract on
+              // IQueueMessages.getMessages promises, and it is why the
+              // strict IMessageManager.getMessagesByIds is not used here.
+              withShared<IMessageTransferable[]>(
+                (client, clientCb) => {
+                  _getMessagesLenient(
+                    client,
+                    pageResult.items,
+                    (err, messages) =>
+                      clientCb(
+                        err,
+                        messages?.map((m) => m.transfer()),
+                      ),
+                  );
+                },
+                (err, items) => {
+                  if (err) return next(err);
                   next(null, {
                     ...pageResult,
-                    items: messages ?? [],
+                    items: items ?? [],
                   });
                 },
               );

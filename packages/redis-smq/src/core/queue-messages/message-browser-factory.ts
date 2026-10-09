@@ -9,7 +9,6 @@
 
 import { CallbackEmptyReplyError, ICallback, ILogger } from 'redis-smq-common';
 import { MessageBrowser } from './message-browser.js';
-import { MessageManager } from '../message-manager/index.js';
 import { BrowserStorageSortedSet } from './browser-storage-sorted-set.js';
 import { BrowserStorageList } from './browser-storage-list.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
@@ -24,11 +23,9 @@ export class MessageBrowserFactory {
     messageType: EQueueMessageType,
     logger: ILogger,
   ): IMessageBrowser {
-    const messageManager = new MessageManager();
     switch (queueType) {
       case EQueueType.PRIORITY_QUEUE:
         return new MessageBrowser(
-          messageManager,
           new BrowserStorageSortedSet(logger),
           messageType,
           'keyQueuePriority',
@@ -38,7 +35,6 @@ export class MessageBrowserFactory {
       case EQueueType.LIFO_QUEUE:
       case EQueueType.FIFO_QUEUE:
         return new MessageBrowser(
-          messageManager,
           new BrowserStorageList(logger),
           messageType,
           'keyQueuePending',
@@ -55,11 +51,9 @@ export class MessageBrowserFactory {
     queueType: EQueueType,
     logger: ILogger,
   ): IMessageBrowser {
-    const messageManager = new MessageManager();
     switch (messageType) {
       case EQueueMessageType.PUBLISHED:
         return new MessageBrowser(
-          messageManager,
           new BrowserStorageList(logger),
           messageType,
           'keyQueuePublished',
@@ -69,7 +63,6 @@ export class MessageBrowserFactory {
 
       case EQueueMessageType.SCHEDULED:
         return new MessageBrowser(
-          messageManager,
           new BrowserStorageSortedSet(logger),
           messageType,
           'keyQueueScheduled',
@@ -86,7 +79,6 @@ export class MessageBrowserFactory {
 
       case EQueueMessageType.ACKNOWLEDGED:
         return new MessageBrowser(
-          messageManager,
           new BrowserStorageList(logger),
           messageType,
           'keyQueueAcknowledged',
@@ -96,7 +88,6 @@ export class MessageBrowserFactory {
 
       case EQueueMessageType.DEAD_LETTERED:
         return new MessageBrowser(
-          messageManager,
           new BrowserStorageList(logger),
           messageType,
           'keyQueueDeadLetter',
