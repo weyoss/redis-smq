@@ -145,17 +145,16 @@ export interface IExchangeFanout {
   /**
    * Returns every queue the exchange delivers to.
    *
-   * In the source, this method delegates to `getBindings` — the two are
-   * interchangeable for a fanout exchange. `matchQueues` is the name the
-   * producer uses when resolving an exchange's targets; `getBindings` is
-   * the name an operator uses when inspecting the exchange. Both return
-   * the same list.
+   * For a fanout exchange this is the entire routing table — the set of
+   * queues bound to the exchange. There is no key or pattern to filter
+   * by.
    *
-   * The alias exists for symmetry with `IExchangeDirect` and
-   * `IExchangeTopic`, both of which distinguish the two concepts: for
-   * those exchanges, `matchQueues` performs an extra exchange-existence
-   * validation that `getBindings` does not. For fanout, no such
-   * distinction is present, but the method is kept for API consistency.
+   * `matchQueues` is the name the producer uses when resolving an
+   * exchange's targets; `getBindings` is the name an operator uses when
+   * inspecting the exchange. Both return the same list for an existing
+   * exchange. A missing exchange rejects with `ExchangeNotFoundError`.
+   *
+   * Order of the returned queues is undefined.
    */
   matchQueues(exchange: string | IExchangeParams): Promise<IQueueParams[]>;
   matchQueues(

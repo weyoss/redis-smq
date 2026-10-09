@@ -188,14 +188,15 @@ export interface IExchangeStrategy {
    *
    *   - `client` — a pooled Redis connection acquired once for the
    *     whole operation. The strategy must not acquire its own.
-   *   - `exchange` — the parsed exchange params. The exchange is not
-   *     validated for existence inside `matchQueues`; the strategy is
-   *     free to skip the existence check when its read returns empty,
-   *     because the caller's contract treats an empty result and a
-   *     missing exchange identically for *topic* matching (the pattern
-   *     set is empty either way). Direct matching does validate
-   *     existence — see the direct strategy's implementation for the
-   *     reasoning.
+   *   - `exchange` — the parsed exchange params. Strategies are called
+   *     only by the exchange manager, which validates the exchange's
+   *     existence — rejecting with `ExchangeNotFoundError` — before
+   *     dispatching. A strategy may therefore assume the exchange exists;
+   *     it is not free to observe the missing-exchange case, and none of
+   *     the three does. An empty result from `matchQueues` means the
+   *     exchange exists and nothing matched; the manager does not
+   *     translate that into an error, and the producer raises
+   *     `NoMatchingQueuesError` at its own boundary.
    *   - `routingKey` — the caller-supplied routing key. `null` for
    *     fanout, where the argument is meaningless. Direct and topic
    *     strategies may assume a non-null value; the manager enforces

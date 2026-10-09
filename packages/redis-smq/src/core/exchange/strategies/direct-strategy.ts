@@ -7,14 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, IRedisClient } from 'redis-smq-common';
+import { ICallback, IRedisClient } from 'redis-smq-common';
 import { keys } from '../../common/redis/keys/keys.js';
 import { validateRedisKey } from '../../common/redis/keys/validator.js';
 import {
   InvalidDirectExchangeParametersError,
   InvalidExchangeRoutingKeyError,
 } from '../../errors/index.js';
-import { _validateExchange } from '../_/_validate-exchange.js';
 import { _getRoutingKeyBoundQueues } from '../_/_get-routing-key-bound-queues.js';
 import {
   EExchangeType,
@@ -42,11 +41,6 @@ import {
  *   routing-key concepts coincide exactly — in a direct exchange, the
  *   binding *is* the routing key.
  */
-
-// ---------------------------------------------------------------------------
-// Strategy
-// ---------------------------------------------------------------------------
-
 export class DirectStrategy implements IExchangeStrategy {
   /**
    * Direct exchanges are identified by `EExchangeType.DIRECT` in both
@@ -98,13 +92,9 @@ export class DirectStrategy implements IExchangeStrategy {
    * The set of routing keys currently registered on the exchange.
    *
    * A routing key appears in this set while at least one queue is
-   * bound under it. The set is maintained by `bindQueue` (adds the
-   * key) and `unbindQueue` (removes the key when its queue set becomes
-   * empty).
-   *
-   * Used by `delete-exchange` and `unbindQueue` to enumerate the
-   * exchange's bindings when they need to walk all of them, and by
-   * `getBindings` to produce the routing-key → queues map.
+   * bound under it. Used by `delete-exchange` and `unbindQueue` to
+   * enumerate the exchange's bindings when they need to walk all of
+   * them, and by `getBindings` to produce the routing-key → queues map.
    */
   getBindingsListKey(ns: string, name: string): string {
     return keys.getExchangeDirectKeys(ns, name).keyExchangeRoutingKeys;
@@ -112,13 +102,6 @@ export class DirectStrategy implements IExchangeStrategy {
 
   /**
    * The set of queues bound under a specific routing key.
-   *
-   * `binding` is required for direct exchanges — the manager's arity
-   * check prevents this method from being called without one. The
-   * non-null assertion reflects that contract; a caller who reaches
-   * here without a routing key has already bypassed the manager's
-   * validation and will get a Redis key derived from `undefined`,
-   * which surfaces as an empty result rather than a crash.
    */
   getBindingQueuesKey(ns: string, name: string, binding?: string): string {
     return keys.getExchangeDirectRoutingKeyKeys(ns, name, binding!)
@@ -133,23 +116,13 @@ export class DirectStrategy implements IExchangeStrategy {
    * Resolve a routing key to the queues a message published under it
    * should be delivered to.
    *
-   * Two-step read:
+   * One read: `SMEMBERS` against the queue set for the routing key's
+   * normalized form. The exchange's existence is assumed — the manager
+   * validated it before dispatching. An empty result means the
+   * exchange exists but no queue is bound under the routing key.
    *
-   *   1. Validate the exchange exists. A missing exchange is a
-   *      distinct failure from "no matching queues", and the source
-   *      reports it as `ExchangeNotFoundError`.
-   *
-   *   2. Look up the queue set for the routing key's normalized form.
-   *
-   * The two reads are sequenced, not parallel, because the existence
-   * check is a precondition: on a missing exchange the second read
-   * would return an empty array, and reporting that as a successful
-   * match would obscure the real failure.
-   *
-   * The callback receives the resolved queue set on success. An empty
-   * array is a valid result — the exchange exists but no queue is
-   * bound under the routing key. Order is undefined; the result is
-   * whatever order Redis's `SMEMBERS` produced.
+   * The callback receives the resolved queue set on success. Order is
+   * undefined; the result is whatever order Redis's `SMEMBERS` produced.
    */
   matchQueues(
     client: IRedisClient,
@@ -157,10 +130,10 @@ export class DirectStrategy implements IExchangeStrategy {
     routingKey: string | null,
     cb: ICallback<IQueueParams[]>,
   ): void {
-    // Direct requires a routing key — the manager enforces this, but
-    // a null here means a manager-level bug rather than a caller
-    // error. Report it as a routing-key validation failure rather
-    // than crashing on a `null` dereference below.
+    // Direct requires a routing key — the manager enforces this. A
+    // null here means a manager-level bug rather than a caller error;
+    // report it as a routing-key validation failure rather than
+    // crashing on a `null` dereference below.
     routingKey = routingKey ?? '';
     const validated = validateRedisKey(routingKey);
     if (validated instanceof Error) {
@@ -170,39 +143,6 @@ export class DirectStrategy implements IExchangeStrategy {
         }),
       );
     }
-
-    const result: IQueueParams[] = [];
-
-    async.series(
-      [
-        // 1) Validate the exchange exists. The `required: true`
-        //    argument tells `_validateExchange` to reject with
-        //    `ExchangeNotFoundError` when the exchange's properties
-        //    hash is absent.
-        (next: ICallback) => _validateExchange(client, exchange, true, next),
-
-        // 2) Read the queue set for the routing key. Pushing into
-        //    `result` rather than returning the array keeps the
-        //    series' callback types uniform — the first step
-        //    produces no value, the second produces a list, and
-        //    `async.series` is not typed for heterogeneous series
-        //    results in this codebase.
-        (next: ICallback) =>
-          _getRoutingKeyBoundQueues(
-            client,
-            exchange,
-            validated,
-            (err, queues) => {
-              if (err) return next(err);
-              if (queues && queues.length) result.push(...queues);
-              next();
-            },
-          ),
-      ],
-      (err) => {
-        if (err) return cb(err);
-        cb(null, result);
-      },
-    );
+    _getRoutingKeyBoundQueues(client, exchange, validated, cb);
   }
 }

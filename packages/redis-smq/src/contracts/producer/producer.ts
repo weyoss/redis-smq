@@ -87,7 +87,13 @@ export interface IProducer extends Runnable<TProducerEvent> {
    *     queue nor an exchange.
    *   - `RoutingKeyRequiredError` — the message targets a direct or
    *     topic exchange without a routing key.
-   *   - `NoMatchingQueuesError` — the exchange resolved to zero queues.
+   *   - `ExchangeNotFoundError` — the message targets an exchange that
+   *     does not exist. Raised before routing is attempted, so the
+   *     error is uniform across the three exchange types.
+   *   - `NoMatchingQueuesError` — the exchange exists but resolved to
+   *     zero destination queues. Distinct from `ExchangeNotFoundError`:
+   *     this is a valid exchange with no listeners, not a missing
+   *     exchange.
    *   - `QueueHasNoConsumerGroupsError` — the message targets a PUB/SUB
    *     queue that has no consumer groups.
    *   - `PanicError` — the resolver is not operational, or an internal

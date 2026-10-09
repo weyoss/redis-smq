@@ -57,37 +57,6 @@ import { InvalidFanoutExchangeParametersError } from '../../errors/index.js';
  *   fanout-specific branches — the branches are written as "if there
  *   is no bindings list, do X", and this strategy is the source of
  *   the condition.
- *
- * WHY THERE IS NO EXISTENCE CHECK IN `matchQueues`:
- *
- *   The three strategies are not required to agree on whether
- *   `matchQueues` validates the exchange's existence. Direct does
- *   (rejecting a missing exchange with `ExchangeNotFoundError`), and
- *   topic and fanout do not (returning an empty array for both a
- *   missing exchange and an empty binding set).
- *
- *   For fanout, the "does not distinguish" behavior is inherited from
- *   the source: the exchange's queue set is read via `SSCAN`, which
- *   returns an empty result for a missing key without an error. A
- *   caller who wants to know whether a fanout exchange exists checks
- *   it separately (via `getProperties` or `exists` on the manager).
- *
- *   The asymmetry is documented in `IExchangeFanout.matchQueues` and
- *   in the manager's `matchQueues` docstring, so a reader is not
- *   surprised by the difference.
- *
- * WHY THE QUEUE-SET READ IS `_getBoundQueues`:
- *
- *   The helper reads `keyFanoutQueues` — the single set the fanout
- *   exchange maintains — and returns its members. It is the same
- *   helper the current `ExchangeFanout` implementation uses, so the
- *   refactor preserves the exact Redis access pattern.
- *
- *   `getBindingQueuesKey` below returns that same key for the
- *   operations that need to derive it (delete, unbind). The two paths
- *   end up reading and writing the same Redis key; the helper exists
- *   because `matchQueues` wants the members while the operations want
- *   the key.
  */
 export class FanoutStrategy implements IExchangeStrategy {
   /**

@@ -157,9 +157,7 @@ export interface IExchangeTopic {
    *
    * A queue bound under two matching patterns appears once in the
    * result. A routing key that matches no pattern returns an empty
-   * array. A missing exchange is not an error — the method returns an
-   * empty array in that case too, because the pattern read returns
-   * nothing.
+   * array. A missing exchange rejects with `ExchangeNotFoundError`.
    *
    * Order of the returned queues is undefined.
    */

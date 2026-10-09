@@ -143,9 +143,9 @@ export interface IExchangeDirect {
    * exchange does not exist at all.
    *
    * The two cases — empty result and missing exchange — are distinct.
-   * A producer that wants to distinguish "no matching queue" from "no
-   * such exchange" inspects the error. The producer's normal path treats
-   * both as "nothing to deliver" and raises `NoMatchingQueuesError`.
+   * The producer distinguishes them at its own boundary: a missing
+   * exchange propagates as `ExchangeNotFoundError`, while an empty
+   * result raises `NoMatchingQueuesError`.
    */
   matchQueues(
     exchange: string | IExchangeParams,
