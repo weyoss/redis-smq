@@ -7,8 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, IRedisClient } from 'redis-smq-common';
+import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { keys } from '../../common/redis/keys/keys.js';
+import { _queueExists } from '../../queue-manager/_/_queue-exists.js';
+import { QueueNotFoundError } from '../../errors/index.js';
 import { IQueueParams } from '../../../contracts/index.js';
 
 export function _getConsumerGroups(
@@ -21,5 +23,19 @@ export function _getConsumerGroups(
     queue.name,
     null,
   );
-  redisClient.smembers(keyQueueConsumerGroups, cb);
+  async.series(
+    [
+      (next: ICallback) =>
+        _queueExists(redisClient, queue, (err, exists) => {
+          if (err) return next(err);
+          if (!exists) {
+            return next(new QueueNotFoundError({ metadata: { queue } }));
+          }
+          next();
+        }),
+      (next: ICallback<string[]>) =>
+        redisClient.smembers(keyQueueConsumerGroups, next),
+    ],
+    (err, reply) => cb(err, reply?.[1]),
+  );
 }
