@@ -15,7 +15,7 @@ import {
   TPurgeQueueJobMeta,
   TPurgeQueueJobPayload,
 } from './types/index.js';
-import { EBackgroundJobStatus } from '../../../index.js';
+import { EBackgroundJobStatus } from '../../types/index.js';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobNotFoundError } from '../../../../errors/index.js';
 import { _lockQueue } from '../../../../queue-state-manager/_/_lock-queue.js';

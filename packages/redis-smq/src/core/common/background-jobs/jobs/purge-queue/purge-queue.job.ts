@@ -10,7 +10,7 @@
 import { WorkerAbstract } from '../../worker-abstract.js';
 import { async, ICallback, PanicError } from 'redis-smq-common';
 import { PurgeQueueJobManager } from './purge-queue-job-manager.js';
-import { EBackgroundJobStatus } from '../../../index.js';
+import { EBackgroundJobStatus } from '../../types/index.js';
 import { _deleteMessage } from '../../../../message-manager/_/_delete-message.js';
 import { BackgroundJobCanceledError } from '../../../../errors/index.js';
 import { TPurgeQueueJob } from './types/index.js';

@@ -20,7 +20,7 @@ import { _getMessagesLenient } from '../message-manager/_/_get-message.js';
 import { withShared } from '../common/redis/connection-pool/with-shared.js';
 import { InvalidPurgeQueueJobIdError } from '../errors/index.js';
 import { IBrowserStorage } from './browser-storage-abstract.js';
-import { EBackgroundJobStatus } from '../common/index.js';
+import { EBackgroundJobStatus } from '../common/background-jobs/types/index.js';
 import { PurgeQueueJobManager } from '../common/background-jobs/jobs/purge-queue/purge-queue-job-manager.js';
 import { _validateOperation } from '../queue-operation-validator/_/_validate-operation.js';
 import { _getMessageIds } from './_/_get-message-ids.js';

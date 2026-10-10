@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { EBackgroundJobStatus } from '../../common/index.js';
+import { EBackgroundJobStatus } from '../../common/background-jobs/types/index.js';
 import { EQueueMessageType } from './queue-messages-registry.js';
 import { TQueueExtendedParams } from '../../../contracts/index.js';
 import { IMessageTransferable } from '../../../contracts/index.js';

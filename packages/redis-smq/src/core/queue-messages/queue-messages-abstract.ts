@@ -13,7 +13,7 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { EBackgroundJobStatus } from '../common/index.js';
+import { EBackgroundJobStatus } from '../common/background-jobs/types/index.js';
 import { Configuration } from '../config-manager/configuration.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import { MessageBrowserFactory } from './message-browser-factory.js';
