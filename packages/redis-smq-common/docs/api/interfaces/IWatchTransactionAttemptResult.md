@@ -4,9 +4,9 @@
 
 ## Properties
 
-### afterExec()?
+### afterExec?
 
-> `optional` **afterExec**: (`execResult`) => `void`
+> `optional` **afterExec?**: (`execResult`) => `void`
 
 Optional post-success hook. Called after a successful EXEC (non-null result).
 
@@ -20,7 +20,7 @@ Optional post-success hook. Called after a successful EXEC (non-null result).
 
 `void`
 
-***
+---
 
 ### multi
 

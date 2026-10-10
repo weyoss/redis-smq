@@ -11,7 +11,7 @@ to ensure consistent behavior across the application.
 
 ## Type Declaration
 
-### each()
+### each
 
 > **each**: \<`T`\>(`collection`, `iteratee`, `callback`) => `void`
 
@@ -33,9 +33,9 @@ The type of elements or values in the collection
 
 ##### collection
 
-The array or object to iterate over
+`Record`\<`string`, `T`\> \| `T`[]
 
-`Record`\<`string`, `T`\> | `T`[]
+The array or object to iterate over
 
 ##### iteratee
 
@@ -53,7 +53,7 @@ The callback function called after all items or properties have been processed o
 
 `void`
 
-### eachIn()
+### eachIn
 
 > **eachIn**: \<`T`\>(`collection`, `iteratee`, `callback`) => `void`
 
@@ -95,7 +95,7 @@ The callback function called after all properties have been processed or when an
 
 `void`
 
-### eachOf()
+### eachOf
 
 > **eachOf**: \<`T`\>(`collection`, `iteratee`, `callback`) => `void`
 
@@ -137,7 +137,7 @@ The callback function called after all items have been processed or when an erro
 
 `void`
 
-### exec()
+### exec
 
 > **exec**: \<`T`\>(`operation`, `callback`) => `void`
 
@@ -171,7 +171,7 @@ The callback to invoke with results
 
 T - The type of data returned by the operation
 
-### map()
+### map
 
 > **map**: \<`T`, `R`\>(`items`, `operation`, `chunkSize`, `callback`) => `void`
 
@@ -259,7 +259,7 @@ map(
 );
 ```
 
-### parallel()
+### parallel
 
 > **parallel**: \<`AsyncOperationList`\>(`operations`, `callback`) => `void`
 
@@ -332,7 +332,7 @@ parallel(
 );
 ```
 
-### series()
+### series
 
 > **series**: \<`AsyncOperationList`\>(`operations`, `callback`) => `void`
 
@@ -389,7 +389,7 @@ series(
 );
 ```
 
-### waterfall()
+### waterfall
 
 > **waterfall**: \{(`tasks`, `callback`): `void`; \<`R1`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`, `R5`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`, `R5`, `R6`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`, `R5`, `R6`, `R7`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`, `R5`, `R6`, `R7`, `R8`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`, `R5`, `R6`, `R7`, `R8`, `R9`\>(`tasks`, `callback`): `void`; \<`R1`, `R2`, `R3`, `R4`, `R5`, `R6`, `R7`, `R8`, `R9`, `R10`\>(`tasks`, `callback`): `void`; \}
 
@@ -941,7 +941,7 @@ A callback to run after all functions complete or an error occurs
 
 `void`
 
-### withCallback()
+### withCallback
 
 > **withCallback**: \<`S`, `T`\>(`setup`, `operation`, `callback`) => `void`
 
@@ -1030,7 +1030,7 @@ withCallback<RedisClient, UserData>(
 );
 ```
 
-### withCallbackList()
+### withCallbackList
 
 > **withCallbackList**: \<`S`, `T`\>(`setups`, `operation`, `callback`) => `void`
 
@@ -1053,7 +1053,7 @@ are prepared by different setup functions.
 
 ##### setups
 
-\{ \[K in string \| number \| symbol\]: (cb: ICallback\<S\[K\<K\>\]\>) =\> void \}
+\{ \[K in string \| number \| symbol\]: (cb: ICallback\<S\[K\]\>) =\> void \}
 
 Array of setup functions that prepare resources
 
@@ -1142,7 +1142,7 @@ withCallbackList(
 );
 ```
 
-### withOptionalCallback()
+### withOptionalCallback
 
 > **withOptionalCallback**: \<`T`\>(`cb`, `fn`) => `void` \| `Promise`\<`T`\>
 
@@ -1156,7 +1156,7 @@ withCallbackList(
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`T`\> | `undefined`
+[`ICallback`](../interfaces/ICallback.md)\<`T`\> \| `undefined`
 
 ##### fn
 
@@ -1166,7 +1166,7 @@ withCallbackList(
 
 `void` \| `Promise`\<`T`\>
 
-### withRetry()
+### withRetry
 
 > **withRetry**: \<`T`\>(`operation`, `options`, `callback`) => `void`
 
@@ -1188,7 +1188,7 @@ If the operation fails, it will be retried up to the specified number of attempt
 
 The operation to execute with retry logic
 
-##### options
+##### options?
 
 Retry options
 
@@ -1224,7 +1224,7 @@ The original callback
 
 T - The type of data returned by the operation
 
-### withTimeout()
+### withTimeout
 
 > **withTimeout**: \<`T`\>(`callback`, `timeoutMs`) => [`ICallback`](../interfaces/ICallback.md)\<`T`\>
 

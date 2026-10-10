@@ -90,14 +90,14 @@ readonly `string`[]
 
 ##### getStats()
 
-> **getStats**(`callerId`): `ICPUUsage`
+> **getStats**(`callerId?`): `ICPUUsage`
 
 Get current system-wide CPU usage for a given caller.
 Baselines older than maxBaselineAgeMs are cleaned up automatically.
 
 ###### Parameters
 
-###### callerId
+###### callerId?
 
 `string` = `'default'`
 
@@ -107,18 +107,18 @@ Baselines older than maxBaselineAgeMs are cleaned up automatically.
 
 ##### getStatsOverInterval()
 
-> **getStatsOverInterval**(`callerId`, `intervalMs`): `Promise`\<`ICPUUsage`\>
+> **getStatsOverInterval**(`callerId?`, `intervalMs?`): `Promise`\<`ICPUUsage`\>
 
 One-shot measurement over a fixed interval (useful for scripts / tests).
 Cleans up old baselines before starting.
 
 ###### Parameters
 
-###### callerId
+###### callerId?
 
 `string` = `'default'`
 
-###### intervalMs
+###### intervalMs?
 
 `number` = `1000`
 
@@ -138,7 +138,7 @@ Cleans up old baselines before starting.
 
 > `readonly` **callerId**: `string`
 
-###### cleanup()
+###### cleanup
 
 > `readonly` **cleanup**: () => `void`
 
@@ -188,13 +188,13 @@ Cleans up old baselines before starting.
 
 ##### getInstance()
 
-> `static` **getInstance**(`options`): [`CPUMonitor`](#cpumonitor)
+> `static` **getInstance**(`options?`): [`CPUMonitor`](#cpumonitor)
 
 Singleton – first call sets the options, later calls ignore them
 
 ###### Parameters
 
-###### options
+###### options?
 
 `ICPUMonitorOptions` = `{}`
 

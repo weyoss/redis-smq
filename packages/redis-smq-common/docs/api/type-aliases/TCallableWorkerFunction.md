@@ -1,6 +1,6 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TCallableWorkerFunction
 
-# Type Alias: TCallableWorkerFunction()
+# Type Alias: TCallableWorkerFunction
 
 > **TCallableWorkerFunction** = (`args`, `cb`) => `void`
 

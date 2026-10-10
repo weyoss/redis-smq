@@ -10,13 +10,13 @@
 
 ### logger?
 
-> `optional` **logger**: [`ILoggerConfig`](ILoggerConfig.md)
+> `optional` **logger?**: [`ILoggerConfig`](ILoggerConfig.md)
 
 #### Inherited from
 
 [`IEventBusConfig`](IEventBusConfig.md).[`logger`](IEventBusConfig.md#logger)
 
-***
+---
 
 ### redis
 

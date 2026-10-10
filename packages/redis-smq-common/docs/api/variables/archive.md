@@ -6,7 +6,7 @@
 
 ## Type Declaration
 
-### extractRpm()
+### extractRpm
 
 > **extractRpm**: (`filePath`, `destinationDirectory`) => `Promise`\<`void`\>
 
@@ -41,7 +41,7 @@ Will throw an error if the file does not look like an RPM package.
 This function reads the RPM package file, extracts the payload, and decompresses it using the appropriate command.
 The extracted contents are saved in the specified destination directory.
 
-### extractTgz()
+### extractTgz
 
 > **extractTgz**: (`tgzPath`, `destDir`) => `Promise`\<`void`\>
 

@@ -35,23 +35,23 @@ logger.info('Service started'); // Output: [timestamp] INFO (app / service): Ser
 
 ### Constructor
 
-> **new ConsoleLogger**(`options`, `namespaces`): `ConsoleLogger`
+> **new ConsoleLogger**(`options?`, `namespaces?`): `ConsoleLogger`
 
 Creates a new ConsoleLogger instance with the specified configuration and namespaces.
 
 #### Parameters
 
-##### options
+##### options?
 
 [`IConsoleLoggerOptions`](../interfaces/IConsoleLoggerOptions.md) = `{}`
 
 Configuration options for the logger behavior and formatting
 
-##### namespaces
+##### namespaces?
+
+`string` \| `string`[]
 
 Single namespace string or array of namespace strings for message categorization
-
-`string` | `string`[]
 
 #### Returns
 

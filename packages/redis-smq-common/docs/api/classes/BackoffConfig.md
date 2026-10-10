@@ -16,11 +16,11 @@
 
 ### parseConfig()
 
-> `static` **parseConfig**(`cfg`): [`IBackoffParsedConfig`](../type-aliases/IBackoffParsedConfig.md)
+> `static` **parseConfig**(`cfg?`): [`IBackoffParsedConfig`](../type-aliases/IBackoffParsedConfig.md)
 
 #### Parameters
 
-##### cfg
+##### cfg?
 
 [`IBackoffConfig`](../interfaces/IBackoffConfig.md) = `{}`
 

@@ -6,7 +6,7 @@
 
 ### Events
 
-`Events` *extends* [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
+`Events` _extends_ [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
 
 ## Methods
 
@@ -18,7 +18,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -34,7 +34,29 @@
 
 `boolean`
 
-***
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `string` \| `number` \| `symbol`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+---
 
 ### on()
 
@@ -44,7 +66,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -60,7 +82,7 @@
 
 `this`
 
-***
+---
 
 ### once()
 
@@ -70,7 +92,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -86,7 +108,7 @@
 
 `this`
 
-***
+---
 
 ### removeAllListeners()
 
@@ -96,7 +118,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 
@@ -108,7 +130,7 @@
 
 `this`
 
-***
+---
 
 ### removeListener()
 
@@ -118,7 +140,7 @@
 
 ##### E
 
-`E` *extends* `string` \| `number` \| `symbol`
+`E` _extends_ `string` \| `number` \| `symbol`
 
 #### Parameters
 

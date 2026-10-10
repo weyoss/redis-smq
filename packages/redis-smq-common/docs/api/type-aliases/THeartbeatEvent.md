@@ -1,20 +1,14 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / THeartbeatEvent
 
-# Type Alias: THeartbeatEvent\<T\>
+# Type Alias: THeartbeatEvent
 
-> **THeartbeatEvent**\<`T`\> = `object`
-
-## Type Parameters
-
-### T
-
-`T`
+> **THeartbeatEvent** = `object`
 
 ## Properties
 
-### heartbeat.beat()
+### heartbeat.beat
 
-> **heartbeat.beat**: (`componentId`, `componentType`, `timestamp`, `payload`) => `void`
+> **heartbeat.beat**: (`componentId`, `componentType`, `timestamp`) => `void`
 
 #### Parameters
 
@@ -30,17 +24,13 @@
 
 `number`
 
-##### payload
-
-[`IHeartbeatPayload`](../interfaces/IHeartbeatPayload.md)\<`T`\>
-
 #### Returns
 
 `void`
 
 ---
 
-### heartbeat.down()
+### heartbeat.down
 
 > **heartbeat.down**: (`componentId`, `componentType`) => `void`
 
@@ -60,7 +50,7 @@
 
 ---
 
-### heartbeat.error()
+### heartbeat.error
 
 > **heartbeat.error**: (`err`, `componentId`, `componentType`) => `void`
 
@@ -84,7 +74,7 @@
 
 ---
 
-### heartbeat.goingDown()
+### heartbeat.goingDown
 
 > **heartbeat.goingDown**: (`componentId`, `componentType`) => `void`
 
@@ -104,7 +94,7 @@
 
 ---
 
-### heartbeat.goingUp()
+### heartbeat.goingUp
 
 > **heartbeat.goingUp**: (`componentId`, `componentType`) => `void`
 
@@ -124,7 +114,7 @@
 
 ---
 
-### heartbeat.up()
+### heartbeat.up
 
 > **heartbeat.up**: (`componentId`, `componentType`) => `void`
 

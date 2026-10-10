@@ -88,7 +88,7 @@
 
 ##### key
 
-`string` | `string`[]
+`string` \| `string`[]
 
 ##### cb
 
@@ -158,7 +158,7 @@
 
 ##### args
 
-`string` | `number` | (`string` \| `number`)[]
+`string` \| `number` \| (`string` \| `number`)[]
 
 ##### cb
 
@@ -310,7 +310,7 @@
 
 ##### fields
 
-`string` | `string`[]
+`string` \| `string`[]
 
 ##### cb
 
@@ -510,7 +510,7 @@
 
 ##### value
 
-`string` | `number`
+`string` \| `number`
 
 ##### cb
 
@@ -590,6 +590,32 @@
 
 ---
 
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`EventEmitter`](../classes/EventEmitter.md).[`listenerCount`](../classes/EventEmitter.md#listenercount)
+
+---
+
 ### llen()
 
 > **llen**(`key`, `cb`): `void`
@@ -626,11 +652,11 @@
 
 ##### from
 
-`"LEFT"` | `"RIGHT"`
+`"LEFT"` \| `"RIGHT"`
 
 ##### to
 
-`"LEFT"` | `"RIGHT"`
+`"LEFT"` \| `"RIGHT"`
 
 ##### cb
 
@@ -754,7 +780,7 @@
 
 ##### elements
 
-`string` | `string`[]
+`string` \| `string`[]
 
 ##### cb
 
@@ -1168,7 +1194,7 @@
 
 ##### elements
 
-`string` | `string`[]
+`string` \| `string`[]
 
 ##### cb
 
@@ -1646,11 +1672,11 @@
 
 ##### min
 
-`string` | `number`
+`string` \| `number`
 
 ##### max
 
-`string` | `number`
+`string` \| `number`
 
 ##### cb
 
@@ -1750,11 +1776,11 @@
 
 ##### min
 
-`string` | `number`
+`string` \| `number`
 
 ##### max
 
-`string` | `number`
+`string` \| `number`
 
 ##### offset
 
@@ -1786,11 +1812,11 @@
 
 ##### min
 
-`string` | `number`
+`string` \| `number`
 
 ##### max
 
-`string` | `number`
+`string` \| `number`
 
 ##### cb
 
@@ -1838,11 +1864,11 @@
 
 ##### min
 
-`string` | `number`
+`string` \| `number`
 
 ##### max
 
-`string` | `number`
+`string` \| `number`
 
 ##### cb
 

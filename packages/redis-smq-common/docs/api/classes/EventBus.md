@@ -22,15 +22,15 @@ EventBus with optional namespace support.
 
 ### Constructor
 
-> **new EventBus**\<`Events`\>(`config`, `namespace`): `EventBus`\<`Events`\>
+> **new EventBus**\<`Events`\>(`config?`, `namespace?`): `EventBus`\<`Events`\>
 
 #### Parameters
 
-##### config
+##### config?
 
 [`IEventBusConfig`](../interfaces/IEventBusConfig.md) = `{}`
 
-##### namespace
+##### namespace?
 
 `string` = `''`
 
@@ -373,6 +373,32 @@ Checks if the Runnable instance is currently up.
 #### Inherited from
 
 [`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
+
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `string` \| `number` \| `symbol`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`listenerCount`](Runnable.md#listenercount)
 
 ---
 

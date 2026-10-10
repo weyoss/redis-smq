@@ -6,7 +6,7 @@
 
 ## Type Declaration
 
-### getRandomPort()
+### getRandomPort
 
 > **getRandomPort**: () => `Promise`\<`number`\>
 
@@ -14,7 +14,7 @@
 
 `Promise`\<`number`\>
 
-### isPortInUse()
+### isPortInUse
 
 > **isPortInUse**: (`port`) => `Promise`\<`boolean`\>
 

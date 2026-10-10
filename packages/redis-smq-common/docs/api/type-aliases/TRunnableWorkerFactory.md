@@ -1,6 +1,6 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TRunnableWorkerFactory
 
-# Type Alias: TRunnableWorkerFactory()
+# Type Alias: TRunnableWorkerFactory
 
 > **TRunnableWorkerFactory** = (`initialPayload`) => [`IRunnableWorker`](../interfaces/IRunnableWorker.md)
 

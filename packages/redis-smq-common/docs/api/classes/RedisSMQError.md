@@ -12,7 +12,7 @@
 - [`CallbackEmptyReplyError`](CallbackEmptyReplyError.md)
 - [`CallbackInvalidReplyError`](CallbackInvalidReplyError.md)
 - [`PanicError`](PanicError.md)
-- [`AbortError`](AbortError.md)
+- [`OperationAbortedError`](OperationAbortedError.md)
 - [`InvalidArgumentsError`](InvalidArgumentsError.md)
 - [`OperationNotAllowedError`](OperationNotAllowedError.md)
 - [`EventBusNotConnectedError`](EventBusNotConnectedError.md)
@@ -32,7 +32,7 @@
 - [`CommandNotSupportedError`](CommandNotSupportedError.md)
 - [`UnsupportedRedisServerVersionError`](UnsupportedRedisServerVersionError.md)
 - [`UnknownRedisServerVersionError`](UnknownRedisServerVersionError.md)
-- [`WatchTransactionMaxRetriesExceeded`](WatchTransactionMaxRetriesExceeded.md)
+- [`WatchTransactionMaxRetriesExceededError`](WatchTransactionMaxRetriesExceededError.md)
 - [`WorkerThreadError`](WorkerThreadError.md)
 - [`WorkerPayloadRequiredError`](WorkerPayloadRequiredError.md)
 - [`WorkerAlreadyRunningError`](WorkerAlreadyRunningError.md)
@@ -44,7 +44,7 @@
 
 ### Metadata
 
-`Metadata` _extends_ `Record`\<`string`, `unknown`\> = `never`
+`Metadata` = `never`
 
 ## Constructors
 
@@ -56,7 +56,7 @@
 
 ##### args
 
-...\[`Metadata`\] _extends_ \[`never`\] ? \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\<`Metadata`\>\>\] : \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\]
+...\[`Metadata`\] _extends_ \[`never`\] ? \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\] : \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\]
 
 #### Returns
 
@@ -70,7 +70,7 @@
 
 ### cause?
 
-> `optional` **cause**: `unknown`
+> `optional` **cause?**: `unknown`
 
 #### Inherited from
 
@@ -88,13 +88,45 @@
 
 ---
 
+### metadata
+
+> `readonly` **metadata**: `Metadata` \| `null`
+
+---
+
+### name
+
+> **name**: `string`
+
+#### Inherited from
+
+`Error.name`
+
+---
+
 ### stack?
 
-> `optional` **stack**: `string`
+> `optional` **stack?**: `string`
 
 #### Inherited from
 
 `Error.stack`
+
+---
+
+### code
+
+> `readonly` `static` **code**: `string` = `'RedisSMQ.Unknown'`
+
+Stable machine-readable code. Must be overridden.
+
+---
+
+### defaultMessage
+
+> `readonly` `static` **defaultMessage**: `string` = `'Unknown error.'`
+
+Human-readable fallback used when the caller does not pass a message.
 
 ---
 
@@ -118,63 +150,35 @@ not capture any frames.
 
 ## Accessors
 
-### name
+### \[toStringTag\]
 
 #### Get Signature
 
-> **get** **name**(): `string`
+> **get** **\[toStringTag\]**(): `string`
 
 ##### Returns
 
 `string`
 
-#### Overrides
-
-`Error.name`
-
 ---
 
-### props
+### code
 
 #### Get Signature
 
-> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+> **get** **code**(): `string`
+
+Stable code, derived from the class.
 
 ##### Returns
 
-> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
-
-###### Returns
-
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+`string`
 
 ## Methods
-
-### getMetadata()
-
-> **getMetadata**(): `Metadata` \| `null`
-
-#### Returns
-
-`Metadata` \| `null`
-
----
-
-### getProps()
-
-> `abstract` **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
-
-#### Returns
-
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
-
----
 
 ### toJSON()
 
 > **toJSON**(): `Record`\<`string`, `unknown`\>
-
-Provides a stable, JSON-friendly representation for logs or network transport.
 
 #### Returns
 
@@ -250,25 +254,19 @@ a();
 
 ---
 
-### isError()
+### isRedisSMQError()
 
-> `static` **isError**(`error`): `error is Error`
-
-Indicates whether the argument provided is a built-in Error instance or not.
+> `static` **isRedisSMQError**(`value`): `value is RedisSMQError<never>`
 
 #### Parameters
 
-##### error
+##### value
 
 `unknown`
 
 #### Returns
 
-`error is Error`
-
-#### Inherited from
-
-`Error.isError`
+`value is RedisSMQError<never>`
 
 ---
 

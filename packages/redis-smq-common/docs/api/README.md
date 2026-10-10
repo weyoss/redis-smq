@@ -32,12 +32,10 @@
 - [Runnable](classes/Runnable.md)
 - [RunnableWorker](classes/RunnableWorker.md)
 - [Timer](classes/Timer.md)
-- [WatchTransactionMaxRetriesExceeded](classes/WatchTransactionMaxRetriesExceeded.md)
 - [WorkerCluster](classes/WorkerCluster.md)
 
 ## Error Classes
 
-- [AbortError](classes/AbortError.md)
 - [AcquireLockNotAllowedError](classes/AcquireLockNotAllowedError.md)
 - [AsyncCallbackTimeoutError](classes/AsyncCallbackTimeoutError.md)
 - [CallbackEmptyReplyError](classes/CallbackEmptyReplyError.md)
@@ -51,6 +49,7 @@
 - [LockNotAcquiredError](classes/LockNotAcquiredError.md)
 - [LoggerInvalidNamespaceError](classes/LoggerInvalidNamespaceError.md)
 - [NotLockedError](classes/NotLockedError.md)
+- [OperationAbortedError](classes/OperationAbortedError.md)
 - [OperationNotAllowedError](classes/OperationNotAllowedError.md)
 - [PanicError](classes/PanicError.md)
 - [RedisClientNotInstalledError](classes/RedisClientNotInstalledError.md)
@@ -62,6 +61,7 @@
 - [UnsupportedClientError](classes/UnsupportedClientError.md)
 - [UnsupportedRedisServerVersionError](classes/UnsupportedRedisServerVersionError.md)
 - [WatchedKeysChangedError](classes/WatchedKeysChangedError.md)
+- [WatchTransactionMaxRetriesExceededError](classes/WatchTransactionMaxRetriesExceededError.md)
 - [WorkerAlreadyDownError](classes/WorkerAlreadyDownError.md)
 - [WorkerAlreadyRunningError](classes/WorkerAlreadyRunningError.md)
 - [WorkerIsShuttingDownError](classes/WorkerIsShuttingDownError.md)
@@ -72,6 +72,7 @@
 ## Interfaces
 
 - [IBackoffConfig](interfaces/IBackoffConfig.md)
+- [IBaseErrorOptions](interfaces/IBaseErrorOptions.md)
 - [ICallableWorker](interfaces/ICallableWorker.md)
 - [ICallback](interfaces/ICallback.md)
 - [IConsoleLoggerOptions](interfaces/IConsoleLoggerOptions.md)
@@ -85,7 +86,6 @@
 - [ILoggerConfig](interfaces/ILoggerConfig.md)
 - [IRedisClient](interfaces/IRedisClient.md)
 - [IRedisConfig](interfaces/IRedisConfig.md)
-- [IRedisSMQErrorProperties](interfaces/IRedisSMQErrorProperties.md)
 - [IRedisTransaction](interfaces/IRedisTransaction.md)
 - [IRunnableWorker](interfaces/IRunnableWorker.md)
 - [IWatchTransactionAttemptResult](interfaces/IWatchTransactionAttemptResult.md)
@@ -107,7 +107,6 @@
 - [TEventBusEvent](type-aliases/TEventBusEvent.md)
 - [TEventEmitterEvent](type-aliases/TEventEmitterEvent.md)
 - [TFunction](type-aliases/TFunction.md)
-- [THeartbeatDataFn](type-aliases/THeartbeatDataFn.md)
 - [THeartbeatEvent](type-aliases/THeartbeatEvent.md)
 - [TLockerEvent](type-aliases/TLockerEvent.md)
 - [TRedisClientEvent](type-aliases/TRedisClientEvent.md)

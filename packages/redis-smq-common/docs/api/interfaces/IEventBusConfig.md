@@ -10,4 +10,4 @@
 
 ### logger?
 
-> `optional` **logger**: [`ILoggerConfig`](ILoggerConfig.md)
+> `optional` **logger?**: [`ILoggerConfig`](ILoggerConfig.md)

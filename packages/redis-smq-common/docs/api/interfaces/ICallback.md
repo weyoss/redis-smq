@@ -20,9 +20,9 @@ The type of the successful result
 
 #### err?
 
-Error object if operation failed, null/undefined if successful
+`Error` \| `null`
 
-`Error` | `null`
+Error object if operation failed, null/undefined if successful
 
 #### result?
 
@@ -44,9 +44,9 @@ Overload for successful case with explicit null/undefined error
 
 #### err
 
-Must be null or undefined to indicate success
+`null` \| `undefined`
 
-`null` | `undefined`
+Must be null or undefined to indicate success
 
 #### result
 

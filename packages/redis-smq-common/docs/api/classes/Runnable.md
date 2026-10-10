@@ -322,6 +322,32 @@ Checks if the Runnable instance is currently up.
 
 ---
 
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `string` \| `number` \| `symbol`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`EventEmitter`](EventEmitter.md).[`listenerCount`](EventEmitter.md#listenercount)
+
+---
+
 ### on()
 
 > **on**\<`E`\>(`event`, `listener`): `this`

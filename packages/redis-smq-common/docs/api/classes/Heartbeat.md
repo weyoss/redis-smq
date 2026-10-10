@@ -1,6 +1,6 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Heartbeat
 
-# Class: Heartbeat\<T\>
+# Class: Heartbeat
 
 A robust base class for long-running components/services with explicit lifecycle management.
 
@@ -12,21 +12,13 @@ Features:
 
 ## Extends
 
-- [`Runnable`](Runnable.md)\<[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\>
-
-## Type Parameters
-
-### T
-
-`T` = `Record`\<`string`, `unknown`\>
-
-The type of events that the Runnable class can emit.
+- [`Runnable`](Runnable.md)\<[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\>
 
 ## Constructors
 
 ### Constructor
 
-> **new Heartbeat**\<`T`\>(`redisClient`, `logger`, `config`, `dataFn`): `Heartbeat`\<`T`\>
+> **new Heartbeat**(`redisClient`, `logger`, `config`): `Heartbeat`
 
 #### Parameters
 
@@ -42,17 +34,13 @@ The type of events that the Runnable class can emit.
 
 [`IHeartbeatConfig`](../interfaces/IHeartbeatConfig.md)
 
-##### dataFn
-
-[`THeartbeatDataFn`](../type-aliases/THeartbeatDataFn.md)\<`T`\>
-
 #### Returns
 
-`Heartbeat`\<`T`\>
+`Heartbeat`
 
 #### Overrides
 
-`Runnable< THeartbeatEvent<T> >.constructor`
+`Runnable<THeartbeatEvent>.constructor`
 
 ## Methods
 
@@ -64,7 +52,7 @@ The type of events that the Runnable class can emit.
 
 ##### E
 
-`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)
 
 #### Parameters
 
@@ -74,7 +62,7 @@ The type of events that the Runnable class can emit.
 
 ##### args
 
-...`Parameters`\<[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]\>
+...`Parameters`\<[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -382,6 +370,32 @@ Checks if the Runnable instance is currently up.
 
 ---
 
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`listenerCount`](Runnable.md#listenercount)
+
+---
+
 ### on()
 
 > **on**\<`E`\>(`event`, `listener`): `this`
@@ -390,7 +404,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)
 
 #### Parameters
 
@@ -400,7 +414,7 @@ Checks if the Runnable instance is currently up.
 
 ##### listener
 
-[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]
+[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\[`E`\]
 
 #### Returns
 
@@ -420,7 +434,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)
 
 #### Parameters
 
@@ -430,7 +444,7 @@ Checks if the Runnable instance is currently up.
 
 ##### listener
 
-[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]
+[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\[`E`\]
 
 #### Returns
 
@@ -450,7 +464,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)
 
 #### Parameters
 
@@ -476,7 +490,7 @@ Checks if the Runnable instance is currently up.
 
 ##### E
 
-`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>
+`E` _extends_ keyof [`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)
 
 #### Parameters
 
@@ -486,7 +500,7 @@ Checks if the Runnable instance is currently up.
 
 ##### listener
 
-[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\<`T`\>\[`E`\]
+[`THeartbeatEvent`](../type-aliases/THeartbeatEvent.md)\[`E`\]
 
 #### Returns
 

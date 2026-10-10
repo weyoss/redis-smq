@@ -6,35 +6,35 @@
 
 ### colorize?
 
-> `optional` **colorize**: `boolean`
+> `optional` **colorize?**: `boolean`
 
 Whether to colorize log messages with ANSI color codes
 
 #### Default
 
 ```ts
-true
+true;
 ```
 
-***
+---
 
 ### includeTimestamp?
 
-> `optional` **includeTimestamp**: `boolean`
+> `optional` **includeTimestamp?**: `boolean`
 
 Whether to include timestamps in log messages
 
 #### Default
 
 ```ts
-true
+true;
 ```
 
-***
+---
 
 ### logLevel?
 
-> `optional` **logLevel**: [`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md) \| `"DEBUG"` \| `"INFO"` \| `"WARN"` \| `"ERROR"`
+> `optional` **logLevel?**: [`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md) \| `"DEBUG"` \| `"INFO"` \| `"WARN"` \| `"ERROR"`
 
 Minimum log level to display
 Can be specified as a string ('DEBUG', 'INFO', 'WARN', 'ERROR') or
@@ -44,5 +44,5 @@ Messages with a level lower than this will be suppressed
 #### Default
 
 ```ts
-EConsoleLoggerLevel.DEBUG (0)
+EConsoleLoggerLevel.DEBUG(0);
 ```

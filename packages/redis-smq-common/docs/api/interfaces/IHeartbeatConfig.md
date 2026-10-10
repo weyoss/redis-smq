@@ -24,4 +24,4 @@
 
 ### heartbeatTTL?
 
-> `optional` **heartbeatTTL**: `number`
+> `optional` **heartbeatTTL?**: `number`

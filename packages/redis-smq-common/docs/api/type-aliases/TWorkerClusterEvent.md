@@ -6,7 +6,7 @@
 
 ## Properties
 
-### workerCluster.error()
+### workerCluster.error
 
 > **workerCluster.error**: (`err`) => `void`
 
@@ -22,7 +22,7 @@
 
 ---
 
-### workerCluster.workerAdded()
+### workerCluster.workerAdded
 
 > **workerCluster.workerAdded**: (`worker`) => `void`
 
@@ -38,7 +38,7 @@
 
 ---
 
-### workerCluster.workerRemoved()
+### workerCluster.workerRemoved
 
 > **workerCluster.workerRemoved**: (`workerId`) => `void`
 

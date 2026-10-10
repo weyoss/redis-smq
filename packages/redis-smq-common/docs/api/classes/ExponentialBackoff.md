@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new ExponentialBackoff**(`logger`, `config`): `ExponentialBackoff`
+> **new ExponentialBackoff**(`logger`, `config?`): `ExponentialBackoff`
 
 #### Parameters
 
@@ -18,7 +18,7 @@
 
 [`ILogger`](../interfaces/ILogger.md)
 
-##### config
+##### config?
 
 [`IExponentialBackoffConfig`](../interfaces/IExponentialBackoffConfig.md) = `{}`
 
@@ -415,6 +415,32 @@ Checks if the Runnable instance is currently up.
 #### Inherited from
 
 `Backoff.isUp`
+
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `string`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+`Backoff.listenerCount`
 
 ---
 

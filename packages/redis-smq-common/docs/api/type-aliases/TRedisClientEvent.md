@@ -6,7 +6,7 @@
 
 ## Properties
 
-### end()
+### end
 
 > **end**: () => `void`
 
@@ -14,9 +14,9 @@
 
 `void`
 
-***
+---
 
-### error()
+### error
 
 > **error**: (`err`) => `void`
 
@@ -30,9 +30,9 @@
 
 `void`
 
-***
+---
 
-### message()
+### message
 
 > **message**: (`channel`, `message`) => `void`
 
@@ -50,9 +50,9 @@
 
 `void`
 
-***
+---
 
-### pmessage()
+### pmessage
 
 > **pmessage**: (`pattern`, `channel`, `message`) => `void`
 
@@ -74,9 +74,9 @@
 
 `void`
 
-***
+---
 
-### ready()
+### ready
 
 > **ready**: () => `void`
 

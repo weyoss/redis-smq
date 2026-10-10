@@ -48,7 +48,7 @@
 
 ##### key
 
-`string` | `string`[]
+`string` \| `string`[]
 
 #### Returns
 
@@ -120,7 +120,7 @@
 
 ##### field
 
-`string` | `string`[]
+`string` \| `string`[]
 
 #### Returns
 
@@ -204,7 +204,7 @@
 
 ##### value
 
-`string` | `number`
+`string` \| `number`
 
 #### Returns
 
@@ -472,7 +472,7 @@
 
 ##### value
 
-`string` | `number`
+`string` \| `number`
 
 ##### options
 
@@ -526,7 +526,7 @@
 
 ##### element
 
-`string` | `string`[]
+`string` \| `string`[]
 
 #### Returns
 
@@ -586,7 +586,7 @@
 
 ##### element
 
-`string` | `string`[]
+`string` \| `string`[]
 
 #### Returns
 

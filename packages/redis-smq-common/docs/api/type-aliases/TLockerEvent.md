@@ -6,7 +6,7 @@
 
 ## Properties
 
-### locker.down()
+### locker.down
 
 > **locker.down**: (`id`) => `void`
 
@@ -20,9 +20,9 @@
 
 `void`
 
-***
+---
 
-### locker.error()
+### locker.error
 
 > **locker.error**: (`error`, `id`) => `void`
 
@@ -40,9 +40,9 @@
 
 `void`
 
-***
+---
 
-### locker.goingDown()
+### locker.goingDown
 
 > **locker.goingDown**: (`id`) => `void`
 
@@ -56,9 +56,9 @@
 
 `void`
 
-***
+---
 
-### locker.goingUp()
+### locker.goingUp
 
 > **locker.goingUp**: (`id`) => `void`
 
@@ -72,9 +72,9 @@
 
 `void`
 
-***
+---
 
-### locker.up()
+### locker.up
 
 > **locker.up**: (`id`) => `void`
 

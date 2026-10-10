@@ -2,14 +2,14 @@
 
 # Function: createLogger()
 
-> **createLogger**(`cfg`, `ns`): [`ILogger`](../interfaces/ILogger.md)
+> **createLogger**(`cfg?`, `ns`): [`ILogger`](../interfaces/ILogger.md)
 
 Creates a logger instance based on the provided configuration and optional namespace.
 If logging is disabled in the configuration, a dummy logger is returned.
 
 ## Parameters
 
-### cfg
+### cfg?
 
 [`ILoggerConfig`](../interfaces/ILoggerConfig.md) = `{}`
 
@@ -17,9 +17,9 @@ Logger configuration specifying if logging is enabled.
 
 ### ns
 
-Optional namespaces to prepend to each log message.
+`string` \| `string`[]
 
-`string` | `string`[]
+Optional namespaces to prepend to each log message.
 
 ## Returns
 

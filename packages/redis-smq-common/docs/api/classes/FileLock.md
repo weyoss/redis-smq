@@ -22,7 +22,7 @@ stale by other processes.
 
 ### acquireLock()
 
-> **acquireLock**(`lockFile`, `options`): `Promise`\<`void`\>
+> **acquireLock**(`lockFile`, `options?`): `Promise`\<`void`\>
 
 Acquires a lock on the specified resource
 
@@ -34,7 +34,7 @@ Acquires a lock on the specified resource
 
 Lock file
 
-##### options
+##### options?
 
 Lock acquisition options
 
@@ -60,7 +60,7 @@ Lock acquisition options
 
 Promise that resolves when the lock is acquired
 
-***
+---
 
 ### isLockHeld()
 
@@ -82,7 +82,7 @@ Lock file
 
 True if the lock is held by this process
 
-***
+---
 
 ### releaseLock()
 

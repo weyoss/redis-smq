@@ -36,7 +36,7 @@
 
 ##### E
 
-`E` *extends* `"error"`
+`E` _extends_ `"error"`
 
 #### Parameters
 
@@ -56,7 +56,7 @@
 
 [`EventEmitter`](EventEmitter.md).[`emit`](EventEmitter.md#emit)
 
-***
+---
 
 ### getInstance()
 
@@ -66,7 +66,7 @@
 
 [`IRedisClient`](../interfaces/IRedisClient.md)
 
-***
+---
 
 ### getSetInstance()
 
@@ -82,7 +82,7 @@
 
 `void`
 
-***
+---
 
 ### init()
 
@@ -98,7 +98,33 @@
 
 `void`
 
-***
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `"error"`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`EventEmitter`](EventEmitter.md).[`listenerCount`](EventEmitter.md#listenercount)
+
+---
 
 ### on()
 
@@ -108,7 +134,7 @@
 
 ##### E
 
-`E` *extends* `"error"`
+`E` _extends_ `"error"`
 
 #### Parameters
 
@@ -128,7 +154,7 @@
 
 [`EventEmitter`](EventEmitter.md).[`on`](EventEmitter.md#on)
 
-***
+---
 
 ### once()
 
@@ -138,7 +164,7 @@
 
 ##### E
 
-`E` *extends* `"error"`
+`E` _extends_ `"error"`
 
 #### Parameters
 
@@ -158,7 +184,7 @@
 
 [`EventEmitter`](EventEmitter.md).[`once`](EventEmitter.md#once)
 
-***
+---
 
 ### removeAllListeners()
 
@@ -168,7 +194,7 @@
 
 ##### E
 
-`E` *extends* `"error"`
+`E` _extends_ `"error"`
 
 #### Parameters
 
@@ -184,7 +210,7 @@
 
 [`EventEmitter`](EventEmitter.md).[`removeAllListeners`](EventEmitter.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -194,7 +220,7 @@
 
 ##### E
 
-`E` *extends* `"error"`
+`E` _extends_ `"error"`
 
 #### Parameters
 
@@ -214,7 +240,7 @@
 
 [`EventEmitter`](EventEmitter.md).[`removeListener`](EventEmitter.md#removelistener)
 
-***
+---
 
 ### shutdown()
 

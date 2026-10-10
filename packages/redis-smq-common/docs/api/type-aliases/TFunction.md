@@ -1,6 +1,6 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TFunction
 
-# Type Alias: TFunction()\<TArgs, TReturn\>
+# Type Alias: TFunction\<TArgs, TReturn\>
 
 > **TFunction**\<`TArgs`, `TReturn`\> = (...`args`) => `TReturn`
 
@@ -10,7 +10,7 @@ A generic function type that can accept any number of arguments and return any t
 
 ### TArgs
 
-`TArgs` *extends* `any`[] = `any`[]
+`TArgs` _extends_ `any`[] = `any`[]
 
 The types of the arguments
 

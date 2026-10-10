@@ -106,6 +106,32 @@ Get worker ID
 
 ---
 
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ keyof `TWorkerEvent`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+`Worker.listenerCount`
+
+---
+
 ### on()
 
 > **on**\<`E`\>(`event`, `listener`): `this`

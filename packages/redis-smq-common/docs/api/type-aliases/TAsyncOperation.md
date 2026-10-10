@@ -1,6 +1,6 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TAsyncOperation
 
-# Type Alias: TAsyncOperation()\<TResult\>
+# Type Alias: TAsyncOperation\<TResult\>
 
 > **TAsyncOperation**\<`TResult`\> = (`cb`) => `void`
 

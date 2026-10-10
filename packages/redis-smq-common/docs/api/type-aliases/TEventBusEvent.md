@@ -6,9 +6,9 @@
 
 ## Type Declaration
 
-### error()
+### error?
 
-> **error**: (`err`) => `void`
+> `optional` **error?**: (`err`) => `void`
 
 #### Parameters
 

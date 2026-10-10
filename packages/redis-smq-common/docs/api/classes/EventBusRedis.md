@@ -18,7 +18,7 @@ EventBus with optional namespace support.
 
 ### Constructor
 
-> **new EventBusRedis**\<`Events`\>(`config`, `namespace`): `EventBusRedis`\<`Events`\>
+> **new EventBusRedis**\<`Events`\>(`config`, `namespace?`): `EventBusRedis`\<`Events`\>
 
 #### Parameters
 
@@ -26,7 +26,7 @@ EventBus with optional namespace support.
 
 [`IEventBusRedisConfig`](../interfaces/IEventBusRedisConfig.md)
 
-##### namespace
+##### namespace?
 
 `string` = `''`
 
@@ -369,6 +369,32 @@ Checks if the Runnable instance is currently up.
 #### Inherited from
 
 [`EventBus`](EventBus.md).[`isUp`](EventBus.md#isup)
+
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `string` \| `number` \| `symbol`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`listenerCount`](EventBus.md#listenercount)
 
 ---
 

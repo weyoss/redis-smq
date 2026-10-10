@@ -10,22 +10,22 @@
 
 ### baseDelay?
 
-> `optional` **baseDelay**: `number`
+> `optional` **baseDelay?**: `number`
 
 ---
 
 ### jitter?
 
-> `optional` **jitter**: `boolean`
+> `optional` **jitter?**: `boolean`
 
 ---
 
 ### maxAttempts?
 
-> `optional` **maxAttempts**: `number`
+> `optional` **maxAttempts?**: `number`
 
 ---
 
 ### maxDelay?
 
-> `optional` **maxDelay**: `number`
+> `optional` **maxDelay?**: `number`

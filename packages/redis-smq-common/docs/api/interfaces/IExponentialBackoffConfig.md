@@ -10,7 +10,7 @@
 
 ### baseDelay?
 
-> `optional` **baseDelay**: `number`
+> `optional` **baseDelay?**: `number`
 
 #### Inherited from
 
@@ -20,13 +20,13 @@
 
 ### factor?
 
-> `optional` **factor**: `number`
+> `optional` **factor?**: `number`
 
 ---
 
 ### jitter?
 
-> `optional` **jitter**: `boolean`
+> `optional` **jitter?**: `boolean`
 
 #### Inherited from
 
@@ -36,7 +36,7 @@
 
 ### maxAttempts?
 
-> `optional` **maxAttempts**: `number`
+> `optional` **maxAttempts?**: `number`
 
 #### Inherited from
 
@@ -46,7 +46,7 @@
 
 ### maxDelay?
 
-> `optional` **maxDelay**: `number`
+> `optional` **maxDelay?**: `number`
 
 #### Inherited from
 

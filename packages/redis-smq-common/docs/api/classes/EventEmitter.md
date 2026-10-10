@@ -60,6 +60,32 @@
 
 ---
 
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ `string` \| `number` \| `symbol`
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Implementation of
+
+[`IEventEmitter`](../interfaces/IEventEmitter.md).[`listenerCount`](../interfaces/IEventEmitter.md#listenercount)
+
+---
+
 ### on()
 
 > **on**\<`E`\>(`event`, `listener`): `this`

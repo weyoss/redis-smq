@@ -13,7 +13,7 @@ using Redis locks for exclusive access
 
 ### Constructor
 
-> **new WorkerCluster**(`redisClient`, `logger`, `uniqueGroupIdentifier`, `workerFilenamePattern`): `WorkerCluster`
+> **new WorkerCluster**(`redisClient`, `logger`, `uniqueGroupIdentifier`, `workerFilenamePattern?`): `WorkerCluster`
 
 #### Parameters
 
@@ -27,9 +27,9 @@ using Redis locks for exclusive access
 
 ##### uniqueGroupIdentifier
 
-`string` | `null`
+`string` \| `null`
 
-##### workerFilenamePattern
+##### workerFilenamePattern?
 
 `string` = `'.worker.js'`
 
@@ -392,6 +392,32 @@ Checks if the Runnable instance is currently up.
 #### Inherited from
 
 [`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
+
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ keyof [`TWorkerClusterEvent`](../type-aliases/TWorkerClusterEvent.md)
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`listenerCount`](Runnable.md#listenercount)
 
 ---
 

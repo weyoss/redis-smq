@@ -16,14 +16,14 @@
 
 > **code**: [`TWorkerThreadChildMessageCode`](TWorkerThreadChildMessageCode.md)
 
-***
+---
 
 ### data?
 
-> `optional` **data**: `Data`
+> `optional` **data?**: `Data`
 
-***
+---
 
 ### error?
 
-> `optional` **error**: [`TWorkerThreadChildError`](TWorkerThreadChildError.md) \| `null`
+> `optional` **error?**: [`TWorkerThreadChildError`](TWorkerThreadChildError.md) \| `null`

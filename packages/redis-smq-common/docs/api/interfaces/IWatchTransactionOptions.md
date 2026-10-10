@@ -4,9 +4,9 @@
 
 ## Properties
 
-### backoff()?
+### backoff?
 
-> `optional` **backoff**: (`attemptNo`) => `number` \| `undefined`
+> `optional` **backoff?**: (`attemptNo`) => `number` \| `undefined`
 
 Optional backoff strategy in milliseconds. Return a number to delay before retrying.
 Return undefined or <= 0 for no delay.
@@ -21,11 +21,11 @@ Return undefined or <= 0 for no delay.
 
 `number` \| `undefined`
 
-***
+---
 
-### makeRetryExceededError()?
+### makeRetryExceededError?
 
-> `optional` **makeRetryExceededError**: () => `Error`
+> `optional` **makeRetryExceededError?**: () => `Error`
 
 Optional factory to create a domain-specific error when retries are exhausted.
 
@@ -33,19 +33,19 @@ Optional factory to create a domain-specific error when retries are exhausted.
 
 `Error`
 
-***
+---
 
 ### maxAttempts?
 
-> `optional` **maxAttempts**: `number`
+> `optional` **maxAttempts?**: `number`
 
 Maximum number of attempts (including the first one). Default: 5
 
-***
+---
 
-### onExecError()?
+### onExecError?
 
-> `optional` **onExecError**: (`err`) => `void`
+> `optional` **onExecError?**: (`err`) => `void`
 
 Optional hook invoked when EXEC fails with an error (not null abort).
 
@@ -59,11 +59,11 @@ Optional hook invoked when EXEC fails with an error (not null abort).
 
 `void`
 
-***
+---
 
-### onRetry()?
+### onRetry?
 
-> `optional` **onRetry**: (`attemptNo`, `maxAttempts`) => `void`
+> `optional` **onRetry?**: (`attemptNo`, `maxAttempts`) => `void`
 
 Optional hook invoked on each retry before scheduling the next attempt.
 
@@ -81,11 +81,11 @@ Optional hook invoked on each retry before scheduling the next attempt.
 
 `void`
 
-***
+---
 
-### onWatchError()?
+### onWatchError?
 
-> `optional` **onWatchError**: (`err`) => `void`
+> `optional` **onWatchError?**: (`err`) => `void`
 
 Optional hook invoked when WATCH returns an error.
 

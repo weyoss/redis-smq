@@ -13,7 +13,7 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 ### Constructor
 
-> **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail`, `autoExtend`): `RedisLock`
+> **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail?`, `autoExtend?`): `RedisLock`
 
 #### Parameters
 
@@ -33,11 +33,11 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 `number`
 
-##### retryOnFail
+##### retryOnFail?
 
 `boolean` = `false`
 
-##### autoExtend
+##### autoExtend?
 
 `boolean` = `false`
 
@@ -456,6 +456,32 @@ Checks if the Runnable instance is currently up.
 #### Inherited from
 
 [`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
+
+---
+
+### listenerCount()
+
+> **listenerCount**\<`E`\>(`event`): `number`
+
+#### Type Parameters
+
+##### E
+
+`E` _extends_ keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
+
+#### Parameters
+
+##### event
+
+`E`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+[`Runnable`](Runnable.md).[`listenerCount`](Runnable.md#listenercount)
 
 ---
 

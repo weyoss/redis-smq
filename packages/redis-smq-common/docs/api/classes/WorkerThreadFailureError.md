@@ -30,7 +30,7 @@
 
 ### cause?
 
-> `optional` **cause**: `unknown`
+> `optional` **cause?**: `unknown`
 
 #### Inherited from
 
@@ -48,13 +48,57 @@
 
 ---
 
+### metadata
+
+> `readonly` **metadata**: \{ `code`: `number`; \} \| `null`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`metadata`](RedisSMQError.md#metadata-1)
+
+---
+
+### name
+
+> **name**: `string`
+
+#### Inherited from
+
+[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+
+---
+
 ### stack?
 
-> `optional` **stack**: `string`
+> `optional` **stack?**: `string`
 
 #### Inherited from
 
 [`RedisSMQError`](RedisSMQError.md).[`stack`](RedisSMQError.md#stack)
+
+---
+
+### code
+
+> `readonly` `static` **code**: `"RedisSMQ.Worker.Failure"` = `'RedisSMQ.Worker.Failure'`
+
+Stable machine-readable code. Must be overridden.
+
+#### Overrides
+
+[`RedisSMQError`](RedisSMQError.md).[`code`](RedisSMQError.md#code)
+
+---
+
+### defaultMessage
+
+> `readonly` `static` **defaultMessage**: `"A worker thread has encountered an error."` = `'A worker thread has encountered an error.'`
+
+Human-readable fallback used when the caller does not pass a message.
+
+#### Overrides
+
+[`RedisSMQError`](RedisSMQError.md).[`defaultMessage`](RedisSMQError.md#defaultmessage)
 
 ---
 
@@ -78,11 +122,11 @@ not capture any frames.
 
 ## Accessors
 
-### name
+### \[toStringTag\]
 
 #### Get Signature
 
-> **get** **name**(): `string`
+> **get** **\[toStringTag\]**(): `string`
 
 ##### Returns
 
@@ -90,63 +134,31 @@ not capture any frames.
 
 #### Inherited from
 
-[`RedisSMQError`](RedisSMQError.md).[`name`](RedisSMQError.md#name)
+[`RedisSMQError`](RedisSMQError.md).[`[toStringTag]`](RedisSMQError.md#tostringtag)
 
 ---
 
-### props
+### code
 
 #### Get Signature
 
-> **get** `static` **props**(): () => [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+> **get** **code**(): `string`
+
+Stable code, derived from the class.
 
 ##### Returns
 
-> (): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
-
-###### Returns
-
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
+`string`
 
 #### Inherited from
 
-[`RedisSMQError`](RedisSMQError.md).[`props`](RedisSMQError.md#props)
+[`RedisSMQError`](RedisSMQError.md).[`code`](RedisSMQError.md#code-1)
 
 ## Methods
-
-### getMetadata()
-
-> **getMetadata**(): \{ `code`: `number`; \} \| `null`
-
-#### Returns
-
-\{ `code`: `number`; \} \| `null`
-
-#### Inherited from
-
-[`RedisSMQError`](RedisSMQError.md).[`getMetadata`](RedisSMQError.md#getmetadata)
-
----
-
-### getProps()
-
-> **getProps**(): [`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
-
-#### Returns
-
-[`IRedisSMQErrorProperties`](../interfaces/IRedisSMQErrorProperties.md)
-
-#### Overrides
-
-`RedisSMQError.getProps`
-
----
 
 ### toJSON()
 
 > **toJSON**(): `Record`\<`string`, `unknown`\>
-
-Provides a stable, JSON-friendly representation for logs or network transport.
 
 #### Returns
 
@@ -226,25 +238,23 @@ a();
 
 ---
 
-### isError()
+### isRedisSMQError()
 
-> `static` **isError**(`error`): `error is Error`
-
-Indicates whether the argument provided is a built-in Error instance or not.
+> `static` **isRedisSMQError**(`value`): `value is RedisSMQError<never>`
 
 #### Parameters
 
-##### error
+##### value
 
 `unknown`
 
 #### Returns
 
-`error is Error`
+`value is RedisSMQError<never>`
 
 #### Inherited from
 
-[`RedisSMQError`](RedisSMQError.md).[`isError`](RedisSMQError.md#iserror)
+[`RedisSMQError`](RedisSMQError.md).[`isRedisSMQError`](RedisSMQError.md#isredissmqerror)
 
 ---
 
