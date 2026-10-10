@@ -33,14 +33,16 @@ RedisSMQ.initialize(
 
 The Redis connection details passed to `initialize()` only tell it where Redis is — they don't configure the queue system itself. Configuration is loaded from Redis after connecting.
 
+All components — producers, consumers, managers — are created through `RedisSMQ` factory methods. Calling any factory before `initialize()` completes throws `PanicError`, so make sure the initialization callback has fired (or the returned promise has resolved) before wiring up the rest of your application.
+
 ## Updating Configuration
 
-Use `ConfigManager` to change settings:
+Create a config manager through the `RedisSMQ` factory and use it to change settings:
 
 ```javascript
-import { ConfigManager } from 'redis-smq';
+const { RedisSMQ } = require('redis-smq');
 
-const configManager = new ConfigManager();
+const configManager = RedisSMQ.createConfigManager();
 
 // Enable message audit and logging
 await configManager.updateConfig({
@@ -75,14 +77,32 @@ await configManager.updateConfig({ messageAudit: true });
 ## Reading Configuration
 
 ```javascript
-const { Configuration } = require('redis-smq');
+const { RedisSMQ } = require('redis-smq');
 
-const config = Configuration.getConfig();
+const configManager = RedisSMQ.createConfigManager();
+const config = configManager.getConfig();
 
 console.log('Namespace:', config.namespace);
-console.log('Message audit:', config.messageAudit);
 console.log('Logger enabled:', config.logger.enabled);
+
+// messageAudit is always a fully-resolved object — never a boolean —
+// regardless of how the raw config was supplied. Each category has
+// an `enabled` flag.
+console.log(
+  'Acknowledged audit enabled:',
+  config.messageAudit.acknowledgedMessages.enabled,
+);
+console.log(
+  'Dead-lettered audit enabled:',
+  config.messageAudit.deadLetteredMessages.enabled,
+);
+console.log(
+  'Unacknowledgement history enabled:',
+  config.messageAudit.unacknowledgementHistory.enabled,
+);
 ```
+
+The object returned by `getConfig()` is a **read-only snapshot**: the library deep-freezes it before returning, so an attempt to write to any field — top-level or nested — throws a `TypeError` at the point of the write instead of silently corrupting the shared configuration.
 
 ## Configuration Options
 
@@ -180,6 +200,9 @@ await configManager.updateConfig({
 ## Complete Configuration Flow
 
 ```javascript
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
 // 1. Initialize the system
 await RedisSMQ.initialize({
   client: ERedisConfigClient.IOREDIS,
@@ -187,7 +210,7 @@ await RedisSMQ.initialize({
 });
 
 // 2. Update configuration
-const configManager = new ConfigManager();
+const configManager = RedisSMQ.createConfigManager();
 await configManager.updateConfig({
   namespace: 'production-app',
   messageAudit: {
@@ -201,15 +224,24 @@ await configManager.updateConfig({
 });
 
 // 3. Verify
-const config = Configuration.getConfig();
+const config = configManager.getConfig();
 console.log('Namespace:', config.namespace);
-console.log('Audit enabled:', config.messageAudit);
+console.log(
+  'Acknowledged audit enabled:',
+  config.messageAudit.acknowledgedMessages.enabled,
+);
+console.log(
+  'Dead-lettered audit enabled:',
+  config.messageAudit.deadLetteredMessages.enabled,
+);
 ```
 
 ## Best Practices
 
 - **Initialize once at startup** — call `RedisSMQ.initialize()` before creating any components
+- **Create managers through factories** — use `RedisSMQ.createConfigManager()` and the other factory methods so components are tracked for cleanup on `RedisSMQ.shutdown()`
 - **Configure before creating components** — updated configuration takes effect for new components
 - **Set production-ready audit limits** — unlimited storage can consume significant Redis memory
 - **Disable logging and audit in production** unless needed for monitoring
 - **Let configuration sync automatically** — don't manually reload; the event bus handles it
+- **Treat `getConfig()` as read-only** — the returned tree is deep-frozen; assign to a variable rather than mutating fields

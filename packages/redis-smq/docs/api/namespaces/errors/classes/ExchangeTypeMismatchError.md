@@ -33,7 +33,7 @@ exchange type does not match the existing exchange's type.
 
 ### cause?
 
-> `optional` **cause**: `unknown`
+> `optional` **cause?**: `unknown`
 
 #### Inherited from
 
@@ -51,13 +51,53 @@ exchange type does not match the existing exchange's type.
 
 ---
 
+### metadata
+
+> `readonly` **metadata**: \{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.metadata`
+
+---
+
+### name
+
+> **name**: `string`
+
+#### Inherited from
+
+`RedisSMQError.name`
+
+---
+
 ### stack?
 
-> `optional` **stack**: `string`
+> `optional` **stack?**: `string`
 
 #### Inherited from
 
 `RedisSMQError.stack`
+
+---
+
+### code
+
+> `readonly` `static` **code**: `"RedisSMQ.Exchange.TypeMismatch"` = `'RedisSMQ.Exchange.TypeMismatch'`
+
+#### Overrides
+
+`RedisSMQError.code`
+
+---
+
+### defaultMessage
+
+> `readonly` `static` **defaultMessage**: `"Exchange type mismatch."` = `'Exchange type mismatch.'`
+
+#### Overrides
+
+`RedisSMQError.defaultMessage`
 
 ---
 
@@ -81,11 +121,11 @@ not capture any frames.
 
 ## Accessors
 
-### name
+### \[toStringTag\]
 
 #### Get Signature
 
-> **get** **name**(): `string`
+> **get** **\[toStringTag\]**(): `string`
 
 ##### Returns
 
@@ -93,57 +133,25 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.name`
+`RedisSMQError.[toStringTag]`
 
 ---
 
-### props
+### code
 
 #### Get Signature
 
-> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+> **get** **code**(): `string`
 
 ##### Returns
 
-> (): `IRedisSMQErrorProperties`
-
-###### Returns
-
-`IRedisSMQErrorProperties`
+`string`
 
 #### Inherited from
 
-`RedisSMQError.props`
+`RedisSMQError.code`
 
 ## Methods
-
-### getMetadata()
-
-> **getMetadata**(): \{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \} \| `null`
-
-#### Returns
-
-\{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \} \| `null`
-
-#### Inherited from
-
-`RedisSMQError.getMetadata`
-
----
-
-### getProps()
-
-> **getProps**(): `IRedisSMQErrorProperties`
-
-#### Returns
-
-`IRedisSMQErrorProperties`
-
-#### Overrides
-
-`RedisSMQError.getProps`
-
----
 
 ### toJSON()
 
@@ -227,25 +235,23 @@ a();
 
 ---
 
-### isError()
+### isRedisSMQError()
 
-> `static` **isError**(`error`): `error is Error`
-
-Indicates whether the argument provided is a built-in Error instance or not.
+> `static` **isRedisSMQError**(`value`): `value is RedisSMQError<never>`
 
 #### Parameters
 
-##### error
+##### value
 
 `unknown`
 
 #### Returns
 
-`error is Error`
+`value is RedisSMQError<never>`
 
 #### Inherited from
 
-`RedisSMQError.isError`
+`RedisSMQError.isRedisSMQError`
 
 ---
 

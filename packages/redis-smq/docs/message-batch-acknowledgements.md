@@ -23,20 +23,20 @@ Message processed → Add to batch
 → Acknowledge all at once (1 Redis call)
 ```
 
+Batching is **enabled by default**. If you do nothing, the consumer batches acknowledgments with the settings shown below.
+
 ## Configuration
 
-Batch acknowledgments are configured when creating a consumer:
+Batch acknowledgments are configured when creating a consumer through the `RedisSMQ` factory:
 
 ```javascript
 const { RedisSMQ } = require('redis-smq');
 
 // Enable with defaults (100 messages or 10 seconds)
-const consumer = new Consumer({
-  batchAcks: true,
-});
+const consumer = RedisSMQ.createConsumer({ batchAcks: true });
 
 // Custom batch settings
-const consumer = new Consumer({
+const consumer = RedisSMQ.createConsumer({
   batchAcks: {
     batchSize: 500, // Max messages per batch
     batchTimeoutMs: 5000, // Max wait time in milliseconds
@@ -44,10 +44,10 @@ const consumer = new Consumer({
 });
 
 // Disable batching (immediate acknowledgments)
-const consumer = new Consumer({
-  batchAcks: false,
-});
+const consumer = RedisSMQ.createConsumer({ batchAcks: false });
 ```
+
+The `Consumer` class is not exported from the package root — construct consumers through `RedisSMQ.createConsumer(options)`. The options object is merged with the consumer's current defaults; unset fields fall back to the values in the table below.
 
 ## When a Batch is Sent
 
@@ -92,20 +92,24 @@ consumer.consume(
 
 ## Monitoring
 
-Acknowledgment events are still emitted per message, even when batched:
+Acknowledgment events are emitted per message, even when the batch contains multiple messages. The event fires when the batch flushes, not when an individual message enters the batch — so a subscriber may see a burst of events shortly after a batch completes.
 
 ```javascript
-eventBus.on(
-  'consumer.consumeMessage.messageAcknowledged',
-  (messageId, queue, handlerId, consumerId) => {
-    console.log(`Message ${messageId} acknowledged`);
-  },
-);
+const { RedisSMQ } = require('redis-smq');
+
+const eventBus = RedisSMQ.getEventBus();
+await eventBus.run();
+
+eventBus.on('consumer.messageAcknowledged', (messageId, queue, consumerId) => {
+  console.log(`Message ${messageId} acknowledged by ${consumerId}`);
+});
 ```
+
+See [Event Bus](event-bus.md) for the bus's start-before-subscribe requirement.
 
 ## Graceful Shutdown
 
-When a consumer shuts down, any pending acknowledgments are flushed immediately. No messages are left unacknowledged.
+When a consumer shuts down, any pending acknowledgments are flushed immediately. Messages that were already in the batch are acked; messages that were still being processed are unacknowledged with cause `SHUTTING_DOWN` and resolved according to their retry policy. See [Graceful Shutdown](graceful-shutdown.md) for the full sequence.
 
 ## When to Use
 
@@ -113,17 +117,17 @@ When a consumer shuts down, any pending acknowledgments are flushed immediately.
 
 - Processing many messages per second
 - Reducing Redis operations is important
-- Slight acknowledgment delay is acceptable
+- A small acknowledgment delay is acceptable
 
 ### Consider Disabling When
 
-- Message volume is very low
+- Message volume is very low (batching adds latency without meaningful savings)
 - Each message requires immediate acknowledgment
-- You need real-time per-message acknowledgment tracking
+- You need per-message acknowledgment visible in Redis the moment the handler returns
 
 ## Tuning
 
-- **Increase `batchSize`** for higher throughput (fewer Redis calls)
+- **Increase `batchSize`** for higher throughput — fewer Redis calls per message
 - **Decrease `batchTimeoutMs`** for more consistent acknowledgment latency
 - **Start with defaults** and adjust based on monitoring
 

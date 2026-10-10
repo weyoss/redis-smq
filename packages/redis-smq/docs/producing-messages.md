@@ -22,9 +22,7 @@ producer.run((err) => {
 ### 2. Send a Message
 
 ```javascript
-const { ProducibleMessage } = require('redis-smq');
-
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setBody({ hello: 'world' })
   .setQueue('orders');
 
@@ -33,6 +31,8 @@ producer.produce(msg, (err, messageIds) => {
   else console.log('Message ID:', messageIds[0]);
 });
 ```
+
+`produce` resolves with an array of message IDs — one per destination queue, multiplied by the number of consumer groups for Pub/Sub destinations. A single call can produce more than one ID.
 
 ### 3. Shutdown
 
@@ -51,56 +51,58 @@ Every message must have exactly one destination:
 | `setQueue(name)`          | Direct to queue | Not needed  |
 | `setDirectExchange(name)` | Direct exchange | Required    |
 | `setTopicExchange(name)`  | Topic exchange  | Required    |
-| `setFanoutExchange(name)` | Fanout exchange | Ignored     |
+| `setFanoutExchange(name)` | Fanout exchange | Forbidden   |
+
+Setting a queue clears any previously set exchange (and its routing key), and vice versa. A message with no destination rejects at `produce` time with `MessageExchangeRequiredError`.
 
 ### Direct to Queue (Fastest)
 
 ```javascript
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setQueue('orders')
   .setBody({ orderId: 123 });
 ```
 
-No routing key needed. The message goes directly to the named queue.
+No routing key needed. The message goes directly to the named queue. This path skips exchange matching, so `produce` resolves as soon as the message is enqueued.
 
 ### Direct Exchange
 
 ```javascript
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setDirectExchange('orders')
   .setExchangeRoutingKey('order.created')
   .setBody({ orderId: 123 });
 ```
 
-Routes to queues bound with the exact routing key `"order.created"`.
+Routes to queues bound with the exact routing key `"order.created"`. Routing keys are lowercased before matching — `"Order.Created"` and `"order.created"` are the same key.
 
 ### Topic Exchange
 
 ```javascript
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setTopicExchange('events')
   .setExchangeRoutingKey('user.created')
   .setBody({ userId: 456 });
 ```
 
-Routes to queues whose binding patterns match `"user.created"`.
+Routes to queues whose binding patterns match `"user.created"`. Patterns are case-sensitive.
 
 ### Fanout Exchange
 
 ```javascript
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setFanoutExchange('notifications')
   .setBody({ alert: 'System update' });
 ```
 
-Broadcasts to all queues bound to the exchange. Routing key is ignored.
+Broadcasts to all queues bound to the exchange. The routing key is ignored; supplying one rejects with `InvalidFanoutExchangeParametersError` at `produce` time.
 
 ## Message Configuration
 
 ### Basic Options
 
 ```javascript
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setQueue('orders')
   .setBody({ userId: 123 })
   .setTTL(3600000) // Expire after 1 hour (0 = never)
@@ -110,7 +112,9 @@ const msg = new ProducibleMessage()
 ### Priority
 
 ```javascript
-const msg = new ProducibleMessage()
+const { EMessagePriority } = require('redis-smq');
+
+const msg = RedisSMQ.newProducibleMessage()
   .setQueue('alerts')
   .setPriority(EMessagePriority.HIGH) // 0–7, lower = higher priority
   .setBody({ alert: 'Urgent' });
@@ -120,17 +124,19 @@ msg.hasPriority(); // true
 msg.disablePriority(); // Removes priority setting
 ```
 
-Only effective for priority queues.
+Priority is only meaningful for priority queues. Producing a message with a priority to a FIFO or LIFO queue rejects with `PriorityQueuingNotEnabledError`; producing without a priority to a priority queue rejects with `MessagePriorityRequiredError`.
 
 ### Retry Policy
 
 ```javascript
-const msg = new ProducibleMessage()
+const msg = RedisSMQ.newProducibleMessage()
   .setQueue('payments')
   .setBody({ amount: 99.99 })
-  .setRetryThreshold(3) // Max 3 retries before dead-letter
+  .setRetryThreshold(3) // Max 3 processing attempts before dead-letter
   .setRetryDelay(5000); // Wait 5 seconds between retries
 ```
+
+A `retryDelay` of `0` requeues failed messages immediately. A positive value places them in the delayed set for the configured interval before retrying.
 
 ### Scheduled Delivery
 
@@ -138,8 +144,9 @@ const msg = new ProducibleMessage()
 // One-time delay
 msg.setScheduledDelay(10000); // Deliver after 10 seconds
 
-// CRON schedule
-msg.setScheduledCRON('0 0 10 * * *'); // Daily at 10 AM
+// CRON schedule — 5-field (seconds assumed 0) or 6-field (explicit seconds)
+msg.setScheduledCRON('30 9 * * 1-5'); // Weekdays at 9:30:00 AM
+msg.setScheduledCRON('0 30 9 * * 1-5'); // Same, 6-field form
 
 // Repeating
 msg.setScheduledDelay(5000); // First after 5 seconds
@@ -150,6 +157,8 @@ msg.setScheduledRepeatPeriod(60000); // Every 60 seconds
 msg.resetScheduledParams();
 ```
 
+See [Scheduling Messages](scheduling-messages.md) for the full set of scheduling interactions.
+
 ## Managing the Producer
 
 ### Check Status
@@ -158,6 +167,8 @@ msg.resetScheduledParams();
 console.log('Producer ID:', producer.getId());
 console.log('Is running:', producer.isRunning());
 ```
+
+Both methods are synchronous — they read in-memory state without a Redis round-trip.
 
 ### Shutdown
 
@@ -175,51 +186,94 @@ RedisSMQ.shutdown(callback);
 ### Callback Style
 
 ```javascript
+const { NoMatchingQueuesError, QueueNotFoundError, ExchangeNotFoundError } =
+  require('redis-smq').errors;
+
 producer.produce(msg, (err, messageIds) => {
-  if (err) {
-    if (err.message.includes('No matching queues')) {
-      console.log('No queues bound to this routing key');
-    } else if (err.message.includes('not found')) {
-      console.log('Queue does not exist');
-    } else {
-      console.error('Unexpected error:', err);
-    }
-    return;
+  if (err instanceof NoMatchingQueuesError) {
+    console.log('No queues bound to this routing key');
+  } else if (err instanceof ExchangeNotFoundError) {
+    console.log('The exchange does not exist');
+  } else if (err instanceof QueueNotFoundError) {
+    console.log('The target queue does not exist');
+  } else if (err) {
+    console.error('Unexpected error:', err);
+  } else {
+    console.log('Sent:', messageIds);
   }
-  console.log('Sent:', messageIds);
 });
 ```
+
+Error classes are exposed under `redis-smq`'s `errors` namespace. Discriminating by class is more reliable than inspecting `err.message` — the message strings are documentation, the classes are the contract.
 
 ### Promise Style
 
 ```javascript
+const { errors } = require('redis-smq');
+
 try {
   const ids = await producer.produce(msg);
   console.log('Sent:', ids);
 } catch (err) {
-  console.error('Failed:', err.message);
+  if (err instanceof errors.ExchangeNotFoundError) {
+    console.error('Exchange does not exist');
+  } else {
+    console.error('Failed:', err.message);
+  }
 }
 ```
 
+The same error class reaches both forms; the `instanceof` check is the same regardless of which style you use.
+
 ## Common Errors
 
-| Error                    | Cause                                               |
-| ------------------------ | --------------------------------------------------- |
-| `QUEUE_NOT_FOUND`        | Queue does not exist                                |
-| `QUEUE_STOPPED`          | Queue is stopped, not accepting messages            |
-| `QUEUE_LOCKED`           | Queue is locked for maintenance                     |
-| `EXCHANGE_NOT_FOUND`     | Exchange does not exist                             |
-| `NO_MATCHING_QUEUES`     | No queues bound to the routing key/pattern          |
-| `ROUTING_KEY_REQUIRED`   | Direct or topic exchange used without a routing key |
-| `MESSAGE_ALREADY_EXISTS` | Duplicate message ID                                |
-| `PRIORITY_REQUIRED`      | Priority queue requires a priority on the message   |
-| `RATE_LIMIT_EXCEEDED`    | Queue's rate limit has been reached                 |
+Errors are grouped by the phase in which they're raised.
+
+### Producer state
+
+| Error class               | Cause                                                      |
+| ------------------------- | ---------------------------------------------------------- |
+| `ProducerNotRunningError` | `run()` was never called, or the producer shut down.       |
+| `PanicError`              | The producer's Pub/Sub target resolver is not operational. |
+
+### Message configuration
+
+| Error class                            | Cause                                                              |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `MessageExchangeRequiredError`         | The message has neither a queue nor an exchange.                   |
+| `RoutingKeyRequiredError`              | A direct or topic exchange was used without a routing key.         |
+| `PriorityQueuingNotEnabledError`       | A priority was set on a message destined for a FIFO/LIFO queue.    |
+| `MessagePriorityRequiredError`         | A message destined for a priority queue has no priority.           |
+| `InvalidFanoutExchangeParametersError` | A routing key was set on a message destined for a fanout exchange. |
+
+### Destination
+
+| Error class                     | Cause                                                        |
+| ------------------------------- | ------------------------------------------------------------ |
+| `ExchangeNotFoundError`         | The target exchange does not exist.                          |
+| `QueueNotFoundError`            | The target queue does not exist.                             |
+| `NoMatchingQueuesError`         | The exchange exists but resolved to zero destination queues. |
+| `QueueHasNoConsumerGroupsError` | A Pub/Sub queue has no consumer groups to deliver to.        |
+
+### Queue state
+
+| Error class              | Cause                                         |
+| ------------------------ | --------------------------------------------- |
+| `QueueStoppedError`      | The target queue is STOPPED.                  |
+| `QueueLockedError`       | The target queue is LOCKED.                   |
+| `InvalidQueueStateError` | The target queue is in an unrecognized state. |
+
+### Message collision
+
+| Error class                 | Cause                                      |
+| --------------------------- | ------------------------------------------ |
+| `MessageAlreadyExistsError` | A message with the same ID already exists. |
 
 ## Best Practices
 
-- **Use direct-to-queue for simple cases** — faster than exchanges
-- **Set TTL** to prevent stale messages from accumulating
-- **Configure retries** for transient failures
-- **Handle errors gracefully** — check error types and respond appropriately
-- **Reuse producers** — create one producer and use it for multiple messages
-- **Shut down** producers when no longer needed
+- **Use direct-to-queue for simple cases** — it skips exchange matching and is measurably faster
+- **Set TTL** to prevent stale messages from accumulating on queues that drain slowly
+- **Configure retries** for transient failures — a `retryThreshold > 0` gives the handler more than one attempt
+- **Discriminate errors by class** — `instanceof` checks on the exported error classes are the stable contract
+- **Reuse producers** — create one producer and use it for multiple messages; the producer holds a shared connection and a Pub/Sub resolver cache
+- **Shut down when done** — call `producer.shutdown()` or `RedisSMQ.shutdown()` to release the connection

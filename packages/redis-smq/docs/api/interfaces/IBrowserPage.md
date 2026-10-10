@@ -2,6 +2,12 @@
 
 # Interface: IBrowserPage\<T\>
 
+One page of results from a queue-message browser.
+
+The `totalItems` field describes the size of the whole result set, not
+the size of `items`. A caller who wants to compute the number of pages
+divides `totalItems` by the page size they requested.
+
 ## Type Parameters
 
 ### T
@@ -14,8 +20,12 @@
 
 > **items**: `T`[]
 
+The items in this page.
+
 ---
 
 ### totalItems
 
 > **totalItems**: `number`
+
+Total number of items in the full result set.

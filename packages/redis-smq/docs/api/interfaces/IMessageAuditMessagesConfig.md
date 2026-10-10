@@ -2,25 +2,37 @@
 
 # Interface: IMessageAuditMessagesConfig
 
-Configuration options for message audit storage.
+Configuration for message audit storage of a single category
+(acknowledged or dead-lettered messages).
 
-Message audit creates dedicated Redis storage structures to track processed message IDs,
-enabling efficient monitoring of acknowledged and dead-lettered messages per queue.
+Message audit creates a dedicated Redis list per queue that tracks
+processed message IDs. The list behaves as a bounded ring buffer:
+entries are appended at one end, and when either the size limit or
+the time limit is reached, older entries are evicted.
 
-The storage acts as a ring buffer with configurable size and expiration policies:
+Two limits govern retention:
 
-- When `queueSize` limit is reached, oldest entries are automatically evicted (FIFO)
-- When `expire` time is reached, entries are removed regardless of size
-- Both limits can be used together for fine-grained retention control
+- `queueSize`: maximum number of message IDs to keep. When the list
+  grows past this, the oldest entries are trimmed.
+
+- `expire`: maximum age in seconds. Entries older than this are
+  removed by Redis's passive expiration when the list is next
+  touched.
+
+Both limits can be active simultaneously; the stricter one wins. A
+value of `0` disables that limit. Setting both to `0` gives unlimited
+retention — every processed message ID is kept for the lifetime of
+the queue.
 
 ## Example
 
-```typescript
-// Store last 1000 messages or messages from last 7 days (whichever is smaller)
-const config: IMessageAuditMessagesConfig = {
+```ts
+// Keep the last 1000 acknowledged message IDs, or entries from the
+// last 7 days, whichever limit is reached first.
+const cfg: IMessageAuditMessagesConfig = {
   enabled: true,
   queueSize: 1000,
-  expire: 604800, // 7 days in seconds
+  expire: 7 * 24 * 60 * 60,
 };
 ```
 
@@ -30,14 +42,17 @@ const config: IMessageAuditMessagesConfig = {
 
 > **enabled**: `boolean`
 
-Enables or disables message audit tracking for this message type.
+Enables audit tracking for this message category.
 
-When enabled, the system maintains a Redis sorted set for each queue,
-storing message IDs with their processing timestamps as scores.
-This enables querying and monitoring capabilities for messages in this category.
+When enabled, the library maintains a Redis list per queue holding
+the IDs of messages in this category (acknowledged, dead-lettered,
+and so on). Browsing APIs such as `QueueAcknowledgedMessages` and
+`QueueDeadLetteredMessages` read from these lists.
 
-When disabled, no audit data is stored, reducing Redis memory overhead
-but losing visibility into processed message history.
+When disabled, no IDs are recorded and the corresponding browsing
+API raises a category-specific error
+(`AcknowledgmentAuditDisabledError` or
+`DeadLetterAuditDisabledError`).
 
 #### Default
 
@@ -51,12 +66,19 @@ false;
 
 > **expire**: `number`
 
-Retention time for message IDs in seconds.
+Maximum age of a message ID, in seconds.
 
-Message IDs older than this duration are automatically purged from audit storage,
-regardless of whether the queue size limit has been reached.
+Older entries are removed by Redis's passive expiration the next
+time the list is accessed. The library does not actively sweep the
+list; removal is deferred to the next read or write.
 
-Set to `0` to disable time-based eviction, keeping messages indefinitely.
+Setting to `0` disables time-based expiration. Combined with
+`queueSize: 0`, this gives unlimited retention.
+
+The value is used as the argument to Redis's `PEXPIRE` after
+converting from seconds to milliseconds internally. The unit in the
+public config is seconds for readability; a value of `3600` means
+one hour, not one millisecond.
 
 #### Default
 
@@ -70,13 +92,15 @@ Set to `0` to disable time-based eviction, keeping messages indefinitely.
 
 > **queueSize**: `number`
 
-Maximum number of message IDs to store per queue.
+Maximum number of message IDs to retain per queue.
 
-Controls the maximum capacity of the audit storage for each queue.
-When the limit is reached, the oldest entries (by timestamp) are
-automatically evicted to accommodate new ones.
+When the list exceeds this size, the oldest entries are trimmed to
+keep the list at exactly `queueSize` entries. Trimming happens
+inside the same Lua script that appends new IDs, so the list never
+observably exceeds the limit.
 
-Set to `0` to disable size-based eviction, allowing unlimited storage.
+Setting to `0` disables the size limit. Combined with `expire: 0`,
+this gives unlimited retention.
 
 #### Default
 

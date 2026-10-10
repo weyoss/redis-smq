@@ -30,7 +30,7 @@
 
 ### cause?
 
-> `optional` **cause**: `unknown`
+> `optional` **cause?**: `unknown`
 
 #### Inherited from
 
@@ -48,13 +48,53 @@
 
 ---
 
+### metadata
+
+> `readonly` **metadata**: \{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
+
+#### Inherited from
+
+`RedisSMQError.metadata`
+
+---
+
+### name
+
+> **name**: `string`
+
+#### Inherited from
+
+`RedisSMQError.name`
+
+---
+
 ### stack?
 
-> `optional` **stack**: `string`
+> `optional` **stack?**: `string`
 
 #### Inherited from
 
 `RedisSMQError.stack`
+
+---
+
+### code
+
+> `readonly` `static` **code**: `"RedisSMQ.Exchange.InvalidRoutingKey"` = `'RedisSMQ.Exchange.InvalidRoutingKey'`
+
+#### Overrides
+
+`RedisSMQError.code`
+
+---
+
+### defaultMessage
+
+> `readonly` `static` **defaultMessage**: `"Invalid exchange routing key."` = `'Invalid exchange routing key.'`
+
+#### Overrides
+
+`RedisSMQError.defaultMessage`
 
 ---
 
@@ -78,11 +118,11 @@ not capture any frames.
 
 ## Accessors
 
-### name
+### \[toStringTag\]
 
 #### Get Signature
 
-> **get** **name**(): `string`
+> **get** **\[toStringTag\]**(): `string`
 
 ##### Returns
 
@@ -90,65 +130,25 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.name`
+`RedisSMQError.[toStringTag]`
 
 ---
 
-### props
+### code
 
 #### Get Signature
 
-> **get** `static` **props**(): () => `IRedisSMQErrorProperties`
+> **get** **code**(): `string`
 
 ##### Returns
 
-> (): `IRedisSMQErrorProperties`
-
-###### Returns
-
-`IRedisSMQErrorProperties`
+`string`
 
 #### Inherited from
 
-`RedisSMQError.props`
+`RedisSMQError.code`
 
 ## Methods
-
-### getMetadata()
-
-> **getMetadata**(): \{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
-
-#### Returns
-
-\{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \} \| `null`
-
-#### Inherited from
-
-`RedisSMQError.getMetadata`
-
----
-
-### getProps()
-
-> **getProps**(): `object`
-
-#### Returns
-
-`object`
-
-##### code
-
-> **code**: `string` = `'RedisSMQ.Exchange.RoutingKeyRequired'`
-
-##### defaultMessage
-
-> **defaultMessage**: `string` = `'Please specify a routing key'`
-
-#### Overrides
-
-`RedisSMQError.getProps`
-
----
 
 ### toJSON()
 
@@ -232,25 +232,23 @@ a();
 
 ---
 
-### isError()
+### isRedisSMQError()
 
-> `static` **isError**(`error`): `error is Error`
-
-Indicates whether the argument provided is a built-in Error instance or not.
+> `static` **isRedisSMQError**(`value`): `value is RedisSMQError<never>`
 
 #### Parameters
 
-##### error
+##### value
 
 `unknown`
 
 #### Returns
 
-`error is Error`
+`value is RedisSMQError<never>`
 
 #### Inherited from
 
-`RedisSMQError.isError`
+`RedisSMQError.isRedisSMQError`
 
 ---
 

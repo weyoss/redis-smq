@@ -2,6 +2,11 @@
 
 # Interface: IQueueParams
 
+Identifies a queue.
+
+`ns` (namespace) defaults to the configured default namespace when a
+queue is specified by name only.
+
 ## Properties
 
 ### name

@@ -2,91 +2,134 @@
 
 # Interface: IRedisSMQConfig
 
+Configuration for a RedisSMQ instance.
+
+Every field is optional. Fields that are omitted fall back to a
+default, and the resulting configuration is normalized into a
+`IRedisSMQParsedConfig` before the library uses it.
+
+Configuration is process-wide — every component reads from the same
+resolved configuration object. It is stored in Redis and shared
+across processes; a change made in one process propagates to the
+others via the configuration sync mechanism.
+
+## Example
+
+```ts
+const config: IRedisSMQConfig = {
+  namespace: 'production',
+  logger: { enabled: true, options: { logLevel: EConsoleLoggerLevel.INFO } },
+  messageAudit: {
+    acknowledgedMessages: { enabled: true, queueSize: 5000 },
+  },
+};
+```
+
 ## Properties
 
 ### logger?
 
-> `optional` **logger**: `boolean` \| `ILoggerConfig`
+> `optional` **logger?**: `boolean` \| `ILoggerConfig`
 
-#### See
+Logger configuration.
 
-/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
+Accepts:
+
+- `true`: enable logging with the default options
+- `false`: disable logging entirely
+- `ILoggerConfig`: enable with granular control
+
+The library uses the provided logger configuration for every
+component that emits diagnostics — consumers, producers, managers,
+background workers. See the `redis-smq-common` package for the
+full `ILoggerConfig` interface.
+
+Defaults to disabled.
 
 ---
 
 ### messageAudit?
 
-> `optional` **messageAudit**: `boolean` \| [`IMessageAuditConfig`](IMessageAuditConfig.md)
+> `optional` **messageAudit?**: `boolean` \| [`IMessageAuditConfig`](IMessageAuditConfig.md)
 
-Message audit configuration for tracking processed messages.
+Message audit configuration.
 
-Message audit creates dedicated Redis storage to track processed message IDs,
-enabling efficient monitoring and analysis of acknowledged and dead-lettered
-messages per queue. Without message audit, QueueAcknowledgedMessages and
-QueueDeadLetteredMessages classes cannot function.
+Message audit creates dedicated Redis storage that tracks processed
+message IDs, enabling efficient monitoring and analysis of
+acknowledged and dead-lettered messages per queue. Without message
+audit, `QueueAcknowledgedMessages` and `QueueDeadLetteredMessages`
+cannot function — they raise `AcknowledgmentAuditDisabledError` and
+`DeadLetterAuditDisabledError` respectively.
 
-**Storage Impact:**
+Storage impact:
 
-- Creates separate Redis storage structures for tracked message IDs
-- Default settings use unlimited storage and retention (queueSize: 0, expire: 0)
-- Consider setting limits in production to manage Redis memory usage
+- Creates separate Redis structures for tracked message IDs.
+- Default settings use unlimited storage and retention
+  (`queueSize: 0`, `expire: 0`).
+- For production deployments, set `queueSize` and `expire` on
+  each category to bound Redis memory usage.
 
-**Configuration Options:**
+Configuration accepts three forms:
 
-- `true`: Enable audit for both acknowledged and dead-lettered messages with defaults
-- `false` or `undefined`: Disable message audit completely
-- `IMessageAuditConfig`: Enable with granular control over message types and limits
+- `true`: enable audit for all categories with defaults
+- `false` or omitted: disable all audit categories
+- `IMessageAuditConfig`: enable categories individually with
+  per-category options
 
 #### Example
 
-```typescript
-// Enable audit for all processed messages (unlimited storage)
-let config = {
-  messageAudit: true,
+```ts
+// Enable audit for all categories with unlimited storage
+const config1: IRedisSMQConfig = { messageAudit: true };
+
+// Enable only dead-letter audit
+const config2: IRedisSMQConfig = {
+  messageAudit: { deadLetteredMessages: true },
 };
 
-// Enable audit only for dead-lettered messages
-config = {
-  messageAudit: {
-    deadLetteredMessages: true,
-  },
-};
-
-// Enable audit with storage limits
-config = {
+// Enable with per-category storage limits
+const config3: IRedisSMQConfig = {
   messageAudit: {
     acknowledgedMessages: {
       enabled: true,
-      queueSize: 5000, // track last 5,000 message IDs per queue
-      expire: 12 * 60 * 60, // retain for 12 hours
+      queueSize: 5000,
+      expire: 12 * 60 * 60, // 12 hours
     },
     deadLetteredMessages: {
       enabled: true,
-      queueSize: 10000, // track last 10,000 message IDs per queue
-      expire: 7 * 24 * 60 * 60, // retain for 7 days
+      queueSize: 10000,
+      expire: 7 * 24 * 60 * 60, // 7 days
     },
   },
 };
 ```
 
-#### See
-
-- /packages/redis-smq/docs/message-audit.md for detailed documentation
-- [IMessageAuditConfig](IMessageAuditConfig.md) for configuration interface details
-
 ---
 
 ### namespace?
 
-> `optional` **namespace**: `string`
+> `optional` **namespace?**: `string`
 
-Logical namespace for all queues, exchanges, and Redis keys used by RedisSMQ.
+Logical namespace for the queues, exchanges, and Redis keys this
+instance manages.
 
 Purpose:
 
-- Isolates resources between applications/environments.
-- Used whenever an operation does not explicitly pass a namespace.
+- Isolates resources between applications and environments.
+- Serves as the default namespace for any operation that does not
+  specify one.
 
-Defaults:
+A namespace is a short lowercase string. It is used as a segment in
+every Redis key the library writes, so it must satisfy the
+library's key-validity rules: start with a letter, contain only
+letters, digits, and the characters `-`, `_`, and `.`.
 
-- If omitted, the default namespace is used (see defaultConfig.namespace).
+Defaults to `'default'` when omitted.
+
+#### Example
+
+```ts
+// Two deployments sharing one Redis instance
+const app1 = { namespace: 'billing' };
+const app2 = { namespace: 'shipping' };
+```

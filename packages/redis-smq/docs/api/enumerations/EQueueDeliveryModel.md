@@ -2,14 +2,25 @@
 
 # Enumeration: EQueueDeliveryModel
 
+Delivery model for a queue.
+
+- POINT_TO_POINT: each message is delivered to exactly one consumer.
+- PUB_SUB: each message is delivered to every consumer group
+  subscribed to the queue. Consumers must provide a
+  group ID (or the library generates an ephemeral
+  one).
+
+The integer values are persisted in Redis (the `DELIVERY_MODEL` hash
+field).
+
 ## Enumeration Members
 
-### POINT_TO_POINT
+### POINT\_TO\_POINT
 
-> **POINT_TO_POINT**: `0`
+> **POINT\_TO\_POINT**: `0`
 
 ---
 
-### PUB_SUB
+### PUB\_SUB
 
-> **PUB_SUB**: `1`
+> **PUB\_SUB**: `1`

@@ -2,14 +2,21 @@
 
 # Interface: IMessageAuditParsedConfig
 
-**`Internal`**
+Fully-resolved message audit configuration.
 
-Parsed and normalized configuration interface.
+This is what `IConfigManager.getConfig().messageAudit` returns and
+what every internal component reads. Every category is present, every
+union has been narrowed to its object form, and every numeric field
+has a value.
 
-This interface represents the final configuration after processing and
-merging defaults. It contains fully resolved configuration objects for
-each audit category, with all optional fields populated with their
-default values.
+The three fields are always present. A category the user disabled (or
+omitted) appears with `enabled: false` and its other fields at their
+defaults. A category the user enabled with the shorthand `true`
+appears with `enabled: true` and every other field at its default.
+
+The shape is stable across both raw forms — `true` and an object — so
+internal code that reads `cfg.messageAudit.acknowledgedMessages.enabled`
+does not need to branch on which form the user supplied.
 
 ## Properties
 
@@ -17,7 +24,7 @@ default values.
 
 > **acknowledgedMessages**: [`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)
 
-Normalized configuration for acknowledged messages audit
+Resolved configuration for the acknowledged-messages category.
 
 ---
 
@@ -25,7 +32,7 @@ Normalized configuration for acknowledged messages audit
 
 > **deadLetteredMessages**: [`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)
 
-Normalized configuration for dead-lettered messages audit
+Resolved configuration for the dead-lettered-messages category.
 
 ---
 
@@ -33,4 +40,4 @@ Normalized configuration for dead-lettered messages audit
 
 > **unacknowledgementHistory**: [`IMessageAuditHistoryConfig`](IMessageAuditHistoryConfig.md)
 
-Normalized configuration for unacknowledgement history
+Resolved configuration for the unacknowledgement-history category.

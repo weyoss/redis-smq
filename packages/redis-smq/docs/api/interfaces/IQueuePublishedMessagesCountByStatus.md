@@ -2,11 +2,15 @@
 
 # Interface: IQueuePublishedMessagesCountByStatus
 
+Message counts by status for a queue.
+
 ## Properties
 
 ### acknowledged
 
 > **acknowledged**: `number`
+
+Number of acknowledged messages (also known as "consumed").
 
 ---
 
@@ -14,14 +18,20 @@
 
 > **deadLettered**: `number`
 
+Number of dead-lettered messages.
+
 ---
 
 ### pending
 
-> **pending**: `number` \| [`IQueueGroupConsumersPendingCount`](IQueueGroupConsumersPendingCount.md)
+> **pending**: `number`
+
+Number of pending messages.
 
 ---
 
 ### scheduled
 
 > **scheduled**: `number`
+
+Number of scheduled messages.

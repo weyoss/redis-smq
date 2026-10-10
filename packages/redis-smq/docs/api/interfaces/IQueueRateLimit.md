@@ -2,13 +2,23 @@
 
 # Interface: IQueueRateLimit
 
+Rate limit configuration for a queue.
+
+Applies to the consumption path: no more than `limit` messages are
+dequeued per `interval` milliseconds. Enforced by an atomic Redis
+check that also decrements a counter, so the limit holds across
+multiple consumers.
+
+The library does not rate-limit publishing; publishing into a
+rate-limited queue is unbounded and simply buffers.
+
 ## Properties
 
 ### interval
 
 > **interval**: `number`
 
-The time window over which the rate limit is applied. In milliseconds.
+Time window for the limit, in milliseconds. Minimum 1000.
 
 ---
 
@@ -16,4 +26,4 @@ The time window over which the rate limit is applied. In milliseconds.
 
 > **limit**: `number`
 
-The maximum number of messages that can be processed per unit of time.
+Maximum number of messages that may be processed within `interval`.

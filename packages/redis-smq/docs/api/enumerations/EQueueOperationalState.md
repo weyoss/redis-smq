@@ -2,8 +2,22 @@
 
 # Enumeration: EQueueOperationalState
 
-Queue operational states representing the current mode of queue processing.
-These states are mutually exclusive - a queue can only be in one state at a time.
+Operational states a queue can be in.
+
+States are mutually exclusive. A queue occupies exactly one at any
+moment. The state is authoritative in Redis (`keyQueueProperties`) and
+is mirrored locally by consumers; the Redis value wins whenever the
+two disagree.
+
+Transitions between states are validated by a rule table (see
+`_isAllowedTransition`). Attempting an invalid transition — for
+example, STOPPED -> PAUSED — fails with a transition error rather than
+silently moving the queue to the new state.
+
+The integer values are part of the Redis wire format. They are used as
+values of the `OPERATIONAL_STATE` hash field and as arguments to the
+queue-state Lua scripts. Reordering or renumbering this enum is a
+breaking change to persisted data.
 
 ## Enumeration Members
 
@@ -23,22 +37,15 @@ Queue is operating normally.
 
 > **LOCKED**: `3`
 
-Queue has an exclusive lock for operations.
+Queue is held under an exclusive lock.
 
-- **NOT** consuming messages (except lock holder)
-- **NOT** accepting new messages
+- NOT consuming messages (except by the lock holder)
+- NOT accepting new messages
 - External operations blocked
-- Lock holder has exclusive access
+- The lock holder has exclusive access
 
-#### Example
-
-```ts
-// Use cases:
-// - Administrative operations
-// - Bulk data operations
-// - Schema migrations
-// - Critical repairs
-```
+Typical use: administrative operations, bulk data operations,
+schema migrations, critical repairs.
 
 ---
 
@@ -48,21 +55,14 @@ Queue has an exclusive lock for operations.
 
 Queue processing is temporarily paused.
 
-- **NOT** consuming messages
-- **CAN** accept new messages (messages buffer)
-- Message handler remain subscribed
-- In-flight messages complete or timeout
-- Quick resume capability
+- NOT consuming messages
+- CAN accept new messages (they buffer in pending)
+- Message handlers remain subscribed
+- In-flight messages complete or time out normally
+- Quick to resume
 
-#### Example
-
-```ts
-// Use cases:
-// - Rolling deployments
-// - Downstream service issues
-// - Temporary maintenance
-// - Debugging/inspection
-```
+Typical use: rolling deployments, downstream service degradation,
+short maintenance windows, debugging a live queue.
 
 ---
 
@@ -72,16 +72,9 @@ Queue processing is temporarily paused.
 
 Queue is completely shut down.
 
-- **NOT** consuming messages
-- **NOT** accepting new messages
-- All message handler are disconnected
+- NOT consuming messages
+- NOT accepting new messages
+- Message handlers are disconnected
 
-#### Example
-
-```ts
-// Use cases:
-// - Major maintenance
-// - Resource reclamation
-// - Long-term disabling
-// - Emergency intervention
-```
+Typical use: prolonged maintenance, resource reclamation,
+long-term disabling, emergency intervention.

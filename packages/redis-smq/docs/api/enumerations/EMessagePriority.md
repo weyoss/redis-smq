@@ -2,11 +2,27 @@
 
 # Enumeration: EMessagePriority
 
+Priority levels for messages in PRIORITY_QUEUE queues.
+
+Lower integer values represent higher priority. A message with priority
+`HIGHEST` (0) is dequeued before any message with priority `HIGH` (2),
+regardless of arrival order. Within the same priority level, ordering
+follows the queue type (FIFO or LIFO by insertion order within the
+level).
+
+Priority is only meaningful for PRIORITY_QUEUE queues. Publishing a
+message with a priority to a non-priority queue is refused at publish
+time; so is publishing without a priority to a priority queue.
+
+The integer values are persisted in Redis (as the score of the pending
+sorted set) and passed as arguments to several Lua scripts. Reordering
+or renumbering is a breaking change to persisted data.
+
 ## Enumeration Members
 
-### ABOVE_NORMAL
+### ABOVE\_NORMAL
 
-> **ABOVE_NORMAL**: `3`
+> **ABOVE\_NORMAL**: `3`
 
 ---
 
@@ -40,12 +56,12 @@
 
 ---
 
-### VERY_HIGH
+### VERY\_HIGH
 
-> **VERY_HIGH**: `1`
+> **VERY\_HIGH**: `1`
 
 ---
 
-### VERY_LOW
+### VERY\_LOW
 
-> **VERY_LOW**: `6`
+> **VERY\_LOW**: `6`

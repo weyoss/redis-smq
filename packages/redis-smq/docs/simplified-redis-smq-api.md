@@ -2,7 +2,11 @@
 
 # Simplified RedisSMQ API
 
-The `RedisSMQ` class provides a simplified API: initialize once, create components via factory methods, and shut down everything with a single call. Components created this way are automatically tracked and cleaned up.
+The `RedisSMQ` class is the library's public entry point. It provides:
+
+- **Two lifecycle methods** — `initialize()` and `shutdown()` — that bring the underlying machinery up and down.
+- **Factory methods** that construct every component the library exposes.
+- **Component tracking** — every component created through a factory is registered, and `shutdown()` tears all of them down in one call.
 
 ## Overview
 
@@ -10,207 +14,268 @@ The `RedisSMQ` class provides a simplified API: initialize once, create componen
 const { RedisSMQ } = require('redis-smq');
 
 // 1. Initialize once
-RedisSMQ.initialize(redisConfig, callback);
+await RedisSMQ.initialize(redisConfig);
 
 // 2. Create components via factory methods
 const producer = RedisSMQ.createProducer();
 const consumer = RedisSMQ.createConsumer();
 
-// 3. Single shutdown for everything
-RedisSMQ.shutdown(callback);
+// 3. One shutdown for everything
+await RedisSMQ.shutdown();
 ```
 
 ## Initialization
 
-Call once when your application starts:
+Call once when your application starts, before any factory method:
 
 ```javascript
-import { RedisSMQ } from 'redis-smq';
-import { ERedisConfigClient } from 'redis-smq-common';
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) console.error('Failed:', err);
-  },
-);
+await RedisSMQ.initialize({
+  client: ERedisConfigClient.IOREDIS,
+  options: { host: '127.0.0.1', port: 6379 },
+});
 ```
 
-## Factory Methods
+Calling a factory method (`createProducer()`, `createConsumer()`, and the rest) before `initialize()` resolves throws `PanicError`. There is no lazy initialization — the constraint is deliberate, so that an uninitialized library fails fast rather than half-working.
 
-All components can be created through the `RedisSMQ` class:
+`initialize()` is transactional: if any step of the startup sequence fails, every resource acquired during the attempt is released and the state machine returns to `DOWN`, ready for a retry. See [Installation](installation.md) for the full startup sequence and its idempotency guarantees.
+
+## Lifecycle
+
+| Method                              | Purpose                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| `RedisSMQ.initialize(redisConfig?)` | Connect to Redis and bring up the library.                                |
+| `RedisSMQ.shutdown()`               | Stop every tracked component and release resources.                       |
+| `RedisSMQ.isRunning()`              | `true` between a successful `initialize()` and the start of `shutdown()`. |
+
+Both `initialize` and `shutdown` are idempotent:
+
+- A call while the library is already in the target state resolves immediately.
+- A call while a transition is in flight queues the caller behind the in-flight one.
+- `initialize()` during shutdown, or `shutdown()` during initialization, rejects with `PanicError`.
+
+## Factory Methods
 
 ### Producers
 
 ```javascript
-// Create
+// Create only — call run() before publishing
 const producer = RedisSMQ.createProducer();
+await producer.run();
 
-// Create and start
-const producer = RedisSMQ.startProducer((err) => {
-  if (err) console.error('Start failed:', err);
-});
+// Create and start in one call
+const started = await RedisSMQ.startProducer();
 ```
 
 ### Consumers
 
 ```javascript
-// Create
+// Default options
 const consumer = RedisSMQ.createConsumer();
 
-// Create multiplexed consumer (shared connection)
-const consumer = RedisSMQ.createConsumer(true);
+// With options
+const consumer = RedisSMQ.createConsumer({
+  enableMultiplexing: true,
+  heartbeatTTL: 30000,
+  batchAcks: { batchSize: 500, batchTimeoutMs: 2000 },
+});
 
-// Create and start
-const consumer = RedisSMQ.startConsumer((err) => {
-  if (err) console.error('Start failed:', err);
+// Create and start in one call
+const started = await RedisSMQ.startConsumer({
+  enableMultiplexing: true,
 });
 ```
 
-### Queue Management
-
-```javascript
-const queueManager = RedisSMQ.createQueueManager();
-const stateManager = RedisSMQ.createQueueStateManager();
-const rateLimitManager = RedisSMQ.createQueueRateLimit();
-const consumerGroups = RedisSMQ.createConsumerGroups();
-```
+See [Consuming Messages](consuming-messages.md) for the full options surface.
 
 ### Messages
 
 ```javascript
-const messageManager = RedisSMQ.createMessageManager();
-
-// Message browsing
-const publishedMessages = RedisSMQ.createQueuePublishedMessages();
-const pendingMessages = RedisSMQ.createQueuePendingMessages();
-const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
-const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
-const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
+// A ProducibleMessage instance, ready to be configured
+const msg = RedisSMQ.newProducibleMessage()
+  .setQueue('orders')
+  .setBody({ orderId: 123 });
 ```
+
+### Managers
+
+```javascript
+const queueManager = RedisSMQ.createQueueManager();
+const stateManager = RedisSMQ.createQueueStateManager();
+const rateLimitManager = RedisSMQ.createQueueRateLimitManager();
+const consumerGroups = RedisSMQ.createConsumerGroupsManager();
+const messageManager = RedisSMQ.createMessageManager();
+const namespaceManager = RedisSMQ.createNamespaceManager();
+const configManager = RedisSMQ.createConfigManager();
+const exchangeManager = RedisSMQ.createExchangeManager();
+```
+
+### Message Browsers
+
+```javascript
+const published = RedisSMQ.createQueuePublishedMessages();
+const pending = RedisSMQ.createQueuePendingMessages();
+const scheduled = RedisSMQ.createQueueScheduledMessages();
+const acknowledged = RedisSMQ.createQueueAcknowledgedMessages();
+const deadLettered = RedisSMQ.createQueueDeadLetteredMessages();
+```
+
+The acknowledged and dead-lettered browsers require the corresponding message-audit category to be enabled. See [Message Audit](message-audit.md).
 
 ### Exchanges
 
 ```javascript
+// Type-specific facades
 const directExchange = RedisSMQ.createDirectExchange();
 const topicExchange = RedisSMQ.createTopicExchange();
 const fanoutExchange = RedisSMQ.createFanoutExchange();
+
+// The unified manager, when the exchange type is a runtime value
+const exchangeManager = RedisSMQ.createExchangeManager();
 ```
 
-### Configuration
+### Event Bus
 
 ```javascript
-const configManager = RedisSMQ.createConfigManager();
+const eventBus = RedisSMQ.getEventBus();
+await eventBus.run(); // the bus is not started automatically
+eventBus.on('consumer.messageAcknowledged', (id, queue, consumerId) => {
+  console.log(id);
+});
 ```
+
+See [Event Bus](event-bus.md) for the start-before-subscribe requirement.
+
+### Queue Operation Validator
+
+```javascript
+const validator = RedisSMQ.createQueueOperationValidator();
+const allowed = await validator.canConsume('orders');
+```
+
+The returned object is the `QueueOperationValidator` class itself (a static-only class), so `createQueueOperationValidator()` is a convenience that also performs the initialization check.
+
+## Default Option Setters
+
+Two static setters configure process-wide defaults for future instances:
+
+```javascript
+// Consumer defaults — heartbeat TTL, multiplexing, batch sizes
+RedisSMQ.setDefaultConsumerOptions({
+  enableMultiplexing: true,
+  heartbeatTTL: 30000,
+});
+
+// ProducibleMessage consume options — TTL, retry policy, consume timeout
+RedisSMQ.setDefaultMessageConsumeOptions({
+  ttl: 60000,
+  retryThreshold: 5,
+  retryDelay: 30000,
+});
+
+// Read the current defaults
+const consumerDefaults = RedisSMQ.getDefaultConsumerOptions();
+const messageDefaults = RedisSMQ.getDefaultMessageConsumeOptions();
+```
+
+Defaults are **process-wide**: setting them changes the behavior of every consumer or message created afterward, in the current process. They do not affect other processes.
 
 ## Automatic Cleanup
 
-Components created via factory methods are tracked by `RedisSMQ`. Calling `RedisSMQ.shutdown()` automatically shuts them all down:
+Components created via factory methods are tracked by an internal registry. `RedisSMQ.shutdown()` shuts them all down, in addition to the connection pool, both event buses, the configuration sync, and the background-worker cluster:
 
 ```javascript
-// Create components
 const producer = RedisSMQ.createProducer();
 const consumer = RedisSMQ.createConsumer();
 const queueManager = RedisSMQ.createQueueManager();
 
 // ... use them ...
 
-// One call shuts down everything
-RedisSMQ.shutdown((err) => {
-  if (err) console.error('Shutdown error:', err);
-  else console.log('All components stopped');
-});
+await RedisSMQ.shutdown(); // tears down every tracked component
 ```
+
+If a tracked component has already been shut down individually, `RedisSMQ.shutdown()` calls `shutdown()` on it again. That second call is a no-op — `Runnable.shutdown()` is idempotent — so the sequence is safe.
 
 ## Individual Shutdown
 
-You can still shut down components individually if needed:
+You can stop a single component while keeping the rest running:
 
 ```javascript
-// Stop a specific consumer early
-consumer.shutdown((err) => {
-  if (err) console.error('Consumer shutdown failed:', err);
-});
-
-// Other components keep running
+await consumer.shutdown();
+// producer, managers, and other consumers keep running
 ```
 
-## Start Methods
-
-`startProducer()` and `startConsumer()` create and start in one call:
-
-```javascript
-// Create and start
-const producer = RedisSMQ.startProducer((err) => {
-  if (err) return console.error(err);
-  console.log('Producer ready, ID:', producer.getId());
-});
-
-// Equivalent to:
-const producer = RedisSMQ.createProducer();
-producer.run((err) => {
-  if (err) return console.error(err);
-  console.log('Producer ready');
-});
-```
+Components remain registered in the tracking set even after individual shutdown. The next `RedisSMQ.shutdown()` still calls `shutdown()` on them; the call is a no-op.
 
 ## Complete Example
 
 ```javascript
-const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { RedisSMQ, EQueueType, EQueueDeliveryModel } = require('redis-smq');
 const { ERedisConfigClient } = require('redis-smq-common');
 
-// Initialize
-RedisSMQ.initialize(
-  {
+function fail(err) {
+  console.error('Fatal:', err);
+  process.exit(1);
+}
+
+async function main() {
+  await RedisSMQ.initialize({
     client: ERedisConfigClient.IOREDIS,
     options: { host: '127.0.0.1', port: 6379 },
-  },
-  (err) => {
-    if (err) throw err;
+  });
 
-    // Create and start a producer
-    const producer = RedisSMQ.startProducer((err) => {
-      if (err) throw err;
+  const queueManager = RedisSMQ.createQueueManager();
+  await queueManager.save(
+    'orders',
+    EQueueType.FIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
-      // Send a message
-      const msg = new ProducibleMessage()
-        .setQueue('orders')
-        .setBody({ hello: 'world' });
+  const producer = await RedisSMQ.startProducer();
 
-      producer.produce(msg, (err, ids) => {
-        if (err) console.error('Send failed:', err);
-        else console.log('Sent:', ids[0]);
-      });
-    });
+  const consumer = RedisSMQ.createConsumer();
+  await consumer.run();
+  await consumer.consume('orders', async (msg) => {
+    console.log('Received:', msg.body);
+  });
 
-    // Create and start a consumer
-    const consumer = RedisSMQ.startConsumer((err) => {
-      if (err) throw err;
+  const msg = RedisSMQ.newProducibleMessage()
+    .setQueue('orders')
+    .setBody({ hello: 'world' });
 
-      consumer.consume('orders', (msg, done) => {
-        console.log('Received:', msg.body);
-        done();
-      });
-    });
+  const ids = await producer.produce(msg);
+  console.log('Sent:', ids);
+}
 
-    // Graceful shutdown
-    process.on('SIGINT', () => {
-      RedisSMQ.shutdown((err) => {
-        process.exit(err ? 1 : 0);
-      });
-    });
-  },
-);
+main().catch(fail);
+
+let shuttingDown = false;
+process.on('SIGINT', async () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  try {
+    await RedisSMQ.shutdown();
+    process.exit(0);
+  } catch (err) {
+    fail(err);
+  }
+});
 ```
 
 ## Best Practices
 
-- **Initialize once** at application startup
+- **Initialize once at startup** — before any factory method is called
 - **Use factory methods** so components are tracked for cleanup
-- **Use a single `RedisSMQ.shutdown()`** at application exit
-- **Handle shutdown signals** (SIGINT, SIGTERM) for clean exit
-- **Avoid mixing** tracked and untracked components — if you create a component directly (not via factory), shut it down yourself
+- **Use a single `RedisSMQ.shutdown()`** at application exit — components created directly (not via a factory) must be shut down individually
+- **Handle shutdown signals** (SIGINT, SIGTERM) with a `shuttingDown` guard so a second signal doesn't race the first
+- **Set default options early** — before creating the components they should affect
+- **Don't mix tracked and untracked components** — if a component is created directly (which is not possible for most of the library's public classes, since the concrete classes are not exported), shut it down yourself
+
+## Related
+
+- [Installation](installation.md) — Package setup and initialization sequence
+- [Graceful Shutdown](graceful-shutdown.md) — What happens to in-flight work during shutdown
+- [Consuming Messages](consuming-messages.md) — Consumer options and handler styles
+- [Producing Messages](producing-messages.md) — Message construction and production

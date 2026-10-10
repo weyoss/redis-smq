@@ -49,54 +49,75 @@ consumer.shutdown((err) => {
 
 ## Message Handler
 
-The handler receives two arguments:
+A handler can be written in one of two function styles, or given as a path to a module:
 
-- **`message`** — the message object with `body`, `id`, `ttl`, `priority`, and metadata
-- **`done(err)`** — callback to acknowledge or reject
+| Style       | Signature                          | Completion signal                                                            |
+| ----------- | ---------------------------------- | ---------------------------------------------------------------------------- |
+| Callback    | `(message, done) => void`          | `done()` acks; `done(err)` unacks                                            |
+| Promise     | `async (message) => Promise<void>` | resolution acks; rejection unacks                                            |
+| Module path | `'./handlers/order-handler.js'`    | loaded in a worker thread; must default-export one of the two function forms |
+
+The distinction between the two function forms is not enforced at runtime — a handler is invoked with both arguments, and the outcome is decided by whichever of the following fires first: a synchronous throw, the returned thenable settling, or the callback being invoked. The arity is a hint, not a contract.
+
+### Callback Style
 
 ```javascript
 consumer.consume(
   'orders',
   (message, done) => {
     try {
-      // Process the message
-      const result = processOrder(message.body);
-
-      // Acknowledge success
-      done();
+      processOrder(message.body);
+      done(); // Acknowledge success
     } catch (err) {
-      // Reject — message will be retried or dead-lettered
-      done(err);
+      done(err); // Reject — message will be retried or dead-lettered
     }
   },
   callback,
 );
 ```
 
+### Promise Style
+
+```javascript
+await consumer.consume('orders', async (message) => {
+  await processOrder(message.body);
+  // Successful return = acknowledge
+  // Thrown error = unacknowledge
+});
+```
+
 ### Message Object
 
-The `message` object provides:
+The `message` argument is an `IMessageTransferable`. Its fields:
 
-| Property           | Description                  |
-| ------------------ | ---------------------------- |
-| `body`             | The message payload          |
-| `id`               | Unique message identifier    |
-| `ttl`              | Time-to-live in milliseconds |
-| `retryThreshold`   | Max retry attempts           |
-| `retryDelay`       | Delay between retries in ms  |
-| `consumeTimeout`   | Max processing time in ms    |
-| `priority`         | Priority level (if set)      |
-| `status`           | Current message status       |
-| `createdAt`        | Creation timestamp           |
-| `destinationQueue` | The target queue             |
+| Property           | Description                                               |
+| ------------------ | --------------------------------------------------------- |
+| `id`               | Unique message identifier                                 |
+| `body`             | The message payload                                       |
+| `status`           | Current message status (`EMessagePropertyStatus`)         |
+| `messageState`     | Runtime state — timestamps, attempts, counters            |
+| `createdAt`        | Creation timestamp, in milliseconds since the epoch       |
+| `ttl`              | Time-to-live in milliseconds (0 = never expires)          |
+| `retryThreshold`   | Max processing attempts before dead-lettering             |
+| `retryDelay`       | Delay between retries, in milliseconds                    |
+| `consumeTimeout`   | Max processing time in milliseconds (0 = no timeout)      |
+| `priority`         | Priority level, or `null` for non-priority queues         |
+| `destinationQueue` | The queue the message was routed to                       |
+| `consumerGroupId`  | The consumer group ID for Pub/Sub queues, or `null`       |
+| `exchange`         | The exchange the message was published through, or `null` |
+
+`attempts`, `acknowledgedAt`, `deadLetteredAt`, and the other lifecycle counters live on `message.messageState`, not at the top level.
 
 ## Pub/Sub with Consumer Groups
 
-For Pub/Sub queues, specify a group ID:
+For Pub/Sub queues, specify a group ID by wrapping the queue params in a `queueParams` object:
 
 ```javascript
 consumer.consume(
-  { queue: 'notifications', groupId: 'email-service' },
+  {
+    queueParams: { name: 'notifications', ns: 'default' },
+    groupId: 'email-service',
+  },
   (message, done) => {
     console.log('Email service processing:', message.body);
     done();
@@ -105,7 +126,17 @@ consumer.consume(
 );
 ```
 
-Each consumer group receives a copy of every message. Within a group, messages are load-balanced across consumers. See [Consumer Groups](https://github.com/weyoss/redis-smq-docs) for details.
+The queue argument accepts one of three shapes:
+
+| Shape                                         | Group ID                 |
+| --------------------------------------------- | ------------------------ |
+| `'notifications'`                             | None (default namespace) |
+| `{ name: 'notifications', ns: 'production' }` | None                     |
+| `{ queueParams: { name, ns }, groupId }`      | Required for Pub/Sub     |
+
+A bare `{ queue, groupId }` object is **not** a valid queue argument. The `groupId` must be nested inside a wrapper that also carries `queueParams`.
+
+Each consumer group receives a copy of every message. Within a group, messages are load-balanced across consumers. See [Consumer Groups](consumer-groups.md) for the group lifecycle.
 
 ## Managing Consumption
 
@@ -123,6 +154,12 @@ consumer.cancel('orders', (err) => {
 ```javascript
 const queues = consumer.getQueues();
 console.log('Registered queues:', queues);
+
+// Each entry includes the effective consumer group ID (if any)
+const withStatus = consumer.getQueuesWithStatus();
+withStatus.forEach(({ queue, status }) => {
+  console.log(`${queue.queueParams.name}: ${status}`); // 'active' or 'stopped'
+});
 ```
 
 ### Shutdown
@@ -137,21 +174,25 @@ RedisSMQ.shutdown(callback);
 
 ## Configuration
 
+Pass options to the `createConsumer` factory.
+
 ### Heartbeat TTL
 
 ```javascript
-const consumer = new Consumer({
-  heartbeatTTL: 30000, // Heartbeat expires after 30 seconds
+const consumer = RedisSMQ.createConsumer({
+  heartbeatTTL: 30000, // Heartbeat expires after 30 seconds (default 60000)
 });
 ```
+
+A shorter TTL detects dead consumers faster but risks false positives under transient pauses.
 
 ### Batch Acknowledgments
 
 ```javascript
-const consumer = new Consumer({
+const consumer = RedisSMQ.createConsumer({
   batchAcks: {
-    batchSize: 100, // Acknowledge in batches of 100
-    batchTimeoutMs: 5000, // Or every 5 seconds
+    batchSize: 100, // Max messages per batch
+    batchTimeoutMs: 5000, // Or flush after this many ms
   },
 });
 ```
@@ -159,7 +200,7 @@ const consumer = new Consumer({
 ### Batch Unacknowledgments
 
 ```javascript
-const consumer = new Consumer({
+const consumer = RedisSMQ.createConsumer({
   batchUnacks: {
     batchSize: 50,
     batchTimeoutMs: 5000,
@@ -170,19 +211,19 @@ const consumer = new Consumer({
 ### Multiplexing
 
 ```javascript
-// Share one Redis connection across multiple queues
-const consumer = RedisSMQ.createConsumer(true);
+// Share one Redis connection across all queues handled by this consumer
+const consumer = RedisSMQ.createConsumer({ enableMultiplexing: true });
 
 consumer.consume('queue1', handler1, callback);
 consumer.consume('queue2', handler2, callback);
 consumer.consume('queue3', handler3, callback);
 ```
 
-See [Multiplexing](multiplexing.md) and [Batch Acknowledgments](message-batch-acknowledgements.md) for details.
+With multiplexing, handlers on the same consumer process messages sequentially rather than in parallel. See [Multiplexing](multiplexing.md) and [Batch Acknowledgments](message-batch-acknowledgements.md) for the trade-offs.
 
 ## Worker Threads
 
-For CPU-intensive handlers, run the handler in a separate thread:
+For CPU-intensive handlers, pass a module path instead of a function. The handler runs in a separate worker thread:
 
 ```javascript
 const path = require('path');
@@ -204,8 +245,8 @@ Messages follow a lifecycle through the consumer:
 Consumer dequeues message
   → Message moves from pending to processing
   → Handler processes the message
-  → Success: done() → message acknowledged
-  → Failure: done(err) → message retried or dead-lettered
+  → Success: done() or Promise resolves → message acknowledged
+  → Failure: done(err), throw, or Promise rejects → message retried or dead-lettered
 ```
 
 See [Message Lifecycle](https://github.com/weyoss/redis-smq-docs) for the full walkthrough.
@@ -242,10 +283,25 @@ await consumer.consume('orders', async (message) => {
 });
 ```
 
+### Callback Style Note
+
+A handler is permitted to return before calling `done()`. RedisSMQ waits for the callback — it does not treat "the handler returned" as an acknowledgment. This lets you do asynchronous work between the call and the callback:
+
+```javascript
+consumer.consume('orders', (message, done) => {
+  setTimeout(() => {
+    processOrder(message.body);
+    done();
+  }, 1000);
+});
+```
+
+If the handler throws after calling `done()`, the throw is discarded — the callback settles the outcome.
+
 ## Best Practices
 
 - **Make handlers idempotent** — messages can be delivered more than once
-- **Keep handlers fast** — slow handlers block other messages on multiplexed consumers
+- **Keep handlers fast** — slow handlers block other queues on multiplexed consumers
 - **Use retry delays** for transient failures (network, rate limits)
 - **Set consume timeouts** to prevent stuck handlers from holding messages
 - **Monitor dead-letter queues** for messages that fail repeatedly
@@ -255,7 +311,7 @@ await consumer.consume('orders', async (message) => {
 ## Related
 
 - [Message Reliability](https://github.com/weyoss/redis-smq-docs) — Delivery guarantees
-- [Consumer Groups](https://github.com/weyoss/redis-smq-docs) — Pub/Sub with groups
+- [Consumer Groups](consumer-groups.md) — Pub/Sub with groups
 - [Batch Acknowledgments](message-batch-acknowledgements.md) — Performance optimization
 - [Multiplexing](multiplexing.md) — Shared connections
 - [Worker Threads](message-handler-worker-threads.md) — CPU-heavy handlers

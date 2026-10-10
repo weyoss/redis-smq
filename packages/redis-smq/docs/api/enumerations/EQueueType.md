@@ -2,20 +2,32 @@
 
 # Enumeration: EQueueType
 
+Queue ordering model.
+
+Determines the Redis data structure used for the pending queue:
+
+- LIFO_QUEUE: list, newest-first retrieval
+- FIFO_QUEUE: list, oldest-first retrieval
+- PRIORITY_QUEUE: sorted set, scored by message priority
+
+The integer values are persisted in Redis (the `QUEUE_TYPE` hash
+field) and passed as arguments to several Lua scripts. Reordering or
+renumbering is a breaking change.
+
 ## Enumeration Members
 
-### FIFO_QUEUE
+### FIFO\_QUEUE
 
-> **FIFO_QUEUE**: `1`
-
----
-
-### LIFO_QUEUE
-
-> **LIFO_QUEUE**: `0`
+> **FIFO\_QUEUE**: `1`
 
 ---
 
-### PRIORITY_QUEUE
+### LIFO\_QUEUE
 
-> **PRIORITY_QUEUE**: `2`
+> **LIFO\_QUEUE**: `0`
+
+---
+
+### PRIORITY\_QUEUE
+
+> **PRIORITY\_QUEUE**: `2`

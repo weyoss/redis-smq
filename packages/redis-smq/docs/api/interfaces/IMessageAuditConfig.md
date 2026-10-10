@@ -2,35 +2,40 @@
 
 # Interface: IMessageAuditConfig
 
-Root configuration interface for message audit system.
+Root configuration for the message audit system.
 
-Each audit category can be configured in three ways:
+Each of the three audit categories can be configured independently in
+one of three ways:
 
-- `false` - Disable auditing for this category
-- `true` - Enable auditing with default settings (queueSize=0, expire=0, maxSize=100)
-- `Partial<IConfig>` - Enable auditing with custom settings
+- `true`: enable with defaults
+- `false` or omitted: disable
+- `Partial<IConfig>`: enable with the specified values, defaults
+  filled in for anything omitted
+
+The same object can mix forms — for example, `true` for one category
+and an explicit object for another.
 
 ## Example
 
-```typescript
-// Minimal configuration - enable all with defaults
-let config: IMessageAuditConfig = {
+```ts
+// Enable all three categories with defaults
+const cfg1: IMessageAuditConfig = {
   acknowledgedMessages: true,
   deadLetteredMessages: true,
   unacknowledgementHistory: true,
 };
 
-// Custom configuration with size limits and expiration
-config = {
+// Custom configuration with per-category storage limits
+const cfg2: IMessageAuditConfig = {
   acknowledgedMessages: {
     enabled: true,
     queueSize: 10000,
-    expire: 2592000, // 30 days
+    expire: 30 * 24 * 60 * 60,
   },
   deadLetteredMessages: {
     enabled: true,
     queueSize: 5000,
-    expire: 604800, // 7 days
+    expire: 7 * 24 * 60 * 60,
   },
   unacknowledgementHistory: {
     enabled: true,
@@ -43,13 +48,12 @@ config = {
 
 ### acknowledgedMessages?
 
-> `optional` **acknowledgedMessages**: `boolean` \| `Partial`\<[`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)\>
+> `optional` **acknowledgedMessages?**: `boolean` \| `Partial`\<[`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)\>
 
 Audit configuration for acknowledged messages.
 
-When enabled, creates dedicated storage to track IDs of successfully
-processed messages. This allows using the `QueueAcknowledgedMessages` class
-to browse, query, and analyze acknowledged messages per queue.
+When enabled, tracks the IDs of successfully processed messages.
+Browsing APIs in `QueueAcknowledgedMessages` read from this store.
 
 #### Default
 
@@ -61,14 +65,13 @@ false;
 
 ### deadLetteredMessages?
 
-> `optional` **deadLetteredMessages**: `boolean` \| `Partial`\<[`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)\>
+> `optional` **deadLetteredMessages?**: `boolean` \| `Partial`\<[`IMessageAuditMessagesConfig`](IMessageAuditMessagesConfig.md)\>
 
 Audit configuration for dead-lettered messages.
 
-When enabled, creates dedicated storage to track IDs of messages that
-failed processing and exceeded their retry limits. This allows using
-the `QueueDeadLetteredMessages` class to browse, query, and analyze
-failed messages per queue.
+When enabled, tracks the IDs of messages that failed processing and
+exceeded their retry thresholds. Browsing APIs in
+`QueueDeadLetteredMessages` read from this store.
 
 #### Default
 
@@ -80,13 +83,12 @@ false;
 
 ### unacknowledgementHistory?
 
-> `optional` **unacknowledgementHistory**: `boolean` \| `Partial`\<[`IMessageAuditHistoryConfig`](IMessageAuditHistoryConfig.md)\>
+> `optional` **unacknowledgementHistory?**: `boolean` \| `Partial`\<[`IMessageAuditHistoryConfig`](IMessageAuditHistoryConfig.md)\>
 
-Audit configuration for unacknowledgement message history.
+Audit configuration for unacknowledgement history.
 
-When enabled, tracks detailed history of message processing failures,
-including each unacknowledgement event with failure causes and resolution
-actions. This provides comprehensive debugging information.
+When enabled, each unacknowledgement appends a record to the
+message's own history list. `MessageManager` reads from this store.
 
 #### Default
 
