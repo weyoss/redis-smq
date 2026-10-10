@@ -10,8 +10,6 @@
 const handlebars = require('handlebars');
 
 module.exports = (async () => {
-  // Dynamic import() works in CommonJS files and can load pure-ESM packages.
-  // The ESM package's default export is the preset factory function.
   const { default: createPreset } =
     await import('conventional-changelog-conventionalcommits');
 
@@ -37,14 +35,12 @@ module.exports = (async () => {
     userUrlFormat: '{{host}}/{{user}}',
   });
 
-  // Register a custom Handlebars helper so we can safely check
-  // whether the version is a stable release (does NOT contain "-").
   handlebars.registerHelper('isStableVersion', function (version) {
     return version && !version.includes('-');
   });
 
-  // Override only the header to inject consolidated release-notes link
-  preset.conventionalChangelog.writerOpts.headerPartial = `## {{#if @root.linkCompare~}}
+  // v8+ API shape: writer options live directly on `preset.writer`
+  preset.writer.headerPartial = `## {{#if @root.linkCompare~}}
   [{{version}}]({{~@root.host}}/{{#if this.owner}}{{~this.owner}}{{else}}{{~@root.owner}}{{/if}}/{{#if this.repository}}{{~this.repository}}{{else}}{{~@root.repository}}{{/if}}/compare/{{previousTag}}...{{currentTag}})
 {{~else}}{{~version}}{{~/if}}
 {{~#if title}} "{{title}}"{{~/if}}
