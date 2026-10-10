@@ -3,6 +3,41 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.2...v11.0.0-next.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq:** consolidate and flatten event types
+- **redis-smq-common:** drop system metrics from heartbeat payload
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** forward connection errors to wrapper ([9783923](https://github.com/weyoss/redis-smq/commit/97839235d9111ca592ac1e4587b5a07266ccb8a7))
+- **redis-smq-common:** unbind client error handler on shutdown, rename retry error ([43c3404](https://github.com/weyoss/redis-smq/commit/43c34047ea5da6ec46543f6931cc03e6c66c43bf))
+- **redis-smq-common:** unsubscribe by namespaced event name in EventBusRedis ([a35c85b](https://github.com/weyoss/redis-smq/commit/a35c85b9662d7783909b65cb84105fcd46b21f5d))
+
+### 🚀 Chore
+
+- update deps to latest versions ([06bc58f](https://github.com/weyoss/redis-smq/commit/06bc58f948fcedbffae32c206ad07056e440ab37))
+- update minimal supported Node.js LTS version ([475fef3](https://github.com/weyoss/redis-smq/commit/475fef3138fd0df4773a2ee058d7bee2a250a14b))
+
+### 📝 Documentation
+
+- make READMEs branch-independent and master-focused ([e364650](https://github.com/weyoss/redis-smq/commit/e3646507f31dbf144a5c3829c7703c769f9ba54e))
+- **redis-smq-common:** update API reference ([c42e9df](https://github.com/weyoss/redis-smq/commit/c42e9df541d471106387bf2a2cedbf9a5a602994))
+- update READMEs (v10.1.2 → next) ([d1db802](https://github.com/weyoss/redis-smq/commit/d1db802dc175c3c4608057e8b18d17f2bf41e7ac))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** add typed listenerCount to EventEmitter ([f57b577](https://github.com/weyoss/redis-smq/commit/f57b5774a36b8556b48073bfa0234eedddee3252))
+- **redis-smq-common:** drop system metrics from heartbeat payload ([567a1b3](https://github.com/weyoss/redis-smq/commit/567a1b3a15379ccbae3d7419f7793875b7127699))
+- **redis-smq-common:** rework RedisSMQError base class and error primitives ([336edb7](https://github.com/weyoss/redis-smq/commit/336edb78a53803623d94c1f0e5a594375e45d1b2))
+- **redis-smq:** consolidate and flatten event types ([89ceee8](https://github.com/weyoss/redis-smq/commit/89ceee8e6d98da0ce9e42f6ae1c7ca93f3d9c663))
+
+### ✅ Tests
+
+- **redis-smq-common:** reorganize test files into setup/helpers/integration dirs ([50c2c8b](https://github.com/weyoss/redis-smq/commit/50c2c8b0be3950d9f6d6e9979887077667d947f5))
+
 ## [10.1.2](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.1...v10.1.2) (2026-04-18)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.1.2](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.2.md)

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.2...v11.0.0-next.0) (2026-10-10)
+
+### 🚀 Chore
+
+- update minimal supported Node.js LTS version ([475fef3](https://github.com/weyoss/redis-smq/commit/475fef3138fd0df4773a2ee058d7bee2a250a14b))
+
+### 📝 Documentation
+
+- make READMEs branch-independent and master-focused ([e364650](https://github.com/weyoss/redis-smq/commit/e3646507f31dbf144a5c3829c7703c769f9ba54e))
+- update READMEs (v10.1.2 → next) ([d1db802](https://github.com/weyoss/redis-smq/commit/d1db802dc175c3c4608057e8b18d17f2bf41e7ac))
+
 ## [10.1.2](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.1...v10.1.2) (2026-04-18)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.1.2](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.2.md)

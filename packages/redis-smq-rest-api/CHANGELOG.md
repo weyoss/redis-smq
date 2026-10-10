@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.2...v11.0.0-next.0) (2026-10-10)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** listen for correct event names on ack and dl messages ([d110558](https://github.com/weyoss/redis-smq/commit/d110558b893920a9b14441280c0fc962b86837f8))
+
+### 🚀 Chore
+
+- update deps to latest versions ([06bc58f](https://github.com/weyoss/redis-smq/commit/06bc58f948fcedbffae32c206ad07056e440ab37))
+- update minimal supported Node.js LTS version ([475fef3](https://github.com/weyoss/redis-smq/commit/475fef3138fd0df4773a2ee058d7bee2a250a14b))
+
+### 📝 Documentation
+
+- make READMEs branch-independent and master-focused ([e364650](https://github.com/weyoss/redis-smq/commit/e3646507f31dbf144a5c3829c7703c769f9ba54e))
+- update READMEs (v10.1.2 → next) ([d1db802](https://github.com/weyoss/redis-smq/commit/d1db802dc175c3c4608057e8b18d17f2bf41e7ac))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** replace getProps with static error metadata ([39cc4fe](https://github.com/weyoss/redis-smq/commit/39cc4fe39547772c20b7da6e08d79e943bc43760))
+- **redis-smq-rest-api:** use RedisSMQ facade API ([19eb978](https://github.com/weyoss/redis-smq/commit/19eb9780d21515f8b204b28913a5f07a029b3c06))
+
+### ✅ Tests
+
+- **redis-smq-rest-api:** reorganize test files into setup/helpers/integration dirs ([63f6946](https://github.com/weyoss/redis-smq/commit/63f6946ef2c886b9bbbc61866b59f63e105219c8))
+
 ## [10.1.2](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.1...v10.1.2) (2026-04-18)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.1.2](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.2.md)

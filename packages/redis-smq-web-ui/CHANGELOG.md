@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v10.1.2...v11.0.0-next.0) (2026-10-10)
+
+### 🚀 Chore
+
+- update deps to latest versions ([06bc58f](https://github.com/weyoss/redis-smq/commit/06bc58f948fcedbffae32c206ad07056e440ab37))
+
+### 📝 Documentation
+
+- make READMEs branch-independent and master-focused ([e364650](https://github.com/weyoss/redis-smq/commit/e3646507f31dbf144a5c3829c7703c769f9ba54e))
+- update READMEs (v10.1.2 → next) ([d1db802](https://github.com/weyoss/redis-smq/commit/d1db802dc175c3c4608057e8b18d17f2bf41e7ac))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** simplify pending count to a number ([9d8b0d1](https://github.com/weyoss/redis-smq/commit/9d8b0d18bd4dc4ea62c45d74cf0aa3e788cc60a9))
+
 ## [10.1.2](https://github.com/weyoss/redis-smq/compare/v10.1.2-next.1...v10.1.2) (2026-04-18)
 
 > 📖 **Detailed Release Notes**: [RedisSMQ v10.1.2](https://github.com/weyoss/redis-smq/blob/master/release-notes/release-v10.1.2.md)
