@@ -334,5 +334,68 @@ describe('Consumer reaction to queue state changes', () => {
       const pending = RedisSMQ.createQueuePendingMessages();
       expect(await pending.countMessages(queue)).toBe(0);
     });
+    it('restarts the handler on every resume across repeated stop/resume cycles', async () => {
+      // A single stop/resume cycle would pass even if the runner
+      // removed the handler configuration on some later interaction —
+      // for example, a regression that treated a second stop as a
+      // permanent failure and cleaned up the config. Looping the cycle
+      // forces the config to survive N−1 additional stops and still
+      // produce a working handler on the final resume. The end-to-end
+      // produce after the last cycle proves the surviving config is
+      // functional, not merely present in the registry.
+      const queue = uniqueQueue('reaction-multi-cycle');
+      await createQueue(queue, EQueueType.FIFO_QUEUE);
+
+      const consumer = await getConsumer({
+        queue,
+        messageHandler: (_msg: IMessageTransferable, cb: ICallback) => cb(),
+      });
+
+      await consumer.run();
+      await waitForConsumerStatus(consumer, 'active');
+
+      const stateManager = RedisSMQ.createQueueStateManager();
+      const CYCLES = 3;
+
+      for (let cycle = 0; cycle < CYCLES; cycle += 1) {
+        // Stop. The handler instance is torn down; the config must
+        // remain so the next resume has something to start.
+        await stateManager.stop(queue, {
+          reason: EStateTransitionReason.SCHEDULED,
+          description: `multi-cycle stop ${cycle}`,
+        });
+
+        await waitForConsumerStatus(consumer, 'stopped');
+
+        // The strongest assertion available at each cycle: the runner's
+        // registry still holds the config. A regression that dropped it
+        // after any stop would fail here on that cycle's iteration,
+        // and the diagnostic names which one.
+        expect(
+          consumer.getQueues().map((entry) => entry.queueParams),
+          `handler configuration was lost after stop ${cycle}`,
+        ).toContainEqual(queue);
+
+        // Resume. The runner's `queue.stateChanged` subscription must
+        // start a fresh handler instance from the surviving config.
+        await stateManager.resume(queue, {
+          reason: EStateTransitionReason.MANUAL,
+          description: `multi-cycle resume ${cycle}`,
+        });
+
+        await waitForConsumerStatus(consumer, 'active');
+      }
+
+      // End-to-end proof: a message produced after the final cycle is
+      // consumed by the handler that started on the final resume. The
+      // config survived all three cycles and is still functional — not
+      // merely present in the registry.
+      const id = await produceOne(queue, { after: 'multi-cycle' });
+
+      await waitForMessageStatus(id, EMessagePropertyStatus.ACKNOWLEDGED, {
+        timeoutMs: 10_000,
+        description: `message ${id} acknowledged after ${CYCLES} stop/resume cycles`,
+      });
+    });
   });
 });

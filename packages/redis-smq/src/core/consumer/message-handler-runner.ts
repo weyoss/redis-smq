@@ -8,7 +8,13 @@
  */
 
 import { async, ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
-import { MessageHandlerAlreadyExistsError } from '../errors/index.js';
+import {
+  MessageHandlerAlreadyExistsError,
+  QueueLockedError,
+  QueueNotActiveError,
+  QueuePausedError,
+  QueueStoppedError,
+} from '../errors/index.js';
 import { MessageHandler } from './message-handler.js';
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { IConsumerContext } from './types/consumer-context.js';
@@ -61,6 +67,17 @@ export type TMessageHandlerRunnerEvent = {
  *   - `removeMessageHandler` and `shutDownMessageHandlers` tear down the
  *     instance AND delete its ephemeral group. Used for cancel() and
  *     consumer shutdown, where the config is gone permanently.
+ *   - `runMessageHandler` classifies a startup failure as transient or
+ *     permanent via `isTransientHandlerError`. The transient set is
+ *     exactly the queue-state errors (queue PAUSED, STOPPED, LOCKED, or
+ *     not yet ACTIVE at startup), for which the runner has an automatic
+ *     recovery path: when the queue later transitions back to ACTIVE,
+ *     `queue.stateChanged` restarts every registered handler for that
+ *     queue. Those failures keep the config. Everything else — invalid
+ *     handler configuration, Redis errors, unrecognised errors — is
+ *     permanent, because nothing in the runner will retry it to a
+ *     different outcome. Those failures remove the config and surface
+ *     the error through the `consume()` callback.
  *
  * Queue state:
  *   The runner subscribes to `queue.stateChanged` in its constructor and
@@ -188,6 +205,49 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
   protected isQueueLocked(queue: IQueueParsedParams): boolean {
     return (
       this.getQueueState(queue.queueParams) === EQueueOperationalState.LOCKED
+    );
+  }
+
+  /**
+   * Classify a handler startup failure as transient or permanent.
+   *
+   * Transient failures are exactly the queue-state errors. These are
+   * the failures the runner has an auto-recovery path for: when the
+   * queue later returns to ACTIVE, the runner's `queue.stateChanged`
+   * subscription re-runs every registered config for that queue, and
+   * the handler starts normally. Keeping the config for these cases is
+   * what makes the restart path work.
+   *
+   * Everything else is permanent. That includes handler-configuration
+   * errors (invalid signature, invalid type, unsupported module
+   * extension, module file missing), Redis connectivity errors, and any
+   * error the runner does not recognise. None of those have a
+   * corresponding auto-recovery trigger — the supervisor would retry
+   * them every tick and never succeed, producing one warn line per
+   * tick without ever changing the outcome. Removing the config fails
+   * fast and lets the `consume()` callback surface the real cause to
+   * the caller, who can decide whether to retry, reconfigure, or give
+   * up.
+   *
+   * `QueueOperationForbiddenError` is deliberately *not* in the
+   * transient set. It is the fallback error from `_validateOperation`
+   * for a state that is not PAUSED, STOPPED, or LOCKED — i.e. ACTIVE —
+   * but which still rejected the operation. For CONSUME specifically,
+   * ACTIVE allows the operation, so this error means a framework bug
+   * or a corrupted queue hash, not a state the queue can transition
+   * out of. Treating it as permanent surfaces it instead of masking it
+   * behind a retry loop.
+   *
+   * `QueueNotFoundError` is also permanent. A deleted queue does not
+   * emit a `stateChanged` event, so the restart path will never fire
+   * for it; keeping the config would be dead weight in the registry.
+   */
+  protected isTransientHandlerError(err: Error): boolean {
+    return (
+      err instanceof QueueNotActiveError ||
+      err instanceof QueuePausedError ||
+      err instanceof QueueStoppedError ||
+      err instanceof QueueLockedError
     );
   }
 
@@ -505,8 +565,13 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
    * the handler subscribes under `groupId: null` and PUB/SUB fan-out to
    * the ephemeral group fails.
    *
-   * On handler startup failure, the configuration is removed via
-   * `removeMessageHandler`, which also deletes the ephemeral group.
+   * On handler startup failure, the response depends on the error class.
+   * A queue-state error (QueueNotActiveError, QueuePausedError,
+   * QueueStoppedError, QueueLockedError) is transient: the config is
+   * kept so `queue.stateChanged` can restart it when the queue returns to
+   * ACTIVE. Any other error is permanent: the config is removed via
+   * `removeMessageHandler`, which also deletes the ephemeral group, and
+   * the error is surfaced through the callback.
    */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
@@ -531,15 +596,22 @@ export class MessageHandlerRunner extends Runnable<TMessageHandlerRunnerEvent> {
 
     const handler = this.createMessageHandlerInstance(handlerParams);
     handler.run((runErr) => {
-      if (runErr) {
-        this.logger.error(
-          `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,
-          runErr,
+      if (!runErr) return cb();
+
+      const queueName = handlerParams.queue.queueParams.name;
+
+      if (this.isTransientHandlerError(runErr)) {
+        this.logger.warn(
+          `Failed to run message handler for queue ${queueName}: ${runErr.message}. Keeping configuration; the supervisor will restart it when the queue returns to ACTIVE.`,
         );
-        this.removeMessageHandler(handlerParams.queue, () => cb(runErr));
-      } else {
-        cb();
+        return this.shutdownMessageHandler(handler, () => cb(runErr));
       }
+
+      this.logger.error(
+        `Failed to run message handler for queue ${queueName}: ${runErr.message}. Removing configuration.`,
+        runErr,
+      );
+      return this.removeMessageHandler(handlerParams.queue, () => cb(runErr));
     });
   }
 
