@@ -10,7 +10,7 @@
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { keys } from '../../common/redis/keys/keys.js';
 import { ExchangeNotFoundError } from '../../errors/index.js';
-import { IQueueParams } from '../../../contracts/index.js';
+import { IExchangeParams } from '../../../contracts/index.js';
 import {
   EExchangeProperty,
   IExchangeProperties,
@@ -18,7 +18,7 @@ import {
 
 export function _getExchangeProperties(
   client: IRedisClient,
-  exchange: IQueueParams,
+  exchange: IExchangeParams,
   cb: ICallback<IExchangeProperties>,
 ) {
   const { keyExchange } = keys.getExchangeKeys(exchange.ns, exchange.name);
