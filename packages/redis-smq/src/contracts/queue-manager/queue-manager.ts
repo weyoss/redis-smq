@@ -86,22 +86,60 @@ export interface IQueueManager {
   /**
    * Deletes a queue and all of its associated data.
    *
-   * Deletion is refused — with a specific error — in any of the
-   * following cases:
+   * Deletion is refused — with a specific error — in any of the following
+   * cases:
    *
    *   - `QueueNotFoundError`: no such queue.
-   *   - `QueueNotEmptyError`: the queue still has pending, scheduled,
-   *     delayed, or requeued messages. Drain the queue first.
+   *   - `QueueNotEmptyError`: the queue still has message records. A
+   *     message record is the message's own hash (`main:msg:<id>`) and,
+   *     if unacknowledgement-history audit is enabled, its history list
+   *     (`main:msg:<id>:uh`). These keys live outside the queue's
+   *     namespace and are not reachable from any queue-level structure,
+   *     so a queue whose message records still exist cannot be deleted
+   *     without orphaning them. Delete the records first — see below.
    *   - `QueueHasActiveConsumersError`: at least one consumer is still
    *     subscribed. Stop the consumers first.
    *   - `QueueHasBoundExchangesError`: at least one exchange is bound to
    *     the queue. Unbind the exchanges first.
    *   - `QueueLockedError`: the queue is in the LOCKED state.
    *
-   * Deletion removes all queue-level state: properties, pending,
-   * scheduled, delayed, requeued, acknowledged, and dead-lettered
-   * message lists, per-consumer processing lists, exchange bindings,
-   * consumer registrations, and state history.
+   * **Satisfying `QueueNotEmptyError`.** Processing every pending
+   * message is not sufficient — acknowledgement and dead-lettering
+   * transition a message's state but do not delete its hash. The
+   * precondition is that the queue's `messagesCount` counter is zero,
+   * and only explicit message deletion decrements that counter. There
+   * are two ways to reach zero:
+   *
+   *   - Purge the message browsers that cover the queue's records. Which
+   *     browsers apply depends on the audit configuration: with
+   *     acknowledged-message audit enabled, the acknowledged records are
+   *     in the acknowledged list; without it, they remain in the
+   *     published list. The published list always holds every message
+   *     the queue has accepted, so purging it alone reaches zero — but a
+   *     queue with audit enabled also needs the acknowledged and
+   *     dead-lettered lists purged, since those are separate storage.
+   *
+   *   - Delete the messages individually via
+   *     `IMessageManager.deleteMessagesByIds`, enumerating the IDs from
+   *     `QueuePublishedMessages.getMessageIds`.
+   *
+   * **What `delete` removes.** All queue-level state: properties,
+   * pending, scheduled, delayed, requeued, acknowledged, and
+   * dead-lettered message lists, per-consumer processing lists, per-
+   * consumer-group pending and priority structures, exchange bindings,
+   * consumer registrations, and state history. Message records are not
+   * touched — by the time the deletion is allowed to proceed, none
+   * remain.
+   *
+   * @example
+   * // A queue that has never accepted a message
+   * await queueManager.delete('empty-queue');
+   *
+   * @example
+   * // A queue that has processed messages
+   * const published = RedisSMQ.createQueuePublishedMessages();
+   * await published.purge('orders'); // wait for the purge job to complete
+   * await queueManager.delete('orders');
    */
   delete(queue: string | IQueueParams): Promise<void>;
   delete(queue: string | IQueueParams, cb: ICallback): void;
