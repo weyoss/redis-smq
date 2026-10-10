@@ -1,4 +1,3 @@
-````markdown
 [RedisSMQ](../README.md) / [Documentation](README.md) / Event Bus
 
 # Event Bus
@@ -23,6 +22,7 @@ eventBus.on('consumer.messageAcknowledged', (messageId, queue, consumerId) => {
   console.log(`Message ${messageId} acknowledged by ${consumerId}`);
 });
 ```
+
 ````
 
 ## Before You Subscribe
@@ -129,3 +129,4 @@ await RedisSMQ.shutdown();
 - [Event Bus Concepts](https://github.com/weyoss/redis-smq-docs) — How the event bus works
 - [TRedisSMQEvent](api/type-aliases/TRedisSMQEvent.md) — The complete event type map
 - [Queue State Management](queue-state-management.md) — Subscribing to `queue.stateChanged`
+````

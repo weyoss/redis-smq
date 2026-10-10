@@ -1,4 +1,3 @@
-```markdown
 [RedisSMQ](../README.md) / [Documentation](README.md) / Message Batch Unacknowledgments
 
 # Message Batch Unacknowledgments
@@ -8,6 +7,7 @@ Batch unacknowledgment groups failed message handling into a single Redis operat
 ## How It Works
 
 When a message fails, the system decides what to do based on retry policy. Without batching, each failure is handled individually. With batching, failures are grouped:
+
 ```
 
 Message fails → Determine action → Add to batch
@@ -41,7 +41,7 @@ Message fails
 ├─→ Retry delay configured? → Delay
 └─→ Otherwise → Requeue
 
-````
+```
 
 The rules are evaluated in the order shown. A periodic message with retries remaining still dead-letters — periodic messages are never retried because a retry would restart the cycle, which is not the caller's intent.
 
@@ -65,7 +65,7 @@ const consumer = RedisSMQ.createConsumer({
 
 // Disable batching
 const consumer = RedisSMQ.createConsumer({ batchUnacks: false });
-````
+```
 
 The `Consumer` class is not exported from the package root — construct consumers through `RedisSMQ.createConsumer(options)`. Unset fields fall back to the consumer's current defaults.
 
