@@ -21,7 +21,7 @@
 
 ## 📋 Requirements
 
-- **Node.js** ≥ 20
+- **Node.js** ≥ 22
 - **Redis** ≥ 4 (persistence enabled for durability)
 - A supported Redis client:
   - [`ioredis`](https://github.com/redis/ioredis) (recommended)
@@ -49,15 +49,15 @@
 
 ```bash
 # Core packages
-npm install redis-smq redis-smq-common --save
+npm install redis-smq redis-smq-common
 
 # Pick a Redis client
-npm install ioredis --save
+npm install ioredis
 # OR
-npm install @redis/client --save
+npm install @redis/client
 ```
 
-> ℹ️ The `@next` tag pulls the latest development version from the `next` branch.  
+> ℹ️ The `@next` tag pulls the latest development version from the `next` branch.
 > For the stable release, use `@latest` (or omit the tag). Always check the [version compatibility guide](packages/redis-smq/docs/version-compatibility.md) and the [language‑agnostic compatibility matrix](https://github.com/weyoss/redis-smq-docs#compatibility-matrix) to ensure packages and implementations are aligned.
 
 ### 2. Initialize (once per process)
@@ -98,13 +98,13 @@ queueManager.save(
 ### 4. Produce a Message
 
 ```javascript
-import { RedisSMQ, ProducibleMessage } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
 
 const producer = RedisSMQ.createProducer();
 producer.run((err) => {
   if (err) return console.error('Producer failed:', err);
 
-  const msg = new ProducibleMessage()
+  const msg = RedisSMQ.newProducibleMessage()
     .setQueue('my_queue')
     .setBody({ hello: 'world' })
     .setRetryThreshold(3); // optional
@@ -126,7 +126,7 @@ consumer.run((err) => {
   if (err) return console.error('Consumer failed:', err);
 
   const handler = (message, done) => {
-    console.log('📥 Received:', message.getBody());
+    console.log('📥 Received:', message.body);
     // Process message...
     done(); // Acknowledge (or done(err) to reject)
   };
@@ -143,12 +143,7 @@ consumer.run((err) => {
 All methods support both callbacks and Promises. Here's the same flow using `async/await`:
 
 ```typescript
-import {
-  RedisSMQ,
-  EQueueType,
-  EQueueDeliveryModel,
-  ProducibleMessage,
-} from 'redis-smq';
+import { RedisSMQ, EQueueType, EQueueDeliveryModel } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
 try {
@@ -169,7 +164,7 @@ try {
   // Produce message
   const producer = RedisSMQ.createProducer();
   await producer.run();
-  const message = new ProducibleMessage()
+  const message = RedisSMQ.newProducibleMessage()
     .setQueue('my_queue')
     .setBody({ hello: 'world' });
   const messageIds = await producer.produce(message);
@@ -179,7 +174,7 @@ try {
   const consumer = RedisSMQ.createConsumer();
   await consumer.run();
   await consumer.consume('my_queue', async (message) => {
-    console.log('Received:', message.getBody());
+    console.log('Received:', message.body);
     // Successful acknowledgement (no error thrown)
   });
 } catch (err) {
