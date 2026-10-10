@@ -128,6 +128,15 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
     callback: ICallback<IRedisClient>;
     timestamp: number;
     mode: ERedisConnectionAcquisitionMode;
+    /**
+     * Handle for the acquire-timeout timer. Cleared when the item is
+     * removed from the queue — either because a connection became
+     * available (processWaitingQueue) or because the pool is shutting
+     * down. Without this, the timer fires as a no-op after the request
+     * has already been settled, keeping the item and its callback
+     * closure alive until the timeout elapses.
+     */
+    timer: NodeJS.Timeout;
   }> = [];
 
   /** Flag indicating if the pool has been properly initialized */
@@ -555,6 +564,7 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
       if (availableConnection) {
         // Remove from queue and prepare connection
         this.waitingQueue.splice(i, 1);
+        clearTimeout(waitingItem.timer);
         this.prepareConnection(
           availableConnection,
           waitingItem.mode,
@@ -770,21 +780,25 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
       });
     }
 
-    // Pool is at effective capacity, add to waiting queue
-    this.waitingQueue.push({
+    const item = {
       callback: cb,
       timestamp: Date.now(),
       mode,
-    });
 
-    // Set timeout for waiting requests
-    setTimeout(() => {
-      const index = this.waitingQueue.findIndex((item) => item.callback === cb);
-      if (index !== -1) {
-        this.waitingQueue.splice(index, 1);
-        cb(new Error('Connection acquire timeout'));
-      }
-    }, this.poolConfig.acquireTimeoutMillis);
+      // Set timeout for waiting requests
+      timer: setTimeout(() => {
+        const index = this.waitingQueue.findIndex(
+          (item) => item.callback === cb,
+        );
+        if (index !== -1) {
+          this.waitingQueue.splice(index, 1);
+          cb(new Error('Connection acquire timeout'));
+        }
+      }, this.poolConfig.acquireTimeoutMillis),
+    };
+
+    // Pool is at effective capacity, add to waiting queue
+    this.waitingQueue.push(item);
   }
 
   /**
@@ -971,6 +985,7 @@ export class Pool extends EventEmitter<TRedisConnectionPoolEvent> {
     while (this.waitingQueue.length > 0) {
       const item = this.waitingQueue.shift();
       if (item) {
+        clearTimeout(item.timer);
         item.callback(new Error('Connection pool shutting down'));
       }
     }
