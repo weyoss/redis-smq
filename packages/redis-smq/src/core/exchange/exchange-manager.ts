@@ -398,48 +398,44 @@ export class ExchangeManager implements IExchangeManager {
             name: exchangeParams.name,
             type: props.type,
           };
-          const strategy = getStrategy(parsed.type);
-          const bindingsListKey = strategy.getBindingsListKey(
-            parsed.ns,
-            parsed.name,
-          );
-
-          if (!bindingsListKey) {
-            _getBoundQueues(client, parsed, done);
-            return;
-          }
-
-          client.smembers(bindingsListKey, (listErr, bindings) => {
-            if (listErr) return done(listErr);
-            const list = (bindings ?? []).filter(
-              (b): b is string => typeof b === 'string' && b.length > 0,
-            );
-            const result: Record<string, IQueueParams[]> = {};
-
-            if (list.length === 0) return done(null, result);
-
-            async.eachOf(
-              list,
-              (b, _i, next) => {
-                const queueSetKey = strategy.getBindingQueuesKey(
-                  parsed.ns,
-                  parsed.name,
-                  b,
-                );
-                client.smembers(queueSetKey, (queueErr, queues) => {
-                  if (queueErr) return next(queueErr);
-                  result[b] = (queues ?? []).map((q): IQueueParams =>
-                    JSON.parse(q),
-                  );
-                  next();
-                });
-              },
-              (eachErr) => done(eachErr || null, result),
-            );
-          });
+          this.readBindings(client, parsed, done);
         });
       }, callback);
     });
+  }
+
+  /**
+   * Read the exchange's bindings, requiring the exchange to have a
+   * specific type.
+   *
+   * Behaves like `getBindings`, but rejects with
+   * `ExchangeTypeMismatchError` when the exchange's stored type does
+   * not match `required`. The three facades (`ExchangeDirect`,
+   * `ExchangeTopic`, `ExchangeFanout`) call this method rather than
+   * `getBindings` so the shape they return is guaranteed by the
+   * stored type, not by a cast over a union.
+   *
+   * The type check exists because an exchange can be deleted and
+   * recreated under a different type at the same (ns, name): a facade
+   * held across that change would otherwise return a runtime shape
+   * that contradicts its own contract.
+   *
+   * This method is not on `IExchangeManager`: a caller who carries the
+   * type as a runtime value uses `getBindings` and narrows the union
+   * themselves; a caller who knows the type at compile time uses a
+   * facade, which is the only intended caller of this method.
+   */
+  getBindingsForType(
+    exchange: string | IExchangeParams,
+    required: EExchangeType,
+    cb?: ICallback<TExchangeBindings>,
+  ): Promise<TExchangeBindings> | void {
+    return this.withTypedExchange(
+      exchange,
+      required,
+      (client, parsed, done) => this.readBindings(client, parsed, done),
+      cb,
+    );
   }
 
   /** @inheritdoc */
@@ -763,6 +759,62 @@ export class ExchangeManager implements IExchangeManager {
   // =========================================================================
 
   /**
+   * Read the bindings of an already-parsed exchange.
+   *
+   * The exchange's existence and type are the caller's responsibility;
+   * this method dispatches on `parsed.type` and assumes the exchange
+   * exists. It is the shared body of `getBindings` and
+   * `getBindingsForType`.
+   *
+   * For fanout exchanges (`getBindingsListKey` returns `null`) the
+   * result is a flat list of bound queues. For direct and topic
+   * exchanges the result is a map from binding (routing key or
+   * pattern) to bound queues. A binding with no bound queues never
+   * appears as a key — the map only lists bindings that have at least
+   * one queue.
+   */
+  private readBindings(
+    client: IRedisClient,
+    parsed: IExchangeParsedParams,
+    cb: ICallback<TExchangeBindings>,
+  ): void {
+    const strategy = getStrategy(parsed.type);
+    const bindingsListKey = strategy.getBindingsListKey(parsed.ns, parsed.name);
+
+    if (!bindingsListKey) {
+      _getBoundQueues(client, parsed, cb);
+      return;
+    }
+
+    client.smembers(bindingsListKey, (listErr, bindings) => {
+      if (listErr) return cb(listErr);
+      const list = (bindings ?? []).filter(
+        (b): b is string => typeof b === 'string' && b.length > 0,
+      );
+      const result: Record<string, IQueueParams[]> = {};
+
+      if (list.length === 0) return cb(null, result);
+
+      async.eachOf(
+        list,
+        (b, _i, next) => {
+          const queueSetKey = strategy.getBindingQueuesKey(
+            parsed.ns,
+            parsed.name,
+            b,
+          );
+          client.smembers(queueSetKey, (queueErr, queues) => {
+            if (queueErr) return next(queueErr);
+            result[b] = (queues ?? []).map((q): IQueueParams => JSON.parse(q));
+            next();
+          });
+        },
+        (eachErr) => cb(eachErr || null, result),
+      );
+    });
+  }
+
+  /**
    * Read the exchange's stored properties, resolve its type, run `fn`
    * with the pooled client and the fully-parsed
    * `IExchangeParsedParams`, and release the client.
@@ -801,18 +853,12 @@ export class ExchangeManager implements IExchangeManager {
    * Discover the exchange's stored type, verify it matches `required`,
    * then run `fn` with the fully-parsed `IExchangeParsedParams`.
    *
-   * Used by the three type-specific read methods. Unlike the other
-   * operations on the manager — which dispatch based on whatever type
-   * is stored — these three methods require a specific type, because
-   * the method name itself makes the type a part of the call. A
-   * mismatch rejects with `ExchangeTypeMismatchError`.
-   *
-   * This is the sole remaining use of `ExchangeTypeMismatchError` in
-   * the manager. `bindQueue`, `unbindQueue`, `matchQueues`,
-   * `getBindings`, and `getBindingQueues` no longer produce it — they
-   * dispatch on the stored type and reject only for arity mismatches
-   * (a fanout exchange given a routing key, a direct/topic exchange
-   * without one).
+   * Used by the three type-specific read methods and by
+   * `getBindingsForType`. Unlike the other operations on the manager —
+   * which dispatch based on whatever type is stored — these methods
+   * require a specific type, because the method name itself makes the
+   * type a part of the call. A mismatch rejects with
+   * `ExchangeTypeMismatchError`.
    */
   private withTypedExchange<T>(
     exchange: string | IExchangeParams,

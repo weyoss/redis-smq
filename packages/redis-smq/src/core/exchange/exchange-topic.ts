@@ -216,12 +216,10 @@ export class ExchangeTopic implements IExchangeTopic {
     cb?: ICallback<Record<string, IQueueParams[]>>,
   ): Promise<Record<string, IQueueParams[]>> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      this.manager.getBindings(exchange, (err, bindings) => {
+      this.manager.getBindingsForType(exchange, this.type, (err, bindings) => {
         if (err) return callback(err);
-        // For a topic exchange, `TExchangeBindings` is the
-        // `Record<string, IQueueParams[]>` member of the union. The
-        // assertion is safe as long as the caller passes a topic
-        // exchange to this facade.
+        // Safe: the manager verified the stored type is TOPIC before
+        // returning.
         callback(null, bindings as Record<string, IQueueParams[]>);
       });
     });

@@ -167,12 +167,11 @@ export class ExchangeFanout implements IExchangeFanout {
     cb?: ICallback<IQueueParams[]>,
   ): Promise<IQueueParams[]> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      this.manager.getBindings(exchange, (err, bindings) => {
+      this.manager.getBindingsForType(exchange, this.type, (err, bindings) => {
         if (err) return callback(err);
-        // For a fanout exchange, `TExchangeBindings` is the
-        // `IQueueParams[]` member of the union. The assertion is safe
-        // as long as the caller passes a fanout exchange to this
-        // facade.
+        // Safe: the manager verified the stored type is FANOUT before
+        // returning, so `bindings` is `IQueueParams[]` — the shape this
+        // facade's contract promises.
         callback(null, bindings as IQueueParams[]);
       });
     });

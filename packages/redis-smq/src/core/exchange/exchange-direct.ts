@@ -211,12 +211,11 @@ export class ExchangeDirect implements IExchangeDirect {
     cb?: ICallback<Record<string, IQueueParams[]>>,
   ): Promise<Record<string, IQueueParams[]>> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      this.manager.getBindings(exchange, (err, bindings) => {
+      this.manager.getBindingsForType(exchange, this.type, (err, bindings) => {
         if (err) return callback(err);
-        // For a direct exchange, `TExchangeBindings` is the
-        // `Record<string, IQueueParams[]>` member of the union. The
-        // assertion is safe as long as the caller passes a direct
-        // exchange to this facade.
+        // Safe: the manager verified the stored type is DIRECT before
+        // returning, so `bindings` is `Record<string, IQueueParams[]>`
+        // — the shape this facade's contract promises.
         callback(null, bindings as Record<string, IQueueParams[]>);
       });
     });
