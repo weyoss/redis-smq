@@ -46,6 +46,16 @@ jobs:
         run: git checkout -B "${{ github.event.workflow_run.head_branch }}"
         shell: bash
 
+      # GitHub-hosted runners have no git identity configured, so the
+      # `git commit` step inside release.sh would fail with
+      # "Author identity unknown". Attribute the release commit to the
+      # official github-actions bot identity.
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        shell: bash
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -61,9 +71,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Build workspaces
-        run: pnpm build:clean
 
       - name: Release pre-release (next branch)
         if: github.event.workflow_run.head_branch == 'next'
