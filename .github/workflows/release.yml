@@ -1,0 +1,80 @@
+name: release
+
+on:
+  workflow_run:
+    # Must exactly match the `name:` field at the top of tests.yml
+    workflows: ['ci']
+    types: [completed]
+    branches: [next, master]
+
+# Prevent two releases from racing on the same branch. A release pushes
+# a version commit and tags, so overlapping runs would conflict.
+concurrency:
+  group: release-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # Only release when the upstream run both succeeded AND was triggered
+    # by a push. tests.yml also runs on pull_request, and we must not cut
+    # a release from a PR's CI run.
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+
+    permissions:
+      contents: write # push version commit + tags, create GitHub Releases
+      id-token: write # npm OIDC trusted publishing
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # workflow_run sets github.sha to the default-branch tip, not the
+          # commit that was tested. Use head_sha so we release exactly what
+          # passed CI.
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0 # full history so lerna can find the last tag
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # actions/checkout with a SHA ref leaves us on a detached HEAD, which
+      # breaks `git push` and lerna's own push. Attach to a named branch at
+      # the tested SHA so pushes have a branch to target.
+      - name: Attach to branch at tested SHA
+        run: git checkout -B "${{ github.event.workflow_run.head_branch }}"
+        shell: bash
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22 # >= 22.14.0 required for OIDC
+          registry-url: 'https://registry.npmjs.org'
+          # Deliberately NOT setting NODE_AUTH_TOKEN. With no token in the
+          # environment, npm/pnpm fall back to OIDC trusted publishing.
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # No `version` input: the action reads `packageManager` from
+        # package.json (pnpm@12.11.2), keeping a single source of truth.
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspaces
+        run: pnpm build:clean
+
+      - name: Release pre-release (next branch)
+        if: github.event.workflow_run.head_branch == 'next'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_TERMINAL_PROMPT: '0'
+        run: pnpm release:pre
+
+      - name: Release stable (master branch)
+        if: github.event.workflow_run.head_branch == 'master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_TERMINAL_PROMPT: '0'
+        run: pnpm release:stable

@@ -4,6 +4,10 @@
   "author": "Weyoss <weyoss@outlook.com>",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": "^22.14.0"
+  },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
@@ -49,13 +53,8 @@
     "build:clean:workspaces": "scripts/build.sh workspaces",
     "test": "scripts/test.sh",
     "prepare": "husky",
-    "release:patch": "scripts/release.sh patch",
-    "release:minor": "scripts/release.sh minor",
-    "release:major": "scripts/release.sh major",
-    "release:prepatch": "scripts/release.sh prepatch",
-    "release:preminor": "scripts/release.sh preminor",
-    "release:premajor": "scripts/release.sh premajor",
-    "release:prerelease": "scripts/release.sh prerelease",
+    "release:pre": "scripts/release.sh pre",
+    "release:stable": "scripts/release.sh stable",
     "document": "scripts/document.sh",
     "lint": "scripts/lint.sh",
     "lint:all": "scripts/lint.sh --all",

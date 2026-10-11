@@ -1,6 +1,5 @@
 name: ci
 
-#on: [push, pull_request]
 on:
   push:
     branches: [next, master]
@@ -12,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Job to list all packages in the packages directory
+  # Enumerate packages under packages/ so the test matrix can fan out.
   list-packages:
     runs-on: ubuntu-latest
 
@@ -26,61 +25,87 @@ jobs:
       - name: List packages
         id: set-packages
         run: |
-          packages=($(ls -d packages/* | xargs -n 1 basename))
-          json="["
-          for package in "${packages[@]}"; do
-            json+="\"$package\","
-          done
-          json="${json%,}]"
-          echo "::set-output name=packages::$json"
+          packages=$(find packages -maxdepth 1 -mindepth 1 -type d -printf '%f\n' \
+            | sort \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
         shell: bash
 
+  # Build once for the whole workspace, then hand the artifacts to the
+  # test matrix so each leg doesn't rebuild everything from scratch.
+  build:
+    needs: list-packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # Version resolved from `packageManager` in package.json (12.11.2)
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspaces
+        run: pnpm build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-dist
+          path: packages/*/dist
+          retention-days: 1
+          if-no-files-found: error
+
   tests:
+    needs: [list-packages, build]
+
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
         node:
-          - 22
-        # Dynamically generate the package list by scanning the packages directory
+          - 22 # Node 22 required for OIDC trusted publishing
         package: ${{ fromJSON(needs.list-packages.outputs.packages) }}
 
     runs-on: ${{ matrix.os }}
 
-    needs: list-packages
-
     steps:
-      - name: Install Redis server
-        run: sudo apt-get update && sudo apt-get install redis-server
-        continue-on-error: false
-
-      - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Install PNPM package manager
-        run: npm install pnpm@10 -g
-        continue-on-error: false
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+
+      - name: Install Redis server
+        run: sudo apt-get update && sudo apt-get install -y redis-server
 
       - name: Install dependencies
-        run: pnpm install
-        continue-on-error: false
+        run: pnpm install --frozen-lockfile
 
-      - name: Install dependencies
-        run: pnpm install
-        continue-on-error: false
-
-      - name: Build workspaces
-        run: pnpm build
-        continue-on-error: false
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-dist
+          path: packages
 
       - name: Run tests and collect code coverage
         run: pnpm -F ${{ matrix.package }} test
-        if: success()
 
       - name: Upload code coverage
         uses: codecov/codecov-action@v4
@@ -89,4 +114,3 @@ jobs:
           flags: ${{ matrix.package }}
           directory: packages/${{ matrix.package }}/coverage
           token: ${{ secrets.CODECOV_TOKEN }}
-        if: success()

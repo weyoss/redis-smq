@@ -2,10 +2,5 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "version": "11.0.0-next.0",
   "ignoreChanges": [],
-  "npmClient": "pnpm",
-  "command": {
-    "publish": {
-      "registry": "http://localhost:4873"
-    }
-  }
+  "npmClient": "pnpm"
 }

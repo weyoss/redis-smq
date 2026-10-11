@@ -8,7 +8,6 @@ coverage
 **/coverage
 data
 **/scripts/document.sh
-**/scripts/release.sh
 **/scripts/benchmark.sh
 .husky/_
 lerna-debug.log
