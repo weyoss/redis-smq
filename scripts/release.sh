@@ -21,13 +21,17 @@ set -euo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-YELLOW='\033[0;33m'
 NC='\033[0m'
 
 CHANGELOG_PRESET="./scripts/changelog-presets/conventional-changelog-custom.cjs"
 
-# Set by generate_changelog(); consumed by create_release_stable().
-CONSOLIDATED_NOTES_FILE=""
+# Path to the release-notes file used by create_release_*. Set by either
+# generate_changelog() (stable) or generate_notes_pre() (pre-release).
+NOTES_FILE=""
+
+# Fixed path for pre-release notes. Overwritten each run; /tmp is ephemeral
+# on CI runners, and locally a single reused file keeps the script simple.
+PRE_NOTES_PATH="/tmp/redis-smq-pre-release-notes.md"
 
 # ---------------------------------------------------------------------------
 # Utilities
@@ -36,32 +40,6 @@ CONSOLIDATED_NOTES_FILE=""
 error()   { echo -e "${RED}❌ Error: $1${NC}" >&2; exit 1; }
 info()    { echo -e "${BLUE}ℹ $1${NC}" >&2; }
 success() { echo -e "${GREEN}✓ $1${NC}" >&2; }
-
-# Print recovery hints on non-zero exit so a partial failure is actionable.
-cleanup_hint() {
-  local status=$?
-  [[ $status -eq 0 ]] && return
-  {
-    echo
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${RED}Release failed (exit $status). Recovery hints:${NC}"
-    echo -e "${YELLOW}  Inspect state:${NC}"
-    echo    "    git status"
-    echo    "    git tag --list 'v*' | tail -5"
-    echo    "    git log --oneline -3"
-    echo -e "${YELLOW}  If a local tag was created but not pushed:${NC}"
-    echo    "    git tag -d v<version>"
-    echo    "    git reset --hard HEAD~1"
-    echo -e "${YELLOW}  If the tag was pushed but the release failed:${NC}"
-    echo    "    git push origin :refs/tags/v<version>   # delete remote tag"
-    echo    "    git tag -d v<version>"
-    echo    "    git reset --hard origin/HEAD"
-    echo -e "${YELLOW}  If publish failed but tag is on the remote:${NC}"
-    echo    "    pnpm -r publish --tag <next|latest> --no-git-checks --access public"
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  } >&2
-}
-trap cleanup_hint EXIT
 
 get_version() {
   local v
@@ -143,15 +121,11 @@ version_stable_prepare() {
 }
 
 # Consolidate pre-release entries from the root CHANGELOG.md into a single
-# release-notes/release-vX.Y.Z.md file.
+# release-notes/release-vX.Y.Z.md file. Used by the STABLE flow.
 #
 # ORDERING IS CRITICAL: this must run BEFORE version_stable_prepare.
 # Graduating prepends a final ## [X.Y.Z] entry, after which the tool's
 # getFirstPreReleaseAfterLastFinal() returns null and produces nothing.
-#
-# Uses before/after directory snapshots rather than `ls -t` so a committed
-# release-notes/ directory with checkout-time mtimes can't confuse the
-# "which file is new" detection.
 generate_changelog() {
   info "Consolidating release notes..."
 
@@ -162,19 +136,44 @@ generate_changelog() {
   after=$(mktemp)
 
   ls release-notes/release-v*.md 2>/dev/null > "$before" || true
-
-  if ! pnpm changelog:consolidate; then
-    rm -f "$before" "$after"
-    error "Changelog consolidation failed"
-  fi
-
+  pnpm changelog:consolidate || error "Changelog consolidation failed"
   ls release-notes/release-v*.md 2>/dev/null > "$after" || true
+
   new=$(comm -13 <(sort "$before") <(sort "$after") | tail -1)
   rm -f "$before" "$after"
 
   [[ -z "$new" ]] && error "No new release notes were generated"
-  CONSOLIDATED_NOTES_FILE="$new"
+  NOTES_FILE="$new"
   success "Release notes: $new"
+}
+
+# Extract the CHANGELOG.md section for the current version into a fixed
+# temp path. Used by the PRE-RELEASE flow so the GitHub release body matches
+# the conventional-changelog formatting rather than GitHub's auto-generated
+# commit list.
+#
+# Lerna has already written the ## [version] entry during
+# version_pre_prepare, so the section exists by the time this runs.
+generate_notes_pre() {
+  local version
+  version=$(get_version)
+
+  # Extract from `## [version]` up to (but not including) the next `## [`
+  # heading. The trailing `]` in the header prevents `## [11.0.0-next.1]`
+  # from matching `## [11.0.0-next.10]`. The `index(...) == 1` check
+  # anchors the match at the start of the line.
+  awk -v header="## [${version}]" '
+    index($0, header) == 1 { flag = 1 }
+    flag && /^## \[/ && index($0, header) != 1 { exit }
+    flag { print }
+  ' CHANGELOG.md > "$PRE_NOTES_PATH"
+
+  if [[ ! -s "$PRE_NOTES_PATH" ]]; then
+    error "No CHANGELOG entry found for version ${version}"
+  fi
+
+  NOTES_FILE="$PRE_NOTES_PATH"
+  success "Extracted CHANGELOG entry for v${version}"
 }
 
 # ---------------------------------------------------------------------------
@@ -205,8 +204,7 @@ commit_and_tag() {
   info "Committing and tagging v${version}..."
 
   git add -A
-  git commit -m "chore(release): v${version}" \
-    || error "git commit failed"
+  git commit -m "v${version}" || error "git commit failed"
   git tag "v${version}" || error "git tag failed"
 
   success "Committed and tagged v${version}"
@@ -226,11 +224,13 @@ create_release_pre() {
   local version
   version=$(get_version)
 
+  [[ -z "$NOTES_FILE" ]] && error "NOTES_FILE is not set"
+
   info "Creating GitHub pre-release v${version}..."
   gh release create "v${version}" \
     --title "v${version}" \
     --prerelease \
-    --generate-notes \
+    --notes-file "$NOTES_FILE" \
     || error "GitHub pre-release creation failed"
 
   success "GitHub pre-release v${version} created"
@@ -240,12 +240,12 @@ create_release_stable() {
   local version
   version=$(get_version)
 
-  [[ -z "$CONSOLIDATED_NOTES_FILE" ]] && error "CONSOLIDATED_NOTES_FILE is not set"
+  [[ -z "$NOTES_FILE" ]] && error "NOTES_FILE is not set"
 
-  info "Creating GitHub release v${version} from $CONSOLIDATED_NOTES_FILE..."
+  info "Creating GitHub release v${version} from $NOTES_FILE..."
   gh release create "v${version}" \
     --title "v${version}" \
-    --notes-file "$CONSOLIDATED_NOTES_FILE" \
+    --notes-file "$NOTES_FILE" \
     || error "GitHub release creation failed"
 
   success "GitHub release v${version} created"
@@ -257,11 +257,9 @@ create_release_stable() {
 #
 # pnpm 11+ speaks OIDC natively in CI. --no-git-checks is required because
 # lerna has just rewritten the tree. --provenance attaches a signed SLSA
-# attestation linking each tarball to the workflow run (only meaningful in
-# CI; pnpm warns and skips locally).
+# attestation linking each tarball to the workflow run.
 #
-# Re-running publish is safe: pnpm skips versions already on the registry,
-# so a partial failure can be recovered by re-invoking the same command.
+# Re-running publish is safe: pnpm skips versions already on the registry.
 
 publish_pre() {
   info "Publishing to npm (dist-tag: next)..."
@@ -270,7 +268,7 @@ publish_pre() {
     --no-git-checks \
     --access public \
     --provenance \
-    || error "Pre-release publish failed (recovery: pnpm -r publish --tag next --no-git-checks --access public)"
+    || error "Pre-release publish failed"
   success "Published to npm@next"
 }
 
@@ -281,18 +279,13 @@ publish_stable() {
     --no-git-checks \
     --access public \
     --provenance \
-    || error "Stable publish failed (recovery: pnpm -r publish --tag latest --no-git-checks --access public)"
+    || error "Stable publish failed"
   success "Published to npm@latest"
 }
 
 # ---------------------------------------------------------------------------
 # Release flows
 # ---------------------------------------------------------------------------
-#
-# Both flows push the version commit and tag to the remote BEFORE running
-# publish. This keeps git as the source of truth: if publish fails, the
-# tag is on the remote, but pnpm's idempotency lets a manual retry succeed
-# without any scripted recovery.
 
 release_pre() {
   info "Pre-release on 'next'"
@@ -301,6 +294,7 @@ release_pre() {
 
   build
   version_pre_prepare
+  generate_notes_pre
   commit_and_tag
   push_commit_and_tag
   create_release_pre
@@ -351,10 +345,10 @@ EOF
 }
 
 [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && { usage; exit 0; }
-[[ -z "${1:-}" ]] && { usage; error "Release mode required"; }
+[[ -z "${1:-}" ]] && { usage; exit 1; }
 
 case "$1" in
   pre)    release_pre ;;
   stable) release_stable ;;
-  *)      usage; error "Invalid mode: $1" ;;
+  *)      usage; exit 1 ;;
 esac
