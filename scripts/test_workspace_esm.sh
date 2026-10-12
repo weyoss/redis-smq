@@ -17,10 +17,18 @@ test_project() {
   # Set default Jest configuration options
   local VITEST_OPTIONS=(--root ./dist/esm)
 
-  echo "Building the project..."
-  if ! pnpm build; then
-    echo "Build process failed."
-    return 1
+  # In CI the workspace is already built — either by the build job that
+  # uploads artifacts, or by the workflow's build step. Rebuilding here
+  # would duplicate that work. Locally, the build is still needed so the
+  # test command has something to run against.
+  if [[ "${CI:-}" == "true" ]]; then
+    echo "Skipping build (CI=true)"
+  else
+    echo "Building the project..."
+    if ! pnpm build; then
+      echo "Build process failed."
+      return 1
+    fi
   fi
 
   # Run tests with Jest
