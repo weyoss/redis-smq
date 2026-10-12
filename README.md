@@ -1,10 +1,29 @@
-<div align="center" style="text-align: center">
+<div align="center">
+
+  <a href="https://github.com/weyoss/redis-smq">
+    <img src="logo.png" alt="RedisSMQ logo" width="500" />
+  </a>
+
   <p>
-    <a href="https://github.com/weyoss/redis-smq">
-      <img src="logo.png" alt="RedisSMQ" width="500px" />
-    </a>
+    <strong>A high‑performance Redis message queue for Node.js.</strong><br />
+    Simple to use. Built for scale.
   </p>
-  <p><strong>High‑performance Redis message queue for Node.js</strong><br />simple to use, built for scale.</p>
+
+  <p>
+    <a href="https://www.npmjs.com/package/redis-smq"><img alt="npm (latest)" src="https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=latest" /></a>
+    <a href="https://www.npmjs.com/package/redis-smq"><img alt="npm (next)" src="https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=next" /></a>
+    <a href="https://github.com/weyoss/redis-smq/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/weyoss/redis-smq?style=flat-square&label=stars" /></a>
+    <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/redis-smq?style=flat-square&label=license" /></a>
+    <a href="https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext"><img alt="Quality (next)" src="https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality" /></a>
+    <a href="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext"><img alt="build status" src="https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square&label=build" /></a>
+  </p>
+
+  <p>
+    <a href="packages/redis-smq/docs/README.md">Documentation</a> ·
+    <a href="BUILD.md">Build</a> ·
+    <a href="CHANGELOG.md">Changelog</a>
+  </p>
+
 </div>
 
 ---
@@ -26,8 +45,6 @@
 - A supported Redis client:
   - [`ioredis`](https://github.com/redis/ioredis) (recommended)
   - [`@redis/client`](https://github.com/redis/node-redis)
-
-> 📊 See [BUILD.md](BUILD.md) for the latest build, quality, and release status across all branches.
 
 ## 📦 Packages
 
