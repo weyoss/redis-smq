@@ -55,6 +55,14 @@ get_version() {
 
 is_ci() { [[ "${GITHUB_ACTIONS:-}" == "true" ]]; }
 
+# Check whether the HEAD commit opts out of releasing. Used by the
+# pre-release flow so pushes to `next` that don't warrant a version bump
+# (docs typos, CI tweaks, .gitignore edits) can skip the release while
+# still running tests through the ci workflow.
+has_skip_marker() {
+  git log -1 --pretty=%B | grep -qF '[skip release]'
+}
+
 # In CI the workflow checks out workflow_run.head_sha and reattaches to a
 # named branch, but branch protection and worktree state are already
 # validated upstream — skip these checks there.
@@ -289,6 +297,12 @@ publish_stable() {
 
 release_pre() {
   info "Pre-release on 'next'"
+
+  if has_skip_marker; then
+    info "HEAD commit contains [skip release] — skipping pre-release"
+    exit 0
+  fi
+
   require_branch "next"
   require_clean_worktree
 
