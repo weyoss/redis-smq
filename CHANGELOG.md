@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.1...v11.0.0-next.2) (2026-10-12)
+
+### 👷 Continuous Integration
+
+- use CHANGELOG entry as pre-release body ([4f2b6c5](https://github.com/weyoss/redis-smq/commit/4f2b6c5fc3b75ec9b41132acb01c6de0106bdd24))
+
 ## [11.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.0...v11.0.0-next.1) (2026-10-11)
 
 ### 📝 Documentation
