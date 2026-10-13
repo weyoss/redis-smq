@@ -10,6 +10,7 @@
 import type { RouteDefinition } from '../http/index.js';
 import { getConfigurationRoute } from './configuration/get/route.js';
 import { updateConfigurationRoute } from './configuration/update/route.js';
+import { getExchangesRoute } from './exchanges/list/route.js';
 import { pingRoute } from './ping/route.js';
 import { createQueueRoute } from './queues/create/route.js';
 import { getAllQueuesRoute } from './queues/list/route.js';
@@ -18,6 +19,9 @@ export const routes: RouteDefinition[] = [
   // Configuration
   getConfigurationRoute,
   updateConfigurationRoute,
+
+  // Exchanges
+  getExchangesRoute,
 
   // Queues
   getAllQueuesRoute,
