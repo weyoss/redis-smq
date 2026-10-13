@@ -483,6 +483,91 @@ importers:
         specifier: 0.2.6
         version: 0.2.6
 
+  packages/redis-smq-rest-api-refactor:
+    dependencies:
+      '@koa/bodyparser':
+        specifier: 6.1.0
+        version: 6.1.0(koa@3.2.1)
+      '@koa/cors':
+        specifier: 5.0.0
+        version: 5.0.0
+      '@koa/router':
+        specifier: 15.7.0
+        version: 15.7.0(koa@3.2.1)(supports-color@7.2.0)
+      '@redis/client':
+        specifier: ^5
+        version: 5.12.1
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
+      bluebird:
+        specifier: 3.7.2
+        version: 3.7.2
+      commander:
+        specifier: 15.0.0
+        version: 15.0.0
+      ioredis:
+        specifier: ^5
+        version: 5.9.2(supports-color@7.2.0)
+      json-schema:
+        specifier: 0.4.0
+        version: 0.4.0
+      koa:
+        specifier: 3.2.1
+        version: 3.2.1
+      koa-mount:
+        specifier: 4.2.0
+        version: 4.2.0(supports-color@7.2.0)
+      koa-static:
+        specifier: 5.0.0
+        version: 5.0.0(supports-color@7.2.0)
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1
+      redis-smq:
+        specifier: workspace:^
+        version: link:../redis-smq
+      redis-smq-common:
+        specifier: workspace:^
+        version: link:../redis-smq-common
+      swagger-ui-dist:
+        specifier: 5.33.0
+        version: 5.33.0
+      ts-json-schema-generator:
+        specifier: ^2.9.0
+        version: 2.9.0
+      uuid:
+        specifier: 14.0.2
+        version: 14.0.2
+    devDependencies:
+      '@scalar/openapi-types':
+        specifier: ^0.9.7
+        version: 0.9.7
+      '@types/json-schema':
+        specifier: 7.0.15
+        version: 7.0.15
+      '@types/koa':
+        specifier: 3.0.3
+        version: 3.0.3
+      '@types/koa-mount':
+        specifier: 4.0.5
+        version: 4.0.5
+      '@types/koa-static':
+        specifier: 4.0.4
+        version: 4.0.4
+      '@types/koa__cors':
+        specifier: 5.0.1
+        version: 5.0.1
+      '@types/koa__router':
+        specifier: 12.0.5
+        version: 12.0.5
+      '@types/swagger-ui-dist':
+        specifier: 3.30.6
+        version: 3.30.6
+      '@types/tmp':
+        specifier: 0.2.6
+        version: 0.2.6
+
   packages/redis-smq-web-server:
     dependencies:
       '@redis/client':

@@ -1,0 +1,112 @@
+{
+  "name": "redis-smq-rest-api-refactor",
+  "version": "11.0.0-next.2",
+  "description": "REST API for RedisSMQ: OpenAPI 3 schema and Swagger UI for managing queues, messages, and consumers.",
+  "author": "Weyoss <weyoss@outlook.com>",
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "message queue",
+    "message-queue",
+    "job queue",
+    "job-queue",
+    "task queue",
+    "task-queue",
+    "rabbitmq",
+    "kafka",
+    "background jobs",
+    "background-jobs",
+    "delayed jobs",
+    "delayed-jobs",
+    "scheduled jobs",
+    "scheduled-jobs",
+    "dead letter",
+    "dead-letter",
+    "priority queue",
+    "priority-queue",
+    "worker"
+  ],
+  "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@koa/bodyparser": "6.1.0",
+    "@koa/cors": "5.0.0",
+    "@koa/router": "15.7.0",
+    "ajv": "8.20.0",
+    "bluebird": "3.7.2",
+    "commander": "15.0.0",
+    "json-schema": "0.4.0",
+    "koa": "3.2.1",
+    "koa-mount": "4.2.0",
+    "koa-static": "5.0.0",
+    "lodash": "4.18.1",
+    "swagger-ui-dist": "5.33.0",
+    "ts-json-schema-generator": "^2.9.0",
+    "uuid": "14.0.2"
+  },
+  "peerDependencies": {
+    "@redis/client": "^5",
+    "ioredis": "^5",
+    "redis-smq": "workspace:^",
+    "redis-smq-common": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@redis/client": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@scalar/openapi-types": "^0.9.7",
+    "@types/json-schema": "7.0.15",
+    "@types/koa": "3.0.3",
+    "@types/koa-mount": "4.0.5",
+    "@types/koa-static": "4.0.4",
+    "@types/koa__cors": "5.0.1",
+    "@types/koa__router": "12.0.5",
+    "@types/swagger-ui-dist": "3.30.6",
+    "@types/tmp": "0.2.6",
+    "bluebird": "3.7.2"
+  },
+  "scripts": {
+    "gen-json-schema": "scripts/gen-json-schema.sh",
+    "gen-openapi": "scripts/gen-openapi.js",
+    "build": "scripts/build.sh",
+    "test": "../../scripts/test_workspace_esm.sh"
+  },
+  "bin": {
+    "redis-smq-rest-api": "./dist/esm/src/cli.js"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=22"
+  }
+}
