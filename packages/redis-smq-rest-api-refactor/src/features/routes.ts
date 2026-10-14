@@ -35,6 +35,9 @@ import { getRoutingPatternsRoute } from './namespace-exchanges/get-routing-patte
 import { getBindingsRoute } from './namespace-exchanges/get-bindings/route.js';
 import { bindQueueRoute } from './namespace-exchanges/bind-queue/route.js';
 import { unbindQueueRoute } from './namespace-exchanges/unbind-queue/route.js';
+import { getQueuePropertiesRoute } from './queue-properties/get/route.js';
+import { checkQueueExistenceRoute } from './queue-properties/check-existence/route.js';
+import { deleteQueueRoute } from './queue-properties/delete/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -74,6 +77,11 @@ export const routes: RouteDefinition[] = [
   getBindingsRoute,
   bindQueueRoute,
   unbindQueueRoute,
+
+  // Queue Properties
+  getQueuePropertiesRoute,
+  deleteQueueRoute,
+  checkQueueExistenceRoute,
 
   // Diagnostics
   pingRoute,
