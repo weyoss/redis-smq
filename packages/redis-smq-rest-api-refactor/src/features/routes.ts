@@ -26,6 +26,15 @@ import { getQueueMessagesRoute } from './queue-messages/get/route.js';
 import { purgeQueueMessagesRoute } from './queue-messages/purge/route.js';
 import { createQueueRoute } from './queues/create/route.js';
 import { getAllQueuesRoute } from './queues/list/route.js';
+import { getNamespaceExchangesRoute } from './namespace-exchanges/list/route.js';
+import { getExchangeRoute } from './namespace-exchanges/get/route.js';
+import { deleteExchangeRoute } from './namespace-exchanges/delete/route.js';
+import { matchQueuesRoute } from './namespace-exchanges/match-queues/route.js';
+import { getRoutingKeysRoute } from './namespace-exchanges/get-routing-keys/route.js';
+import { getRoutingPatternsRoute } from './namespace-exchanges/get-routing-patterns/route.js';
+import { getBindingsRoute } from './namespace-exchanges/get-bindings/route.js';
+import { bindQueueRoute } from './namespace-exchanges/bind-queue/route.js';
+import { unbindQueueRoute } from './namespace-exchanges/unbind-queue/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -54,6 +63,17 @@ export const routes: RouteDefinition[] = [
   // Queues
   getAllQueuesRoute,
   createQueueRoute,
+
+  // Namespace Exchanges
+  getNamespaceExchangesRoute,
+  getExchangeRoute,
+  deleteExchangeRoute,
+  matchQueuesRoute,
+  getRoutingKeysRoute,
+  getRoutingPatternsRoute,
+  getBindingsRoute,
+  bindQueueRoute,
+  unbindQueueRoute,
 
   // Diagnostics
   pingRoute,
