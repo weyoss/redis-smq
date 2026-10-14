@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import type { IQueueParams, IQueueProperties } from 'redis-smq';
 import type { BodyInput, Controller } from '../../../http/index.js';
 import type { CreateQueueControllerRequestBodyDTO } from './CreateQueueControllerRequestBodyDTO.js';
+import { CreateQueueControllerResponseDTO } from './CreateQueueControllerResponseDTO.js';
 
 /**
  * Creates a queue and returns its identity plus full properties.
@@ -20,7 +20,7 @@ import type { CreateQueueControllerRequestBodyDTO } from './CreateQueueControlle
  */
 export const createQueue: Controller<
   BodyInput<CreateQueueControllerRequestBodyDTO>,
-  { queue: IQueueParams; properties: IQueueProperties }
+  CreateQueueControllerResponseDTO
 > = async (deps, input) => {
   const { queue, queueType, queueDeliveryModel } = input.body;
   deps.logger.debug('Creating queue', { queue });

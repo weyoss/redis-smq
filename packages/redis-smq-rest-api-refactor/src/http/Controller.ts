@@ -9,23 +9,6 @@
 
 import type { Deps } from '../deps/index.js';
 
-/**
- * The three sources of request data, extracted from Koa and passed to
- * the handler after validation.
- *
- * Each source is parameterized so a handler can declare the exact
- * shape it expects after schema validation:
- *
- *   - `PathDTO`  — dynamic path segments. Defaults to `Record<string, string>`,
- *                  the shape `ctx.params` has at runtime.
- *   - `QueryDTO` — parsed query string. Defaults to `Record<string, unknown>`,
- *                  the widest shape `ctx.query` can carry.
- *   - `BodyDTO`  — parsed JSON body. Defaults to `unknown` — no shape
- *                  assumed until a DTO narrows it.
- *
- * Handlers that only care about one source leave the others at their
- * defaults and only narrow the one that matters.
- */
 export interface RequestInput<
   PathDTO = Record<string, string>,
   QueryDTO = Record<string, unknown>,
@@ -36,44 +19,100 @@ export interface RequestInput<
   body: BodyDTO;
 }
 
-/**
- * Convenience aliases for the three common cases.
- *
- * A handler that only narrows the path uses `PathInput<P>`; one that
- * only narrows the query uses `QueryInput<Q>`; one that only narrows
- * the body uses `BodyInput<B>`. The full `RequestInput<P, Q, B>`
- * spelling is reserved for handlers that narrow two or more sources,
- * where it's clearer than nesting three aliases.
- */
 export type PathInput<PathDTO> = RequestInput<
   PathDTO,
   Record<string, unknown>,
   unknown
 >;
+
 export type QueryInput<QueryDTO> = RequestInput<
   Record<string, string>,
   QueryDTO,
   unknown
 >;
+
 export type BodyInput<BodyDTO> = RequestInput<
   Record<string, string>,
   Record<string, unknown>,
   BodyDTO
 >;
 
-/**
- * The handler's return value. A tuple, not an object.
- */
-export type ControllerResult<Out = unknown> = readonly [number, Out];
+/** Tuple shape the router reads from a handler's return value. */
+export type ControllerResult = readonly [number, unknown];
 
 /**
- * A handler: `(deps, input) => Promise<[status, body]>`.
+ * Every 2xx status a handler is allowed to return.
  *
- * `In` defaults to `RequestInput` — every source at its runtime
- * default. Handlers narrow it via one of the three type parameters
- * (or all three at once).
+ * Enumerated rather than expressed as a range — TypeScript has no
+ * range over numeric literals, and a template-literal trick would
+ * accept `2999` (starts with 2) while rejecting `99` for the wrong
+ * reason. The explicit union is unambiguous.
  */
-export type Controller<In = RequestInput, Out = unknown> = (
+export type SuccessStatus =
+  | 200 // OK
+  | 201 // Created
+  | 202 // Accepted
+  | 203 // Non-Authoritative Information
+  | 204 // No Content
+  | 205 // Reset Content
+  | 206 // Partial Content
+  | 207 // Multi-Status
+  | 208 // Already Reported
+  | 226; // IM Used
+
+/**
+ * Extracts the 2xx branches of a response DTO.
+ *
+ * A response DTO is a union of `readonly [status, payload]` tuples —
+ * one per status the endpoint can return, plus the `TErrors['X']`
+ * entries that carry the 4xx/5xx branches. This type walks the union,
+ * keeps the branches whose status is a member of `SuccessStatus`, and
+ * discards the rest.
+ *
+ *   type GetConfigurationControllerResponseDTO =
+ *     | readonly [200, IRedisSMQParsedConfig]
+ *     | TErrors['ConfigurationNotFoundError'];
+ *
+ *   SuccessOf<GetConfigurationControllerResponseDTO>
+ *     // = readonly [200, IRedisSMQParsedConfig]
+ *
+ * When `R` doesn't match the tuple shape (the unconstrained default
+ * `unknown`, for example), it's returned unchanged so the default
+ * `Controller<In>` still has a usable return type.
+ */
+export type SuccessOf<R> = R extends readonly [infer S extends number, unknown]
+  ? S extends SuccessStatus
+    ? R
+    : never
+  : R;
+
+/**
+ * A handler: `(deps, input) => Promise<SuccessOf<ResponseType>>`.
+ *
+ * The second parameter is the **response DTO** — the same type the
+ * route passes to `getResponseSchemas`. Its 2xx branch is what the
+ * handler is expected to return; its 4xx/5xx branches are metadata for
+ * the OpenAPI document and the error handler, not part of the
+ * handler's contract.
+ *
+ * ## Why the status can't drift
+ *
+ * The status appears exactly once, in the DTO. Every handler return
+ * site is checked against the derived `SuccessOf<ResponseType>`. A
+ * handler that returns `[201, body]` when the DTO says `200` fails to
+ * compile, with an error pointing at the return value. There is no
+ * second place to update, and no way for the two declarations to
+ * disagree.
+ *
+ * ## Why this replaces the old `Controller<In, Out>`
+ *
+ * The previous shape took the payload type as the second parameter,
+ * which left the status unchecked. `Controller<In, SomePayload>`
+ * compiled with a handler returning any number. Passing the DTO
+ * instead — with `SuccessOf` doing the extraction — makes the status
+ * part of the compile-time contract without a second type parameter.
+ */
+export type Controller<In = RequestInput, ResponseType = unknown> = (
   deps: Deps,
   input: In,
-) => Promise<ControllerResult<Out>>;
+) => Promise<SuccessOf<ResponseType>>;

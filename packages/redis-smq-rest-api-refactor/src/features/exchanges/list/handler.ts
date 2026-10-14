@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import type { IExchangeParsedParams } from 'redis-smq';
 import type { Controller, RequestInput } from '../../../http/index.js';
+import { GetExchangesControllerResponseDTO } from './GetExchangesControllerResponseDTO.js';
 
 /**
  * Returns every exchange the runtime knows about.
@@ -19,7 +19,7 @@ import type { Controller, RequestInput } from '../../../http/index.js';
  */
 export const getExchanges: Controller<
   RequestInput,
-  IExchangeParsedParams[]
+  GetExchangesControllerResponseDTO
 > = async (deps) => {
   const exchanges = await deps.exchangeManager.getAllExchanges();
   return [200, exchanges];

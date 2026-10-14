@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import type { IMessageTransferable } from 'redis-smq';
 import type { Controller, PathInput } from '../../../http/index.js';
 import type { GetMessageByIdControllerRequestPathDTO } from './GetMessageByIdControllerRequestPathDTO.js';
+import { GetMessageByIdControllerResponseDTO } from './GetMessageByIdControllerResponseDTO.js';
 
 export const getMessageById: Controller<
   PathInput<GetMessageByIdControllerRequestPathDTO>,
-  IMessageTransferable
+  GetMessageByIdControllerResponseDTO
 > = async (deps, input) => {
   const message = await deps.messageManager.getMessageById(input.path.id);
   return [200, message];

@@ -76,5 +76,5 @@ export interface RouteDefinition {
    * under TypeScript's bivariant method-parameter checking. See the
    * file-level comment for the reasoning.
    */
-  handler(deps: Deps, input: RequestInput): Promise<ControllerResult<unknown>>;
+  handler(deps: Deps, input: RequestInput): Promise<ControllerResult>;
 }

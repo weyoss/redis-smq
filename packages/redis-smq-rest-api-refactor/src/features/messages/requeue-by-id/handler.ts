@@ -9,10 +9,11 @@
 
 import type { Controller, PathInput } from '../../../http/index.js';
 import type { RequeueMessageByIdControllerRequestPathDTO } from './RequeueMessageByIdControllerRequestPathDTO.js';
+import { RequeueMessageByIdControllerResponseDTO } from './RequeueMessageByIdControllerResponseDTO.js';
 
 export const requeueMessageById: Controller<
   PathInput<RequeueMessageByIdControllerRequestPathDTO>,
-  null
+  RequeueMessageByIdControllerResponseDTO
 > = async (deps, input) => {
   await deps.messageManager.requeueMessageById(input.path.id);
   return [204, null];

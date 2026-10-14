@@ -10,13 +10,14 @@
 import { RedisSMQ } from 'redis-smq';
 import type { BodyInput, Controller } from '../../../http/index.js';
 import type { PublishMessageControllerRequestBodyDTO } from './PublishMessageControllerRequestBodyDTO.js';
+import { PublishMessageControllerResponseDTO } from './PublishMessageControllerResponseDTO.js';
 
 /**
  * Publishes a message to a queue, topic, fanout, or direct exchange.
  */
 export const publishMessage: Controller<
   BodyInput<PublishMessageControllerRequestBodyDTO>,
-  string[]
+  PublishMessageControllerResponseDTO
 > = async (deps, input) => {
   const { message, exchange } = input.body;
 

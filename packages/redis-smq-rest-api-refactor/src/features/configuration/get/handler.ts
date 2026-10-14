@@ -7,12 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import type { IRedisSMQParsedConfig } from 'redis-smq';
 import type { Controller, RequestInput } from '../../../http/index.js';
+import { GetConfigurationControllerResponseDTO } from './GetConfigurationControllerResponseDTO.js';
 
 export const getConfiguration: Controller<
   RequestInput,
-  IRedisSMQParsedConfig
+  GetConfigurationControllerResponseDTO
 > = async (deps) => {
   deps.logger.debug('Retrieving library configuration');
   const config = await deps.configManager.getConfig();

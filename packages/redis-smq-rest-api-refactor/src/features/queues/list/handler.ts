@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import type { IQueueParams } from 'redis-smq';
 import type { Controller, RequestInput } from '../../../http/index.js';
+import { GetAllQueuesControllerResponseDTO } from './GetAllQueuesControllerResponseDTO.js';
 
 /**
  * Returns every queue the runtime knows about.
@@ -17,9 +17,10 @@ import type { Controller, RequestInput } from '../../../http/index.js';
  * response tuple — no transformation, no filtering, no envelope. The
  * router applies `{ data }`.
  */
-export const getAllQueues: Controller<RequestInput, IQueueParams[]> = async (
-  deps,
-) => {
+export const getAllQueues: Controller<
+  RequestInput,
+  GetAllQueuesControllerResponseDTO
+> = async (deps) => {
   const queues = await deps.queueManager.getQueues();
   return [200, queues];
 };

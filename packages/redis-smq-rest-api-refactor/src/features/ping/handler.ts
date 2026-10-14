@@ -8,18 +8,7 @@
  */
 
 import type { Controller, RequestInput } from '../../http/index.js';
-
-/**
- * Response body of the ping endpoint. Kept as a named interface (rather
- * than inline) so a `PingControllerResponseDTO.ts` can be added later
- * without touching the handler — the DTO type would simply alias this
- * one or repeat its shape.
- */
-export interface PingResponse {
-  ok: true;
-  /** Process uptime in seconds, as returned by `process.uptime()`. */
-  uptime: number;
-}
+import { PingControllerResponseDTO } from './PingControllerResponseDTO.js';
 
 /**
  * Trivial liveness endpoint.
@@ -33,6 +22,9 @@ export interface PingResponse {
  * on any property access. If a future change makes the handler reach
  * for `deps.logger` or any manager, that test fails loudly.
  */
-export const ping: Controller<RequestInput, PingResponse> = async () => {
+export const ping: Controller<
+  RequestInput,
+  PingControllerResponseDTO
+> = async () => {
   return [200, { ok: true, uptime: process.uptime() }] as const;
 };

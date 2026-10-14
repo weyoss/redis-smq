@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import type { IRedisSMQParsedConfig } from 'redis-smq';
 import type { BodyInput, Controller } from '../../../http/index.js';
 import type { UpdateConfigurationControllerRequestBodyDTO } from './UpdateConfigurationControllerRequestBodyDTO.js';
+import { UpdateConfigurationControllerResponseDTO } from './UpdateConfigurationControllerResponseDTO.js';
 
 export const updateConfiguration: Controller<
   BodyInput<UpdateConfigurationControllerRequestBodyDTO>,
-  IRedisSMQParsedConfig
+  UpdateConfigurationControllerResponseDTO
 > = async (deps, input) => {
   deps.logger.debug('Updating library configuration');
   await deps.configManager.updateConfig(input.body);

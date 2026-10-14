@@ -9,10 +9,11 @@
 
 import type { Controller, QueryInput } from '../../../http/index.js';
 import type { DeleteMessagesByIdsControllerRequestQueryDTO } from './DeleteMessagesByIdsControllerRequestQueryDTO.js';
+import { DeleteMessagesByIdsControllerResponseDTO } from './DeleteMessagesByIdsControllerResponseDTO.js';
 
 export const deleteMessagesByIds: Controller<
   QueryInput<DeleteMessagesByIdsControllerRequestQueryDTO>,
-  null
+  DeleteMessagesByIdsControllerResponseDTO
 > = async (deps, input) => {
   await deps.messageManager.deleteMessagesByIds(input.query.ids);
   return [204, null];
