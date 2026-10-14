@@ -38,6 +38,9 @@ import { unbindQueueRoute } from './namespace-exchanges/unbind-queue/route.js';
 import { getQueuePropertiesRoute } from './queue-properties/get/route.js';
 import { checkQueueExistenceRoute } from './queue-properties/check-existence/route.js';
 import { deleteQueueRoute } from './queue-properties/delete/route.js';
+import { getQueueStateRoute } from './queue-state/get/route.js';
+import { transitQueueStateRoute } from './queue-state/transit/route.js';
+import { getQueueStateHistoryRoute } from './queue-state/get-history/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -82,6 +85,11 @@ export const routes: RouteDefinition[] = [
   getQueuePropertiesRoute,
   deleteQueueRoute,
   checkQueueExistenceRoute,
+
+  // Queue State
+  getQueueStateRoute,
+  transitQueueStateRoute,
+  getQueueStateHistoryRoute,
 
   // Diagnostics
   pingRoute,
