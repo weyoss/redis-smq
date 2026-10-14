@@ -21,6 +21,9 @@ import { publishMessageRoute } from './messages/publish/route.js';
 import { requeueMessageByIdAliasRoute } from './messages/requeue-by-id/alias-route.js';
 import { requeueMessageByIdRoute } from './messages/requeue-by-id/route.js';
 import { pingRoute } from './ping/route.js';
+import { countQueueMessagesRoute } from './queue-messages/count/route.js';
+import { getQueueMessagesRoute } from './queue-messages/get/route.js';
+import { purgeQueueMessagesRoute } from './queue-messages/purge/route.js';
 import { createQueueRoute } from './queues/create/route.js';
 import { getAllQueuesRoute } from './queues/list/route.js';
 
@@ -42,6 +45,11 @@ export const routes: RouteDefinition[] = [
   requeueMessageByIdAliasRoute,
   getMessageStatusRoute,
   getMessageUnacknowledgementHistoryRoute,
+
+  // Queue Messages
+  getQueueMessagesRoute,
+  purgeQueueMessagesRoute,
+  countQueueMessagesRoute,
 
   // Queues
   getAllQueuesRoute,
