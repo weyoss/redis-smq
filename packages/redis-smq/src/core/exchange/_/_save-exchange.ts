@@ -21,6 +21,7 @@ import {
   EExchangeQueuePolicy,
   IExchangeParsedParams,
 } from '../../../contracts/index.js';
+import { _stringifyExchangeParams } from './_stringify-exchange-params.js';
 
 export function _saveExchange(
   client: IRedisClient,
@@ -60,7 +61,7 @@ export function _saveExchange(
           (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
             const typeField = String(EExchangeProperty.TYPE);
             const queuePolicyField = String(EExchangeProperty.QUEUE_POLICY);
-            const exchangeStr = JSON.stringify(exchangeParams);
+            const exchangeStr = _stringifyExchangeParams(exchangeParams);
 
             const multi = client.multi();
 
