@@ -41,6 +41,12 @@ import { deleteQueueRoute } from './queue-properties/delete/route.js';
 import { getQueueStateRoute } from './queue-state/get/route.js';
 import { transitQueueStateRoute } from './queue-state/transit/route.js';
 import { getQueueStateHistoryRoute } from './queue-state/get-history/route.js';
+import { getConsumerGroupsRoute } from './consumer-groups/list/route.js';
+import { saveConsumerGroupRoute } from './consumer-groups/save/route.js';
+import { deleteConsumerGroupRoute } from './consumer-groups/delete/route.js';
+import { getConsumerGroupPendingMessagesRoute } from './consumer-groups/get-pending-messages/route.js';
+import { purgeConsumerGroupPendingMessagesRoute } from './consumer-groups/purge-pending-messages/route.js';
+import { countConsumerGroupPendingMessagesRoute } from './consumer-groups/count-pending-messages/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -90,6 +96,14 @@ export const routes: RouteDefinition[] = [
   getQueueStateRoute,
   transitQueueStateRoute,
   getQueueStateHistoryRoute,
+
+  // Consumer Groups
+  getConsumerGroupsRoute,
+  saveConsumerGroupRoute,
+  deleteConsumerGroupRoute,
+  getConsumerGroupPendingMessagesRoute,
+  purgeConsumerGroupPendingMessagesRoute,
+  countConsumerGroupPendingMessagesRoute,
 
   // Diagnostics
   pingRoute,
