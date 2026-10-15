@@ -47,6 +47,9 @@ import { deleteConsumerGroupRoute } from './consumer-groups/delete/route.js';
 import { getConsumerGroupPendingMessagesRoute } from './consumer-groups/get-pending-messages/route.js';
 import { purgeConsumerGroupPendingMessagesRoute } from './consumer-groups/purge-pending-messages/route.js';
 import { countConsumerGroupPendingMessagesRoute } from './consumer-groups/count-pending-messages/route.js';
+import { getQueueRateLimitRoute } from './queue-rate-limit/get/route.js';
+import { setQueueRateLimitRoute } from './queue-rate-limit/set/route.js';
+import { clearQueueRateLimitRoute } from './queue-rate-limit/clear/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -104,6 +107,11 @@ export const routes: RouteDefinition[] = [
   getConsumerGroupPendingMessagesRoute,
   purgeConsumerGroupPendingMessagesRoute,
   countConsumerGroupPendingMessagesRoute,
+
+  // Queue Rate Limit
+  getQueueRateLimitRoute,
+  setQueueRateLimitRoute,
+  clearQueueRateLimitRoute,
 
   // Diagnostics
   pingRoute,
