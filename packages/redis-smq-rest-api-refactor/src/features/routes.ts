@@ -53,6 +53,7 @@ import { clearQueueRateLimitRoute } from './queue-rate-limit/clear/route.js';
 import { getNamespacesRoute } from './namespaces/list/route.js';
 import { deleteNamespaceRoute } from './namespaces/delete/route.js';
 import { getNamespaceQueuesRoute } from './namespace-queues/list/route.js';
+import { getQueueConsumersRoute } from './queue-consumers/list/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -122,6 +123,9 @@ export const routes: RouteDefinition[] = [
   // Namespaces
   getNamespacesRoute,
   deleteNamespaceRoute,
+
+  // Queue Consumers
+  getQueueConsumersRoute,
 
   // Diagnostics
   pingRoute,
