@@ -50,6 +50,8 @@ import { countConsumerGroupPendingMessagesRoute } from './consumer-groups/count-
 import { getQueueRateLimitRoute } from './queue-rate-limit/get/route.js';
 import { setQueueRateLimitRoute } from './queue-rate-limit/set/route.js';
 import { clearQueueRateLimitRoute } from './queue-rate-limit/clear/route.js';
+import { getNamespacesRoute } from './namespaces/list/route.js';
+import { deleteNamespaceRoute } from './namespaces/delete/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -112,6 +114,10 @@ export const routes: RouteDefinition[] = [
   getQueueRateLimitRoute,
   setQueueRateLimitRoute,
   clearQueueRateLimitRoute,
+
+  // Namespaces
+  getNamespacesRoute,
+  deleteNamespaceRoute,
 
   // Diagnostics
   pingRoute,
