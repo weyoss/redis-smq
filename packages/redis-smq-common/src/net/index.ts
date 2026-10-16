@@ -7,43 +7,56 @@
  * in the root directory of this source tree.
  */
 
-import { createServer } from 'net';
+import { createServer, type AddressInfo } from 'net';
+
+// Ports already handed out by this process — prevents concurrent
+// getRandomPort() calls from returning the same port.
+const reservedPorts = new Set<number>();
 
 async function isPortInUse(port: number): Promise<boolean> {
   return new Promise((resolve) => {
-    const server = createServer()
+    const server = createServer();
+    server
       .once('error', (err: NodeJS.ErrnoException) => {
-        if (err.code === 'EADDRINUSE') {
-          resolve(true);
-        } else {
-          resolve(false);
-        }
+        // EADDRINUSE  -> in use
+        // EACCES/EADDRNOTAVAIL -> unusable, treat as "in use"
+        resolve(err.code === 'EADDRINUSE' || err.code === 'EACCES');
       })
       .once('listening', () => {
-        server.close();
-        resolve(false);
+        server.close(() => resolve(false));
       })
-      .listen(port, '127.0.0.1');
+      // No host: bind to :: / 0.0.0.0 — matches the real server.
+      .listen({ port });
+  });
+}
+
+// Ask the OS for a free ephemeral port. The kernel keeps these unique,
+// so collisions are far less likely than random sampling.
+function getEphemeralPort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.unref();
+    server.once('error', reject);
+    server.listen(0, () => {
+      const { port } = server.address() as AddressInfo;
+      server.close(() => resolve(port));
+    });
   });
 }
 
 async function getRandomPort(): Promise<number> {
-  const MIN_PORT = 1024;
-  const MAX_PORT = 65535;
   const MAX_ATTEMPTS = 100;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const port =
-      Math.floor(Math.random() * (MAX_PORT - MIN_PORT + 1)) + MIN_PORT;
-    if (!(await isPortInUse(port))) {
-      return port;
-    }
+    const port = await getEphemeralPort();
+    if (reservedPorts.has(port)) continue;
+    if (await isPortInUse(port)) continue;
+
+    reservedPorts.add(port);
+    return port;
   }
 
   throw new Error('Unable to find an available port after multiple attempts');
 }
 
-export const net = {
-  isPortInUse,
-  getRandomPort,
-};
+export const net = { isPortInUse, getRandomPort };
