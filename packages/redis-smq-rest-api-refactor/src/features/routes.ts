@@ -52,6 +52,7 @@ import { setQueueRateLimitRoute } from './queue-rate-limit/set/route.js';
 import { clearQueueRateLimitRoute } from './queue-rate-limit/clear/route.js';
 import { getNamespacesRoute } from './namespaces/list/route.js';
 import { deleteNamespaceRoute } from './namespaces/delete/route.js';
+import { getNamespaceQueuesRoute } from './namespace-queues/list/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -80,6 +81,9 @@ export const routes: RouteDefinition[] = [
   // Queues
   getAllQueuesRoute,
   createQueueRoute,
+
+  // Namespace Queues
+  getNamespaceQueuesRoute,
 
   // Namespace Exchanges
   getNamespaceExchangesRoute,
