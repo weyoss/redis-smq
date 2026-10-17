@@ -14,14 +14,12 @@ Track the latest npm releases and test coverage for `redis-smq-rest-api` across 
 | `master` | [![npm (latest)](https://img.shields.io/npm/v/redis-smq-rest-api/latest?style=flat-square&label=latest)](https://www.npmjs.com/package/redis-smq-rest-api/v/latest) | [![Code Coverage (master)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/master?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api) |
 | `next`   | [![npm (next)](https://img.shields.io/npm/v/redis-smq-rest-api/next?style=flat-square&label=next)](https://www.npmjs.com/package/redis-smq-rest-api/v/next)         | [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api)       |
 
-> **📌 Note:** The `master` branch always points to the latest **stable, production-ready** release. The `next` branch contains **bleeding-edge development**—new features, fixes, and experimental changes that are not yet considered stable.
-
 ## Features
 
 - 🚀 Clean and efficient implementation
 - ✅ Strict request/response validation using [JSON Schema](https://json-schema.org/)
 - 📚 Native [OpenAPI v3](https://www.openapis.org/) support and [Swagger UI](https://swagger.io/)
-- 🧪 90%+ code coverage with extensive testing
+- 🧪 End-to-end test suite covering every endpoint against a real Redis instance
 - 📦 Support for both ESM & CJS modules
 
 ## Installation
@@ -45,7 +43,7 @@ Always install matching versions of RedisSMQ packages to ensure compatibility. S
 
 ## Documentation
 
-For in-depth guides and API references, see [the documentation page](docs/README.md):
+For in-depth guides and API references, see [the documentation page](docs/README.md).
 
 ## Related packages
 
