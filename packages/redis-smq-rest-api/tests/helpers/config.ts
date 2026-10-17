@@ -7,16 +7,39 @@
  * in the root directory of this source tree.
  */
 
-import { ERedisConfigClient } from 'redis-smq-common';
-import { IRedisSMQRestApiConfig } from '../../src/config/index.js';
+import type { IRedisSMQConfig } from 'redis-smq';
 
-export const config: IRedisSMQRestApiConfig = {
-  redis: {
-    client: ERedisConfigClient.IOREDIS,
+/**
+ * The `basePath` every HTTP test assumes.
+ *
+ * `start-api.ts` uses this as the default when it constructs the
+ * server config, and tests compose URLs as `${apiUrl}${TEST_BASE_PATH}/...`.
+ * Keeping it as a constant means a change here propagates to every
+ * test and to the server that serves them — they cannot disagree.
+ */
+export const TEST_BASE_PATH = '/';
+
+/**
+ * Library-level redis-smq configuration applied before each test.
+ *
+ * Passed to `RedisSMQ.createConfigManager().updateConfig(...)` in the
+ * setup file. This config affects every manager the API server
+ * constructs — it is not the REST API's own config, and it is not the
+ * Redis connection config.
+ *
+ * The values here mirror the original package's test configuration.
+ * `logger.enabled: false` keeps test output clean; `messageAudit: true`
+ * enables the audit trail that the message-history endpoints depend on.
+ * A test that needs a different library config can call
+ * `updateConfig` itself with a partial override — `redis-smq` merges
+ * the change over the current config.
+ */
+export const TEST_REDIS_SMQ_CONFIG: IRedisSMQConfig = {
+  logger: {
+    enabled: false,
     options: {
-      host: '127.0.0.1',
-      port: 0,
-      showFriendlyErrorStack: true,
+      logLevel: 'DEBUG',
     },
   },
+  messageAudit: true,
 };

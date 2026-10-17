@@ -7,161 +7,73 @@
  * in the root directory of this source tree.
  */
 
-import { bodyParser } from '@koa/bodyparser';
-import cors from '@koa/cors';
-import { asValue } from 'awilix';
-import * as http from 'http';
-import Koa from 'koa';
-import mount from 'koa-mount';
-import koaStatic from 'koa-static';
-import { join } from 'path';
-import { RedisSMQ } from 'redis-smq';
-import { createLogger, ILogger } from 'redis-smq-common';
-import { getAbsoluteFSPath as swaggerUiDistPath } from 'swagger-ui-dist';
-import { constants } from './config/constants.js';
-import {
-  IRedisSMQRestApiConfig,
-  IRedisSMQRestApiParsedConfig,
+/**
+ * Public API of `redis-smq-rest-api-refactor`.
+ *
+ * The package has three surfaces:
+ *
+ *   1. **The server class** — `RedisSMQRestApi`. The primary entry
+ *      point for every consumer. Construct it, call `run()`, call
+ *      `shutdown()` when done.
+ *
+ *   2. **The configuration contract** — `IRedisSMQRestApiConfig` and
+ *      its associated types. Consumers pass this to the constructor
+ *      or to the CLI; `parseConfig` is exposed for tooling that wants
+ *      to validate config without constructing a server.
+ *
+ *   3. **The extension contract** — `Controller`, `RouteDefinition`,
+ *      `HttpMethod`, `RequestInput`, `Deps`. Anything a third party
+ *      would need to add a feature to their own build of this package,
+ *      or to write a handler for a test that exercises the pipeline
+ *      without going through HTTP.
+ *
+ * Everything else — the Koa adapter, the AJV validators, the schema
+ * loader, the OpenAPI builder, the codegen outputs — is an
+ * implementation detail. Exposing it would create a public surface
+ * that has to be maintained across versions for consumers who never
+ * asked for it. If a need for one of those arises, export it
+ * deliberately in a future version.
+ */
+
+// ── The server class ─────────────────────────────────────────────────
+
+export { RedisSMQRestApi } from './server.js';
+
+// ── Configuration ────────────────────────────────────────────────────
+
+export {
+  DEFAULT_BASE_PATH,
+  DEFAULT_PORT,
   parseConfig,
 } from './config/index.js';
-import { Container } from './container/Container.js';
-import { buildSwaggerUiHtml } from './helpers/swagger-ui.js';
-import {
-  IApplicationMiddlewareContext,
-  IApplicationMiddlewareState,
-} from './lib/types/application.js';
-import { errorHandlerMiddleware } from './lib/errors/middlewares/errorHandlerMiddleware.js';
-import { registerResources } from './lib/router/index.js';
-import { routing } from './routing/routing.js';
+export type {
+  IRedisSMQRestApiCliOptions,
+  IRedisSMQRestApiConfig,
+  IParsedConfig,
+} from './config/index.js';
 
-export class RedisSMQRestApi {
-  protected app: Koa<
-    IApplicationMiddlewareState,
-    IApplicationMiddlewareContext
-  >;
-  protected config: IRedisSMQRestApiParsedConfig;
-  protected runHttpServer: boolean;
-  protected logger: ILogger;
-  protected httpServer: http.Server;
-  protected bootstrapped = false;
+// ── Extension contract ───────────────────────────────────────────────
 
-  constructor(config: IRedisSMQRestApiConfig = {}, runHttpServer = true) {
-    this.app = new Koa<
-      IApplicationMiddlewareState,
-      IApplicationMiddlewareContext
-    >();
-    this.runHttpServer = runHttpServer;
-    this.config = parseConfig(config);
+export type { Deps } from './deps/index.js';
+export type {
+  Controller,
+  ControllerResult,
+  HttpMethod,
+  RequestInput,
+  RouteDefinition,
+} from './http/index.js';
 
-    Container.registerServices();
-    const container = Container.getInstance();
-    container.register({ config: asValue(this.config) });
+// ── Errors ───────────────────────────────────────────────────────────
+//
+// Only the base class and the two errors a caller might catch directly
+// (config validation during construction, request validation from a
+// handler they wrote themselves) are exported. The rest of the error
+// hierarchy is internal — consumers catch by name or via
+// `isRedisSMQError`, not by importing every subclass.
 
-    this.logger = createLogger(this.config.logger, 'RedisSMQRestApi');
-    this.httpServer = http.createServer(this.app.callback());
-  }
-
-  protected async initApplicationMiddlewares() {
-    // Per-request scope for DI
-    this.app.use<IApplicationMiddlewareState, IApplicationMiddlewareContext>(
-      (ctx, next) => {
-        ctx.scope = Container.getInstance().createScope();
-        return next();
-      },
-    );
-
-    // Global middlewares
-    this.app.use(errorHandlerMiddleware);
-    this.app.use(bodyParser());
-    this.app.use(
-      cors({
-        origin: '*',
-      }),
-    );
-  }
-
-  protected async initOpenApi() {
-    this.logger.info('Initializing OpenAPI...');
-
-    const { basePath } = this.config.apiServer;
-    const { openapiSchemaFilename, assetsPath } = constants;
-
-    // 1. Serve Swagger UI assets from /swagger/ui
-    const uiAssetsFsPath = swaggerUiDistPath();
-    this.app.use(
-      mount(join(basePath, '/swagger/ui'), koaStatic(uiAssetsFsPath)),
-    );
-
-    // 2. Serve the OpenAPI spec from /swagger/assets/<filename>
-    this.app.use(
-      mount(join(basePath, '/swagger/assets'), koaStatic(assetsPath)),
-    );
-
-    // Prepare URLs for the HTML template
-    const specUrl = join(basePath, '/swagger/assets', openapiSchemaFilename);
-    const uiAssetsUrl = join(basePath, '/swagger/ui');
-    const html = buildSwaggerUiHtml(specUrl, uiAssetsUrl);
-
-    // 3. Serve the Swagger UI HTML at /swagger
-    this.app.use(
-      mount(join(basePath, '/swagger'), (ctx: Koa.Context) => {
-        // Only serve HTML for the root of the mount path (e.g., /swagger or /swagger/)
-        if (ctx.path === '/' || ctx.path === '') {
-          ctx.type = 'text/html; charset=utf-8';
-          ctx.body = html;
-        }
-        // Requests for other sub-paths will fall through and result in a 404
-      }),
-    );
-  }
-
-  protected async initRouting() {
-    this.logger.info('Registering routes...');
-    const appRouter = await registerResources(routing);
-    this.app.use(appRouter.routes());
-    this.app.use(appRouter.allowedMethods());
-  }
-
-  protected async bootstrap() {
-    if (this.bootstrapped) return;
-
-    await RedisSMQ.initialize(this.config.redis);
-    await this.initApplicationMiddlewares();
-    await this.initRouting();
-    await this.initOpenApi();
-
-    this.bootstrapped = true;
-  }
-
-  async run() {
-    await this.bootstrap();
-    if (!this.runHttpServer) return;
-
-    const { port, basePath } = this.config.apiServer;
-    await new Promise<void>((resolve) =>
-      this.httpServer.listen(port, () => resolve()),
-    );
-    this.logger.info(
-      `RedisSMQ REST API server is running on http://localhost:${port}...`,
-    );
-    const baseURL = `http://127.0.0.1:${port}${basePath === '/' ? '' : basePath}`;
-    this.logger.info(
-      `OpenAPI specs are available at ${baseURL}/swagger/assets/${constants.openapiSchemaFilename}`,
-    );
-    this.logger.info(`SWAGGER UI is accessible from ${baseURL}/swagger`);
-  }
-
-  async getApplication() {
-    await this.bootstrap();
-    return this.app.callback();
-  }
-
-  async shutdown() {
-    if (this.httpServer.listening) {
-      await new Promise((resolve) => this.httpServer.close(resolve));
-    }
-    await Container.getInstance().dispose();
-    await RedisSMQ.shutdown();
-    this.logger.info('RedisSMQ HTTP API has been shutdown.');
-  }
-}
+export {
+  InvalidApiServerParamsError,
+  RedisSMQRestApiError,
+  RequestValidationError,
+  isRedisSMQError,
+} from './errors/index.js';

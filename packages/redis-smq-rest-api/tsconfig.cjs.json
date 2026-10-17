@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.cjs.json",
   "compilerOptions": {
+    "rootDir": ".",
     "outDir": "./dist/cjs",
     "paths": {
       "@scalar/openapi-types": [

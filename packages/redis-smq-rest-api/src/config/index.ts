@@ -7,6 +7,10 @@
  * in the root directory of this source tree.
  */
 
-export * from './errors/index.js';
-export * from './types/index.js';
-export * from './parseConfig.js';
+export { DEFAULT_BASE_PATH, DEFAULT_PORT, constants } from './constants.js';
+export { parseConfig } from './parseConfig.js';
+export type {
+  IRedisSMQRestApiCliOptions,
+  IRedisSMQRestApiConfig,
+  IParsedConfig,
+} from './types.js';
