@@ -66,3 +66,24 @@ export function redisClient(): TRedisClientAsync {
   }
   return context.redisClient;
 }
+
+/**
+ * Port of the embedded Redis the test setup is running.
+ *
+ * Exposed for tests that need to construct a second `RedisSMQRestApi`
+ * instance against the same Redis — typically to verify behavior that
+ * depends on server config (custom `basePath`, embedded mode, lifecycle
+ * hooks) without disturbing the shared instance the setup file booted.
+ *
+ * The port is stable for the whole test file: Redis is spawned once in
+ * `beforeAll` and torn down in `afterAll`. Tests that need to reach the
+ * embedded Redis directly use this instead of starting their own.
+ */
+export function getRedisPort(): number {
+  if (!context) {
+    throw new Error(
+      'Test context has not been initialized. Check vitest.setup.ts.',
+    );
+  }
+  return context.redis.port;
+}
