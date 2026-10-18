@@ -55,6 +55,7 @@ import { deleteNamespaceRoute } from './namespaces/delete/route.js';
 import { getNamespaceQueuesRoute } from './namespace-queues/list/route.js';
 import { getQueueConsumersRoute } from './queue-consumers/list/route.js';
 import { getQueueExchangesRoute } from './queue-exchanges/list/route.js';
+import { createExchangeRoute } from './exchanges/create/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -63,6 +64,7 @@ export const routes: RouteDefinition[] = [
 
   // Exchanges
   getExchangesRoute,
+  createExchangeRoute,
 
   // Messages
   publishMessageRoute,
