@@ -71,6 +71,9 @@ export default tseslint.config(
       'packages/redis-smq-web-ui/**/*.vue',
       'packages/redis-smq-web-ui-refactor/**/*.vue',
     ],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,

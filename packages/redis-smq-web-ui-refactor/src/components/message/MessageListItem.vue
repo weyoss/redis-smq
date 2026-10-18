@@ -12,7 +12,15 @@ import type { IMessageTransferable } from '@/api/model';
 import { EMessagePropertyStatus } from '@/types/messages.ts';
 import { formatDate, formatSince } from '@/lib/format';
 
-defineProps<{ message: IMessageTransferable }>();
+defineProps<{
+  message: IMessageTransferable;
+  canRequeue?: boolean;
+}>();
+
+const emit = defineEmits<{
+  delete: [id: string];
+  requeue: [id: string];
+}>();
 
 const STATUS_LABELS: Record<number, string> = {
   [EMessagePropertyStatus.NEW]: 'New',
@@ -62,6 +70,27 @@ function preview(body: unknown): string {
       >
         {{ STATUS_LABELS[message.status] ?? `Unknown (${message.status})` }}
       </span>
+      <div class="msg-row__actions">
+        <button
+          v-if="canRequeue"
+          type="button"
+          class="btn btn-icon btn-outline-secondary"
+          title="Requeue message"
+          aria-label="Requeue message"
+          @click="emit('requeue', message.id)"
+        >
+          <i class="bi bi-arrow-clockwise" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-icon btn-outline-danger"
+          title="Delete message"
+          aria-label="Delete message"
+          @click="emit('delete', message.id)"
+        >
+          <i class="bi bi-trash" aria-hidden="true" />
+        </button>
+      </div>
     </header>
     <div class="msg-row__meta">
       <span :title="formatDate(message.createdAt)">
@@ -83,12 +112,14 @@ function preview(body: unknown): string {
 .msg-row:last-child {
   border-bottom: none;
 }
+
 .msg-row__head {
   display: flex;
   align-items: center;
   gap: var(--rsmq-space-2);
   flex-wrap: wrap;
 }
+
 .msg-row__id {
   font-size: 0.8rem;
   color: var(--rsmq-color-text);
@@ -99,6 +130,7 @@ function preview(body: unknown): string {
   flex: 1;
   min-width: 0;
 }
+
 .msg-row__priority,
 .msg-row__status {
   font-size: 0.7rem;
@@ -109,10 +141,12 @@ function preview(body: unknown): string {
   border-radius: var(--rsmq-radius-sm);
   flex-shrink: 0;
 }
+
 .msg-row__priority {
   background: var(--rsmq-color-primary-tint);
   color: var(--rsmq-color-primary);
 }
+
 .msg-row__status--warning {
   background: #fff3cd;
   color: #856404;
@@ -133,10 +167,23 @@ function preview(body: unknown): string {
   background: var(--rsmq-color-bg);
   color: var(--rsmq-color-text-muted);
 }
+
+.msg-row__actions {
+  display: flex;
+  gap: var(--rsmq-space-1);
+  margin-left: auto;
+}
+.msg-row__actions .btn {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: var(--rsmq-space-1);
+}
+
 .msg-row__meta {
   font-size: 0.75rem;
   color: var(--rsmq-color-text-muted);
 }
+
 .msg-row__body {
   margin: 0;
   padding: var(--rsmq-space-3);
@@ -149,5 +196,12 @@ function preview(body: unknown): string {
   max-height: 8rem;
   overflow-y: auto;
   font-family: var(--rsmq-font-mono);
+}
+
+@media (max-width: 576px) {
+  .msg-row__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>

@@ -28,3 +28,14 @@ export enum EQueueOperationalState {
   STOPPED = 2,
   LOCKED = 3,
 }
+
+export enum EStateTransitionReason {
+  MANUAL = 'MANUAL',
+  SCHEDULED = 'SCHEDULED',
+  EMERGENCY = 'EMERGENCY',
+  PERFORMANCE = 'PERFORMANCE',
+  ERROR = 'ERROR',
+  CONFIG_CHANGE = 'CONFIG_CHANGE',
+  TESTING = 'TESTING',
+  OTHER = 'OTHER',
+}

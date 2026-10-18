@@ -8,24 +8,30 @@
   -->
 
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
+import { computed, ref } from 'vue';
 import PageShell from '@/components/ui/PageShell.vue';
 import Card from '@/components/ui/Card.vue';
 import StatCard from '@/components/ui/StatCard.vue';
 import StatGrid from '@/components/ui/StatGrid.vue';
 import StateBlock from '@/components/ui/StateBlock.vue';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+import ChangeStateModal from '@/components/modals/ChangeStateModal.vue';
 import { useQueueSelection } from '@/composables/useQueueSelection';
 import { useQueueProperties } from '@/composables/useQueueProperties';
 import { useQueueStats } from '@/composables/useQueueStats';
 import { useQueueRateLimit } from '@/composables/useQueueRateLimit';
+import { useRateLimitActions } from '@/composables/useRateLimitActions';
 import { useTypedRouter } from '@/router/typed';
 import { formatCompact, formatNumber } from '@/lib/format';
+import { getErrorMessage } from '@/lib/error';
+import { useDeleteQueue } from '@/api/generated/queue/queue';
 import {
   EQueueDeliveryModel,
   EQueueOperationalState,
   EQueueType,
 } from '@/types/queues';
 import type { PageAction } from '@/components/ui/PageShell.vue';
+import type { QueueStateAction } from '@/composables/useQueueStateTransition';
 
 const router = useTypedRouter();
 const { ns, name, params } = useQueueSelection();
@@ -33,6 +39,72 @@ const { ns, name, params } = useQueueSelection();
 const properties = useQueueProperties(params);
 const stats = useQueueStats(params);
 const rateLimit = useQueueRateLimit(params);
+const rateLimitActions = useRateLimitActions(params, () => rateLimit.refetch());
+
+// --- State-transition modal ---
+const showStateModal = ref(false);
+const stateAction = ref<QueueStateAction>('pause');
+
+function openStateModal(action: QueueStateAction) {
+  stateAction.value = action;
+  showStateModal.value = true;
+}
+
+function onStateSuccess() {
+  showStateModal.value = false;
+  properties.refetch();
+  stats.refetch();
+}
+
+// --- Delete modal ---
+const showDeleteModal = ref(false);
+const deleteError = ref<string | null>(null);
+
+const deleteMutation = useDeleteQueue({
+  mutation: {
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      router.go('queues');
+    },
+  },
+});
+
+async function onConfirmDelete() {
+  const q = params.value;
+  if (!q) return;
+  deleteError.value = null;
+  try {
+    await deleteMutation.mutateAsync({ ns: q.ns, name: q.name });
+  } catch (e) {
+    deleteError.value = getErrorMessage(e);
+  }
+}
+
+// --- Clear rate-limit modal ---
+const showClearLimitModal = ref(false);
+const clearLimitError = ref<string | null>(null);
+
+async function onConfirmClearLimit() {
+  clearLimitError.value = null;
+  try {
+    await rateLimitActions.clearRateLimit();
+    showClearLimitModal.value = false;
+  } catch (e) {
+    clearLimitError.value = getErrorMessage(e);
+  }
+}
+
+// --- Derived labels ---
+const operational = computed(() => properties.data.value?.operationalState);
+
+const isActive = computed(
+  () => operational.value === EQueueOperationalState.ACTIVE,
+);
+const isPausedOrStopped = computed(
+  () =>
+    operational.value === EQueueOperationalState.PAUSED ||
+    operational.value === EQueueOperationalState.STOPPED,
+);
 
 const queueLabel = computed(() =>
   name.value && ns.value ? `${name.value}@${ns.value}` : '',
@@ -54,7 +126,7 @@ const deliveryLabel = computed(() => {
 });
 
 const operationalLabel = computed(() => {
-  const s = properties.data.value?.operationalState;
+  const s = operational.value;
   if (s === EQueueOperationalState.ACTIVE) return 'Active';
   if (s === EQueueOperationalState.PAUSED) return 'Paused';
   if (s === EQueueOperationalState.STOPPED) return 'Stopped';
@@ -62,7 +134,16 @@ const operationalLabel = computed(() => {
   return '—';
 });
 
+// --- Stat tiles ---
 const statCards = computed(() => [
+  {
+    id: 'pending',
+    label: 'Pending',
+    value: formatNumber(stats.pending.value),
+    icon: 'bi-clock-history',
+    tint: 'warning' as const,
+    percentage: stats.percentages.value.pending,
+  },
   {
     id: 'acknowledged',
     label: 'Acknowledged',
@@ -87,44 +168,81 @@ const statCards = computed(() => [
     tint: 'secondary' as const,
     percentage: stats.percentages.value.scheduled,
   },
-  {
-    id: 'pending',
-    label: 'Pending',
-    value: formatNumber(stats.pending.value),
-    icon: 'bi-clock-history',
-    tint: 'warning' as const,
-    percentage: stats.percentages.value.pending,
-  },
 ]);
 
-const actions = computed<PageAction[]>(() => [
-  {
-    id: 'view-messages',
-    label: 'View messages',
-    icon: 'bi-envelope',
-    variant: 'primary',
-    disabled: !params.value,
-    onClick: () => {
-      if (!params.value) return;
-      router.go('messages', {
-        ns: params.value.ns,
-        queue: params.value.name,
-      });
+// --- Actions ---
+const actions = computed<PageAction[]>(() => {
+  const list: PageAction[] = [
+    {
+      id: 'view-messages',
+      label: 'View messages',
+      icon: 'bi-envelope',
+      variant: 'primary',
+      disabled: !params.value,
+      onClick: () => {
+        if (!params.value) return;
+        router.go('messages', {
+          ns: params.value.ns,
+          queue: params.value.name,
+        });
+      },
     },
-  },
-  {
-    id: 'refresh',
-    label: 'Refresh',
-    icon: 'bi-arrow-clockwise',
-    variant: 'secondary',
-    loading: properties.isLoading.value || stats.isLoading.value,
-    onClick: () => {
-      properties.refetch();
-      stats.refetch();
-      rateLimit.refetch();
+  ];
+
+  if (isActive.value) {
+    list.push(
+      {
+        id: 'pause',
+        label: 'Pause',
+        icon: 'bi-pause-circle',
+        variant: 'secondary',
+        onClick: () => openStateModal('pause'),
+      },
+      {
+        id: 'stop',
+        label: 'Stop',
+        icon: 'bi-stop-circle',
+        variant: 'secondary',
+        onClick: () => openStateModal('stop'),
+      },
+    );
+  } else if (isPausedOrStopped.value) {
+    list.push({
+      id: 'resume',
+      label: 'Resume',
+      icon: 'bi-play-circle',
+      variant: 'secondary',
+      onClick: () => openStateModal('resume'),
+    });
+  }
+
+  list.push(
+    {
+      id: 'refresh',
+      label: 'Refresh',
+      icon: 'bi-arrow-clockwise',
+      variant: 'secondary',
+      loading: properties.isLoading.value || stats.isLoading.value,
+      onClick: () => {
+        properties.refetch();
+        stats.refetch();
+        rateLimit.refetch();
+      },
     },
-  },
-]);
+    {
+      id: 'delete',
+      label: 'Delete',
+      icon: 'bi-trash',
+      variant: 'danger',
+      onClick: () => {
+        deleteError.value = null;
+        showDeleteModal.value = true;
+      },
+    },
+  );
+
+  return list;
+});
 </script>
 
 <template>
@@ -171,27 +289,68 @@ const actions = computed<PageAction[]>(() => [
       </Card>
 
       <Card title="Rate limiting" icon="bi-speedometer2" :heading-level="2">
-        <div v-if="rateLimit.isLoading.value">
-          <StateBlock kind="loading" />
-        </div>
-        <div v-else-if="rateLimit.error.value">
-          <StateBlock
-            kind="error"
-            icon="bi-exclamation-triangle-fill"
-            :message="rateLimit.error.value"
-          />
-        </div>
-        <div v-else-if="rateLimit.rateLimit.value">
+        <StateBlock v-if="rateLimit.isLoading.value" kind="loading" />
+        <StateBlock
+          v-else-if="rateLimit.error.value"
+          kind="error"
+          icon="bi-exclamation-triangle-fill"
+          :message="rateLimit.error.value"
+        />
+        <div v-else-if="rateLimit.rateLimit.value" class="rate-limit-row">
           <p class="rate">
             <strong>{{ rateLimit.rateLimit.value.limit }}</strong>
             messages per
             <strong>{{ rateLimit.rateLimit.value.interval }}ms</strong>
           </p>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            :disabled="rateLimitActions.isClearing.value"
+            @click="showClearLimitModal = true"
+          >
+            <i class="bi bi-trash me-1" aria-hidden="true" />
+            Clear
+          </button>
         </div>
         <p v-else class="rate rate--none">No rate limit configured.</p>
       </Card>
     </template>
   </PageShell>
+
+  <ChangeStateModal
+    :is-visible="showStateModal"
+    :queue="params"
+    :action="stateAction"
+    @close="showStateModal = false"
+    @success="onStateSuccess"
+  />
+
+  <ConfirmationModal
+    :is-visible="showDeleteModal"
+    title="Delete queue"
+    subtitle="This action cannot be undone"
+    icon="bi-exclamation-triangle"
+    :message="`Delete queue ${queueLabel}? All messages will be lost.`"
+    confirm-label="Delete queue"
+    confirm-variant="danger"
+    :is-pending="deleteMutation.isPending.value"
+    :error="deleteError"
+    @close="showDeleteModal = false"
+    @confirm="onConfirmDelete"
+  />
+
+  <ConfirmationModal
+    :is-visible="showClearLimitModal"
+    title="Clear rate limit"
+    icon="bi-speedometer2"
+    :message="`Remove rate limiting from ${queueLabel}?`"
+    confirm-label="Clear rate limit"
+    confirm-variant="warning"
+    :is-pending="rateLimitActions.isClearing.value"
+    :error="clearLimitError"
+    @close="showClearLimitModal = false"
+    @confirm="onConfirmClearLimit"
+  />
 </template>
 
 <style scoped>
@@ -215,11 +374,19 @@ const actions = computed<PageAction[]>(() => [
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.rate-limit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rsmq-space-3);
+  flex-wrap: wrap;
+}
 .rate {
   margin: 0;
   font-size: 1rem;
 }
 .rate--none {
+  margin: 0;
   color: var(--rsmq-color-text-muted);
   font-size: 0.9rem;
 }

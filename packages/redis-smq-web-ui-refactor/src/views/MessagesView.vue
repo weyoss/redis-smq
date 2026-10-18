@@ -8,19 +8,22 @@
   -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PageShell from '@/components/ui/PageShell.vue';
 import Card from '@/components/ui/Card.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import StateBlock from '@/components/ui/StateBlock.vue';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import MessageTabs from '@/components/message/MessageTabs.vue';
 import MessageListItem from '@/components/message/MessageListItem.vue';
 import { useQueueSelection } from '@/composables/useQueueSelection';
 import { useMessages } from '@/composables/useMessages';
+import { useMessageActions } from '@/composables/useMessageActions';
 import { getQueueMessages } from '@/api/generated/queue-messages/queue-messages';
 import type { MessageStatus } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
+import { getErrorMessage } from '@/lib/error.ts';
 
 const route = useRoute();
 const { ns, name, params } = useQueueSelection();
@@ -50,11 +53,53 @@ const messages = useMessages(params, {
     }),
 });
 
+// --- Mutations ---
+const actions = useMessageActions(() => messages.refresh());
+
+// --- Delete modal state ---
+const deleteTarget = ref<string | null>(null);
+const deleteError = ref<string | null>(null);
+
+async function onConfirmDelete() {
+  if (!deleteTarget.value) return;
+  deleteError.value = null;
+  try {
+    await actions.deleteMessage(deleteTarget.value);
+    deleteTarget.value = null;
+  } catch (e) {
+    deleteError.value = getErrorMessage(e);
+  }
+}
+
+// --- Requeue modal state ---
+const requeueTarget = ref<string | null>(null);
+const requeueError = ref<string | null>(null);
+
+async function onConfirmRequeue() {
+  if (!requeueTarget.value) return;
+  requeueError.value = null;
+  try {
+    await actions.requeueMessage(requeueTarget.value);
+    requeueTarget.value = null;
+  } catch (e) {
+    requeueError.value = getErrorMessage(e);
+  }
+}
+
+// Close modals if user switches tabs while one is open.
+watch(messageType, () => {
+  deleteTarget.value = null;
+  requeueTarget.value = null;
+});
+
+// Requeue is meaningful for everything except scheduled.
+const canRequeue = computed(() => messageType.value !== 'scheduled');
+
 const queueLabel = computed(() =>
   name.value && ns.value ? `${name.value}@${ns.value}` : '',
 );
 
-const actions = computed<PageAction[]>(() => [
+const pageActions = computed<PageAction[]>(() => [
   {
     id: 'refresh',
     label: 'Refresh',
@@ -64,14 +109,19 @@ const actions = computed<PageAction[]>(() => [
     onClick: () => messages.refresh(),
   },
 ]);
+
+const pageTitle = computed(
+  () =>
+    `${messageType.value.charAt(0).toUpperCase()}${messageType.value.slice(1)} messages`,
+);
 </script>
 
 <template>
   <PageShell
     :title="`Messages: ${queueLabel}`"
-    :subtitle="`${messageType.charAt(0).toUpperCase()}${messageType.slice(1)} messages`"
+    :subtitle="pageTitle"
     icon="bi-envelope"
-    :actions="actions"
+    :actions="pageActions"
   >
     <MessageTabs v-if="ns && name" :ns="ns" :queue="name" />
 
@@ -106,8 +156,48 @@ const actions = computed<PageAction[]>(() => [
           v-for="m in messages.items.value"
           :key="m.id"
           :message="m"
+          :can-requeue="canRequeue"
+          @delete="
+            (id) => {
+              deleteTarget = id;
+              deleteError = null;
+            }
+          "
+          @requeue="
+            (id) => {
+              requeueTarget = id;
+              requeueError = null;
+            }
+          "
         />
       </template>
     </Card>
   </PageShell>
+
+  <ConfirmationModal
+    :is-visible="!!deleteTarget"
+    title="Delete message"
+    subtitle="This action cannot be undone"
+    icon="bi-exclamation-triangle"
+    :message="`Delete message ${deleteTarget ?? ''}?`"
+    confirm-label="Delete"
+    confirm-variant="danger"
+    :is-pending="actions.isDeleting.value"
+    :error="deleteError"
+    @close="deleteTarget = null"
+    @confirm="onConfirmDelete"
+  />
+
+  <ConfirmationModal
+    :is-visible="!!requeueTarget"
+    title="Requeue message"
+    icon="bi-arrow-clockwise"
+    :message="`Requeue message ${requeueTarget ?? ''}? It will become available for processing again.`"
+    confirm-label="Requeue"
+    confirm-variant="primary"
+    :is-pending="actions.isRequeuing.value"
+    :error="requeueError"
+    @close="requeueTarget = null"
+    @confirm="onConfirmRequeue"
+  />
 </template>

@@ -79,9 +79,15 @@ export function useMessages(
     gcTime: 5 * 60_000,
   });
 
-  // Reset page when the queue changes — the only reason page lives here.
-  watch(queueRef, (next, prev) => {
-    if (next && (!prev || next.ns !== prev.ns || next.name !== prev.name)) {
+  // Reset page when the query's identity changes (queue OR prefix/tab).
+  watch([queueRef, prefix], (next, prev) => {
+    const [nextQ, nextP] = next;
+    if (!nextQ) return;
+    const [prevQ, prevP] = prev;
+    const queueChanged =
+      !prevQ || nextQ.ns !== prevQ.ns || nextQ.name !== prevQ.name;
+    const prefixChanged = prevP !== undefined && nextP !== prevP;
+    if (queueChanged || prefixChanged) {
       pagination.page = 1;
     }
   });
