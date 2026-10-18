@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.js",
+    "dev:only": "vite",
+    "dev:api": "node scripts/run-api-server.js",
     "build": "vue-tsc --build && vite build",
     "preview": "vite preview",
     "generate-api": "orval",
@@ -27,6 +29,7 @@
     "@vue/tsconfig": "0.9.1",
     "happy-dom": "21.0.3",
     "orval": "8.9.1",
+    "redis-smq-common": "workspace:^",
     "redis-smq-rest-api": "workspace:^",
     "vite": "8.3.1",
     "vitest": "^3.2.0",

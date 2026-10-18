@@ -18,4 +18,7 @@ lerna-debug.log
 packages/redis-smq-web-ui/run/
 packages/redis-smq-web-ui/src/api/generated/
 packages/redis-smq-web-ui/src/api/model/
+packages/redis-smq-web-ui-refactor/src/api/generated/
+packages/redis-smq-web-ui-refactor/src/api/model/
 **/.env
+**/.env.local

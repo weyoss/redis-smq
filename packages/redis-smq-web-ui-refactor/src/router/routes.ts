@@ -10,11 +10,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 
 export const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: 'home',
-    component: () => import('@/views/HomeView.vue'),
-  },
+  { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
   {
     path: '/ns',
     name: 'namespaces',
@@ -23,12 +19,22 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/queues',
     name: 'queues',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/QueueListView.vue'),
   },
   {
     path: '/exchanges',
     name: 'exchanges',
     component: () => import('@/views/PlaceholderView.vue'),
+  },
+  {
+    path: '/ns/:ns/queues/:queue',
+    name: 'queue',
+    component: () => import('@/views/QueueView.vue'),
+  },
+  {
+    path: '/ns/:ns/queues/:queue/messages',
+    name: 'messages',
+    component: () => import('@/views/MessagesView.vue'),
   },
   {
     path: '/:pathMatch(.*)*',
