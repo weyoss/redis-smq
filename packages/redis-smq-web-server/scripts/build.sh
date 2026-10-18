@@ -11,15 +11,24 @@
 
 set -euxo pipefail
 
+# Anchor to the package root. `pnpm build` and direct invocations from
+# anywhere resolve the same paths.
+cd "$(dirname "$0")/.."
+
+# ─────────────────────────────────────────────────────────────────────
+# 0. Clean
+# ─────────────────────────────────────────────────────────────────────
 rm -rf dist
 
-# esm
-tsc -p ./tsconfig.json
+# ─────────────────────────────────────────────────────────────────────
+# 1. ESM build → dist/esm/
+# ─────────────────────────────────────────────────────────────────────
+tsc -p tsconfig.json
 
-# cjs
-tsc -p ./tsconfig.cjs.json
-cat >dist/cjs/package.json <<!EOF
-{
-    "type": "commonjs"
-}
-!EOF
+# ─────────────────────────────────────────────────────────────────────
+# 2. CJS build → dist/cjs/
+# ─────────────────────────────────────────────────────────────────────
+tsc -p tsconfig.cjs.json
+printf '{"type":"commonjs"}\n' > dist/cjs/package.json
+
+echo "✅ Build complete."

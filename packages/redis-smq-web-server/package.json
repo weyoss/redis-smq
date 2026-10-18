@@ -46,7 +46,7 @@
     "test": "../../scripts/test_workspace_esm.sh"
   },
   "bin": {
-    "redis-smq-web-server": "./dist/esm/bin/cli.js"
+    "redis-smq-web-server": "./dist/esm/src/cli.js"
   },
   "dependencies": {
     "commander": "15.0.0",

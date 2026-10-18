@@ -8,27 +8,28 @@
  */
 
 import bluebird from 'bluebird';
-import { RedisClientFactory } from 'redis-smq-common';
-import { config } from './config.js';
+import {
+  ERedisConfigClient,
+  type IRedisClient,
+  RedisClientFactory,
+} from 'redis-smq-common';
 
-const { promisifyAll } = bluebird;
+export type TRedisClientAsync = ReturnType<
+  typeof bluebird.promisifyAll<IRedisClient>
+>;
 
-let redisClient: ReturnType<
-  typeof bluebird.promisifyAll<RedisClientFactory>
-> | null = null;
-
-export async function getRedisClientInstance() {
-  if (!redisClient) {
-    if (!config.redis) throw new Error(`Redis configuration is required`);
-    redisClient = promisifyAll(new RedisClientFactory(config.redis));
-    await redisClient.initAsync();
-  }
-  return promisifyAll(redisClient.getInstance());
-}
-
-export async function shutdownRedisClient() {
-  if (redisClient) {
-    await redisClient.shutdownAsync();
-    redisClient = null;
-  }
+/**
+ * Opens a promisified Redis client against the given port.
+ */
+export async function createRedisClient(
+  port: number,
+): Promise<TRedisClientAsync> {
+  const factory = bluebird.promisifyAll(
+    new RedisClientFactory({
+      client: ERedisConfigClient.IOREDIS,
+      options: { host: '127.0.0.1', port },
+    }),
+  );
+  await factory.initAsync();
+  return bluebird.promisifyAll(factory.getInstance());
 }

@@ -7,193 +7,64 @@
  * in the root directory of this source tree.
  */
 
-import express from 'express';
-import path from 'path';
-import fs from 'fs';
-import * as http from 'http';
-import { getDistPath } from 'redis-smq-web-ui';
-import {
-  IRedisSMQWebServerConfig,
-  IRedisSMQWebServerParsedConfig,
-} from './config/types/index.js';
-import { RedisSMQRestApi } from 'redis-smq-rest-api';
-import { parseConfig } from './config/parse-config.js';
-import type { IRedisSMQWebUIConfig } from 'redis-smq-web-ui';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import { createLogger, ILogger } from 'redis-smq-common';
+/**
+ * Public API of `redis-smq-web-server`.
+ *
+ * The package has three surfaces:
+ *
+ *   1. **The server class** — `RedisSMQWebServer`. The primary entry
+ *      point. Construct it, call `run()`, call `shutdown()` when done.
+ *      Or construct with `false` as the second argument and call
+ *      `getApplication()` for embedding in a larger Express host.
+ *
+ *   2. **The configuration contract** — `IWebServerConfig` and its
+ *      associated types. Consumers pass this to the constructor or to
+ *      the CLI; `parseConfig` is exposed for tooling that wants to
+ *      validate config without constructing a server.
+ *
+ *   3. **The error hierarchy** — the three error classes the server
+ *      can throw during startup. Exported so callers that construct
+ *      the server programmatically (rather than via the CLI) can
+ *      format errors with the same metadata the CLI surfaces.
+ *
+ * Everything else — the Express middleware composition, the `Deps`
+ * bag, the config parsing internals — is an implementation detail.
+ * Exposing it would create public surface that has to be maintained
+ * across versions for consumers who never asked for it.
+ */
 
-type TRequest = express.Request<unknown, unknown, unknown>;
-type TResponse = express.Response<unknown>;
-type TNextFn = express.NextFunction;
+// ── The server class ─────────────────────────────────────────────────
 
-export class RedisSMQWebServer {
-  private readonly app = express();
-  private readonly config: IRedisSMQWebServerParsedConfig;
-  private readonly webUIPath: string;
-  private readonly webUIConfig: IRedisSMQWebUIConfig;
-  private readonly apiProxyTarget: string | null = null;
-  private restApi: RedisSMQRestApi | null = null;
-  private bootstrapped = false;
-  private httpServer: http.Server | null = null;
-  protected logger: ILogger;
+export { RedisSMQWebServer } from './server.js';
 
-  constructor(config: IRedisSMQWebServerConfig = {}) {
-    // Default configuration
-    this.config = parseConfig(config);
-    this.webUIConfig = {
-      BASE_PATH: this.config.webServer.basePath,
-      API_URL: this.config.webServer.basePath,
-    };
-    this.apiProxyTarget = this.config.webServer.apiProxyTarget ?? null;
-    this.webUIPath = getDistPath();
-    this.logger = createLogger(this.config.logger, 'RedisSMQWebServer');
-  }
+// ── Configuration ────────────────────────────────────────────────────
 
-  private async setupMiddleware(): Promise<void> {
-    const { basePath } = this.config.webServer;
+export {
+  DEFAULT_BASE_PATH,
+  DEFAULT_PORT,
+  parseConfig,
+} from './config/index.js';
+export type {
+  IWebServerCliOptions,
+  IWebServerConfig,
+  IParsedWebServerConfig,
+} from './config/index.js';
 
-    this.app.set('trust proxy', true);
-    this.logger.info('Trusting reverse proxy headers.');
+// ── Errors ───────────────────────────────────────────────────────────
+//
+// All three are thrown during startup — before the HTTP listener is
+// bound. A caller catching them can produce a diagnostic without
+// having to parse a stack trace:
+//
+//   - `InvalidWebServerParamsError` — config validation failed.
+//   - `WebUIBundleNotFoundError` — the RedisSMQ Web UI bundle is
+//     missing or malformed.
+//   - `WebServerError` — the base class. Useful for a catch-all that
+//     wants to distinguish "something this package threw" from "a
+//     Redis error, a bug in Express, or anything else."
 
-    // Static file serving
-    this.app.use(
-      basePath,
-      //type-coverage:ignore-next-line
-      express.static(this.webUIPath, {
-        etag: true,
-        lastModified: true,
-        index: false, // We manually handle index.html serving
-        setHeaders: (res: express.Response<unknown>, filePath) => {
-          // JS and CSS are handled by rewriters; only set headers for other asset types.
-          if (filePath.match(/\.(png|jpg|jpeg|gif|ico|svg|css|js)$/)) {
-            res.setHeader('Cache-Control', 'public, max-age=86400');
-          } else {
-            res.setHeader('Cache-Control', 'no-cache');
-          }
-        },
-      }),
-    );
-  }
-
-  private async setupApi(): Promise<void> {
-    const basePath = this.config.webServer.basePath;
-    const apiPath = path.posix.join(basePath, 'api');
-    const swaggerPath = path.posix.join(basePath, 'swagger');
-
-    const apiBasePaths = [apiPath, swaggerPath];
-    const isApiRequest = (path: string) =>
-      apiBasePaths.some((base) => path === base || path.startsWith(`${base}/`));
-
-    const target = this.config.webServer.apiProxyTarget;
-
-    if (target) {
-      const proxy = createProxyMiddleware({
-        target,
-        changeOrigin: true,
-        ws: true,
-      });
-      this.app.use(
-        (req: TRequest, res: TResponse, next: express.NextFunction) => {
-          if (isApiRequest(req.path)) {
-            return proxy(req, res, next);
-          }
-          next();
-        },
-      );
-      return;
-    }
-
-    this.restApi = new RedisSMQRestApi(this.config, false);
-    const restApiCallback = await this.restApi.getApplication();
-    this.app.use((req: TRequest, res: TResponse, next: TNextFn) => {
-      if (isApiRequest(req.path)) {
-        return restApiCallback(req, res);
-      }
-      next();
-    });
-  }
-
-  private sendIndexHtml(res: express.Response<unknown>) {
-    const indexPath = path.join(this.webUIPath, 'index.html');
-    fs.readFile(indexPath, 'utf8', (err, data) => {
-      if (err) {
-        this.logger.error('Error reading index.html:', err);
-        return res.status(500).send('Error loading application');
-      }
-      const configScript = `<script>window.configs = ${JSON.stringify(
-        this.webUIConfig,
-      )};</script>`;
-      const modifiedHtml = data.replace('</head>', `${configScript}</head>`);
-      res.send(modifiedHtml);
-    });
-  }
-
-  private async setupRoutes(): Promise<void> {
-    await this.setupApi();
-
-    const { basePath } = this.config.webServer;
-
-    if (basePath !== '/') {
-      this.app.get('/', (_req: TRequest, res: TResponse) =>
-        res.redirect(basePath),
-      );
-    }
-
-    // SPA Fallback: Serve index.html for any non-API, non-file GET request.
-    this.app.get(/(.*)/, (req: TRequest, res: TResponse, next: TNextFn) => {
-      if (
-        req.path.startsWith(path.posix.join(basePath, 'api')) ||
-        req.path.startsWith(path.posix.join(basePath, 'swagger'))
-      ) {
-        return next();
-      }
-      if (path.extname(req.path)) {
-        return next();
-      }
-      if (req.headers.accept && !req.headers.accept.includes('text/html')) {
-        return next();
-      }
-      this.sendIndexHtml(res);
-    });
-  }
-
-  private async bootstrap(): Promise<void> {
-    if (!this.bootstrapped) {
-      await this.setupMiddleware();
-      await this.setupRoutes();
-      this.bootstrapped = true;
-    }
-  }
-
-  public async run(): Promise<void> {
-    await this.bootstrap();
-    const port = this.config.webServer.port;
-    this.httpServer = this.app.listen(port, () => {
-      this.logger.info(`Redis SMQ Web Server running on port ${port}`);
-      if (this.apiProxyTarget) {
-        this.logger.info(`Proxying API requests to ${this.apiProxyTarget}`);
-      } else {
-        this.logger.info(`Embedded Redis SMQ REST API is mounted`);
-      }
-      this.logger.info(`Serving static assets from: ${this.webUIPath}`);
-      this.logger.info(`Base path: ${this.config.webServer.basePath || '/'}`);
-    });
-  }
-
-  public async shutdown(): Promise<void> {
-    if (this.httpServer && this.httpServer.listening) {
-      await new Promise<void>((resolve, reject) => {
-        this.httpServer?.close((err?: Error) => {
-          if (err) return reject(err);
-          resolve();
-        });
-      });
-      this.httpServer = null;
-      this.logger.info('Redis SMQ Web Server has been shutdown.');
-    }
-    if (this.restApi) {
-      await this.restApi.shutdown();
-      this.restApi = null;
-    }
-  }
-}
+export {
+  InvalidWebServerParamsError,
+  WebServerError,
+  WebUIBundleNotFoundError,
+} from './errors/index.js';

@@ -100,3 +100,5 @@ server {
 - A user requests `https://example.com/smq/assets/main.js`.
 - Nginx receives the request and forwards it to `http://localhost:7210/smq/assets/main.js`. The `/smq` path is preserved.
 - The Express app receives the request, matches the path and serves the requested file.
+- A user who reaches `https://example.com/` (without `/smq`) is redirected to `https://example.com/smq` by the web
+  server itself — no additional nginx `location` block is needed for that case.
