@@ -52,6 +52,11 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/ExchangeListView.vue'),
   },
   {
+    path: '/config',
+    name: 'configuration',
+    component: () => import('@/views/ConfigurationView.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'notFound',
     component: () => import('@/views/NotFoundView.vue'),

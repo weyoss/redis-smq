@@ -38,6 +38,17 @@ const route = useRoute();
           <i :class="item.icon" aria-hidden="true" />
           {{ item.label }}
         </RouterLink>
+        <RouterLink
+          :to="{ name: 'configuration' }"
+          class="app-header__link app-header__link--settings"
+          :class="{
+            'app-header__link--active': route.name === 'configuration',
+          }"
+          title="Configuration"
+        >
+          <i class="bi bi-gear" aria-hidden="true" />
+          <span class="d-none d-md-inline">Configuration</span>
+        </RouterLink>
       </nav>
     </div>
   </header>
