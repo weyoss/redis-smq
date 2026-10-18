@@ -13,14 +13,15 @@ import PageShell from '@/components/ui/PageShell.vue';
 import Card from '@/components/ui/Card.vue';
 import StatCard from '@/components/ui/StatCard.vue';
 import StatGrid from '@/components/ui/StatGrid.vue';
-import StateBlock from '@/components/ui/StateBlock.vue';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import ChangeStateModal from '@/components/modals/ChangeStateModal.vue';
+import ConsumerGroupsCard from '@/components/queue/ConsumerGroupsCard.vue';
+import QueueConsumersCard from '@/components/queue/QueueConsumersCard.vue';
+import OperationalStateHistoryCard from '@/components/queue/OperationalStateHistoryCard.vue';
+import RateLimitCard from '@/components/queue/RateLimitCard.vue';
 import { useQueueSelection } from '@/composables/useQueueSelection';
 import { useQueueProperties } from '@/composables/useQueueProperties';
 import { useQueueStats } from '@/composables/useQueueStats';
-import { useQueueRateLimit } from '@/composables/useQueueRateLimit';
-import { useRateLimitActions } from '@/composables/useRateLimitActions';
 import { useTypedRouter } from '@/router/typed';
 import { formatCompact, formatNumber } from '@/lib/format';
 import { getErrorMessage } from '@/lib/error';
@@ -38,10 +39,7 @@ const { ns, name, params } = useQueueSelection();
 
 const properties = useQueueProperties(params);
 const stats = useQueueStats(params);
-const rateLimit = useQueueRateLimit(params);
-const rateLimitActions = useRateLimitActions(params, () => rateLimit.refetch());
 
-// --- State-transition modal ---
 const showStateModal = ref(false);
 const stateAction = ref<QueueStateAction>('pause');
 
@@ -56,7 +54,6 @@ function onStateSuccess() {
   stats.refetch();
 }
 
-// --- Delete modal ---
 const showDeleteModal = ref(false);
 const deleteError = ref<string | null>(null);
 
@@ -80,23 +77,7 @@ async function onConfirmDelete() {
   }
 }
 
-// --- Clear rate-limit modal ---
-const showClearLimitModal = ref(false);
-const clearLimitError = ref<string | null>(null);
-
-async function onConfirmClearLimit() {
-  clearLimitError.value = null;
-  try {
-    await rateLimitActions.clearRateLimit();
-    showClearLimitModal.value = false;
-  } catch (e) {
-    clearLimitError.value = getErrorMessage(e);
-  }
-}
-
-// --- Derived labels ---
 const operational = computed(() => properties.data.value?.operationalState);
-
 const isActive = computed(
   () => operational.value === EQueueOperationalState.ACTIVE,
 );
@@ -134,7 +115,6 @@ const operationalLabel = computed(() => {
   return '—';
 });
 
-// --- Stat tiles ---
 const statCards = computed(() => [
   {
     id: 'pending',
@@ -170,7 +150,6 @@ const statCards = computed(() => [
   },
 ]);
 
-// --- Actions ---
 const actions = computed<PageAction[]>(() => {
   const list: PageAction[] = [
     {
@@ -226,7 +205,6 @@ const actions = computed<PageAction[]>(() => {
       onClick: () => {
         properties.refetch();
         stats.refetch();
-        rateLimit.refetch();
       },
     },
     {
@@ -254,7 +232,7 @@ const actions = computed<PageAction[]>(() => {
     :loading="properties.isLoading.value"
     :error="properties.error.value"
   >
-    <template v-if="properties.data.value">
+    <template v-if="properties.data.value && params">
       <StatGrid :loading="stats.isLoading.value" :error="stats.error.value">
         <StatCard v-for="s in statCards" :key="s.id" v-bind="s" />
       </StatGrid>
@@ -288,32 +266,10 @@ const actions = computed<PageAction[]>(() => {
         </dl>
       </Card>
 
-      <Card title="Rate limiting" icon="bi-speedometer2" :heading-level="2">
-        <StateBlock v-if="rateLimit.isLoading.value" kind="loading" />
-        <StateBlock
-          v-else-if="rateLimit.error.value"
-          kind="error"
-          icon="bi-exclamation-triangle-fill"
-          :message="rateLimit.error.value"
-        />
-        <div v-else-if="rateLimit.rateLimit.value" class="rate-limit-row">
-          <p class="rate">
-            <strong>{{ rateLimit.rateLimit.value.limit }}</strong>
-            messages per
-            <strong>{{ rateLimit.rateLimit.value.interval }}ms</strong>
-          </p>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-danger"
-            :disabled="rateLimitActions.isClearing.value"
-            @click="showClearLimitModal = true"
-          >
-            <i class="bi bi-trash me-1" aria-hidden="true" />
-            Clear
-          </button>
-        </div>
-        <p v-else class="rate rate--none">No rate limit configured.</p>
-      </Card>
+      <RateLimitCard :queue="params" />
+      <ConsumerGroupsCard :queue="params" />
+      <QueueConsumersCard :queue="params" />
+      <OperationalStateHistoryCard :queue="params" />
     </template>
   </PageShell>
 
@@ -338,19 +294,6 @@ const actions = computed<PageAction[]>(() => {
     @close="showDeleteModal = false"
     @confirm="onConfirmDelete"
   />
-
-  <ConfirmationModal
-    :is-visible="showClearLimitModal"
-    title="Clear rate limit"
-    icon="bi-speedometer2"
-    :message="`Remove rate limiting from ${queueLabel}?`"
-    confirm-label="Clear rate limit"
-    confirm-variant="warning"
-    :is-pending="rateLimitActions.isClearing.value"
-    :error="clearLimitError"
-    @close="showClearLimitModal = false"
-    @confirm="onConfirmClearLimit"
-  />
 </template>
 
 <style scoped>
@@ -373,21 +316,5 @@ const actions = computed<PageAction[]>(() => {
   color: var(--rsmq-color-text);
   font-weight: 600;
   overflow-wrap: anywhere;
-}
-.rate-limit-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--rsmq-space-3);
-  flex-wrap: wrap;
-}
-.rate {
-  margin: 0;
-  font-size: 1rem;
-}
-.rate--none {
-  margin: 0;
-  color: var(--rsmq-color-text-muted);
-  font-size: 0.9rem;
 }
 </style>

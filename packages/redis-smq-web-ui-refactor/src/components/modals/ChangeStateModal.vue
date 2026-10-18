@@ -33,34 +33,40 @@ const description = ref('');
 
 const stateTransition = useQueueStateTransition(() => props.queue);
 
-const config = computed(() => {
-  switch (props.action) {
-    case 'pause':
-      return {
-        title: 'Pause queue',
-        subtitle: 'Pause message delivery',
-        icon: 'bi-pause-circle',
-        confirmLabel: 'Pause queue',
-        variant: 'warning' as const,
-      };
-    case 'stop':
-      return {
-        title: 'Stop queue',
-        subtitle: 'Disconnect consumers and block production',
-        icon: 'bi-stop-circle',
-        confirmLabel: 'Stop queue',
-        variant: 'danger' as const,
-      };
-    case 'resume':
-      return {
-        title: 'Resume queue',
-        subtitle: 'Restore normal operations',
-        icon: 'bi-play-circle',
-        confirmLabel: 'Resume queue',
-        variant: 'primary' as const,
-      };
+const configs = {
+  pause: {
+    title: 'Pause queue',
+    subtitle: 'Pause message delivery',
+    icon: 'bi-pause-circle',
+    confirmLabel: 'Pause queue',
+    variant: 'warning',
+  },
+  stop: {
+    title: 'Stop queue',
+    subtitle: 'Disconnect consumers and block production',
+    icon: 'bi-stop-circle',
+    confirmLabel: 'Stop queue',
+    variant: 'danger',
+  },
+  resume: {
+    title: 'Resume queue',
+    subtitle: 'Restore normal operations',
+    icon: 'bi-play-circle',
+    confirmLabel: 'Resume queue',
+    variant: 'primary',
+  },
+} as const satisfies Record<
+  QueueStateAction,
+  {
+    title: string;
+    subtitle: string;
+    icon: string;
+    confirmLabel: string;
+    variant: 'primary' | 'danger' | 'warning';
   }
-});
+>;
+
+const config = computed(() => configs[props.action]);
 
 const queueLabel = computed(() =>
   props.queue ? `${props.queue.name}@${props.queue.ns}` : '',
