@@ -8,17 +8,20 @@
   -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import PageShell from '@/components/ui/PageShell.vue';
 import ExchangeCard from '@/components/exchange/ExchangeCard.vue';
+import CreateExchangeModal from '@/components/modals/CreateExchangeModal.vue';
 import { useNamespaceExchanges } from '@/composables/useNamespaceExchanges';
+import type { IExchangeParams } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
 
 const route = useRoute();
 const ns = computed(() => String(route.params.ns ?? ''));
 
 const exchanges = useNamespaceExchanges(ns);
+const showCreate = ref(false);
 
 const isEmpty = computed(
   () =>
@@ -27,7 +30,23 @@ const isEmpty = computed(
     exchanges.exchanges.value.length === 0,
 );
 
+function openCreate() {
+  showCreate.value = true;
+}
+
+function onCreated(_params: IExchangeParams) {
+  showCreate.value = false;
+  exchanges.refetch();
+}
+
 const actions = computed<PageAction[]>(() => [
+  {
+    id: 'create',
+    label: 'Create exchange',
+    icon: 'bi-plus-lg',
+    variant: 'primary',
+    onClick: openCreate,
+  },
   {
     id: 'refresh',
     label: 'Refresh',
@@ -50,7 +69,9 @@ const actions = computed<PageAction[]>(() => [
     :empty="isEmpty"
     empty-icon="bi-diagram-3"
     empty-title="No exchanges"
-    empty-message="Create an exchange by binding a queue."
+    empty-message="Create an exchange to start routing messages."
+    empty-action-label="Create exchange"
+    :on-empty-action="openCreate"
   >
     <div class="exchange-grid">
       <ExchangeCard
@@ -60,6 +81,13 @@ const actions = computed<PageAction[]>(() => [
       />
     </div>
   </PageShell>
+
+  <CreateExchangeModal
+    :is-visible="showCreate"
+    :namespace="ns"
+    @close="showCreate = false"
+    @created="onCreated"
+  />
 </template>
 
 <style scoped>

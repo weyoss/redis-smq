@@ -20,6 +20,7 @@ const props = defineProps<{ queue: IQueueParams }>();
 const consumers = useQueueConsumers(() => props.queue);
 
 const rows = computed(() => consumers.consumers.value);
+const count = computed(() => rows.value.length);
 </script>
 
 <template>
@@ -30,7 +31,17 @@ const rows = computed(() => consumers.consumers.value);
     :heading-level="2"
   >
     <template #actions>
-      <span class="badge bg-secondary">{{ rows.length }}</span>
+      <span
+        class="consumer-count"
+        :class="{ 'consumer-count--empty': count === 0 }"
+        :aria-label="`${count} active ${count === 1 ? 'consumer' : 'consumers'}`"
+      >
+        <i class="bi bi-people-fill" aria-hidden="true" />
+        <span class="consumer-count__num">{{ count }}</span>
+        <span class="consumer-count__label">
+          {{ count === 1 ? 'consumer' : 'consumers' }}
+        </span>
+      </span>
       <button
         type="button"
         class="btn btn-refresh btn-icon"
@@ -66,17 +77,24 @@ const rows = computed(() => consumers.consumers.value);
             {{ c.id }}
           </div>
           <div class="consumer-list__meta">
-            <span><i class="bi bi-hdd-network me-1" />{{ c.hostname }}</span>
-            <span><i class="bi bi-cpu me-1" />PID {{ c.pid }}</span>
+            <span>
+              <i class="bi bi-hdd-network me-1" aria-hidden="true" />
+              {{ c.hostname }}
+            </span>
+            <span>
+              <i class="bi bi-cpu me-1" aria-hidden="true" />
+              PID {{ c.pid }}
+            </span>
             <span :title="formatDate(c.createdAt)">
-              <i class="bi bi-clock me-1" />{{ formatSince(c.createdAt) }}
+              <i class="bi bi-clock me-1" aria-hidden="true" />
+              {{ formatSince(c.createdAt) }}
             </span>
           </div>
         </div>
         <div class="consumer-list__ips">
-          <span v-for="ip in c.ipAddress" :key="ip" class="ip-badge">{{
-            ip
-          }}</span>
+          <span v-for="ip in c.ipAddress" :key="ip" class="ip-badge">
+            {{ ip }}
+          </span>
         </div>
       </li>
     </ul>
@@ -84,6 +102,48 @@ const rows = computed(() => consumers.consumers.value);
 </template>
 
 <style scoped>
+/* Align the count chip and the icon button on the same baseline */
+:deep(.ui-card__actions) {
+  align-items: center;
+}
+
+/* Count chip */
+.consumer-count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rsmq-space-1);
+  padding: var(--rsmq-space-1) var(--rsmq-space-3);
+  border-radius: 999px;
+  background: var(--rsmq-color-primary-tint);
+  color: var(--rsmq-color-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background var(--rsmq-transition),
+    color var(--rsmq-transition);
+}
+
+.consumer-count .bi {
+  font-size: 0.85rem;
+}
+
+.consumer-count__num {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.consumer-count__label {
+  font-weight: 500;
+}
+
+.consumer-count--empty {
+  background: var(--rsmq-color-bg);
+  color: var(--rsmq-color-text-muted);
+}
+
+/* Consumer list */
 .consumer-list {
   list-style: none;
   margin: 0;
@@ -92,6 +152,7 @@ const rows = computed(() => consumers.consumers.value);
   flex-direction: column;
   gap: var(--rsmq-space-2);
 }
+
 .consumer-list__row {
   display: flex;
   justify-content: space-between;
@@ -102,10 +163,12 @@ const rows = computed(() => consumers.consumers.value);
   border-radius: var(--rsmq-radius-md);
   flex-wrap: wrap;
 }
+
 .consumer-list__main {
   min-width: 0;
   flex: 1;
 }
+
 .consumer-list__id {
   font-weight: 600;
   font-size: 0.85rem;
@@ -113,6 +176,7 @@ const rows = computed(() => consumers.consumers.value);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .consumer-list__meta {
   display: flex;
   gap: var(--rsmq-space-4);
@@ -121,11 +185,13 @@ const rows = computed(() => consumers.consumers.value);
   margin-top: var(--rsmq-space-1);
   flex-wrap: wrap;
 }
+
 .consumer-list__ips {
   display: flex;
   gap: var(--rsmq-space-1);
   flex-wrap: wrap;
 }
+
 .ip-badge {
   font-size: 0.7rem;
   padding: 0.15rem 0.5rem;
@@ -134,5 +200,11 @@ const rows = computed(() => consumers.consumers.value);
   border-radius: var(--rsmq-radius-sm);
   font-family: var(--rsmq-font-mono);
   color: var(--rsmq-color-text-muted);
+}
+
+@media (max-width: 576px) {
+  .consumer-list__row {
+    flex-direction: column;
+  }
 }
 </style>

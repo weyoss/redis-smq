@@ -99,11 +99,10 @@ const canDelete = computed(
   () => !!exchange.data.value && bindings.totalQueues.value === 0,
 );
 
-const exchangeForModal = computed(() =>
-  exchange.data.value
-    ? { name: exchange.data.value.name, type: exchange.data.value.type }
-    : null,
-);
+const exchangeForModal = computed(() => ({
+  name: exchange.data.value?.name ?? '',
+  type: exchange.data.value?.type ?? EExchangeType.DIRECT,
+}));
 
 const actions = computed<PageAction[]>(() => [
   {

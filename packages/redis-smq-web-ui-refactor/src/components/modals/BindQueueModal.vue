@@ -16,18 +16,12 @@ import { EExchangeType, ExchangeTypeLabel } from '@/types/exchanges';
 
 const props = defineProps<{
   isVisible: boolean;
-  namespace?: string;
-  exchange: { name: string; type: EExchangeType } | null;
+  namespace: string;
+  exchange: { name: string; type: EExchangeType };
 }>();
 
 const emit = defineEmits<{ close: []; success: [] }>();
 
-const isCreate = computed(() => props.exchange === null);
-const askNamespace = computed(() => !props.namespace);
-
-const namespaceInput = ref('');
-const exchangeName = ref('');
-const exchangeType = ref<EExchangeType>(EExchangeType.DIRECT);
 const queueName = ref('');
 const routingKey = ref('');
 const routingPattern = ref('');
@@ -36,19 +30,16 @@ const errorMsg = ref<string | null>(null);
 const mutation = useBindQueue();
 
 const needsRoutingKey = computed(
-  () => exchangeType.value === EExchangeType.DIRECT,
+  () => props.exchange.type === EExchangeType.DIRECT,
 );
 const needsRoutingPattern = computed(
-  () => exchangeType.value === EExchangeType.TOPIC,
+  () => props.exchange.type === EExchangeType.TOPIC,
 );
 
 watch(
   () => props.isVisible,
   (v) => {
     if (!v) return;
-    namespaceInput.value = 'default';
-    exchangeName.value = props.exchange?.name ?? '';
-    exchangeType.value = props.exchange?.type ?? EExchangeType.DIRECT;
     queueName.value = '';
     routingKey.value = '';
     routingPattern.value = '';
@@ -59,9 +50,6 @@ watch(
 );
 
 const canSubmit = computed(() => {
-  const ns = props.namespace ?? namespaceInput.value.trim();
-  if (!ns) return false;
-  if (!exchangeName.value.trim()) return false;
   if (!queueName.value.trim()) return false;
   if (needsRoutingKey.value && !routingKey.value.trim()) return false;
   if (needsRoutingPattern.value && !routingPattern.value.trim()) return false;
@@ -70,16 +58,16 @@ const canSubmit = computed(() => {
 
 async function onSubmit() {
   errorMsg.value = null;
-  const ns = props.namespace ?? namespaceInput.value.trim();
   const params: Record<string, string> = {};
   if (needsRoutingKey.value) params.routingKey = routingKey.value.trim();
-  if (needsRoutingPattern.value)
+  if (needsRoutingPattern.value) {
     params.routingPattern = routingPattern.value.trim();
+  }
 
   try {
     await mutation.mutateAsync({
-      ns,
-      exchange: exchangeName.value.trim(),
+      ns: props.namespace,
+      exchange: props.exchange.name,
       queue: queueName.value.trim(),
       params,
     });
@@ -88,66 +76,19 @@ async function onSubmit() {
     errorMsg.value = getErrorMessage(e);
   }
 }
-
-const TYPES: EExchangeType[] = [
-  EExchangeType.DIRECT,
-  EExchangeType.FANOUT,
-  EExchangeType.TOPIC,
-];
 </script>
 
 <template>
   <BaseModal
     :is-visible="isVisible"
-    :title="isCreate ? 'Create exchange' : 'Bind queue'"
-    :subtitle="
-      isCreate
-        ? 'Exchanges are created when you bind the first queue'
-        : `Bind a queue to ${exchangeName}`
-    "
+    :title="`Bind queue to ${ExchangeTypeLabel[exchange.type]} exchange`"
+    :subtitle="`${exchange.name} • ${namespace}`"
     icon="bi-link-45deg"
     size="md"
     @close="emit('close')"
   >
     <template #body>
       <form @submit.prevent="onSubmit">
-        <div v-if="askNamespace" class="field">
-          <label for="bind-ns" class="form-label">Namespace</label>
-          <input
-            id="bind-ns"
-            v-model="namespaceInput"
-            type="text"
-            class="form-control"
-            required
-          />
-        </div>
-
-        <div v-if="isCreate" class="field">
-          <label for="bind-exchange-name" class="form-label"
-            >Exchange name</label
-          >
-          <input
-            id="bind-exchange-name"
-            v-model="exchangeName"
-            type="text"
-            class="form-control"
-            required
-          />
-        </div>
-
-        <div v-if="isCreate" class="field">
-          <label for="bind-exchange-type" class="form-label">Type</label>
-          <select
-            id="bind-exchange-type"
-            v-model.number="exchangeType"
-            class="form-select"
-          >
-            <option v-for="t in TYPES" :key="t" :value="t">
-              {{ ExchangeTypeLabel[t] }}
-            </option>
-          </select>
-        </div>
-
         <div class="field">
           <label for="bind-queue-name" class="form-label">Queue name</label>
           <input
@@ -155,7 +96,9 @@ const TYPES: EExchangeType[] = [
             v-model="queueName"
             type="text"
             class="form-control"
+            placeholder="e.g. user-notifications"
             required
+            :disabled="mutation.isPending.value"
           />
         </div>
 
@@ -167,20 +110,27 @@ const TYPES: EExchangeType[] = [
             type="text"
             class="form-control"
             placeholder="e.g. user.created"
+            :disabled="mutation.isPending.value"
           />
+          <p class="hint">Messages with this exact key route to this queue.</p>
         </div>
 
         <div v-if="needsRoutingPattern" class="field">
-          <label for="bind-routing-pattern" class="form-label"
-            >Routing pattern</label
-          >
+          <label for="bind-routing-pattern" class="form-label">
+            Routing pattern
+          </label>
           <input
             id="bind-routing-pattern"
             v-model="routingPattern"
             type="text"
             class="form-control"
             placeholder="e.g. user.* or orders.#"
+            :disabled="mutation.isPending.value"
           />
+          <p class="hint">
+            <code>*</code> matches one word, <code>#</code> matches zero or
+            more.
+          </p>
         </div>
 
         <div v-if="errorMsg" class="alert alert-danger mb-0 mt-3" role="alert">
@@ -208,7 +158,7 @@ const TYPES: EExchangeType[] = [
           class="spinner-border spinner-border-sm me-1"
           aria-hidden="true"
         />
-        {{ isCreate ? 'Create exchange' : 'Bind queue' }}
+        Bind queue
       </button>
     </template>
   </BaseModal>
@@ -219,6 +169,16 @@ const TYPES: EExchangeType[] = [
   margin-bottom: var(--rsmq-space-3);
 }
 .field:last-of-type {
-  margin-bottom: 0;
+  margin-bottom: var(--rsmq-space-4);
+}
+.hint {
+  margin: var(--rsmq-space-1) 0 0;
+  font-size: 0.75rem;
+  color: var(--rsmq-color-text-muted);
+}
+.hint code {
+  background: var(--rsmq-color-bg);
+  padding: 0 4px;
+  border-radius: 3px;
 }
 </style>

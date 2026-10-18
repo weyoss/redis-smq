@@ -11,10 +11,13 @@
 import { computed, ref } from 'vue';
 import PageShell from '@/components/ui/PageShell.vue';
 import ExchangeCard from '@/components/exchange/ExchangeCard.vue';
-import BindQueueModal from '@/components/modals/BindQueueModal.vue';
+import CreateExchangeModal from '@/components/modals/CreateExchangeModal.vue';
 import { useExchanges } from '@/composables/useExchanges';
+import { useTypedRouter } from '@/router/typed';
+import type { IExchangeParams } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
 
+const router = useTypedRouter();
 const exchanges = useExchanges();
 const showCreate = ref(false);
 
@@ -25,13 +28,23 @@ const isEmpty = computed(
     exchanges.exchanges.value.length === 0,
 );
 
+function openCreate() {
+  showCreate.value = true;
+}
+
+function onCreated(params: IExchangeParams) {
+  showCreate.value = false;
+  exchanges.refetch();
+  router.go('exchangeDetails', { ns: params.ns, exchange: params.name });
+}
+
 const actions = computed<PageAction[]>(() => [
   {
     id: 'create',
     label: 'Create exchange',
     icon: 'bi-plus-lg',
     variant: 'primary',
-    onClick: () => (showCreate.value = true),
+    onClick: openCreate,
   },
   {
     id: 'refresh',
@@ -42,15 +55,6 @@ const actions = computed<PageAction[]>(() => [
     onClick: () => exchanges.refetch(),
   },
 ]);
-
-function onCreated() {
-  showCreate.value = false;
-  exchanges.refetch();
-}
-
-function openCreate() {
-  showCreate.value = true;
-}
 </script>
 
 <template>
@@ -77,11 +81,10 @@ function openCreate() {
     </div>
   </PageShell>
 
-  <BindQueueModal
+  <CreateExchangeModal
     :is-visible="showCreate"
-    :exchange="null"
     @close="showCreate = false"
-    @success="onCreated"
+    @created="onCreated"
   />
 </template>
 

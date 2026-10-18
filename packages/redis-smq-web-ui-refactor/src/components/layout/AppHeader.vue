@@ -9,6 +9,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
+import redisSMQLogo from '@/assets/images/redis-smq-logo.png';
 
 const navItems = [
   { name: 'home', label: 'Home', icon: 'bi-house-door' },
@@ -23,9 +24,12 @@ const route = useRoute();
 <template>
   <header class="app-header">
     <div class="rsmq-container app-header__inner">
-      <RouterLink :to="{ name: 'home' }" class="app-header__brand">
-        <span class="app-header__logo" aria-hidden="true">◆</span>
-        <span>RedisSMQ</span>
+      <RouterLink
+        :to="{ name: 'home' }"
+        class="app-header__brand"
+        aria-label="RedisSMQ home"
+      >
+        <img :src="redisSMQLogo" alt="RedisSMQ" class="app-header__logo" />
       </RouterLink>
       <nav class="app-header__nav" aria-label="Main navigation">
         <RouterLink
@@ -45,9 +49,10 @@ const route = useRoute();
             'app-header__link--active': route.name === 'configuration',
           }"
           title="Configuration"
+          aria-label="Configuration"
         >
           <i class="bi bi-gear" aria-hidden="true" />
-          <span class="d-none d-md-inline">Configuration</span>
+          <span>Configuration</span>
         </RouterLink>
       </nav>
     </div>
@@ -68,21 +73,19 @@ const route = useRoute();
   align-items: center;
   justify-content: space-between;
   gap: var(--rsmq-space-5);
-  padding-block: var(--rsmq-space-3);
+  padding-block: var(--rsmq-space-5);
   flex-wrap: wrap;
 }
 .app-header__brand {
   display: flex;
   align-items: center;
-  gap: var(--rsmq-space-2);
-  color: white;
-  font-weight: 700;
-  font-size: 1.125rem;
   text-decoration: none;
+  flex-shrink: 0;
 }
 .app-header__logo {
-  font-size: 1.5rem;
-  line-height: 1;
+  width: 160px;
+  height: auto;
+  display: block;
 }
 .app-header__nav {
   display: flex;
@@ -109,10 +112,19 @@ const route = useRoute();
   background: rgb(255 255 255 / 20%);
   color: white;
 }
+.app-header__link--settings {
+  margin-left: auto;
+}
 @media (max-width: 576px) {
   .app-header__inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .app-header__link--settings {
+    margin-left: 0;
+  }
+  .app-header__logo {
+    width: 120px;
   }
 }
 </style>

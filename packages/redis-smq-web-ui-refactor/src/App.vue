@@ -7,29 +7,6 @@
   - in the root directory of this source tree.
   -->
 
-<script setup lang="ts">
-import AppHeader from '@/components/layout/AppHeader.vue';
-import AppFooter from '@/components/layout/AppFooter.vue';
-</script>
-
 <template>
-  <div class="app">
-    <AppHeader />
-    <main class="app__main">
-      <RouterView />
-    </main>
-    <AppFooter />
-  </div>
+  <RouterView />
 </template>
-
-<style scoped>
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--rsmq-color-bg);
-}
-.app__main {
-  flex: 1;
-}
-</style>

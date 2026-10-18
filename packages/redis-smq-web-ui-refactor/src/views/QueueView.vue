@@ -15,10 +15,11 @@ import StatCard from '@/components/ui/StatCard.vue';
 import StatGrid from '@/components/ui/StatGrid.vue';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import ChangeStateModal from '@/components/modals/ChangeStateModal.vue';
+import RateLimitCard from '@/components/queue/RateLimitCard.vue';
 import ConsumerGroupsCard from '@/components/queue/ConsumerGroupsCard.vue';
 import QueueConsumersCard from '@/components/queue/QueueConsumersCard.vue';
 import OperationalStateHistoryCard from '@/components/queue/OperationalStateHistoryCard.vue';
-import RateLimitCard from '@/components/queue/RateLimitCard.vue';
+import OperationalStateBanner from '@/components/queue/OperationalStateBanner.vue';
 import { useQueueSelection } from '@/composables/useQueueSelection';
 import { useQueueProperties } from '@/composables/useQueueProperties';
 import { useQueueStats } from '@/composables/useQueueStats';
@@ -34,12 +35,15 @@ import {
 import type { PageAction } from '@/components/ui/PageShell.vue';
 import type { QueueStateAction } from '@/composables/useQueueStateTransition';
 
+// --- Route params ---
 const router = useTypedRouter();
 const { ns, name, params } = useQueueSelection();
 
+// --- Data ---
 const properties = useQueueProperties(params);
 const stats = useQueueStats(params);
 
+// --- Change-state modal ---
 const showStateModal = ref(false);
 const stateAction = ref<QueueStateAction>('pause');
 
@@ -54,6 +58,7 @@ function onStateSuccess() {
   stats.refetch();
 }
 
+// --- Delete modal ---
 const showDeleteModal = ref(false);
 const deleteError = ref<string | null>(null);
 
@@ -77,7 +82,9 @@ async function onConfirmDelete() {
   }
 }
 
+// --- Derived state ---
 const operational = computed(() => properties.data.value?.operationalState);
+
 const isActive = computed(
   () => operational.value === EQueueOperationalState.ACTIVE,
 );
@@ -85,6 +92,12 @@ const isPausedOrStopped = computed(
   () =>
     operational.value === EQueueOperationalState.PAUSED ||
     operational.value === EQueueOperationalState.STOPPED,
+);
+
+const showStateBanner = computed(
+  () =>
+    operational.value !== undefined &&
+    operational.value !== EQueueOperationalState.ACTIVE,
 );
 
 const queueLabel = computed(() =>
@@ -115,6 +128,7 @@ const operationalLabel = computed(() => {
   return '—';
 });
 
+// --- Stat tiles ---
 const statCards = computed(() => [
   {
     id: 'pending',
@@ -150,6 +164,7 @@ const statCards = computed(() => [
   },
 ]);
 
+// --- Page actions (conditional on operational state) ---
 const actions = computed<PageAction[]>(() => {
   const list: PageAction[] = [
     {
@@ -233,10 +248,21 @@ const actions = computed<PageAction[]>(() => {
     :error="properties.error.value"
   >
     <template v-if="properties.data.value && params">
+      <!-- Persistent operational state banner (PAUSED / STOPPED / LOCKED) -->
+      <OperationalStateBanner
+        v-if="showStateBanner && operational !== undefined"
+        :key="operational"
+        :queue="params"
+        :state="operational"
+        @resume="openStateModal('resume')"
+      />
+
+      <!-- Message statistics -->
       <StatGrid :loading="stats.isLoading.value" :error="stats.error.value">
         <StatCard v-for="s in statCards" :key="s.id" v-bind="s" />
       </StatGrid>
 
+      <!-- Configuration -->
       <Card title="Configuration" icon="bi-gear" :heading-level="2">
         <dl class="config-grid">
           <div>
@@ -266,13 +292,21 @@ const actions = computed<PageAction[]>(() => {
         </dl>
       </Card>
 
+      <!-- Rate limiting (owns set/clear) -->
       <RateLimitCard :queue="params" />
+
+      <!-- Consumer groups (pub/sub only) -->
       <ConsumerGroupsCard :queue="params" />
+
+      <!-- Active consumers (15s auto-refetch) -->
       <QueueConsumersCard :queue="params" />
+
+      <!-- Operational state history -->
       <OperationalStateHistoryCard :queue="params" />
     </template>
   </PageShell>
 
+  <!-- Change-state modal (pause / stop / resume) -->
   <ChangeStateModal
     :is-visible="showStateModal"
     :queue="params"
@@ -281,6 +315,7 @@ const actions = computed<PageAction[]>(() => {
     @success="onStateSuccess"
   />
 
+  <!-- Delete queue confirmation -->
   <ConfirmationModal
     :is-visible="showDeleteModal"
     title="Delete queue"

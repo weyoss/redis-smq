@@ -33,3 +33,18 @@ export const ExchangeTypeIcon: Record<EExchangeType, string> = {
   [EExchangeType.FANOUT]: 'bi-broadcast',
   [EExchangeType.TOPIC]: 'bi-hash',
 };
+
+export enum EExchangeQueuePolicy {
+  STANDARD = 0,
+  PRIORITY = 1,
+}
+
+export const ExchangeQueuePolicyLabel: Record<EExchangeQueuePolicy, string> = {
+  [EExchangeQueuePolicy.STANDARD]: 'Standard queues',
+  [EExchangeQueuePolicy.PRIORITY]: 'Priority queues',
+};
+
+export const ExchangeQueuePolicyHint: Record<EExchangeQueuePolicy, string> = {
+  [EExchangeQueuePolicy.STANDARD]: 'FIFO and LIFO queues',
+  [EExchangeQueuePolicy.PRIORITY]: 'Priority-ordered queues only',
+};

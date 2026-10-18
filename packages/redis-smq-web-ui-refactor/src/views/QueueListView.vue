@@ -8,14 +8,20 @@
   -->
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import PageShell from '@/components/ui/PageShell.vue';
 import Card from '@/components/ui/Card.vue';
 import QueueListItem from '@/components/queue/QueueListItem.vue';
+import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
 import { useListQueues } from '@/composables/useListQueues';
+import { useTypedRouter } from '@/router/typed';
+import type { IQueueParams } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
 
+const router = useTypedRouter();
 const queues = useListQueues();
+
+const showCreate = ref(false);
 
 const isEmpty = computed(
   () =>
@@ -24,7 +30,24 @@ const isEmpty = computed(
     queues.sortedQueues.value.length === 0,
 );
 
+function openCreate() {
+  showCreate.value = true;
+}
+
+function onCreated(params: IQueueParams) {
+  showCreate.value = false;
+  queues.refetch();
+  router.go('queue', { ns: params.ns, queue: params.name });
+}
+
 const actions = computed<PageAction[]>(() => [
+  {
+    id: 'create',
+    label: 'Create queue',
+    icon: 'bi-plus-lg',
+    variant: 'primary',
+    onClick: openCreate,
+  },
   {
     id: 'refresh',
     label: 'Refresh',
@@ -47,7 +70,9 @@ const actions = computed<PageAction[]>(() => [
     :empty="isEmpty"
     empty-icon="bi-inbox"
     empty-title="No queues"
-    empty-message="No queues have been created yet."
+    empty-message="Create your first queue to start producing and consuming messages."
+    empty-action-label="Create queue"
+    :on-empty-action="openCreate"
   >
     <Card
       :title="`${queues.sortedQueues.value.length} queue${queues.sortedQueues.value.length === 1 ? '' : 's'}`"
@@ -58,7 +83,14 @@ const actions = computed<PageAction[]>(() => [
         v-for="q in queues.sortedQueues.value"
         :key="`${q.ns}-${q.name}`"
         :queue="q"
+        @deleted="queues.refetch()"
       />
     </Card>
   </PageShell>
+
+  <CreateQueueModal
+    :is-visible="showCreate"
+    @close="showCreate = false"
+    @created="onCreated"
+  />
 </template>
