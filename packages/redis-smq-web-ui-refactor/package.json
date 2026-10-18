@@ -7,11 +7,14 @@
     "dev": "vite",
     "build": "vue-tsc --build && vite build",
     "preview": "vite preview",
+    "generate-api": "orval",
     "test:unit": "vitest",
     "test:unit:run": "vitest run",
     "typecheck": "vue-tsc --build --force"
   },
   "dependencies": {
+    "@tanstack/vue-query": "5.104.0",
+    "axios": "1.20.0",
     "bootstrap": "5.3.8",
     "bootstrap-icons": "1.13.1",
     "vue": "3.5.43",
@@ -23,6 +26,8 @@
     "@vue/test-utils": "2.5.1",
     "@vue/tsconfig": "0.9.1",
     "happy-dom": "21.0.3",
+    "orval": "8.9.1",
+    "redis-smq-rest-api": "workspace:^",
     "vite": "8.3.1",
     "vitest": "^3.2.0",
     "vue-tsc": "3.3.11"
