@@ -10,13 +10,19 @@
 export type RouteName =
   | 'home'
   | 'namespaces'
+  | 'namespaceQueues'
+  | 'namespaceExchanges'
   | 'queues'
-  | 'exchanges'
   | 'queue'
   | 'messages'
+  | 'exchanges'
+  | 'exchangeDetails'
   | 'notFound';
 
 export interface RouteParams {
   queue: { ns: string; queue: string };
   messages: { ns: string; queue: string };
+  namespaceQueues: { ns: string };
+  namespaceExchanges: { ns: string };
+  exchangeDetails: { ns: string; exchange: string };
 }
