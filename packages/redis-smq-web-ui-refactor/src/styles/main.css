@@ -1,0 +1,80 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+@import './tokens.css';
+@import 'bootstrap/dist/css/bootstrap.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--rsmq-color-bg);
+  color: var(--rsmq-color-text);
+  font-family: var(--bs-body-font-family);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* The only place max-width is declared for the app shell. */
+.rsmq-container {
+  max-width: var(--rsmq-max-content);
+  margin-inline: auto;
+  padding-inline: var(--rsmq-space-5);
+}
+
+@media (max-width: 768px) {
+  .rsmq-container {
+    padding-inline: var(--rsmq-space-4);
+  }
+}
+
+.btn-refresh {
+  --bs-btn-color: var(--rsmq-color-text-muted);
+  --bs-btn-bg: var(--rsmq-color-surface);
+  --bs-btn-border-color: var(--rsmq-color-border);
+  --bs-btn-hover-color: var(--rsmq-color-primary);
+  --bs-btn-hover-bg: var(--rsmq-color-surface);
+  --bs-btn-hover-border-color: var(--rsmq-color-primary);
+}
+
+.btn-icon {
+  padding: var(--rsmq-space-2);
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spin {
+  animation: rsmq-spin 1s linear infinite;
+}
+@keyframes rsmq-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.font-mono {
+  font-family: var(--rsmq-font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,78 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+:root {
+  --rsmq-color-primary: #667eea;
+  --rsmq-color-primary-hover: #5a6fd8;
+  --rsmq-color-primary-tint: #eef1fd;
+  --rsmq-color-success: #198754;
+  --rsmq-color-warning: #d97706;
+  --rsmq-color-danger: #dc3545;
+  --rsmq-color-info: #0d6efd;
+  --rsmq-color-bg: #f8f9fa;
+  --rsmq-color-surface: #ffffff;
+  --rsmq-color-border: #e9ecef;
+  --rsmq-color-border-strong: #dee2e6;
+  --rsmq-color-text: #1a1a1a;
+  --rsmq-color-text-muted: #6c757d;
+  --rsmq-color-text-subtle: #9ca3af;
+
+  --rsmq-space-1: 4px;
+  --rsmq-space-2: 8px;
+  --rsmq-space-3: 12px;
+  --rsmq-space-4: 16px;
+  --rsmq-space-5: 24px;
+  --rsmq-space-6: 32px;
+  --rsmq-space-7: 48px;
+
+  --rsmq-radius-sm: 6px;
+  --rsmq-radius-md: 10px;
+  --rsmq-radius-lg: 16px;
+
+  --rsmq-shadow-sm: 0 2px 4px rgb(0 0 0 / 5%);
+  --rsmq-shadow-md: 0 4px 12px rgb(0 0 0 / 8%);
+  --rsmq-shadow-lg: 0 8px 24px rgb(0 0 0 / 10%);
+
+  --rsmq-max-content: 1400px;
+  --rsmq-transition: 150ms ease;
+  --rsmq-font-mono:
+    'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+
+  --bs-primary: var(--rsmq-color-primary);
+  --bs-primary-rgb: 102 126 234;
+  --bs-body-bg: var(--rsmq-color-bg);
+  --bs-body-color: var(--rsmq-color-text);
+  --bs-border-color: var(--rsmq-color-border);
+  --bs-border-radius: var(--rsmq-radius-md);
+  --bs-border-radius-sm: var(--rsmq-radius-sm);
+  --bs-border-radius-lg: var(--rsmq-radius-lg);
+  --bs-link-color: var(--rsmq-color-primary);
+  --bs-link-hover-color: var(--rsmq-color-primary-hover);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --rsmq-color-primary: #8f9df0;
+    --rsmq-color-primary-hover: #7a89e8;
+    --rsmq-color-primary-tint: #2a2f52;
+    --rsmq-color-success: #34d399;
+    --rsmq-color-warning: #fbbf24;
+    --rsmq-color-danger: #f87171;
+    --rsmq-color-info: #60a5fa;
+    --rsmq-color-bg: #1a1a1a;
+    --rsmq-color-surface: #2d2d2d;
+    --rsmq-color-border: #404040;
+    --rsmq-color-border-strong: #525252;
+    --rsmq-color-text: #e5e7eb;
+    --rsmq-color-text-muted: #9ca3af;
+    --rsmq-color-text-subtle: #6b7280;
+
+    --bs-primary-rgb: 143 157 240;
+  }
+}

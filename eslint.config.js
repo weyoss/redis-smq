@@ -67,7 +67,10 @@ export default tseslint.config(
   // Vue files configuration
   ...vue.configs['flat/recommended'],
   {
-    files: ['packages/redis-smq-web-ui/**/*.vue'],
+    files: [
+      'packages/redis-smq-web-ui/**/*.vue',
+      'packages/redis-smq-web-ui-refactor/**/*.vue',
+    ],
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,
@@ -85,7 +88,10 @@ export default tseslint.config(
 
   // JavaScript and TypeScript files in redis-smq-web-ui directory
   ...tseslint.config({
-    files: ['packages/redis-smq-web-ui/**/*.{js,ts}'],
+    files: [
+      'packages/redis-smq-web-ui/**/*.{js,ts}',
+      'packages/redis-smq-web-ui-refactor/**/*.{js,ts}',
+    ],
     extends: [eslint.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       parser: tseslint.parser,

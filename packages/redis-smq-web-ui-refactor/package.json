@@ -1,0 +1,30 @@
+{
+  "name": "redis-smq-web-ui-refactor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --build && vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest",
+    "test:unit:run": "vitest run",
+    "typecheck": "vue-tsc --build --force"
+  },
+  "dependencies": {
+    "bootstrap": "5.3.8",
+    "bootstrap-icons": "1.13.1",
+    "vue": "3.5.43",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "20.1.10",
+    "@vitejs/plugin-vue": "6.0.9",
+    "@vue/test-utils": "2.5.1",
+    "@vue/tsconfig": "0.9.1",
+    "happy-dom": "21.0.3",
+    "vite": "8.3.1",
+    "vitest": "^3.2.0",
+    "vue-tsc": "3.3.11"
+  }
+}
