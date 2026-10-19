@@ -12,9 +12,6 @@ import type { OpenAPIV3_1 } from '@scalar/openapi-types';
 import type { RouteDefinition } from '../http/index.js';
 
 export interface BuildDocumentOptions {
-  /** Value of `servers[0].url`. Typically the server's `apiServer.basePath`. */
-  basePath: string;
-
   /** Value of `info.version`. Read from `package.json` by the caller. */
   version: string;
 
@@ -36,10 +33,42 @@ const DEFAULT_TITLE = 'RedisSMQ HTTP API';
 const DEFAULT_DESCRIPTION = 'HTTP adapter for RedisSMQ';
 
 /**
- * Human-readable descriptions for the HTTP statuses our routes declare.
- * Anything not in this map falls back to `'Response'`, which is valid
- * but less useful in Swagger UI.
+ * The fixed server URL declared in the generated document.
+ *
+ * `'/'` means: the operation paths in the spec (`/api/queues`,
+ * `/api/config`, …) are absolute from the origin root. A client that
+ * generates from the spec composes `{its-base-url}/api/…`, and where
+ * the server is actually deployed — root or a sub-path — is the
+ * client's base-URL concern.
+ *
+ * The `basePath` option controls where the server *mounts* its routes
+ * and the Swagger UI — an internal routing concern. It is not part of
+ * the API's contract, and baking it into `servers[0].url` would make
+ * the spec describe one specific deployment rather than the API.
+ *
+ * Concretely, a server running with `apiServer.basePath: '/tenant/foo'`:
+ *
+ *   - Serves its spec at `/tenant/foo/swagger/assets/openapi-specs.json`
+ *   - Serves endpoints at `/tenant/foo/api/…`
+ *   - **Declares `servers[0].url: '/'` in the spec**
+ *
+ * A client that generates from the spec uses `{its-configured-base}/api/…`.
+ * If the client is deployed behind the same proxy as the server, it
+ * configures its base URL to the same external prefix — `/tenant/foo` —
+ * and the composed URL works. If the client is on the same host, the
+ * base is `/`. Either way, the composition is correct because the API
+ * paths are stable and the deployment prefix is client-configured.
+ *
+ * A spec that declared `servers[0].url: '/tenant/foo'` would only be
+ * correct for clients deployed at exactly that prefix on exactly that
+ * host. It would silently break for clients reaching the API through a
+ * different proxy path, a CDN, or the server's own localhost.
+ *
+ * The rule: the spec describes the API. Deployment paths are the
+ * client's problem, handled by the client's base-URL configuration.
  */
+const SERVER_URL = '/';
+
 const STATUS_DESCRIPTIONS: Record<number, string> = {
   200: 'OK',
   201: 'Created',
@@ -61,7 +90,7 @@ const STATUS_DESCRIPTIONS: Record<number, string> = {
  * Pure function: given the same `routes` and options, it produces the
  * same document. No filesystem access, no Redis, no environment reads,
  * no module-level state. It can therefore run at build time (from
- * `scripts/gen-openapi.ts`) without booting the server, and it can be
+ * `scripts/gen-openapi.js`) without booting the server, and it can be
  * unit-tested with hand-written route arrays.
  *
  * The contract is bidirectional:
@@ -78,6 +107,13 @@ const STATUS_DESCRIPTIONS: Record<number, string> = {
  *   OpenAPI requires unique operation IDs; failing here — at build
  *   time, before any spec is written — is preferable to shipping an
  *   invalid document.
+ *
+ * @throws {Error} when a `$ref` in the produced document points at a
+ *   component that was not emitted. The `assertNoDanglingRefs` guard
+ *   at the end of this function catches the class of bugs that came
+ *   from `sanitize` producing different names for the definition key
+ *   and the `$ref` value, or from excluding a definition that some
+ *   path still referenced.
  */
 export function buildDocument(
   routes: RouteDefinition[],
@@ -101,24 +137,29 @@ export function buildDocument(
     paths[openApiPath] = pathItem;
   }
 
-  return {
+  const document: OpenAPIV3_1.Document = {
     openapi: '3.1.0',
     info: {
       title: opts.title ?? DEFAULT_TITLE,
       version: opts.version,
       description: opts.description ?? DEFAULT_DESCRIPTION,
     },
-    servers: [{ url: opts.basePath, description: 'API server' }],
+    servers: [{ url: SERVER_URL, description: 'API server' }],
     components: {
       schemas: convertDefinitions(opts.definitions),
     },
     paths,
   };
+
+  // Guard against the class of bugs that produce a spec with dangling
+  // `$ref`s. See `assertNoDanglingRefs` for the specific cases.
+  assertNoDanglingRefs(document);
+
+  return document;
 }
 
 /**
- * `:param` (Express-style, used by `@koa/router`) →
- * `{param}`  (OpenAPI-style).
+ * `:param` (Express-style, used by `@koa/router`) → `{param}` (OpenAPI-style).
  */
 function convertPath(path: string): string {
   return path
@@ -246,6 +287,42 @@ function buildResponses(
 }
 
 /**
+ * Determines whether a definition is a controller DTO that should be
+ * kept out of `components.schemas`.
+ *
+ * Response DTOs are `anyOf` unions of `[status, payload]` tuples. They
+ * are a build-time intermediate: `getResponseSchemas` splits them into
+ * per-status schemas with the envelope applied, and those split
+ * schemas are embedded inline on each path's `responses` object. No
+ * path `$ref`s a response DTO.
+ *
+ * Request DTOs (body, query, path) are similarly inlined: the request
+ * body's schema is embedded directly on the operation, and path/query
+ * DTOs are broken down into individual `parameters`. No path `$ref`s
+ * a request DTO either.
+ *
+ * Emitting these in `components.schemas` produces dead weight and, for
+ * the tuple-union response DTOs, an unusable shape (`unknown[]` in
+ * generators that don't handle tuple unions). Client generation from
+ * the OpenAPI document is cleaner without them: request types come
+ * from the inline `requestBody`, response types from the inline
+ * per-status schema — the shapes that paths actually reference.
+ *
+ * The naming convention is the contract: every DTO is
+ * `*Controller{Request,Response}*DTO`, and no other schema in the
+ * document follows that pattern. `redis-smq` types
+ * (`IQueueParams`, `IExchangeParsedParams`, …) don't, so they stay in
+ * `components.schemas` where paths do reference them.
+ *
+ * If a future change to `buildOperation` starts `$ref`-ing a controller
+ * DTO instead of inlining it, `assertNoDanglingRefs` fails the build
+ * rather than shipping a spec with a broken reference.
+ */
+function isControllerDTO(name: string): boolean {
+  return /Controller(Request|Response).*DTO$/.test(name);
+}
+
+/**
  * Converts the `definitions` map into `components.schemas`, rewriting
  * each schema's internal refs so they point at `#/components/schemas/…`.
  */
@@ -256,6 +333,7 @@ function convertDefinitions(
 
   for (const [name, schema] of Object.entries(definitions)) {
     if (typeof schema === 'boolean') continue;
+    if (isControllerDTO(name)) continue;
     schemas[sanitize(name)] = rewriteSchema(schema);
   }
 
@@ -269,11 +347,12 @@ function convertDefinitions(
  * The only transformation between the runtime schema format produced
  * by `ts-json-schema-generator` and the format OpenAPI expects.
  *
- * Cast to `unknown` at entry so the walker can traverse arbitrary
- * JSON structures (schemas nest via `properties`, `items`, `anyOf`,
- * `oneOf`, `allOf`, `not`, `additionalProperties`, `$defs`, and any
- * future keyword `json-schema` or the OpenAPI spec adds). The return
- * value is cast back to the input type — the walker preserves shape.
+ * The walker traverses arbitrary JSON structures. Schemas nest via
+ * `properties`, `items`, `anyOf`, `oneOf`, `allOf`, `not`,
+ * `additionalProperties`, `$defs`, and any future keyword
+ * `json-schema` or the OpenAPI spec adds. The `unknown` cast at entry
+ * lets the walker handle all of them without a keyword-by-keyword
+ * type.
  */
 function rewriteRefs(node: unknown): unknown {
   if (Array.isArray(node)) {
@@ -311,11 +390,85 @@ function rewriteSchema(schema: JSONSchema7): OpenAPIV3_1.SchemaObject {
 }
 
 /**
- * Component names must match `^[a-zA-Z0-9._-]+$` per OpenAPI 3.1.
- * `ts-json-schema-generator` can emit names with characters that
- * don't qualify (e.g. `Pick<Foo, "bar">` becomes `Pick_Foo,_bar_`),
- * so any character outside the allowed set is replaced with `_`.
+ * Converts a schema name into a valid OpenAPI component identifier.
+ *
+ * `ts-json-schema-generator` stores generic type names in two forms
+ * within the same file:
+ *
+ *   - **Definition keys** use the raw name: `IBrowserPage<Foo>`.
+ *   - **`$ref` values** URL-encode the name per the JSON Pointer spec:
+ *     `#/definitions/IBrowserPage%3CFoo%3E`.
+ *
+ * Both must map to the same component name. Without decoding, the raw
+ * form becomes `IBrowserPage_Foo_` (via the sanitize regex replacing
+ * `<`/`>`) and the encoded form becomes `IBrowserPage_3CFoo_3E` (via
+ * the regex replacing `%`). Those are different keys, and the OpenAPI
+ * document ends up with a reference to a component that was stored
+ * under a different name — `Ref not found` in any validator.
+ *
+ * Decoding first normalizes both forms to `IBrowserPage<Foo>` before
+ * the regex runs, so both produce `IBrowserPage_Foo_`.
+ *
+ * `decodeURIComponent` throws on a malformed percent-encoding — a
+ * stray `%` followed by non-hex characters, or a `%` at end-of-string.
+ * A schema name is generated code, not user input, so this should
+ * never happen; but if `ts-json-schema-generator` ever changes its
+ * encoding strategy in a way that produces a bare `%`, the correct
+ * behavior is to fall back to the un-decoded form (which the sanitize
+ * regex will still make safe) rather than crash the whole document
+ * build.
  */
 function sanitize(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(name);
+  } catch {
+    decoded = name;
+  }
+  return decoded.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+/**
+ * Walks the document, collects every `$ref` into `components.schemas`,
+ * and throws if any points at a component that wasn't emitted.
+ */
+function assertNoDanglingRefs(doc: OpenAPIV3_1.Document): void {
+  const seen = new Set<string>();
+
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (!node || typeof node !== 'object') return;
+
+    const obj = node as Record<string, unknown>;
+    const ref = obj.$ref;
+    if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
+      seen.add(ref.slice('#/components/schemas/'.length));
+    }
+    for (const value of Object.values(obj)) {
+      walk(value);
+    }
+  };
+
+  walk(doc);
+
+  const missing: string[] = [];
+  for (const ref of seen) {
+    if (!doc.components?.schemas?.[ref]) {
+      missing.push(ref);
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `OpenAPI document has ${missing.length} dangling $ref(s):\n` +
+        missing.map((m) => `  - #/components/schemas/${m}`).join('\n') +
+        `\n\nThis usually means a schema was excluded from ` +
+        `components.schemas (see isControllerDTO) that some path ` +
+        `still references, or that sanitize() produced different ` +
+        `names for a definition key and its $ref value.`,
+    );
+  }
 }
