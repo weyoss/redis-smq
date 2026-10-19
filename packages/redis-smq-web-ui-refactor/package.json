@@ -12,6 +12,7 @@
     "generate-api": "orval",
     "test:unit": "vitest",
     "test:unit:run": "vitest run",
+    "test:e2e": "playwright test",
     "typecheck": "vue-tsc --build --force"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "vue-router": "5.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.0",
     "@tsconfig/node20": "20.1.10",
     "@vitejs/plugin-vue": "6.0.9",
     "@vue/test-utils": "2.5.1",
