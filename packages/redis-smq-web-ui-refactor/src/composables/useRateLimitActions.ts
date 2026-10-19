@@ -8,7 +8,7 @@
  */
 
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
-import type { IQueueParams } from '@/api/model';
+import type { IQueueParams, IQueueRateLimit } from '@/api/model';
 import {
   useClearQueueRateLimit,
   useSetQueueRateLimit,
@@ -28,10 +28,7 @@ export function useRateLimitActions(
     mutation: { onSuccess: () => onSuccess?.() },
   });
 
-  async function setRateLimit(data: {
-    limit: number;
-    interval: number;
-  }): Promise<void> {
+  async function setRateLimit(data: IQueueRateLimit): Promise<void> {
     const q = params.value;
     if (!q) throw new Error('Queue is required');
     await setMutation.mutateAsync({

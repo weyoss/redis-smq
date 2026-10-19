@@ -33,7 +33,7 @@ import {
   EQueueType,
 } from '@/types/queues';
 import type { PageAction } from '@/components/ui/PageShell.vue';
-import type { QueueStateAction } from '@/composables/useQueueStateTransition';
+import type { TransitQueueStateBodyState } from '@/api/model';
 
 // --- Route params ---
 const router = useTypedRouter();
@@ -45,9 +45,9 @@ const stats = useQueueStats(params);
 
 // --- Change-state modal ---
 const showStateModal = ref(false);
-const stateAction = ref<QueueStateAction>('pause');
+const stateAction = ref<TransitQueueStateBodyState>('pause');
 
-function openStateModal(action: QueueStateAction) {
+function openStateModal(action: TransitQueueStateBodyState) {
   stateAction.value = action;
   showStateModal.value = true;
 }

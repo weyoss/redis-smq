@@ -17,7 +17,10 @@ export function usePublishMessage() {
 
   async function publish(payload: PublishMessageBody): Promise<string[]> {
     const result = await mutation.mutateAsync({ data: payload });
-    return result?.data ?? [];
+    if (!result?.data) {
+      throw new Error('Publish succeeded but returned no message IDs');
+    }
+    return result.data;
   }
 
   return {

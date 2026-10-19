@@ -13,6 +13,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import { useUnbindQueue } from '@/api/generated/namespace-exchanges/namespace-exchanges';
 import { getErrorMessage } from '@/lib/error';
 import { EExchangeType } from '@/types/exchanges';
+import type { BindQueueParams } from '@/api/model';
 
 const props = defineProps<{
   isVisible: boolean;
@@ -48,7 +49,7 @@ async function onSubmit() {
   if (!props.exchange) return;
   errorMsg.value = null;
 
-  const params: Record<string, string> = {};
+  const params: BindQueueParams = {};
   if (props.exchange.type === EExchangeType.DIRECT && props.bindingKey) {
     params.routingKey = props.bindingKey;
   } else if (props.exchange.type === EExchangeType.TOPIC && props.bindingKey) {

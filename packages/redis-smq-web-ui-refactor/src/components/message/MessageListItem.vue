@@ -22,7 +22,7 @@ const emit = defineEmits<{
   requeue: [id: string];
 }>();
 
-const STATUS_LABELS: Record<number, string> = {
+const STATUS_LABELS: Record<EMessagePropertyStatus, string> = {
   [EMessagePropertyStatus.NEW]: 'New',
   [EMessagePropertyStatus.PENDING]: 'Pending',
   [EMessagePropertyStatus.PROCESSING]: 'Processing',
@@ -33,7 +33,7 @@ const STATUS_LABELS: Record<number, string> = {
   [EMessagePropertyStatus.DEAD_LETTERED]: 'Dead-lettered',
 };
 
-const STATUS_TINT: Record<number, string> = {
+const STATUS_TINT: Record<EMessagePropertyStatus, string> = {
   [EMessagePropertyStatus.NEW]: 'secondary',
   [EMessagePropertyStatus.PENDING]: 'warning',
   [EMessagePropertyStatus.PROCESSING]: 'info',

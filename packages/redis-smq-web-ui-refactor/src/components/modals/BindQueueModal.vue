@@ -13,6 +13,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import { useBindQueue } from '@/api/generated/namespace-exchanges/namespace-exchanges';
 import { getErrorMessage } from '@/lib/error';
 import { EExchangeType, ExchangeTypeLabel } from '@/types/exchanges';
+import type { BindQueueParams } from '@/api/model';
 
 const props = defineProps<{
   isVisible: boolean;
@@ -58,7 +59,7 @@ const canSubmit = computed(() => {
 
 async function onSubmit() {
   errorMsg.value = null;
-  const params: Record<string, string> = {};
+  const params: BindQueueParams = {};
   if (needsRoutingKey.value) params.routingKey = routingKey.value.trim();
   if (needsRoutingPattern.value) {
     params.routingPattern = routingPattern.value.trim();

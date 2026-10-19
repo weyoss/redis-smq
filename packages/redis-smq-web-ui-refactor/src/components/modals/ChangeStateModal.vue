@@ -10,17 +10,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
-import {
-  useQueueStateTransition,
-  type QueueStateAction,
-} from '@/composables/useQueueStateTransition';
+import { useQueueStateTransition } from '@/composables/useQueueStateTransition';
 import { EStateTransitionReason } from '@/types/queues';
-import type { IQueueParams } from '@/api/model';
+import type { IQueueParams, TransitQueueStateBodyState } from '@/api/model';
 
 const props = defineProps<{
   isVisible: boolean;
   queue: IQueueParams | null;
-  action: QueueStateAction;
+  action: TransitQueueStateBodyState;
 }>();
 
 const emit = defineEmits<{
@@ -33,7 +30,16 @@ const description = ref('');
 
 const stateTransition = useQueueStateTransition(() => props.queue);
 
-const configs = {
+const configs: Record<
+  TransitQueueStateBodyState,
+  {
+    title: string;
+    subtitle: string;
+    icon: string;
+    confirmLabel: string;
+    variant: 'primary' | 'danger' | 'warning';
+  }
+> = {
   pause: {
     title: 'Pause queue',
     subtitle: 'Pause message delivery',
@@ -55,16 +61,7 @@ const configs = {
     confirmLabel: 'Resume queue',
     variant: 'primary',
   },
-} as const satisfies Record<
-  QueueStateAction,
-  {
-    title: string;
-    subtitle: string;
-    icon: string;
-    confirmLabel: string;
-    variant: 'primary' | 'danger' | 'warning';
-  }
->;
+};
 
 const config = computed(() => configs[props.action]);
 

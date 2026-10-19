@@ -8,29 +8,23 @@
  */
 
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
-import type { IQueueParams } from '@/api/model';
+import type {
+  IQueueParams,
+  TQueueStateTransitionUserOptions,
+  TransitQueueStateBodyState,
+} from '@/api/model';
 import { useTransitQueueState } from '@/api/generated/queue-operational-state/queue-operational-state';
 import { getErrorMessage } from '@/lib/error';
-import type { EStateTransitionReason } from '@/types/queues';
-
-export type QueueStateAction = 'pause' | 'stop' | 'resume';
-
-export interface StateChangeOptions {
-  reason?: EStateTransitionReason;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}
 
 export function useQueueStateTransition(
   queue: MaybeRefOrGetter<IQueueParams | null>,
 ) {
   const params = computed(() => toValue(queue));
-
   const mutation = useTransitQueueState();
 
   async function changeState(
-    state: QueueStateAction,
-    options: StateChangeOptions = {},
+    state: TransitQueueStateBodyState,
+    options: TQueueStateTransitionUserOptions = {},
   ): Promise<void> {
     const q = params.value;
     if (!q) throw new Error('Queue is required');
