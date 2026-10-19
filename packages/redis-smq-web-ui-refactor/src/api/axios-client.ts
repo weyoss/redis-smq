@@ -17,6 +17,13 @@ import { API_URL } from '@/config';
 const instance = axios.create({
   baseURL: API_URL.replace(/\/+$/, ''),
   headers: { 'Content-Type': 'application/json' },
+  paramsSerializer: {
+    // OpenAPI's default for arrays is `style: form, explode: true`
+    // (i.e. `?ids=a&ids=b`), not `?ids[]=a&ids[]=b`. Axios's default
+    // adds the `[]` suffix. `indexes: null` tells axios to skip the
+    // suffix and repeat the key.
+    indexes: null,
+  },
 });
 
 export type Cancellable<T> = Promise<T> & { cancel: () => void };
