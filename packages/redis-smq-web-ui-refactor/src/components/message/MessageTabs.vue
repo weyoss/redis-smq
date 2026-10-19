@@ -16,6 +16,11 @@ const props = defineProps<{ ns: string; queue: string }>();
 
 const route = useRoute();
 
+const consumerGroupId = computed<string | null>(() => {
+  const v = route.query.consumerGroupId;
+  return typeof v === 'string' && v.length > 0 ? v : null;
+});
+
 const TABS: ReadonlyArray<{
   type: MessageStatus;
   label: string;
@@ -52,7 +57,10 @@ const activeType = computed<MessageStatus>(() => {
       :to="{
         name: 'messages',
         params: { ns: props.ns, queue: props.queue },
-        query: { type: tab.type },
+        query: {
+          type: tab.type,
+          ...(consumerGroupId ? { consumerGroupId } : {}),
+        },
       }"
       class="tabs__link"
       :class="{ 'tabs__link--active': activeType === tab.type }"

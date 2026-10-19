@@ -15,11 +15,13 @@ import {
   type PurgeScope,
 } from '@/composables/usePurgeQueueMessages';
 import type { IQueueParams, MessageStatus } from '@/api/model';
+import { usePurgeConsumerGroupMessages } from '@/composables/usePurgeConsumerGroupMessages.ts';
 
 const props = defineProps<{
   isVisible: boolean;
   queue: IQueueParams | null;
   defaultStatus: MessageStatus;
+  consumerGroupId?: string | null;
 }>();
 
 const emit = defineEmits<{ close: []; purged: [] }>();
@@ -28,6 +30,12 @@ const scope = ref<PurgeScope>(props.defaultStatus);
 const confirmed = ref(false);
 
 const purger = usePurgeQueueMessages(() => props.queue);
+const groupPurger = usePurgeConsumerGroupMessages(
+  () => props.queue,
+  () => props.consumerGroupId ?? null,
+);
+
+const isGroupMode = computed(() => !!props.consumerGroupId);
 
 const isAll = computed(() => scope.value === 'all');
 
@@ -38,6 +46,7 @@ watch(
     scope.value = props.defaultStatus;
     confirmed.value = false;
     purger.reset();
+    groupPurger.reset();
   },
   { immediate: true },
 );
@@ -47,6 +56,9 @@ const queueLabel = computed(() =>
 );
 
 const message = computed(() => {
+  if (isGroupMode.value) {
+    return `Delete all pending messages in consumer group "${props.consumerGroupId}" from ${queueLabel.value}? This cannot be undone.`;
+  }
   if (isAll.value) {
     return `Delete ALL messages from ${queueLabel.value}? Every message in the queue will be removed regardless of status. This cannot be undone.`;
   }
@@ -54,7 +66,10 @@ const message = computed(() => {
 });
 
 const canConfirm = computed(() => {
-  if (purger.isPending.value) return false;
+  const pending = isGroupMode.value
+    ? groupPurger.isPending.value
+    : purger.isPending.value;
+  if (pending) return false;
   if (isAll.value && !confirmed.value) return false;
   return true;
 });
@@ -69,12 +84,20 @@ const SCOPE_OPTIONS: ReadonlyArray<{ value: PurgeScope; label: string }> = [
 ];
 
 const confirmLabel = computed(() =>
-  isAll.value ? 'Purge all messages' : `Purge ${scope.value}`,
+  isGroupMode.value
+    ? 'Purge group messages'
+    : isAll.value
+      ? 'Purge all messages'
+      : `Purge ${scope.value}`,
 );
 
 async function onConfirm() {
   try {
-    await purger.purge(scope.value);
+    if (isGroupMode.value) {
+      await groupPurger.purge();
+    } else {
+      await purger.purge(scope.value);
+    }
     emit('purged');
   } catch {
     // purger.error renders inline; the modal stays open
@@ -94,7 +117,7 @@ async function onConfirm() {
     <template #body>
       <p class="message">{{ message }}</p>
 
-      <div class="field">
+      <div v-if="!isGroupMode" class="field">
         <label for="purge-scope" class="form-label">What to delete</label>
         <select
           id="purge-scope"
@@ -122,18 +145,20 @@ async function onConfirm() {
       </div>
 
       <div
-        v-if="purger.error.value"
+        v-if="isGroupMode ? groupPurger.error.value : purger.error.value"
         class="alert alert-danger mb-0 mt-3"
         role="alert"
       >
-        {{ purger.error.value }}
+        {{ isGroupMode ? groupPurger.error.value : purger.error.value }}
       </div>
     </template>
     <template #footer>
       <button
         type="button"
         class="btn btn-secondary"
-        :disabled="purger.isPending.value"
+        :disabled="
+          isGroupMode ? groupPurger.isPending.value : purger.isPending.value
+        "
         @click="emit('close')"
       >
         Cancel
@@ -145,11 +170,17 @@ async function onConfirm() {
         @click="onConfirm"
       >
         <span
-          v-if="purger.isPending.value"
+          v-if="
+            isGroupMode ? groupPurger.isPending.value : purger.isPending.value
+          "
           class="spinner-border spinner-border-sm me-1"
           aria-hidden="true"
         />
-        {{ purger.isPending.value ? 'Purging…' : confirmLabel }}
+        {{
+          (isGroupMode ? groupPurger.isPending.value : purger.isPending.value)
+            ? 'Purging…'
+            : confirmLabel
+        }}
       </button>
     </template>
   </BaseModal>
