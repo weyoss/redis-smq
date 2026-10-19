@@ -12,12 +12,13 @@ import type { IMessageTransferable } from '@/api/model';
 import { EMessagePropertyStatus } from '@/types/messages.ts';
 import { formatDate, formatSince } from '@/lib/format';
 
-defineProps<{
+const props = defineProps<{
   message: IMessageTransferable;
   canRequeue?: boolean;
 }>();
 
 const emit = defineEmits<{
+  view: [id: string];
   delete: [id: string];
   requeue: [id: string];
 }>();
@@ -49,10 +50,22 @@ function preview(body: unknown): string {
   const s = typeof body === 'string' ? body : JSON.stringify(body);
   return s.length > 200 ? `${s.slice(0, 200)}…` : s;
 }
+
+function open() {
+  emit('view', props.message.id);
+}
 </script>
 
 <template>
-  <article class="msg-row">
+  <article
+    class="msg-row"
+    role="button"
+    tabindex="0"
+    :aria-label="`View message ${message.id}`"
+    @click="open"
+    @keydown.enter="open"
+    @keydown.space.prevent="open"
+  >
     <header class="msg-row__head">
       <span class="msg-row__id font-mono" :title="message.id">
         {{ message.id }}
@@ -77,7 +90,7 @@ function preview(body: unknown): string {
           class="btn btn-icon btn-outline-secondary"
           title="Requeue message"
           aria-label="Requeue message"
-          @click="emit('requeue', message.id)"
+          @click.stop="emit('requeue', message.id)"
         >
           <i class="bi bi-arrow-clockwise" aria-hidden="true" />
         </button>
@@ -86,7 +99,7 @@ function preview(body: unknown): string {
           class="btn btn-icon btn-outline-danger"
           title="Delete message"
           aria-label="Delete message"
-          @click="emit('delete', message.id)"
+          @click.stop="emit('delete', message.id)"
         >
           <i class="bi bi-trash" aria-hidden="true" />
         </button>
@@ -106,8 +119,19 @@ function preview(body: unknown): string {
   display: flex;
   flex-direction: column;
   gap: var(--rsmq-space-2);
-  padding: var(--rsmq-space-3) 0;
+  padding: var(--rsmq-space-3) var(--rsmq-space-2);
   border-bottom: 1px solid var(--rsmq-color-border);
+  border-radius: var(--rsmq-radius-sm);
+  cursor: pointer;
+  transition: background var(--rsmq-transition);
+  outline: none;
+}
+.msg-row:hover {
+  background: var(--rsmq-color-bg);
+}
+.msg-row:focus-visible {
+  outline: 2px solid var(--rsmq-color-primary);
+  outline-offset: -2px;
 }
 .msg-row:last-child {
   border-bottom: none;
@@ -119,7 +143,6 @@ function preview(body: unknown): string {
   gap: var(--rsmq-space-2);
   flex-wrap: wrap;
 }
-
 .msg-row__id {
   font-size: 0.8rem;
   color: var(--rsmq-color-text);
@@ -130,7 +153,6 @@ function preview(body: unknown): string {
   flex: 1;
   min-width: 0;
 }
-
 .msg-row__priority,
 .msg-row__status {
   font-size: 0.7rem;
@@ -141,12 +163,10 @@ function preview(body: unknown): string {
   border-radius: var(--rsmq-radius-sm);
   flex-shrink: 0;
 }
-
 .msg-row__priority {
   background: var(--rsmq-color-primary-tint);
   color: var(--rsmq-color-primary);
 }
-
 .msg-row__status--warning {
   background: #fff3cd;
   color: #856404;
@@ -196,6 +216,9 @@ function preview(body: unknown): string {
   max-height: 8rem;
   overflow-y: auto;
   font-family: var(--rsmq-font-mono);
+}
+.msg-row:hover .msg-row__body {
+  background: var(--rsmq-color-surface);
 }
 
 @media (max-width: 576px) {

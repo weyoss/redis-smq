@@ -16,6 +16,7 @@ import Pagination from '@/components/ui/Pagination.vue';
 import StateBlock from '@/components/ui/StateBlock.vue';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import PublishMessageModal from '@/components/modals/PublishMessageModal.vue';
+import ViewMessageModal from '@/components/modals/ViewMessageModal.vue';
 import MessageTabs from '@/components/message/MessageTabs.vue';
 import MessageListItem from '@/components/message/MessageListItem.vue';
 import { useQueueSelection } from '@/composables/useQueueSelection';
@@ -45,7 +46,7 @@ const messageType = computed<MessageStatus>(() => {
   return typeof v === 'string' && isValidStatus(v) ? v : 'published';
 });
 
-// --- Messages query (single call, reactive prefix per tab) ---
+// --- Messages query ---
 const messages = useMessages(params, {
   queryKeyPrefix: () => `queue-messages-${messageType.value}`,
   queryFn: ({ ns, name, page, pageSize }) =>
@@ -56,10 +57,10 @@ const messages = useMessages(params, {
     }),
 });
 
-// --- Row-level actions ---
+// --- Mutations (used by both row actions and the detail modal) ---
 const actions = useMessageActions(() => messages.refresh());
 
-// Delete modal state
+// --- Delete modal (row actions) ---
 const deleteTarget = ref<string | null>(null);
 const deleteError = ref<string | null>(null);
 
@@ -74,7 +75,7 @@ async function onConfirmDelete() {
   }
 }
 
-// Requeue modal state
+// --- Requeue modal (row actions) ---
 const requeueTarget = ref<string | null>(null);
 const requeueError = ref<string | null>(null);
 
@@ -89,23 +90,37 @@ async function onConfirmRequeue() {
   }
 }
 
-// Close action modals if the user switches tabs while one is open.
-watch(messageType, () => {
-  deleteTarget.value = null;
-  requeueTarget.value = null;
-});
+// --- View detail modal ---
+const selectedMessageId = ref<string | null>(null);
+
+function onDetailDeleted() {
+  // Detail modal already closed itself; just refresh the list.
+  selectedMessageId.value = null;
+  messages.refresh();
+}
+
+function onDetailRequeued() {
+  // Detail modal stays open on requeue — the user can see the new state.
+  // Only the underlying list needs to refresh.
+  messages.refresh();
+}
 
 // --- Publish modal ---
 const showPublishModal = ref(false);
 
 function onPublished() {
   showPublishModal.value = false;
-  // Refetch the current tab. If the user published with a delay, the
-  // message lands in Scheduled — switch tabs to see it.
   messages.refresh();
 }
 
-// Requeue is meaningful for everything except scheduled messages.
+// Close all action modals when the user switches tabs.
+watch(messageType, () => {
+  deleteTarget.value = null;
+  requeueTarget.value = null;
+  selectedMessageId.value = null;
+});
+
+// Requeue is meaningful for everything except scheduled.
 const canRequeue = computed(() => messageType.value !== 'scheduled');
 
 const queueLabel = computed(() =>
@@ -180,6 +195,7 @@ const pageActions = computed<PageAction[]>(() => [
           :key="m.id"
           :message="m"
           :can-requeue="canRequeue"
+          @view="(id) => (selectedMessageId = id)"
           @delete="
             (id) => {
               deleteTarget = id;
@@ -205,7 +221,16 @@ const pageActions = computed<PageAction[]>(() => [
     @published="onPublished"
   />
 
-  <!-- Delete confirmation -->
+  <!-- Message detail view -->
+  <ViewMessageModal
+    :is-visible="!!selectedMessageId"
+    :message-id="selectedMessageId"
+    @close="selectedMessageId = null"
+    @deleted="onDetailDeleted"
+    @requeued="onDetailRequeued"
+  />
+
+  <!-- Delete confirmation (row action) -->
   <ConfirmationModal
     :is-visible="!!deleteTarget"
     title="Delete message"
@@ -220,7 +245,7 @@ const pageActions = computed<PageAction[]>(() => [
     @confirm="onConfirmDelete"
   />
 
-  <!-- Requeue confirmation -->
+  <!-- Requeue confirmation (row action) -->
   <ConfirmationModal
     :is-visible="!!requeueTarget"
     title="Requeue message"
