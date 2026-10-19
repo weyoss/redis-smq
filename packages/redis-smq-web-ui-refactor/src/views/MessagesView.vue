@@ -15,19 +15,21 @@ import Card from '@/components/ui/Card.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import StateBlock from '@/components/ui/StateBlock.vue';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+import PublishMessageModal from '@/components/modals/PublishMessageModal.vue';
 import MessageTabs from '@/components/message/MessageTabs.vue';
 import MessageListItem from '@/components/message/MessageListItem.vue';
 import { useQueueSelection } from '@/composables/useQueueSelection';
 import { useMessages } from '@/composables/useMessages';
 import { useMessageActions } from '@/composables/useMessageActions';
 import { getQueueMessages } from '@/api/generated/queue-messages/queue-messages';
+import { getErrorMessage } from '@/lib/error';
 import type { MessageStatus } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
-import { getErrorMessage } from '@/lib/error.ts';
 
 const route = useRoute();
 const { ns, name, params } = useQueueSelection();
 
+// --- Message type from query param ---
 function isValidStatus(v: unknown): v is MessageStatus {
   return (
     v === 'published' ||
@@ -43,6 +45,7 @@ const messageType = computed<MessageStatus>(() => {
   return typeof v === 'string' && isValidStatus(v) ? v : 'published';
 });
 
+// --- Messages query (single call, reactive prefix per tab) ---
 const messages = useMessages(params, {
   queryKeyPrefix: () => `queue-messages-${messageType.value}`,
   queryFn: ({ ns, name, page, pageSize }) =>
@@ -53,10 +56,10 @@ const messages = useMessages(params, {
     }),
 });
 
-// --- Mutations ---
+// --- Row-level actions ---
 const actions = useMessageActions(() => messages.refresh());
 
-// --- Delete modal state ---
+// Delete modal state
 const deleteTarget = ref<string | null>(null);
 const deleteError = ref<string | null>(null);
 
@@ -71,7 +74,7 @@ async function onConfirmDelete() {
   }
 }
 
-// --- Requeue modal state ---
+// Requeue modal state
 const requeueTarget = ref<string | null>(null);
 const requeueError = ref<string | null>(null);
 
@@ -86,20 +89,45 @@ async function onConfirmRequeue() {
   }
 }
 
-// Close modals if user switches tabs while one is open.
+// Close action modals if the user switches tabs while one is open.
 watch(messageType, () => {
   deleteTarget.value = null;
   requeueTarget.value = null;
 });
 
-// Requeue is meaningful for everything except scheduled.
+// --- Publish modal ---
+const showPublishModal = ref(false);
+
+function onPublished() {
+  showPublishModal.value = false;
+  // Refetch the current tab. If the user published with a delay, the
+  // message lands in Scheduled — switch tabs to see it.
+  messages.refresh();
+}
+
+// Requeue is meaningful for everything except scheduled messages.
 const canRequeue = computed(() => messageType.value !== 'scheduled');
 
 const queueLabel = computed(() =>
   name.value && ns.value ? `${name.value}@${ns.value}` : '',
 );
 
+const pageTitle = computed(
+  () =>
+    `${messageType.value.charAt(0).toUpperCase()}${messageType.value.slice(1)} messages`,
+);
+
 const pageActions = computed<PageAction[]>(() => [
+  {
+    id: 'publish',
+    label: 'Publish',
+    icon: 'bi-send',
+    variant: 'primary',
+    disabled: !params.value,
+    onClick: () => {
+      showPublishModal.value = true;
+    },
+  },
   {
     id: 'refresh',
     label: 'Refresh',
@@ -109,11 +137,6 @@ const pageActions = computed<PageAction[]>(() => [
     onClick: () => messages.refresh(),
   },
 ]);
-
-const pageTitle = computed(
-  () =>
-    `${messageType.value.charAt(0).toUpperCase()}${messageType.value.slice(1)} messages`,
-);
 </script>
 
 <template>
@@ -174,6 +197,15 @@ const pageTitle = computed(
     </Card>
   </PageShell>
 
+  <!-- Publish -->
+  <PublishMessageModal
+    :is-visible="showPublishModal"
+    :queue="params"
+    @close="showPublishModal = false"
+    @published="onPublished"
+  />
+
+  <!-- Delete confirmation -->
   <ConfirmationModal
     :is-visible="!!deleteTarget"
     title="Delete message"
@@ -188,6 +220,7 @@ const pageTitle = computed(
     @confirm="onConfirmDelete"
   />
 
+  <!-- Requeue confirmation -->
   <ConfirmationModal
     :is-visible="!!requeueTarget"
     title="Requeue message"
