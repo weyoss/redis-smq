@@ -74,7 +74,21 @@ export function useMessages(
         pageSize: pagination.pageSize,
       });
     },
-    placeholderData: (prev) => prev,
+    // Keep the previous data visible only when the query identity (prefix +
+    // queue) is unchanged — i.e. pagination within the same tab. When the
+    // prefix (tab) or queue changes, return undefined so TanStack flips
+    // isLoading → true and the view shows a loading state instead of the
+    // previous tab's content.
+    placeholderData: (prev, prevQuery) => {
+      if (prev === undefined || !prevQuery) return undefined;
+      const key = prevQuery.queryKey;
+      if (!Array.isArray(key) || key.length < 4) return undefined;
+      const [, prevPrefix, prevNs, prevName] = key;
+      if (prevPrefix !== prefix.value) return undefined;
+      if (prevNs !== queueRef.value?.ns) return undefined;
+      if (prevName !== queueRef.value?.name) return undefined;
+      return prev;
+    },
     staleTime: 30_000,
     gcTime: 5 * 60_000,
   });
@@ -139,6 +153,7 @@ export function useMessages(
     pagination.page = 1;
   }
 
+  // Preserve the current page — do not silently jump to page 1 on refresh.
   function refresh() {
     return query.refetch();
   }
