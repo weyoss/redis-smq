@@ -34,6 +34,7 @@ import {
 } from '@/types/queues';
 import type { PageAction } from '@/components/ui/PageShell.vue';
 import type { TransitQueueStateBodyState } from '@/api/model';
+import QueueExchangesCard from '@/components/queue/QueueExchangesCard.vue';
 
 // --- Route params ---
 const router = useTypedRouter();
@@ -291,6 +292,9 @@ const actions = computed<PageAction[]>(() => {
           </div>
         </dl>
       </Card>
+
+      <!-- Bound Exchanges -->
+      <QueueExchangesCard :queue="params" />
 
       <!-- Rate limiting (owns set/clear) -->
       <RateLimitCard :queue="params" />
