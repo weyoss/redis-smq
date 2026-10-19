@@ -26,6 +26,7 @@ import { getQueueMessages } from '@/api/generated/queue-messages/queue-messages'
 import { getErrorMessage } from '@/lib/error';
 import type { MessageStatus } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
+import PurgeQueueModal from '@/components/modals/PurgeQueueModal.vue';
 
 const route = useRoute();
 const { ns, name, params } = useQueueSelection();
@@ -113,11 +114,20 @@ function onPublished() {
   messages.refresh();
 }
 
+// --- Purge modal ---
+const showPurge = ref(false);
+
+function onPurged() {
+  showPurge.value = false;
+  messages.refresh();
+}
+
 // Close all action modals when the user switches tabs.
 watch(messageType, () => {
   deleteTarget.value = null;
   requeueTarget.value = null;
   selectedMessageId.value = null;
+  showPurge.value = false;
 });
 
 // Requeue is meaningful for everything except scheduled.
@@ -150,6 +160,16 @@ const pageActions = computed<PageAction[]>(() => [
     variant: 'secondary',
     loading: messages.isLoading.value,
     onClick: () => messages.refresh(),
+  },
+  {
+    id: 'purge',
+    label: 'Purge',
+    icon: 'bi-trash',
+    variant: 'danger',
+    disabled: !params.value,
+    onClick: () => {
+      showPurge.value = true;
+    },
   },
 ]);
 </script>
@@ -219,6 +239,15 @@ const pageActions = computed<PageAction[]>(() => [
     :queue="params"
     @close="showPublishModal = false"
     @published="onPublished"
+  />
+
+  <!-- Purge -->
+  <PurgeQueueModal
+    :is-visible="showPurge"
+    :queue="params"
+    :default-status="messageType"
+    @close="showPurge = false"
+    @purged="onPurged"
   />
 
   <!-- Message detail view -->
