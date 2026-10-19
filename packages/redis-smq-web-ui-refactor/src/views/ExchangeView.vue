@@ -30,6 +30,7 @@ import {
   ExchangeTypeLabel,
 } from '@/types/exchanges';
 import type { PageAction } from '@/components/ui/PageShell.vue';
+import ExchangeMatchCard from '@/components/exchange/ExchangeMatchCard.vue';
 
 const route = useRoute();
 const router = useTypedRouter();
@@ -213,6 +214,12 @@ void EExchangeType;
           </div>
         </div>
       </Card>
+      <ExchangeMatchCard
+        v-if="exchange.data.value"
+        :ns="ns"
+        :exchange="exchangeName"
+        :type="exchange.data.value.type"
+      />
     </template>
   </PageShell>
 
