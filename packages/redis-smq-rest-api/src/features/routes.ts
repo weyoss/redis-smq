@@ -56,6 +56,10 @@ import { getNamespaceQueuesRoute } from './namespace-queues/list/route.js';
 import { getQueueConsumersRoute } from './queue-consumers/list/route.js';
 import { getQueueExchangesRoute } from './queue-exchanges/list/route.js';
 import { createExchangeRoute } from './exchanges/create/route.js';
+import { getMessageIdsRoute } from './queue-messages/get-ids/route.js';
+import { getPurgeJobRoute } from './queue-messages/get-purge-job/route.js';
+import { getPurgeJobStatusRoute } from './queue-messages/get-purge-job-status/route.js';
+import { cancelPurgeRoute } from './queue-messages/cancel-purge/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -81,6 +85,10 @@ export const routes: RouteDefinition[] = [
   getQueueMessagesRoute,
   purgeQueueMessagesRoute,
   countQueueMessagesRoute,
+  getMessageIdsRoute,
+  getPurgeJobRoute,
+  getPurgeJobStatusRoute,
+  cancelPurgeRoute,
 
   // Queues
   getAllQueuesRoute,

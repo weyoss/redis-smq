@@ -13,11 +13,18 @@ import type { PurgeQueueMessagesControllerRequestQueryDTO } from './PurgeQueueMe
 import type { PurgeQueueMessagesControllerResponseDTO } from './PurgeQueueMessagesControllerResponseDTO.js';
 import { selectMessageBrowser } from '../message-browser.js';
 
+/**
+ * Enqueues a purge job for the selected message category.
+ *
+ * Returns `202 Accepted` with the job ID. The purge itself runs
+ * asynchronously on a background worker — the 202 means the job was
+ * scheduled, not that the messages are gone.
+ */
 export const purgeQueueMessages: Controller<
   RequestInput<
     PurgeQueueMessagesControllerRequestPathDTO,
     PurgeQueueMessagesControllerRequestQueryDTO,
-    never
+    unknown
   >,
   PurgeQueueMessagesControllerResponseDTO
 > = async (deps, input) => {
@@ -25,7 +32,9 @@ export const purgeQueueMessages: Controller<
   const { status } = input.query;
 
   const browser = selectMessageBrowser(deps, status);
-  await browser.purge({ ns, name });
+  const jobId = await browser.purge({ ns, name });
 
-  return [204, null];
+  deps.logger.debug('Purge job queued', { queue: { ns, name }, jobId, status });
+
+  return [202, { jobId }];
 };
