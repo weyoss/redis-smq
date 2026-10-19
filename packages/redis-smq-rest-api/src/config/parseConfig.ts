@@ -10,7 +10,7 @@
 import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 import { InvalidApiServerParamsError } from '../errors/index.js';
 import { DEFAULT_BASE_PATH, DEFAULT_PORT } from './constants.js';
-import type { IRedisSMQRestApiConfig, IParsedConfig } from './types.js';
+import type { IApiConfig, IParsedApiConfig } from './types.js';
 
 /**
  * Collapses a raw base path into a canonical form:
@@ -49,9 +49,7 @@ function validatePort(port: number): void {
  * Throws `InvalidApiServerParamsError` on invalid port or basePath.
  * Anything related to Redis is validated later by `RedisSMQ.initialize`.
  */
-export function parseConfig(
-  config: IRedisSMQRestApiConfig = {},
-): IParsedConfig {
+export function parseConfig(config: IApiConfig = {}): IParsedApiConfig {
   const port = config.apiServer?.port ?? DEFAULT_PORT;
   validatePort(port);
 

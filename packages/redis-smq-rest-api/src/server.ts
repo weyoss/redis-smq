@@ -15,8 +15,8 @@ import { RedisSMQ } from 'redis-smq';
 import {
   constants,
   parseConfig,
-  type IParsedConfig,
-  type IRedisSMQRestApiConfig,
+  type IParsedApiConfig,
+  type IApiConfig,
 } from './config/index.js';
 import { createDeps, type Deps } from './deps/index.js';
 import { routes } from './features/routes.js';
@@ -82,7 +82,7 @@ type NodeRequestHandler = (
 export class RedisSMQRestApi {
   private readonly app: Koa;
   private readonly httpServer: http.Server;
-  private readonly config: IParsedConfig;
+  private readonly config: IParsedApiConfig;
   private readonly runHttpServer: boolean;
 
   /**
@@ -94,7 +94,7 @@ export class RedisSMQRestApi {
    */
   private deps: Deps | null = null;
 
-  constructor(config: IRedisSMQRestApiConfig = {}, runHttpServer = true) {
+  constructor(config: IApiConfig = {}, runHttpServer = true) {
     this.config = parseConfig(config);
     this.runHttpServer = runHttpServer;
     this.app = new Koa();

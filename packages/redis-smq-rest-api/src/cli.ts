@@ -14,9 +14,10 @@ import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 import {
   DEFAULT_BASE_PATH,
   DEFAULT_PORT,
-  type IRedisSMQRestApiConfig,
+  type IApiConfig,
 } from './config/index.js';
 import { RedisSMQRestApi } from './server.js';
+import { InvalidApiServerParamsError } from './errors/index.js';
 
 /**
  * Command-line entry point.
@@ -95,7 +96,7 @@ const options = program.opts<{
 // and produce two possible error formats for the same failure.
 // ─────────────────────────────────────────────────────────────────────
 
-const config: IRedisSMQRestApiConfig = {
+const config: IApiConfig = {
   apiServer: {
     port: Number(options.port),
     basePath: options.basePath,
@@ -131,14 +132,22 @@ let api: RedisSMQRestApi;
 try {
   api = new RedisSMQRestApi(config);
 } catch (err) {
+  reportStartupError(err);
+}
+
+function reportStartupError(err: unknown): never {
+  if (err instanceof InvalidApiServerParamsError) {
+    const { field, value, reason } = err.metadata ?? {};
+    console.error(
+      `Invalid configuration: ${field} ${reason} (got ${JSON.stringify(value)})`,
+    );
+    process.exit(1);
+  }
   console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 }
 
-api.run().catch((err: unknown) => {
-  console.error(err instanceof Error ? err.message : String(err));
-  process.exit(1);
-});
+api.run().catch(reportStartupError);
 
 // ─────────────────────────────────────────────────────────────────────
 // Signal handling

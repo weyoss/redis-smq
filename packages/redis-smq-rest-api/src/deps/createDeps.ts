@@ -9,7 +9,7 @@
 
 import { RedisSMQ } from 'redis-smq';
 import { createLogger } from 'redis-smq-common';
-import type { IParsedConfig } from '../config/index.js';
+import type { IParsedApiConfig } from '../config/index.js';
 import type { Deps } from './Deps.js';
 
 /**
@@ -25,7 +25,7 @@ import type { Deps } from './Deps.js';
  * any of these factories are invoked. The server class guarantees this
  * by calling `createDeps` inside `bootstrap()`, after `initialize()`.
  */
-export function createDeps(config: IParsedConfig): Deps {
+export function createDeps(config: IParsedApiConfig): Deps {
   return {
     // ─── Queues ─────────────────────────────────────────────────────
     queueManager: RedisSMQ.createQueueManager(),

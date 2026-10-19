@@ -47,9 +47,9 @@ export {
   parseConfig,
 } from './config/index.js';
 export type {
-  IRedisSMQRestApiCliOptions,
-  IRedisSMQRestApiConfig,
-  IParsedConfig,
+  IApiCliOptions,
+  IApiConfig,
+  IParsedApiConfig,
 } from './config/index.js';
 
 // ── Extension contract ───────────────────────────────────────────────

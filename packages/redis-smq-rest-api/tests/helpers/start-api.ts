@@ -8,15 +8,15 @@
  */
 
 import { ERedisConfigClient, net } from 'redis-smq-common';
-import { IRedisSMQRestApiConfig, RedisSMQRestApi } from '../../src/index.js';
+import { IApiConfig, RedisSMQRestApi } from '../../src/index.js';
 
 export interface StartApiOptions {
   /** Port the embedded Redis is listening on. */
   redisPort: number;
 
   /** Optional overrides for the server config. `port` is always regenerated. */
-  overrides?: Partial<Omit<IRedisSMQRestApiConfig, 'apiServer'>> & {
-    apiServer?: Omit<NonNullable<IRedisSMQRestApiConfig['apiServer']>, 'port'>;
+  overrides?: Partial<Omit<IApiConfig, 'apiServer'>> & {
+    apiServer?: Omit<NonNullable<IApiConfig['apiServer']>, 'port'>;
   };
 }
 
@@ -44,7 +44,7 @@ export async function startApi(options: StartApiOptions): Promise<ApiInstance> {
   const { redisPort, overrides = {} } = options;
   const port = await net.getRandomPort();
 
-  const config: IRedisSMQRestApiConfig = {
+  const config: IApiConfig = {
     redis: {
       client: ERedisConfigClient.IOREDIS,
       options: { host: '127.0.0.1', port: redisPort },

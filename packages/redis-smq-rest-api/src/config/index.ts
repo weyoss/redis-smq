@@ -9,8 +9,4 @@
 
 export { DEFAULT_BASE_PATH, DEFAULT_PORT, constants } from './constants.js';
 export { parseConfig } from './parseConfig.js';
-export type {
-  IRedisSMQRestApiCliOptions,
-  IRedisSMQRestApiConfig,
-  IParsedConfig,
-} from './types.js';
+export type { IApiCliOptions, IApiConfig, IParsedApiConfig } from './types.js';

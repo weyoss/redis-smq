@@ -20,7 +20,7 @@ import type {
  * and by the CLI. Every field is optional; defaults are applied by
  * `parseConfig()`.
  */
-export interface IRedisSMQRestApiConfig {
+export interface IApiConfig {
   /**
    * Redis connection settings. Passed through to redis-smq
    * (`RedisSMQ.initialize`). If omitted, defaults to ioredis on
@@ -55,7 +55,7 @@ export interface IRedisSMQRestApiConfig {
  * guaranteed present, and every constraint has been checked.
  * Produced exclusively by `parseConfig()`.
  */
-export interface IParsedConfig {
+export interface IParsedApiConfig {
   redis: IRedisConfig;
 
   apiServer: {
@@ -78,7 +78,7 @@ export interface IParsedConfig {
  * Kept separate from `IRedisSMQRestApiConfig` because the CLI and the
  * programmatic API have different shapes (flat vs. nested).
  */
-export interface IRedisSMQRestApiCliOptions {
+export interface IApiCliOptions {
   port: string;
   basePath: string;
   redisClient: ERedisConfigClient;
