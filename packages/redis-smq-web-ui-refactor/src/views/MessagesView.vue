@@ -8,8 +8,8 @@
   -->
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, ref, watch, watchEffect } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import PageShell from '@/components/ui/PageShell.vue';
 import Card from '@/components/ui/Card.vue';
 import Pagination from '@/components/ui/Pagination.vue';
@@ -25,6 +25,7 @@ import { useQueueSelection } from '@/composables/useQueueSelection';
 import { useQueueProperties } from '@/composables/useQueueProperties';
 import { useMessages } from '@/composables/useMessages';
 import { useMessageActions } from '@/composables/useMessageActions';
+import { useBulkDeleteMessages } from '@/composables/useBulkDeleteMessages';
 import { getQueueMessages } from '@/api/generated/queue-messages/queue-messages';
 import { getConsumerGroupPendingMessages } from '@/api/generated/consumer-groups/consumer-groups';
 import { getErrorMessage } from '@/lib/error';
@@ -32,6 +33,7 @@ import type { MessageStatus } from '@/api/model';
 import type { PageAction } from '@/components/ui/PageShell.vue';
 
 const route = useRoute();
+const router = useRouter();
 const { ns, name, params } = useQueueSelection();
 
 // --- Message type from query param ---
@@ -59,7 +61,6 @@ const consumerGroupId = computed<string | null>(() => {
 const queueProperties = useQueueProperties(params);
 const isPubSub = computed(() => queueProperties.isPubSub.value);
 
-// Show the group selector: pending tab on pub/sub queue with no group selected.
 const showGroupSelector = computed(() => {
   if (!params.value) return false;
   if (messageType.value !== 'pending') return false;
@@ -101,7 +102,6 @@ const messages = useMessages(params, {
 // --- Mutations ---
 const actions = useMessageActions(() => messages.refresh());
 
-// Row delete
 const deleteTarget = ref<string | null>(null);
 const deleteError = ref<string | null>(null);
 
@@ -116,7 +116,6 @@ async function onConfirmDelete() {
   }
 }
 
-// Row requeue
 const requeueTarget = ref<string | null>(null);
 const requeueError = ref<string | null>(null);
 
@@ -131,7 +130,7 @@ async function onConfirmRequeue() {
   }
 }
 
-// Detail modal
+// --- Detail modal ---
 const selectedMessageId = ref<string | null>(null);
 
 function onDetailDeleted() {
@@ -143,7 +142,7 @@ function onDetailRequeued() {
   messages.refresh();
 }
 
-// Publish modal
+// --- Publish modal ---
 const showPublishModal = ref(false);
 
 function onPublished() {
@@ -151,7 +150,7 @@ function onPublished() {
   messages.refresh();
 }
 
-// Purge modal
+// --- Purge modal ---
 const showPurge = ref(false);
 
 function onPurged() {
@@ -159,28 +158,98 @@ function onPurged() {
   messages.refresh();
 }
 
-// Close action modals on tab switch or group change.
-watch([messageType, consumerGroupId], () => {
-  deleteTarget.value = null;
-  requeueTarget.value = null;
-  selectedMessageId.value = null;
-  showPurge.value = false;
+// --- Bulk selection ---
+const selectedIds = ref<Set<string>>(new Set());
+
+const items = computed(() => messages.items.value);
+
+const allSelected = computed(() => {
+  const list = items.value;
+  if (list.length === 0) return false;
+  return list.every((m) => selectedIds.value.has(m.id));
 });
+
+const someSelected = computed(() => {
+  const list = items.value;
+  if (list.length === 0) return false;
+  const count = list.filter((m) => selectedIds.value.has(m.id)).length;
+  return count > 0 && count < list.length;
+});
+
+const selectionCount = computed(() => selectedIds.value.size);
+
+function toggleOne(id: string) {
+  const next = new Set(selectedIds.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  selectedIds.value = next;
+}
+
+function toggleAll() {
+  if (allSelected.value) {
+    selectedIds.value = new Set();
+  } else {
+    selectedIds.value = new Set(items.value.map((m) => m.id));
+  }
+}
+
+function clearSelection() {
+  selectedIds.value = new Set();
+}
+
+// Master checkbox indeterminate state is a DOM property, not an attribute.
+const masterCheckbox = ref<HTMLInputElement | null>(null);
+watchEffect(() => {
+  if (masterCheckbox.value) {
+    masterCheckbox.value.indeterminate = someSelected.value;
+  }
+});
+
+// Clear selection on any context change (tab, group, page).
+watch(
+  [messageType, consumerGroupId, () => messages.pagination.value.currentPage],
+  () => {
+    selectedIds.value = new Set();
+    deleteTarget.value = null;
+    requeueTarget.value = null;
+    selectedMessageId.value = null;
+    showPurge.value = false;
+    showBulkDelete.value = false;
+  },
+);
+
+// --- Bulk delete ---
+const showBulkDelete = ref(false);
+const bulkDeleteError = ref<string | null>(null);
+const bulkDelete = useBulkDeleteMessages(() => messages.refresh());
+
+const bulkPreviewIds = computed(() =>
+  Array.from(selectedIds.value).slice(0, 5),
+);
+const bulkExtraCount = computed(() => Math.max(0, selectedIds.value.size - 5));
+
+async function onConfirmBulkDelete() {
+  bulkDeleteError.value = null;
+  const ids = Array.from(selectedIds.value);
+  if (ids.length === 0) return;
+  try {
+    await bulkDelete.deleteMany(ids);
+    showBulkDelete.value = false;
+    selectedIds.value = new Set();
+  } catch (e) {
+    bulkDeleteError.value = getErrorMessage(e);
+  }
+}
 
 // --- Group selection ---
 function onSelectGroup(id: string) {
-  const query = { ...route.query, consumerGroupId: id };
-  // push so the browser back button returns to the selector
-  router.replace({ query });
+  router.replace({ query: { ...route.query, consumerGroupId: id } });
 }
 
 function onChangeGroup() {
   const { consumerGroupId: _drop, ...rest } = route.query;
   router.replace({ query: rest });
 }
-
-import { useRouter } from 'vue-router';
-const router = useRouter();
 
 // --- Display ---
 const canRequeue = computed(() => messageType.value !== 'scheduled');
@@ -238,21 +307,17 @@ const pageActions = computed<PageAction[]>(() => [
   >
     <MessageTabs v-if="ns && name" :ns="ns" :queue="name" />
 
-    <!-- Queue properties loading (only relevant to the pending tab) -->
     <Card v-if="messageType === 'pending' && queueProperties.isLoading.value">
       <StateBlock kind="loading" />
     </Card>
 
-    <!-- Consumer group selector -->
     <ConsumerGroupSelector
       v-else-if="showGroupSelector && params"
       :queue="params"
       @select="onSelectGroup"
     />
 
-    <!-- Message list -->
     <Card v-else>
-      <!-- Active group banner -->
       <div
         v-if="consumerGroupId && messageType === 'pending'"
         class="group-banner"
@@ -290,6 +355,46 @@ const pageActions = computed<PageAction[]>(() => [
         "
       />
       <template v-else>
+        <!-- Bulk toolbar (appears when any row is selected) -->
+        <div
+          v-if="selectionCount > 0"
+          class="bulk-bar"
+          role="region"
+          aria-label="Bulk actions"
+        >
+          <label class="bulk-bar__master">
+            <input
+              ref="masterCheckbox"
+              type="checkbox"
+              :checked="allSelected"
+              :aria-label="
+                allSelected ? 'Deselect all on page' : 'Select all on page'
+              "
+              @change="toggleAll"
+            />
+            <span>{{
+              allSelected ? 'Deselect all' : 'Select all on page'
+            }}</span>
+          </label>
+          <span class="bulk-bar__count"> {{ selectionCount }} selected </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            @click="clearSelection"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-danger"
+            :disabled="bulkDelete.isPending.value"
+            @click="showBulkDelete = true"
+          >
+            <i class="bi bi-trash me-1" aria-hidden="true" />
+            Delete selected
+          </button>
+        </div>
+
         <Pagination
           :current-page="messages.pagination.value.currentPage"
           :total-pages="messages.pagination.value.totalPages"
@@ -305,6 +410,8 @@ const pageActions = computed<PageAction[]>(() => [
           :key="m.id"
           :message="m"
           :can-requeue="canRequeue"
+          :selected="selectedIds.has(m.id)"
+          @toggle="toggleOne"
           @view="(id) => (selectedMessageId = id)"
           @delete="
             (id) => {
@@ -347,6 +454,33 @@ const pageActions = computed<PageAction[]>(() => [
     @purged="onPurged"
   />
 
+  <!-- Bulk delete confirmation -->
+  <ConfirmationModal
+    :is-visible="showBulkDelete"
+    title="Delete selected messages"
+    subtitle="This action cannot be undone"
+    icon="bi-exclamation-triangle"
+    :message="`Delete ${selectionCount} message${selectionCount === 1 ? '' : 's'}?`"
+    confirm-label="Delete selected"
+    confirm-variant="danger"
+    :is-pending="bulkDelete.isPending.value"
+    :error="bulkDeleteError"
+    @close="showBulkDelete = false"
+    @confirm="onConfirmBulkDelete"
+  >
+    <template #extra>
+      <ul class="bulk-preview">
+        <li v-for="id in bulkPreviewIds" :key="id" class="font-mono">
+          {{ id }}
+        </li>
+        <li v-if="bulkExtraCount > 0" class="bulk-preview__more">
+          …and {{ bulkExtraCount }} more
+        </li>
+      </ul>
+    </template>
+  </ConfirmationModal>
+
+  <!-- Row-level single delete -->
   <ConfirmationModal
     :is-visible="!!deleteTarget"
     title="Delete message"
@@ -361,6 +495,7 @@ const pageActions = computed<PageAction[]>(() => [
     @confirm="onConfirmDelete"
   />
 
+  <!-- Row-level single requeue -->
   <ConfirmationModal
     :is-visible="!!requeueTarget"
     title="Requeue message"
@@ -391,10 +526,75 @@ const pageActions = computed<PageAction[]>(() => [
 .group-banner__change {
   margin-left: auto;
 }
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rsmq-space-3);
+  padding: var(--rsmq-space-2) var(--rsmq-space-3);
+  background: var(--rsmq-color-primary-tint);
+  border: 1px solid var(--rsmq-color-primary);
+  border-radius: var(--rsmq-radius-md);
+  margin-bottom: var(--rsmq-space-3);
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.bulk-bar__master {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rsmq-space-2);
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--rsmq-color-primary);
+}
+.bulk-bar__master input {
+  accent-color: var(--rsmq-color-primary);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  margin: 0;
+}
+
+.bulk-bar__count {
+  font-weight: 600;
+  color: var(--rsmq-color-primary);
+}
+
+.bulk-bar > button:nth-last-child(2) {
+  margin-left: auto;
+}
+
+.bulk-preview {
+  list-style: none;
+  margin: var(--rsmq-space-3) 0 0;
+  padding: var(--rsmq-space-2) var(--rsmq-space-3);
+  background: var(--rsmq-color-bg);
+  border-radius: var(--rsmq-radius-sm);
+  font-size: 0.75rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+.bulk-preview li {
+  padding: 2px 0;
+  overflow-wrap: anywhere;
+}
+.bulk-preview__more {
+  color: var(--rsmq-color-text-muted);
+  font-style: italic;
+}
+
 @media (max-width: 576px) {
   .group-banner__change {
     margin-left: 0;
     width: 100%;
+  }
+  .bulk-bar > button {
+    flex: 1;
+    justify-content: center;
+  }
+  .bulk-bar > button:nth-last-child(2) {
+    margin-left: 0;
   }
 }
 </style>

@@ -15,12 +15,14 @@ import { formatDate, formatSince } from '@/lib/format';
 const props = defineProps<{
   message: IMessageTransferable;
   canRequeue?: boolean;
+  selected?: boolean;
 }>();
 
 const emit = defineEmits<{
   view: [id: string];
   delete: [id: string];
   requeue: [id: string];
+  toggle: [id: string];
 }>();
 
 const STATUS_LABELS: Record<EMessagePropertyStatus, string> = {
@@ -57,84 +59,126 @@ function open() {
 </script>
 
 <template>
-  <article
-    class="msg-row"
-    role="button"
-    tabindex="0"
-    :aria-label="`View message ${message.id}`"
-    @click="open"
-    @keydown.enter="open"
-    @keydown.space.prevent="open"
-  >
-    <header class="msg-row__head">
-      <span class="msg-row__id font-mono" :title="message.id">
-        {{ message.id }}
-      </span>
-      <span
-        v-if="message.priority !== null"
-        class="msg-row__priority"
-        :title="`Priority ${message.priority}`"
-      >
-        P{{ message.priority }}
-      </span>
-      <span
-        class="msg-row__status"
-        :class="`msg-row__status--${STATUS_TINT[message.status] ?? 'secondary'}`"
-      >
-        {{ STATUS_LABELS[message.status] ?? `Unknown (${message.status})` }}
-      </span>
-      <div class="msg-row__actions">
-        <button
-          v-if="canRequeue"
-          type="button"
-          class="btn btn-icon btn-outline-secondary"
-          title="Requeue message"
-          aria-label="Requeue message"
-          @click.stop="emit('requeue', message.id)"
+  <div class="msg-row-wrap" :class="{ 'msg-row-wrap--selected': selected }">
+    <label class="msg-row__check" @click.stop>
+      <input
+        type="checkbox"
+        :checked="selected"
+        :aria-label="`Select message ${message.id}`"
+        @change="emit('toggle', message.id)"
+      />
+    </label>
+
+    <article
+      class="msg-row"
+      role="button"
+      tabindex="0"
+      :aria-label="`View message ${message.id}`"
+      @click="open"
+      @keydown.enter="open"
+      @keydown.space.prevent="open"
+    >
+      <header class="msg-row__head">
+        <span class="msg-row__id font-mono" :title="message.id">
+          {{ message.id }}
+        </span>
+        <span
+          v-if="message.priority !== null"
+          class="msg-row__priority"
+          :title="`Priority ${message.priority}`"
         >
-          <i class="bi bi-arrow-clockwise" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          class="btn btn-icon btn-outline-danger"
-          title="Delete message"
-          aria-label="Delete message"
-          @click.stop="emit('delete', message.id)"
+          P{{ message.priority }}
+        </span>
+        <span
+          class="msg-row__status"
+          :class="`msg-row__status--${STATUS_TINT[message.status] ?? 'secondary'}`"
         >
-          <i class="bi bi-trash" aria-hidden="true" />
-        </button>
+          {{ STATUS_LABELS[message.status] ?? `Unknown (${message.status})` }}
+        </span>
+        <div class="msg-row__actions">
+          <button
+            v-if="canRequeue"
+            type="button"
+            class="btn btn-icon btn-outline-secondary"
+            title="Requeue message"
+            aria-label="Requeue message"
+            @click.stop="emit('requeue', message.id)"
+          >
+            <i class="bi bi-arrow-clockwise" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-icon btn-outline-danger"
+            title="Delete message"
+            aria-label="Delete message"
+            @click.stop="emit('delete', message.id)"
+          >
+            <i class="bi bi-trash" aria-hidden="true" />
+          </button>
+        </div>
+      </header>
+      <div class="msg-row__meta">
+        <span :title="formatDate(message.createdAt)">
+          {{ formatSince(message.createdAt) }}
+        </span>
       </div>
-    </header>
-    <div class="msg-row__meta">
-      <span :title="formatDate(message.createdAt)">
-        {{ formatSince(message.createdAt) }}
-      </span>
-    </div>
-    <pre class="msg-row__body">{{ preview(message.body) }}</pre>
-  </article>
+      <pre class="msg-row__body">{{ preview(message.body) }}</pre>
+    </article>
+  </div>
 </template>
 
 <style scoped>
-.msg-row {
+.msg-row-wrap {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
   gap: var(--rsmq-space-2);
   padding: var(--rsmq-space-3) var(--rsmq-space-2);
   border-bottom: 1px solid var(--rsmq-color-border);
   border-radius: var(--rsmq-radius-sm);
-  cursor: pointer;
   transition: background var(--rsmq-transition);
-  outline: none;
 }
-.msg-row:hover {
+.msg-row-wrap:last-child {
+  border-bottom: none;
+}
+.msg-row-wrap:hover {
   background: var(--rsmq-color-bg);
+}
+.msg-row-wrap--selected {
+  background: var(--rsmq-color-primary-tint);
+}
+.msg-row-wrap--selected:hover {
+  background: var(--rsmq-color-primary-tint);
+}
+
+.msg-row__check {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg-row__check input {
+  accent-color: var(--rsmq-color-primary);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  margin: 0;
+}
+
+.msg-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsmq-space-2);
+  cursor: pointer;
+  outline: none;
 }
 .msg-row:focus-visible {
   outline: 2px solid var(--rsmq-color-primary);
   outline-offset: -2px;
-}
-.msg-row:last-child {
-  border-bottom: none;
+  border-radius: var(--rsmq-radius-sm);
 }
 
 .msg-row__head {
@@ -217,7 +261,7 @@ function open() {
   overflow-y: auto;
   font-family: var(--rsmq-font-mono);
 }
-.msg-row:hover .msg-row__body {
+.msg-row-wrap:hover .msg-row__body {
   background: var(--rsmq-color-surface);
 }
 
