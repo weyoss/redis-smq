@@ -9,7 +9,7 @@
 
 import type { TErrors } from '../../../errors/index.js';
 
-export type CancelPurgeControllerResponseDTO =
+export type CancelPurgeJobControllerResponseDTO =
   | readonly [204, null]
   | TErrors['InvalidQueueParametersError']
   | TErrors['InvalidPurgeQueueJobIdError']

@@ -7,8 +7,11 @@
  * in the root directory of this source tree.
  */
 
-export type GetPurgeJobStatusControllerRequestPathDTO = {
+import type { MessageStatus } from '../../queue-messages/MessageStatus.js';
+
+export type GetPurgeJobControllerRequestPathDTO = {
   ns: string;
   name: string;
+  messageStatus: MessageStatus;
   jobId: string;
 };

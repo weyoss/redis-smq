@@ -7,8 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { MessageStatus } from '../MessageStatus.js';
+import type { MessageStatus } from '../../queue-messages/MessageStatus.js';
 
-export type PurgeQueueMessagesControllerRequestQueryDTO = {
-  status?: MessageStatus;
+export type CancelPurgeJobControllerRequestPathDTO = {
+  ns: string;
+  name: string;
+  messageStatus: MessageStatus;
+  jobId: string;
 };

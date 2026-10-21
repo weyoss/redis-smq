@@ -23,7 +23,6 @@ import { requeueMessageByIdRoute } from './messages/requeue-by-id/route.js';
 import { pingRoute } from './ping/route.js';
 import { countQueueMessagesRoute } from './queue-messages/count/route.js';
 import { getQueueMessagesRoute } from './queue-messages/get/route.js';
-import { purgeQueueMessagesRoute } from './queue-messages/purge/route.js';
 import { createQueueRoute } from './queues/create/route.js';
 import { getAllQueuesRoute } from './queues/list/route.js';
 import { getNamespaceExchangesRoute } from './namespace-exchanges/list/route.js';
@@ -57,9 +56,10 @@ import { getQueueConsumersRoute } from './queue-consumers/list/route.js';
 import { getQueueExchangesRoute } from './queue-exchanges/list/route.js';
 import { createExchangeRoute } from './exchanges/create/route.js';
 import { getMessageIdsRoute } from './queue-messages/get-ids/route.js';
-import { getPurgeJobRoute } from './queue-messages/get-purge-job/route.js';
-import { getPurgeJobStatusRoute } from './queue-messages/get-purge-job-status/route.js';
-import { cancelPurgeRoute } from './queue-messages/cancel-purge/route.js';
+import { startPurgeRoute } from './queue-purge/start/route.js';
+import { cancelPurgeJobRoute } from './queue-purge/cancel-job/route.js';
+import { getPurgeJobRoute } from './queue-purge/get-job/route.js';
+import { getPurgeJobStatusRoute } from './queue-purge/get-job-status/route.js';
 
 export const routes: RouteDefinition[] = [
   // Configuration
@@ -83,12 +83,8 @@ export const routes: RouteDefinition[] = [
 
   // Queue Messages
   getQueueMessagesRoute,
-  purgeQueueMessagesRoute,
   countQueueMessagesRoute,
   getMessageIdsRoute,
-  getPurgeJobRoute,
-  getPurgeJobStatusRoute,
-  cancelPurgeRoute,
 
   // Queues
   getAllQueuesRoute,
@@ -130,6 +126,12 @@ export const routes: RouteDefinition[] = [
   getQueueRateLimitRoute,
   setQueueRateLimitRoute,
   clearQueueRateLimitRoute,
+
+  // Queue Purge
+  startPurgeRoute,
+  getPurgeJobRoute,
+  getPurgeJobStatusRoute,
+  cancelPurgeJobRoute,
 
   // Namespaces
   getNamespacesRoute,

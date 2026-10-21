@@ -13,12 +13,11 @@ import { getPurgeJobStatus } from './handler.js';
 
 export const getPurgeJobStatusRoute: RouteDefinition = {
   method: 'get',
-  path: '/api/namespaces/:ns/queues/:name/messages/purge/:jobId/status',
-  tags: ['Queue Messages'],
+  path: '/api/namespaces/:ns/queues/:name/purge/:messageStatus/:jobId/status',
+  tags: ['Queue Purge'],
   operationId: 'getPurgeJobStatus',
   request: {
     path: getSchema('GetPurgeJobStatusControllerRequestPathDTO'),
-    query: getSchema('GetPurgeJobStatusControllerRequestQueryDTO'),
   },
   response: getResponseSchemas('GetPurgeJobStatusControllerResponseDTO'),
   handler: getPurgeJobStatus,
