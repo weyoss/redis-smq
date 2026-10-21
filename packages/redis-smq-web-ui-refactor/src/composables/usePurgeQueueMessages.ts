@@ -9,34 +9,35 @@
 
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
 import type { IQueueParams, MessageStatus } from '@/api/model';
-import { usePurgeQueueMessages as useOrvalPurge } from '@/api/generated/queue-messages/queue-messages';
+import { useStartPurge } from '@/api/generated/queue-purge/queue-purge';
 import { getErrorMessage } from '@/lib/error';
-
-export type PurgeScope = MessageStatus | 'all';
 
 export function usePurgeQueueMessages(
   queue: MaybeRefOrGetter<IQueueParams | null>,
-  onSuccess?: () => void,
 ) {
   const params = computed(() => toValue(queue));
-  const mutation = useOrvalPurge({
-    mutation: { onSuccess: () => onSuccess?.() },
-  });
+  const mutation = useStartPurge();
 
-  async function purge(scope: PurgeScope): Promise<void> {
+  /**
+   * Trigger an async purge. `status` is the browse-API filter:
+   *   - 'published'      → every message regardless of current status
+   *   - other statuses   → only messages currently in that state
+   * The same value is required in the follow-up URLs
+   * (.../purge/{messageStatus}/{jobId}).
+   */
+  async function purge(status: MessageStatus): Promise<{ jobId: string }> {
     const q = params.value;
     if (!q) throw new Error('Queue is required');
 
-    // `params: {}` for "all" — the endpoint treats a missing `status` query
-    // param as "purge every status". Passing `{}` is equivalent and satisfies
-    // the generated `params?: PurgeQueueMessagesParams` slot either way.
-    const queryParams = scope === 'all' ? {} : { status: scope };
-
-    await mutation.mutateAsync({
+    const result = await mutation.mutateAsync({
       ns: q.ns,
       name: q.name,
-      params: queryParams,
+      messageStatus: status,
     });
+
+    const jobId = result?.data?.jobId;
+    if (!jobId) throw new Error('Purge accepted but returned no job ID');
+    return { jobId };
   }
 
   return {
