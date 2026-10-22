@@ -7,7 +7,7 @@
     "dev": "node scripts/dev.js",
     "dev:only": "vite",
     "dev:api": "node scripts/run-api-server.js",
-    "build": "vue-tsc --build && vite build",
+    "build": "scripts/build.sh",
     "preview": "vite preview",
     "generate-api": "orval",
     "test:unit": "vitest",
