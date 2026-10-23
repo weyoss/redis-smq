@@ -252,7 +252,11 @@ function onChangeGroup() {
 }
 
 // --- Display ---
-const canRequeue = computed(() => messageType.value !== 'scheduled');
+const canRequeue = computed(
+  () =>
+    messageType.value === 'dead-lettered' ||
+    messageType.value === 'acknowledged',
+);
 
 const queueLabel = computed(() =>
   name.value && ns.value ? `${name.value}@${ns.value}` : '',
