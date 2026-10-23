@@ -17,10 +17,7 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import BindQueueModal from '@/components/modals/BindQueueModal.vue';
 import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
 import { useExchangeDetail } from '@/composables/useExchangeDetail';
-import {
-  useExchangeBindings,
-  FANOUT_KEY,
-} from '@/composables/useExchangeBindings';
+import { useExchangeBindings } from '@/composables/useExchangeBindings';
 import { useTypedRouter } from '@/router/typed';
 import { getErrorMessage } from '@/lib/error';
 import { useDeleteExchange } from '@/api/generated/namespace-exchanges/namespace-exchanges';
@@ -138,11 +135,6 @@ const actions = computed<PageAction[]>(() => [
     },
   },
 ]);
-
-// Keep FANOUT_KEY referenced so the compiler doesn't tree-shake it away
-// when the value ends up in the template via v-if in the future.
-void FANOUT_KEY;
-void EExchangeType;
 </script>
 
 <template>
@@ -178,11 +170,11 @@ void EExchangeType;
         <div v-else class="binding-list">
           <div
             v-for="b in bindings.bindings.value"
-            :key="b.key"
+            :key="`${b.kind}-${b.key}`"
             class="binding-group"
           >
             <h4
-              v-if="b.key !== FANOUT_KEY"
+              v-if="b.kind === 'routed'"
               class="binding-group__title font-mono"
             >
               {{ b.key }}
@@ -203,7 +195,7 @@ void EExchangeType;
                   @click="
                     unbindTarget = {
                       queueName: q.name,
-                      bindingKey: b.key === FANOUT_KEY ? undefined : b.key,
+                      bindingKey: b.kind === 'routed' ? b.key : undefined,
                     }
                   "
                 >

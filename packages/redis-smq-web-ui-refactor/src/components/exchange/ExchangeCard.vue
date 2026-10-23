@@ -40,7 +40,7 @@ const samples = computed(() => {
     for (const q of b.queues) {
       flat.push({
         queueName: q.name,
-        bindingKey: b.key === '_all' ? undefined : b.key,
+        bindingKey: b.kind === 'routed' ? b.key : undefined,
       });
     }
   }
