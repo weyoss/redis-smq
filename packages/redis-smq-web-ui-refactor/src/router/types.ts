@@ -17,6 +17,7 @@ export type RouteName =
   | 'messages'
   | 'exchanges'
   | 'exchangeDetails'
+  | 'configuration'
   | 'notFound';
 
 export interface RouteParams {

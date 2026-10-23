@@ -8,17 +8,47 @@
   -->
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import redisSMQLogo from '@/assets/images/redis-smq-logo.png';
+import type { RouteName } from '@/router/types';
 
 const navItems = [
   { name: 'home', label: 'Home', icon: 'bi-house-door' },
   { name: 'namespaces', label: 'Namespaces', icon: 'bi-folder' },
   { name: 'queues', label: 'Queues', icon: 'bi-list-ul' },
   { name: 'exchanges', label: 'Exchanges', icon: 'bi-diagram-3' },
-] as const;
+] as const satisfies ReadonlyArray<{
+  name: RouteName;
+  label: string;
+  icon: string;
+}>;
+
+type NavSection = (typeof navItems)[number]['name'];
+
+// Which route names highlight each nav item. Detail routes and
+// namespace-scoped lists belong to the section the user navigated
+// *through* — /ns/:ns/queues/:q/messages highlights Queues even
+// though the URL is longer than the Queues link itself.
+const SECTION_ROUTES: Record<NavSection, readonly RouteName[]> = {
+  home: ['home'],
+  namespaces: ['namespaces'],
+  queues: ['queues', 'queue', 'messages', 'namespaceQueues'],
+  exchanges: ['exchanges', 'exchangeDetails', 'namespaceExchanges'],
+};
 
 const route = useRoute();
+
+const activeSection = computed<NavSection | null>(() => {
+  const name = route.name as RouteName | undefined;
+  if (!name) return null;
+  for (const item of navItems) {
+    if (SECTION_ROUTES[item.name].includes(name)) return item.name;
+  }
+  return null;
+});
+
+const isConfiguration = computed(() => route.name === 'configuration');
 </script>
 
 <template>
@@ -37,7 +67,8 @@ const route = useRoute();
           :key="item.name"
           :to="{ name: item.name }"
           class="app-header__link"
-          :class="{ 'app-header__link--active': route.name === item.name }"
+          :class="{ 'app-header__link--active': activeSection === item.name }"
+          :aria-current="activeSection === item.name ? 'page' : undefined"
         >
           <i :class="item.icon" aria-hidden="true" />
           {{ item.label }}
@@ -45,9 +76,8 @@ const route = useRoute();
         <RouterLink
           :to="{ name: 'configuration' }"
           class="app-header__link app-header__link--settings"
-          :class="{
-            'app-header__link--active': route.name === 'configuration',
-          }"
+          :class="{ 'app-header__link--active': isConfiguration }"
+          :aria-current="isConfiguration ? 'page' : undefined"
           title="Configuration"
           aria-label="Configuration"
         >
