@@ -15,8 +15,9 @@ import { getErrorMessage } from '@/lib/error';
 export function useMessageDetail(id: MaybeRefOrGetter<string | null>) {
   const idRef = computed(() => toValue(id) ?? '');
 
+  const enabled = computed(() => idRef.value.length > 0);
   const query = useGetMessageById(idRef, {
-    query: { staleTime: 5_000 },
+    query: { enabled, staleTime: 5_000 },
   });
 
   return {
