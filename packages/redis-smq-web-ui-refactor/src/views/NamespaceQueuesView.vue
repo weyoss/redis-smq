@@ -62,6 +62,7 @@ const actions = computed<PageAction[]>(() => [
         v-for="q in queues.queues.value"
         :key="`${q.ns}-${q.name}`"
         :queue="q"
+        @deleted="queues.refetch()"
       />
     </Card>
   </PageShell>
