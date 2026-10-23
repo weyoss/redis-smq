@@ -16,6 +16,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import { useQueueProperties } from '@/composables/useQueueProperties';
 import { useQueueConsumerGroups } from '@/composables/useQueueConsumerGroups';
+import { getErrorMessage } from '@/lib/error';
 
 const props = defineProps<{ queue: IQueueParams }>();
 
@@ -43,8 +44,10 @@ async function onCreate() {
     await groups.createGroup(newName.value.trim());
     showCreate.value = false;
   } catch (e) {
-    // fall through — use createError.value from composable for the real message
-    createError.value = groups.createError.value ?? createError.value;
+    // Use the caught error, not `groups.createError.value` — relying on
+    // TanStack's mutation.error being populated before mutateAsync
+    // rejects is a timing assumption. `e` is the authoritative value.
+    createError.value = getErrorMessage(e);
   }
 }
 
@@ -59,8 +62,7 @@ async function onConfirmDelete() {
     await groups.removeGroup(deleteTarget.value);
     deleteTarget.value = null;
   } catch (e) {
-    deleteError.value =
-      groups.deleteError.value ?? (e instanceof Error ? e.message : String(e));
+    deleteError.value = getErrorMessage(e);
   }
 }
 
