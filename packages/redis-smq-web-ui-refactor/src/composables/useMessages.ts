@@ -141,6 +141,19 @@ export function useMessages(
     };
   });
 
+  // Clamp the current page when totalPages shrinks below it (e.g. after
+  // deletions removed the last item on the last page). Must be declared
+  // AFTER paginationInfo — the watch source getter runs synchronously
+  // during setup.
+  watch(
+    () => paginationInfo.value.totalPages,
+    (max) => {
+      if (pagination.page > max) {
+        pagination.page = Math.max(1, max);
+      }
+    },
+  );
+
   function goToPage(page: number) {
     const max = paginationInfo.value.totalPages;
     if (page < 1 || page > max || page === pagination.page) return;
