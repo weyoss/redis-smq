@@ -40,6 +40,13 @@ const emit = defineEmits<{
 
 const activeTab = ref<Tab>('overview');
 
+// Modal-local action state
+const showDelete = ref(false);
+const showRequeue = ref(false);
+const deleteError = ref<string | null>(null);
+const requeueError = ref<string | null>(null);
+const actionFlash = ref<string | null>(null);
+
 const message = useMessageDetail(() => props.messageId);
 
 const unackHistory = useMessageUnackHistory(
@@ -49,20 +56,22 @@ const unackHistory = useMessageUnackHistory(
 
 const actions = useMessageActions();
 
+// Reset all per-message UI state when the target message changes. Without
+// this, the requeue flash and any open confirm dialog / error message
+// leak into the next message the user opens.
 watch(
   () => props.messageId,
   () => {
     activeTab.value = 'overview';
+    actionFlash.value = null;
+    showDelete.value = false;
+    showRequeue.value = false;
+    deleteError.value = null;
+    requeueError.value = null;
   },
 );
 
 // --- Actions ---
-const showDelete = ref(false);
-const showRequeue = ref(false);
-const deleteError = ref<string | null>(null);
-const requeueError = ref<string | null>(null);
-const actionFlash = ref<string | null>(null);
-
 async function onConfirmDelete() {
   if (!props.messageId) return;
   deleteError.value = null;
