@@ -63,6 +63,19 @@ function trapFocus(e: KeyboardEvent): void {
   const first = els[0];
   const last = els[els.length - 1];
   const active = document.activeElement as HTMLElement | null;
+
+  // Pull focus back into the modal if it somehow escaped — e.g. it was
+  // still on <body> when the modal opened (a fast click can land before
+  // the nextTick focus), the user clicked the non-interactive scrim
+  // background, or a child control moved focus programmatically. Without
+  // this branch, Tab from outside the modal is unhandled and walks
+  // through the underlying page.
+  if (!active || !root.contains(active)) {
+    e.preventDefault();
+    (e.shiftKey ? last : first).focus();
+    return;
+  }
+
   if (e.shiftKey && (active === first || active === root)) {
     e.preventDefault();
     last.focus();
