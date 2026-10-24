@@ -6,177 +6,28 @@
  * This source code is licensed under the MIT license found in the LICENSE file
  * in the root directory of this source tree.
  */
+import { computed, toValue, type MaybeRefOrGetter } from 'vue';
+import type { IQueueParams } from '@/api/model';
+import { useGetQueueRateLimit } from '@/api/generated/rate-limiting/rate-limiting';
+import { getErrorMessage } from '@/lib/error';
 
-import {
-  useDeleteApiNamespacesNsQueuesNameRateLimit,
-  useGetApiNamespacesNsQueuesNameRateLimit,
-  usePutApiNamespacesNsQueuesNameRateLimit,
-} from '@/api/generated/rate-limiting/rate-limiting.ts';
-import type { PutApiNamespacesNsQueuesNameRateLimitBody } from '@/api/model/index.ts';
-import { computed } from 'vue';
-import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+export function useQueueRateLimit(
+  queue: MaybeRefOrGetter<IQueueParams | null>,
+) {
+  const params = computed(() => toValue(queue));
+  const enabled = computed(() => params.value !== null);
 
-export function useQueueRateLimit() {
-  const selectedQueueStore = useSelectedQueueStore();
-
-  // Rate Limit Query
-  const rateLimitQuery = useGetApiNamespacesNsQueuesNameRateLimit(
-    computed(() => selectedQueueStore.selectedQueue?.ns || ''),
-    computed(() => selectedQueueStore.selectedQueue?.name || ''),
-    {
-      query: {
-        enabled: computed(
-          () =>
-            !!selectedQueueStore.selectedQueue?.ns &&
-            !!selectedQueueStore.selectedQueue?.name,
-        ),
-        retry: false, // Don't retry if rate limit doesn't exist
-      },
-    },
+  const query = useGetQueueRateLimit(
+    computed(() => params.value?.ns ?? ''),
+    computed(() => params.value?.name ?? ''),
+    { query: { enabled, retry: false } },
   );
-
-  // Rate Limit Mutations
-  const setRateLimitMutation = usePutApiNamespacesNsQueuesNameRateLimit({
-    mutation: {
-      onSuccess: async () => {
-        // Refetch rate limit data after successful update
-        await rateLimitQuery.refetch();
-      },
-    },
-  });
-
-  const clearRateLimitMutation = useDeleteApiNamespacesNsQueuesNameRateLimit({
-    mutation: {
-      onSuccess: async () => {
-        // Refetch rate limit data after successful deletion
-        await rateLimitQuery.refetch();
-      },
-    },
-  });
-
-  // Computed properties for easy access to data
-  const rateLimit = computed(() => rateLimitQuery.data.value);
-
-  // Loading states
-  const isLoadingRateLimit = computed(() => rateLimitQuery.isLoading.value);
-  const isUpdatingRateLimit = computed(
-    () => setRateLimitMutation.isPending.value,
-  );
-  const isClearingRateLimit = computed(
-    () => clearRateLimitMutation.isPending.value,
-  );
-
-  // Combined loading state
-  const isLoading = computed(
-    () =>
-      isLoadingRateLimit.value ||
-      isUpdatingRateLimit.value ||
-      isClearingRateLimit.value,
-  );
-
-  // Error states
-  const rateLimitError = computed(() => rateLimitQuery.error.value);
-  const setRateLimitError = computed(() => setRateLimitMutation.error.value);
-  const clearRateLimitError = computed(
-    () => clearRateLimitMutation.error.value,
-  );
-
-  // Combined error state
-  const error = computed(
-    () =>
-      rateLimitError.value ||
-      setRateLimitError.value ||
-      clearRateLimitError.value,
-  );
-
-  // Computed getters
-  const hasRateLimit = computed(() => {
-    return !!rateLimit.value?.data;
-  });
-
-  // Rate limit operations
-  async function setRateLimit(
-    rateLimitData: PutApiNamespacesNsQueuesNameRateLimitBody,
-  ): Promise<void> {
-    if (!selectedQueueStore.selectedQueue) {
-      throw new Error('No queue selected');
-    }
-
-    await setRateLimitMutation.mutateAsync({
-      ...selectedQueueStore.selectedQueue,
-      data: rateLimitData,
-    });
-  }
-
-  async function clearRateLimit(): Promise<void> {
-    if (!selectedQueueStore.selectedQueue) {
-      throw new Error('No queue selected');
-    }
-
-    await clearRateLimitMutation.mutateAsync(selectedQueueStore.selectedQueue);
-  }
-
-  // Utility functions
-  async function refreshRateLimit(): Promise<void> {
-    await rateLimitQuery.refetch();
-  }
-
-  function refetchRateLimitData(): Promise<unknown> {
-    if (!selectedQueueStore.selectedQueue) {
-      return Promise.resolve();
-    }
-    return rateLimitQuery.refetch();
-  }
-
-  // Reset mutations (useful for clearing error states)
-  function resetSetRateLimitMutation(): void {
-    setRateLimitMutation.reset();
-  }
-
-  function resetClearRateLimitMutation(): void {
-    clearRateLimitMutation.reset();
-  }
-
-  function resetAllMutations(): void {
-    setRateLimitMutation.reset();
-    clearRateLimitMutation.reset();
-  }
 
   return {
-    // Query objects (for direct access)
-    rateLimitQuery,
-
-    // Mutation objects (for direct access to mutate, mutateAsync, etc.)
-    setRateLimitMutation,
-    clearRateLimitMutation,
-
-    // Data computed properties
-    rateLimit,
-
-    // Loading states
-    isLoading,
-    isLoadingRateLimit,
-    isUpdatingRateLimit,
-    isClearingRateLimit,
-
-    // Error states
-    error,
-    rateLimitError,
-    setRateLimitError,
-    clearRateLimitError,
-
-    // Computed getters
-    hasRateLimit,
-
-    // Actions
-    setRateLimit,
-    clearRateLimit,
-    refreshRateLimit,
-    refetchRateLimitData,
-
-    // Mutation reset methods
-    resetSetRateLimitMutation,
-    resetClearRateLimitMutation,
-    resetAllMutations,
+    query,
+    rateLimit: computed(() => query.data.value?.data ?? null),
+    isLoading: computed(() => query.isLoading.value),
+    error: computed(() => getErrorMessage(query.error.value) || null),
+    refetch: query.refetch,
   };
 }

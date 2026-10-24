@@ -7,30 +7,30 @@
  * in the root directory of this source tree.
  */
 
-import type { IRedisSMQWebUIConfig } from '@/config/types/index.ts';
+interface RsmqWebConfig {
+  API_URL: string;
+  BASE_PATH: string;
+}
 
-// Create a global declaration to extend the Window interface
 declare global {
   interface Window {
-    configs: IRedisSMQWebUIConfig;
+    configs?: Partial<RsmqWebConfig>;
   }
 }
 
-// Initialize the configs object if it doesn't exist
-if (typeof window !== 'undefined' && !window.configs) {
-  window.configs = {
-    API_URL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000/api',
-    BASE_PATH: import.meta.env.VITE_BASE_PATH || '/',
-  };
-}
+const FALLBACKS: RsmqWebConfig = {
+  API_URL: 'http://127.0.0.1:3000',
+  BASE_PATH: '/',
+};
 
-// Helper function to get config values with type safety
-export function getConfig<K extends keyof IRedisSMQWebUIConfig>(
+function resolve<K extends keyof RsmqWebConfig>(
   key: K,
-): IRedisSMQWebUIConfig[K] {
-  const value = window.configs[key];
-  if (value === undefined) {
-    throw new Error(`Environment variable "${key}" is not defined`);
-  }
-  return value;
+  envValue: string | undefined,
+): string {
+  const fromWindow =
+    typeof window !== 'undefined' ? window.configs?.[key] : undefined;
+  return fromWindow ?? envValue ?? FALLBACKS[key];
 }
+
+export const API_URL = resolve('API_URL', import.meta.env.VITE_API_URL);
+export const BASE_PATH = resolve('BASE_PATH', import.meta.env.VITE_BASE_PATH);

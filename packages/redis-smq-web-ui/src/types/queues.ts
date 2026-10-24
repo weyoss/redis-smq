@@ -7,25 +7,43 @@
  * in the root directory of this source tree.
  */
 
-export interface IQueueParams {
-  name: string;
-  ns: string;
-}
+// Numeric enums from redis-smq, matching the wire format in openapi-specs.json.
+// Orval generates `{ NUMBER_0: 0, NUMBER_1: 1 }` for these because the spec
+// has no name metadata — so we declare them here with the semantic names.
 
 export enum EQueueDeliveryModel {
-  POINT_TO_POINT,
-  PUB_SUB,
+  POINT_TO_POINT = 0,
+  PUB_SUB = 1,
 }
 
 export enum EQueueType {
-  LIFO_QUEUE,
-  FIFO_QUEUE,
-  PRIORITY_QUEUE,
+  LIFO_QUEUE = 0,
+  FIFO_QUEUE = 1,
+  PRIORITY_QUEUE = 2,
 }
 
 export enum EQueueOperationalState {
-  ACTIVE,
-  PAUSED,
-  STOPPED,
-  LOCKED,
+  ACTIVE = 0,
+  PAUSED = 1,
+  STOPPED = 2,
+  LOCKED = 3,
+}
+
+export enum EStateTransitionReason {
+  MANUAL = 'MANUAL',
+  SCHEDULED = 'SCHEDULED',
+  EMERGENCY = 'EMERGENCY',
+  PERFORMANCE = 'PERFORMANCE',
+  ERROR = 'ERROR',
+  CONFIG_CHANGE = 'CONFIG_CHANGE',
+  TESTING = 'TESTING',
+  OTHER = 'OTHER',
+}
+
+export enum EBackgroundJobStatus {
+  PENDING = 0,
+  RUNNING = 1,
+  COMPLETED = 2,
+  FAILED = 3,
+  CANCELLED = 4,
 }

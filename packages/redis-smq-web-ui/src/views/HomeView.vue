@@ -8,965 +8,525 @@
   -->
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useQueryClient } from '@tanstack/vue-query';
-import {
-  getApiQueues,
-  getGetApiQueuesQueryKey,
-} from '@/api/generated/queues/queues.ts';
-import {
-  getApiNamespacesNsQueuesName,
-  getGetApiNamespacesNsQueuesNameQueryKey,
-} from '@/api/generated/queue/queue.ts';
-import {
-  getApiNamespacesNsQueuesNameConsumers,
-  getGetApiNamespacesNsQueuesNameConsumersQueryKey,
-} from '@/api/generated/queue-consumers/queue-consumers.ts';
+import { computed, ref } from 'vue';
+import PageShell from '@/components/ui/PageShell.vue';
+import Card from '@/components/ui/Card.vue';
+import StatCard from '@/components/ui/StatCard.vue';
+import StatGrid from '@/components/ui/StatGrid.vue';
 import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
-import { useTypedRouter } from '@/router/useTypeRouter.ts';
-import type { IQueueParams } from '@/types';
+import { useListQueues } from '@/composables/useListQueues';
+import { useExchanges } from '@/composables/useExchanges';
+import { useNamespaces } from '@/composables/useNamespaces';
+import { useTypedRouter } from '@/router/typed';
+import { formatNumber } from '@/lib/format';
+import type { IQueueParams } from '@/api/model';
+import type { PageAction } from '@/components/ui/PageShell.vue';
 
 const router = useTypedRouter();
-const queryClient = useQueryClient();
 
-// Local UI state: Create Queue modal
-const showCreateQueueModal = ref(false);
+const queues = useListQueues();
+const exchanges = useExchanges();
+const namespaces = useNamespaces();
 
-const systemStats = ref({
-  totalQueues: 0,
-  totalMessages: 0,
-  currentlyInProcess: 0,
-  pendingMessages: 0,
-  activeConsumers: 0,
-  lastUpdated: new Date(),
-});
+const showCreate = ref(false);
+function openCreate() {
+  showCreate.value = true;
+}
 
-const quickActions = [
+function onCreated(params: IQueueParams) {
+  showCreate.value = false;
+  queues.refetch();
+  exchanges.refetch();
+  namespaces.refetch();
+  router.go('queue', { ns: params.ns, queue: params.name });
+}
+
+const isLoading = computed(
+  () =>
+    queues.isLoading.value ||
+    exchanges.isLoading.value ||
+    namespaces.isLoading.value,
+);
+
+const error = computed(
+  () =>
+    queues.error.value ||
+    exchanges.error.value ||
+    namespaces.error.value ||
+    null,
+);
+
+const stats = computed(() => [
   {
-    title: 'Create Queue',
-    description: 'Set up a new message queue',
-    icon: 'bi-plus-circle-fill',
-    color: 'info',
-    // Open the self-contained modal instead of navigating away
-    action: () => {
-      showCreateQueueModal.value = true;
-    },
+    id: 'queues',
+    label: 'Queues',
+    value: formatNumber(queues.queues.value.length),
+    icon: 'bi-collection',
+    tint: 'primary' as const,
   },
   {
-    title: 'Set up Exchange',
-    description: 'Bind your queue to an exchange',
+    id: 'exchanges',
+    label: 'Exchanges',
+    value: formatNumber(exchanges.exchanges.value.length),
     icon: 'bi-diagram-3',
-    color: 'info',
-    action: () => router.push('exchanges'),
+    tint: 'info' as const,
   },
   {
-    title: 'View Queues',
+    id: 'namespaces',
+    label: 'Namespaces',
+    value: formatNumber(namespaces.namespaces.value.length),
+    icon: 'bi-folder',
+    tint: 'secondary' as const,
+  },
+]);
+
+const recentQueues = computed(() => queues.sortedQueues.value.slice(0, 8));
+
+const hasQueues = computed(() => queues.queues.value.length > 0);
+
+// Quick actions — spec §C.2
+const quickActions = computed(() => [
+  {
+    id: 'create-queue',
+    title: 'Create queue',
+    description: 'Set up a new message queue',
+    icon: 'bi-plus-circle',
+    onClick: openCreate,
+  },
+  {
+    id: 'exchanges',
+    title: 'Set up exchange',
+    description: 'Route messages to queues',
+    icon: 'bi-diagram-3',
+    onClick: () => router.go('exchanges'),
+  },
+  {
+    id: 'queues',
+    title: 'View queues',
     description: 'Manage existing queues',
     icon: 'bi-list-ul',
-    color: 'info',
-    action: () => router.push('queues'),
+    onClick: () => router.go('queues'),
   },
   {
+    id: 'docs',
     title: 'Documentation',
     description: 'Learn more about RedisSMQ',
-    icon: 'bi-book-fill',
-    color: 'info',
-    action: () =>
+    icon: 'bi-book',
+    onClick: () =>
       window.open(
-        'https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/README.md',
+        'https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs',
         '_blank',
+        'noopener,noreferrer',
       ),
+  },
+]);
+
+// Getting started steps — spec §C.2
+const gettingStartedSteps = [
+  {
+    title: 'Create a queue',
+    description: 'Create a new queue to hold your messages.',
+  },
+  {
+    title: 'Publish a message',
+    description: 'Send messages directly to your queue or through an exchange.',
+  },
+  {
+    title: 'Consume messages',
+    description: 'Build a consumer application to process messages.',
+  },
+  {
+    title: 'Monitor & manage',
+    description: 'Use the UI to monitor queues, exchanges, and messages.',
   },
 ];
 
-const isLoading = ref(true);
-
-// Computed properties
-const formattedStats = computed(() => ({
-  totalQueues: systemStats.value.totalQueues.toLocaleString(),
-  totalMessages: systemStats.value.totalMessages.toLocaleString(),
-  pendingMessages: systemStats.value.pendingMessages.toLocaleString(),
-  currentlyInProcess: systemStats.value.currentlyInProcess.toLocaleString(),
-  activeConsumers: systemStats.value.activeConsumers.toLocaleString(),
-}));
-
-// Methods
-const loadDashboardData = async () => {
-  try {
-    isLoading.value = true;
-
-    // Fetch all queues imperatively using the query client
-    const queuesResponse = await queryClient.fetchQuery({
-      queryKey: getGetApiQueuesQueryKey(),
-      queryFn: () => getApiQueues(),
-    });
-    const queues = queuesResponse.data;
-
-    if (!queues || queues.length === 0) {
-      Object.assign(systemStats.value, {
-        totalQueues: 0,
-        totalMessages: 0,
-        pendingMessages: 0,
-        currentlyInProcess: 0,
-        activeConsumers: 0,
-        lastUpdated: new Date(),
-      });
-      return;
-    }
-
-    // For each queue, create promises to fetch its details and consumers
-    const promises = queues.map(async (queue) => {
-      const detailsPromise = queryClient.fetchQuery({
-        queryKey: getGetApiNamespacesNsQueuesNameQueryKey(queue.ns, queue.name),
-        queryFn: () => getApiNamespacesNsQueuesName(queue.ns, queue.name),
-      });
-
-      const consumersPromise = queryClient.fetchQuery({
-        queryKey: getGetApiNamespacesNsQueuesNameConsumersQueryKey(
-          queue.ns,
-          queue.name,
-        ),
-        queryFn: () =>
-          getApiNamespacesNsQueuesNameConsumers(queue.ns, queue.name),
-      });
-
-      const [detailsResponse, consumersResponse] = await Promise.all([
-        detailsPromise,
-        consumersPromise,
-      ]);
-
-      const details = detailsResponse.data;
-      const consumers = consumersResponse.data ?? {};
-
-      return { details, consumers };
-    });
-
-    const results = await Promise.all(promises);
-
-    // Aggregate results
-    const newStats = results.reduce(
-      (acc, result) => {
-        if (result.details) {
-          acc.totalMessages += result.details.messagesCount ?? 0;
-          acc.pendingMessages += result.details.pendingMessagesCount ?? 0;
-          acc.currentlyInProcess += result.details.processingMessagesCount ?? 0;
-        }
-        if (result.consumers) {
-          acc.activeConsumers += Object.keys(result.consumers).length;
-        }
-        return acc;
-      },
-      {
-        totalMessages: 0,
-        pendingMessages: 0,
-        currentlyInProcess: 0,
-        activeConsumers: 0,
-      },
-    );
-
-    systemStats.value = {
-      ...newStats,
-      totalQueues: queues.length,
-      lastUpdated: new Date(),
-    };
-  } catch (error) {
-    console.error('Failed to load dashboard data:', error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Lifecycle
-onMounted(() => {
-  loadDashboardData();
-});
-
-const onQueueCreated = (queue: IQueueParams) => {
-  router.push('queue', {
-    params: {
-      ns: queue.ns,
-      queue: queue.name,
+const actions = computed<PageAction[]>(() => [
+  {
+    id: 'refresh',
+    label: 'Refresh',
+    icon: 'bi-arrow-clockwise',
+    variant: 'secondary',
+    loading: isLoading.value,
+    onClick: () => {
+      queues.refetch();
+      exchanges.refetch();
+      namespaces.refetch();
     },
-  });
-};
+  },
+]);
+
+const heroCtaLabel = computed(() =>
+  hasQueues.value ? 'Create queue' : 'Get started',
+);
 </script>
 
 <template>
-  <div class="home-page">
-    <!-- Hero Section -->
-    <section class="hero-section">
-      <div class="hero-content">
-        <div class="hero-text">
-          <h1 class="hero-title">
-            <span class="hero-icon">🚀</span>
-            Welcome to RedisSMQ
-          </h1>
-          <p class="hero-subtitle">
-            Powerful Redis-based message queue management made simple
-          </p>
-          <div class="hero-stats">
-            <div class="stat-item">
-              <span class="stat-value">{{ formattedStats.totalQueues }}</span>
-              <span class="stat-label">Active Queues</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ formattedStats.totalMessages }}</span>
-              <span class="stat-label">Messages Processed</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{
-                formattedStats.activeConsumers
-              }}</span>
-              <span class="stat-label">Active Consumers</span>
-            </div>
-          </div>
+  <PageShell
+    title="Home"
+    subtitle="RedisSMQ dashboard"
+    icon="bi-house-door"
+    :actions="actions"
+    :loading="isLoading"
+    :error="error"
+  >
+    <!-- Hero strip -->
+    <section class="hero">
+      <div class="hero__text">
+        <div class="hero__icon" aria-hidden="true">
+          <i class="bi bi-rocket-takeoff" />
         </div>
-        <div class="hero-actions">
-          <button
-            class="btn btn-primary btn-lg hero-btn"
-            @click="router.push('queues')"
-          >
-            <i class="bi bi-plus-circle me-2"></i>
-            Get Started
-          </button>
+        <div class="hero__titles">
+          <h2 class="hero__title">Welcome to RedisSMQ</h2>
+          <p class="hero__subtitle">
+            Powerful Redis-based message queue management
+          </p>
         </div>
       </div>
+      <button type="button" class="btn btn-light hero__cta" @click="openCreate">
+        <i class="bi bi-plus-circle me-1" aria-hidden="true" />
+        {{ heroCtaLabel }}
+      </button>
     </section>
 
-    <!-- Main Dashboard -->
-    <main class="dashboard-main">
-      <!-- Loading State -->
-      <div v-if="isLoading" class="loading-section">
-        <div class="loading-content">
-          <div
-            class="spinner-border text-primary mb-3"
-            role="status"
-            aria-live="polite"
-            aria-label="Loading dashboard"
-          ></div>
-          <h5 class="loading-title">Loading dashboard...</h5>
-          <p class="loading-subtitle">Fetching system information</p>
-        </div>
+    <!-- Aggregate stats -->
+    <StatGrid>
+      <StatCard v-for="s in stats" :key="s.id" v-bind="s" />
+    </StatGrid>
+
+    <!-- Quick actions -->
+    <Card title="Quick actions" icon="bi-lightning" :heading-level="2">
+      <div class="quick-grid">
+        <button
+          v-for="action in quickActions"
+          :key="action.id"
+          type="button"
+          class="quick-tile"
+          @click="action.onClick"
+        >
+          <span class="quick-tile__icon" aria-hidden="true">
+            <i :class="action.icon" />
+          </span>
+          <span class="quick-tile__text">
+            <span class="quick-tile__title">{{ action.title }}</span>
+            <span class="quick-tile__desc">{{ action.description }}</span>
+          </span>
+          <i class="bi bi-arrow-right quick-tile__chevron" aria-hidden="true" />
+        </button>
       </div>
+    </Card>
 
-      <!-- Dashboard Content -->
-      <div v-else class="dashboard-content">
-        <!-- Quick Actions -->
-        <section class="actions-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="bi bi-lightning-fill me-2"></i>
-              Quick Actions
-            </h2>
-          </div>
+    <!-- Recent queues (when there are queues) -->
+    <Card
+      v-if="hasQueues"
+      title="Recent queues"
+      subtitle="Jump back into your most recently created queues"
+      icon="bi-collection"
+      :heading-level="2"
+    >
+      <template #actions>
+        <RouterLink
+          :to="{ name: 'queues' }"
+          class="btn btn-sm btn-outline-secondary"
+        >
+          View all
+          <i class="bi bi-arrow-right ms-1" aria-hidden="true" />
+        </RouterLink>
+      </template>
+      <ul class="recent">
+        <li v-for="q in recentQueues" :key="`${q.ns}-${q.name}`">
+          <RouterLink
+            :to="{ name: 'queue', params: { ns: q.ns, queue: q.name } }"
+            class="recent__link"
+          >
+            <i class="bi bi-collection recent__icon" aria-hidden="true" />
+            <span class="font-mono recent__name">{{ q.name }}</span>
+            <span class="recent__ns">{{ q.ns }}</span>
+            <i class="bi bi-chevron-right recent__chevron" aria-hidden="true" />
+          </RouterLink>
+        </li>
+      </ul>
+    </Card>
 
-          <div class="actions-grid">
-            <div
-              v-for="action in quickActions"
-              :key="action.title"
-              class="action-card"
-              :class="`action-${action.color}`"
-              @click="action.action"
-            >
-              <div class="action-icon">
-                <i :class="action.icon"></i>
-              </div>
-              <div class="action-content">
-                <h3 class="action-title">{{ action.title }}</h3>
-                <p class="action-description">{{ action.description }}</p>
-              </div>
-              <div class="action-arrow">
-                <i class="bi bi-arrow-right"></i>
-              </div>
-            </div>
+    <!-- Getting started (only when no queues yet) -->
+    <Card
+      v-if="!hasQueues"
+      title="Getting started"
+      subtitle="Four steps to your first message"
+      icon="bi-signpost-2"
+      :heading-level="2"
+    >
+      <ol class="steps">
+        <li
+          v-for="(step, i) in gettingStartedSteps"
+          :key="step.title"
+          class="steps__item"
+        >
+          <span class="steps__number" aria-hidden="true">{{ i + 1 }}</span>
+          <div class="steps__text">
+            <div class="steps__title">{{ step.title }}</div>
+            <div class="steps__desc">{{ step.description }}</div>
           </div>
-        </section>
-
-        <!-- Getting Started -->
-        <section class="getting-started-section">
-          <div class="getting-started-card">
-            <div class="getting-started-content">
-              <h2 class="getting-started-title">
-                <i class="bi bi-rocket-takeoff me-2"></i>
-                Getting Started
-              </h2>
-              <p class="getting-started-description">
-                New to RedisSMQ? Follow these steps to set up your first message
-                queue and start processing messages.
-              </p>
-              <div class="getting-started-steps">
-                <div class="step-item">
-                  <div class="step-number">1</div>
-                  <div class="step-content">
-                    <h4 class="step-title">Create a Queue</h4>
-                    <p class="step-description">
-                      Create a new queue to hold your messages.
-                    </p>
-                  </div>
-                </div>
-                <div class="step-item">
-                  <div class="step-number">2</div>
-                  <div class="step-content">
-                    <h4 class="step-title">Publish a Message</h4>
-                    <p class="step-description">
-                      Send messages directly to your queue or publish them
-                      through an exchange.
-                    </p>
-                  </div>
-                </div>
-                <div class="step-item">
-                  <div class="step-number">3</div>
-                  <div class="step-content">
-                    <h4 class="step-title">Consume Messages</h4>
-                    <p class="step-description">
-                      Build a consumer in your application to process messages
-                      from the queue.
-                    </p>
-                  </div>
-                </div>
-                <div class="step-item">
-                  <div class="step-number">4</div>
-                  <div class="step-content">
-                    <h4 class="step-title">Monitor & Manage</h4>
-                    <p class="step-description">
-                      Use the Web UI to monitor your queues, exchanges, and
-                      messages in real-time.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class="getting-started-actions">
-                <button
-                  v-if="systemStats.totalQueues === 0"
-                  class="btn btn-primary"
-                  @click="showCreateQueueModal = true"
-                >
-                  <i class="bi bi-plus-circle me-2"></i>
-                  Create Your First Queue
-                </button>
-                <a
-                  href="https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/README.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="btn btn-outline-secondary"
-                >
-                  <i class="bi bi-book me-2"></i>
-                  Read Documentation
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
+        </li>
+      </ol>
+      <div class="steps__actions">
+        <button type="button" class="btn btn-primary" @click="openCreate">
+          <i class="bi bi-plus-circle me-1" aria-hidden="true" />
+          Create your first queue
+        </button>
+        <a
+          href="https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-outline-secondary"
+        >
+          <i class="bi bi-book me-1" aria-hidden="true" />
+          Read documentation
+        </a>
       </div>
-    </main>
+    </Card>
+  </PageShell>
 
-    <!-- Create Queue Modal -->
-    <CreateQueueModal
-      :is-visible="showCreateQueueModal"
-      @close="showCreateQueueModal = false"
-      @created="onQueueCreated"
-    />
-  </div>
+  <CreateQueueModal
+    :is-visible="showCreate"
+    @close="showCreate = false"
+    @created="onCreated"
+  />
 </template>
 
 <style scoped>
-/* Mobile-first safety: sizing and overflow guards */
-.home-page,
-.home-page * {
-  box-sizing: border-box;
-}
-
-.home-page {
-  min-height: calc(100vh - 200px);
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  touch-action: manipulation;
-}
-
-.hero-section {
-  /* Use clamp + safe-area for comfortable gutters on mobile */
-  padding: clamp(24px, 6vw, 64px) clamp(16px, 4vw, 32px);
-  padding-top: calc(clamp(24px, 6vw, 64px) + env(safe-area-inset-top));
-  padding-bottom: calc(clamp(24px, 6vw, 64px) + env(safe-area-inset-bottom));
-  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-  color: white;
-  margin-bottom: clamp(16px, 3vw, 32px);
-  border-radius: 16px;
-}
-
-.hero-content {
-  max-width: 1200px;
-  margin: 0 auto;
+/* Hero strip */
+.hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(16px, 4vw, 48px);
-  flex-wrap: nowrap;
-}
-
-.hero-text {
-  flex: 1;
-  min-width: 0; /* allow children to shrink without overflow */
-}
-
-.hero-title {
-  font-size: clamp(1.75rem, 4.5vw, 3rem);
-  font-weight: 700;
-  margin-bottom: clamp(8px, 1.5vw, 16px);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap; /* allow wrapping to avoid overflow */
-  gap: clamp(8px, 2vw, 16px);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.hero-icon {
-  font-size: clamp(2rem, 6vw, 3.5rem);
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.hero-subtitle {
-  font-size: clamp(1rem, 2.8vw, 1.25rem);
-  opacity: 0.9;
-  margin-bottom: clamp(16px, 3vw, 32px);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: clamp(12px, 3vw, 24px);
-  margin-bottom: clamp(12px, 2.5vw, 24px);
-}
-
-.stat-item {
-  text-align: center;
-  min-width: 0;
-}
-
-.stat-value {
-  display: block;
-  font-size: clamp(1.25rem, 4.2vw, 2rem);
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  overflow-wrap: anywhere;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  opacity: 0.8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  overflow-wrap: anywhere;
-}
-
-/* Main container with safe-area bottom padding */
-.dashboard-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 clamp(12px, 3vw, 32px) clamp(16px, 3vw, 32px);
-  padding-bottom: calc(clamp(16px, 3vw, 32px) + env(safe-area-inset-bottom));
-}
-
-/* Loading Section */
-.loading-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(24px, 6vw, 64px) clamp(16px, 4vw, 32px);
-}
-
-.loading-content {
-  text-align: center;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 0 clamp(8px, 2vw, 12px);
-}
-
-.loading-title {
-  color: #495057;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.loading-subtitle {
-  color: #6c757d;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-/* Dashboard Content */
-.dashboard-content {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(16px, 4vw, 48px);
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: clamp(12px, 2.5vw, 24px);
-  gap: clamp(8px, 2vw, 16px);
-}
-
-.section-title {
-  font-size: clamp(1.125rem, 2.8vw, 1.5rem);
-  font-weight: 600;
-  color: #212529;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  overflow-wrap: anywhere;
-}
-
-.refresh-btn {
-  white-space: nowrap;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: clamp(12px, 3vw, 24px);
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: clamp(16px, 3.5vw, 32px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
-  display: flex;
-  align-items: center;
-  gap: clamp(12px, 2.5vw, 24px);
-  transition: all 0.2s ease;
-  min-width: 0;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-  width: clamp(44px, 8vw, 60px);
-  height: clamp(44px, 8vw, 60px);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
-  color: white;
-  flex-shrink: 0;
-}
-
-.queues-icon {
-  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-}
-
-.messages-icon {
-  background: linear-gradient(135deg, #198754 0%, #157347 100%);
-}
-
-.consumers-icon {
-  background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-}
-
-.uptime-icon {
-  background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
-}
-
-.stat-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.stat-number {
-  font-size: clamp(1.25rem, 4.5vw, 2rem);
-  font-weight: 700;
-  color: #212529;
-  margin-bottom: 0.25rem;
-  overflow-wrap: anywhere;
-}
-
-.stat-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.25rem;
-  overflow-wrap: anywhere;
-}
-
-.stat-description {
-  font-size: 0.85rem;
-  color: #6c757d;
-  overflow-wrap: anywhere;
-}
-
-/* Actions Grid */
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: clamp(12px, 3vw, 24px);
-}
-
-.action-card {
-  background: white;
-  border-radius: 12px;
-  padding: clamp(12px, 3vw, 24px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, 2vw, 16px);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 0;
-}
-
-.action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.action-icon {
-  width: clamp(40px, 7vw, 48px);
-  height: clamp(40px, 7vw, 48px);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(1rem, 3.2vw, 1.25rem);
-  color: white;
-  flex-shrink: 0;
-}
-
-.action-primary .action-icon {
-  background: #0d6efd;
-}
-.action-info .action-icon {
-  background: #0dcaf0;
-}
-.action-success .action-icon {
-  background: #198754;
-}
-.action-secondary .action-icon {
-  background: #6c757d;
-}
-
-.action-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.action-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 0.25rem;
-  overflow-wrap: anywhere;
-}
-
-.action-description {
-  font-size: 0.85rem;
-  color: #6c757d;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.action-arrow {
-  color: #6c757d;
-  font-size: 1rem;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.action-card:hover .action-arrow {
-  transform: translateX(4px);
-}
-
-/* Activity Feed */
-.activity-feed {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
-  overflow: hidden;
-}
-
-.activity-item {
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, 2vw, 16px);
-  padding: clamp(12px, 3vw, 24px);
-  border-bottom: 1px solid #e9ecef;
-  transition: background-color 0.2s ease;
-}
-
-.activity-item:last-child {
-  border-bottom: none;
-}
-
-.activity-item:hover {
-  background: #f8f9fa;
-}
-
-.activity-icon {
-  width: clamp(32px, 6vw, 40px);
-  height: clamp(32px, 6vw, 40px);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(0.9rem, 3vw, 1rem);
-  color: white;
-  flex-shrink: 0;
-}
-
-.activity-success .activity-icon {
-  background: #198754;
-}
-.activity-info .activity-icon {
-  background: #0dcaf0;
-}
-.activity-primary .activity-icon {
-  background: #0d6efd;
-}
-.activity-warning .activity-icon {
-  background: #ffc107;
-}
-
-.activity-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.activity-message {
-  font-size: 0.9rem;
-  color: #495057;
-  margin-bottom: 0.25rem;
-  overflow-wrap: anywhere;
-}
-
-.activity-time {
-  font-size: 0.8rem;
-  color: #6c757d;
-  overflow-wrap: anywhere;
-}
-
-/* Getting Started Section */
-.getting-started-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
-  overflow: hidden;
-}
-
-.getting-started-content {
-  padding: clamp(16px, 4vw, 40px);
-}
-
-.getting-started-title {
-  font-size: clamp(1.125rem, 3vw, 1.5rem);
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: clamp(8px, 2vw, 16px);
-  display: flex;
-  align-items: center;
-  overflow-wrap: anywhere;
-}
-
-.getting-started-description {
-  color: #6c757d;
-  margin-bottom: clamp(16px, 3vw, 32px);
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.getting-started-steps {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(12px, 3vw, 24px);
-  margin-bottom: clamp(16px, 3vw, 32px);
-}
-
-.step-item {
-  display: flex;
-  align-items: flex-start;
-  gap: clamp(8px, 2vw, 16px);
-}
-
-.step-number {
-  width: 32px;
-  height: 32px;
-  background: #0d6efd;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.step-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.step-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 0.25rem;
-  overflow-wrap: anywhere;
-}
-
-.step-description {
-  font-size: 0.9rem;
-  color: #6c757d;
-  margin: 0;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.getting-started-actions {
-  display: flex;
-  gap: 1rem;
+  gap: var(--rsmq-space-4);
   flex-wrap: wrap;
+  padding: var(--rsmq-space-5);
+  border-radius: var(--rsmq-radius-lg);
+  background: linear-gradient(
+    135deg,
+    var(--rsmq-color-primary),
+    var(--rsmq-color-primary-hover)
+  );
+  color: white;
+  box-shadow: var(--rsmq-shadow-md);
 }
-
-.getting-started-actions .btn {
-  white-space: nowrap;
+.hero__text {
+  display: flex;
+  align-items: center;
+  gap: var(--rsmq-space-4);
+  min-width: 0;
+  flex: 1 1 auto;
 }
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .hero-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .hero-title {
-    flex-direction: column;
-  }
-
-  .hero-stats {
-    justify-content: center;
-  }
-
-  .dashboard-main {
-    padding: 0 clamp(12px, 3.5vw, 16px) clamp(12px, 3.5vw, 16px);
-    padding-bottom: calc(
-      clamp(12px, 3.5vw, 16px) + env(safe-area-inset-bottom)
-    );
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .actions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .section-header {
+.hero__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--rsmq-radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 20%);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.hero__titles {
+  min-width: 0;
+}
+.hero__title {
+  margin: 0 0 var(--rsmq-space-1);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  overflow-wrap: anywhere;
+}
+.hero__subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  overflow-wrap: anywhere;
+}
+.hero__cta {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+@media (max-width: 576px) {
+  .hero {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .refresh-btn {
+  .hero__cta {
     width: 100%;
     justify-content: center;
   }
-
-  .getting-started-actions {
-    flex-direction: column;
-  }
 }
 
+/* Quick actions */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--rsmq-space-3);
+}
+.quick-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--rsmq-space-3);
+  padding: var(--rsmq-space-3) var(--rsmq-space-4);
+  background: var(--rsmq-color-bg);
+  border: 1px solid var(--rsmq-color-border);
+  border-radius: var(--rsmq-radius-md);
+  text-align: left;
+  color: var(--rsmq-color-text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition:
+    transform var(--rsmq-transition),
+    box-shadow var(--rsmq-transition),
+    border-color var(--rsmq-transition);
+  min-width: 0;
+}
+.quick-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rsmq-shadow-md);
+  border-color: var(--rsmq-color-primary);
+}
+.quick-tile__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--rsmq-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rsmq-color-primary-tint);
+  color: var(--rsmq-color-primary);
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+.quick-tile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.quick-tile__title {
+  font-weight: 600;
+  color: var(--rsmq-color-text);
+  overflow-wrap: anywhere;
+}
+.quick-tile__desc {
+  font-size: 0.8rem;
+  color: var(--rsmq-color-text-muted);
+  overflow-wrap: anywhere;
+}
+.quick-tile__chevron {
+  color: var(--rsmq-color-text-subtle);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+/* Recent queues */
+.recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsmq-space-1);
+}
+.recent__link {
+  display: flex;
+  align-items: center;
+  gap: var(--rsmq-space-3);
+  padding: var(--rsmq-space-2) var(--rsmq-space-3);
+  border-radius: var(--rsmq-radius-sm);
+  color: var(--rsmq-color-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background var(--rsmq-transition);
+}
+.recent__link:hover {
+  background: var(--rsmq-color-primary-tint);
+  color: var(--rsmq-color-text);
+}
+.recent__icon {
+  color: var(--rsmq-color-primary);
+  flex-shrink: 0;
+}
+.recent__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent__ns {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--rsmq-color-bg);
+  color: var(--rsmq-color-text-muted);
+  font-family: var(--rsmq-font-mono);
+  flex-shrink: 0;
+}
+.recent__chevron {
+  color: var(--rsmq-color-text-subtle);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+/* Getting started */
+.steps {
+  list-style: none;
+  margin: 0 0 var(--rsmq-space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsmq-space-3);
+}
+.steps__item {
+  display: flex;
+  gap: var(--rsmq-space-3);
+  align-items: flex-start;
+}
+.steps__number {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--rsmq-color-primary);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.steps__text {
+  min-width: 0;
+}
+.steps__title {
+  font-weight: 600;
+  color: var(--rsmq-color-text);
+  margin-bottom: 2px;
+}
+.steps__desc {
+  font-size: 0.875rem;
+  color: var(--rsmq-color-text-muted);
+  overflow-wrap: anywhere;
+}
+.steps__actions {
+  display: flex;
+  gap: var(--rsmq-space-2);
+  flex-wrap: wrap;
+}
 @media (max-width: 576px) {
-  .hero-title {
-    font-size: clamp(1.5rem, 6vw, 1.75rem);
-  }
-
-  .hero-subtitle {
-    font-size: clamp(0.95rem, 3.5vw, 1rem);
-  }
-
-  .hero-stats {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .stat-card {
-    padding: clamp(12px, 4vw, 24px);
+  .steps__actions {
     flex-direction: column;
-    text-align: center;
   }
-
-  .action-card {
-    padding: clamp(12px, 4vw, 20px);
-  }
-
-  .activity-item {
-    padding: clamp(12px, 4vw, 20px);
-    align-items: flex-start;
-  }
-
-  .getting-started-content {
-    padding: clamp(12px, 4vw, 24px);
-  }
-
-  .getting-started-steps {
-    gap: clamp(10px, 3vw, 16px);
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: more) {
-  .stat-card,
-  .action-card,
-  .activity-feed,
-  .getting-started-card {
-    border: 2px solid #000;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .hero-icon,
-  .stat-card,
-  .action-card,
-  .activity-item,
-  .hero-btn {
-    animation: none;
-    transition: none;
-  }
-
-  .stat-card:hover,
-  .action-card:hover,
-  .hero-btn:hover {
-    transform: none;
+  .steps__actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

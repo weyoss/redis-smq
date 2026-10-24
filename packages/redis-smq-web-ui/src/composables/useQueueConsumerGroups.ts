@@ -7,218 +7,73 @@
  * in the root directory of this source tree.
  */
 
+import { computed, toValue, type MaybeRefOrGetter } from 'vue';
+import type { IQueueParams } from '@/api/model';
 import {
-  useGetApiNamespacesNsQueuesNameConsumerGroups,
-  usePostApiNamespacesNsQueuesNameConsumerGroups,
-  useDeleteApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupId,
-} from '@/api/generated/consumer-groups/consumer-groups.ts';
-import type { PostApiNamespacesNsQueuesNameConsumerGroupsBody } from '@/api/model/index.ts';
-import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
-import { computed } from 'vue';
-import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+  useDeleteConsumerGroup,
+  useGetConsumerGroups,
+  useSaveConsumerGroup,
+} from '@/api/generated/consumer-groups/consumer-groups';
+import { getErrorMessage } from '@/lib/error';
 
-export function useQueueConsumerGroups() {
-  const selectedQueueStore = useSelectedQueueStore();
-  const queuePropertiesStore = useSelectedQueuePropertiesStore();
+export function useQueueConsumerGroups(
+  queue: MaybeRefOrGetter<IQueueParams | null>,
+) {
+  const params = computed(() => toValue(queue));
+  const enabled = computed(() => params.value !== null);
 
-  const selectedQueue = computed(() => {
-    return selectedQueueStore.selectedQueue;
+  const query = useGetConsumerGroups(
+    computed(() => params.value?.ns ?? ''),
+    computed(() => params.value?.name ?? ''),
+    { query: { enabled } },
+  );
+
+  const saveMutation = useSaveConsumerGroup({
+    mutation: { onSuccess: () => query.refetch() },
+  });
+  const deleteMutation = useDeleteConsumerGroup({
+    mutation: { onSuccess: () => query.refetch() },
   });
 
-  // Consumer Groups Query
-  const consumerGroupsQuery = useGetApiNamespacesNsQueuesNameConsumerGroups(
-    computed(() => selectedQueue.value?.ns || ''),
-    computed(() => selectedQueue.value?.name || ''),
-    {
-      query: {
-        enabled: computed(
-          () => !!selectedQueue.value && queuePropertiesStore.isPubSubQueue,
-        ),
-      },
-    },
-  );
+  const groups = computed(() => query.data.value?.data ?? []);
 
-  // Consumer Groups Mutations
-  const createConsumerGroupMutation =
-    usePostApiNamespacesNsQueuesNameConsumerGroups({
-      mutation: {
-        onSuccess: async () => {
-          // Refetch consumer groups after successful creation
-          await consumerGroupsQuery.refetch();
-        },
-      },
-    });
-
-  const deleteConsumerGroupMutation =
-    useDeleteApiNamespacesNsQueuesNameConsumerGroupsConsumerGroupId({
-      mutation: {
-        onSuccess: async () => {
-          // Refetch consumer groups after successful deletion
-          await consumerGroupsQuery.refetch();
-        },
-      },
-    });
-
-  // Computed properties for easy access to data
-  const consumerGroups = computed(() => consumerGroupsQuery.data.value);
-
-  // Loading states
-  const isLoadingConsumerGroups = computed(
-    () => consumerGroupsQuery.isLoading.value,
-  );
-  const isCreatingConsumerGroup = computed(
-    () => createConsumerGroupMutation.isPending.value,
-  );
-  const isDeletingConsumerGroup = computed(
-    () => deleteConsumerGroupMutation.isPending.value,
-  );
-
-  // Combined loading state
-  const isLoading = computed(
-    () =>
-      isLoadingConsumerGroups.value ||
-      isCreatingConsumerGroup.value ||
-      isDeletingConsumerGroup.value,
-  );
-
-  // Error states
-  const consumerGroupsError = computed(() => consumerGroupsQuery.error.value);
-  const createConsumerGroupError = computed(
-    () => createConsumerGroupMutation.error.value,
-  );
-  const deleteConsumerGroupError = computed(
-    () => deleteConsumerGroupMutation.error.value,
-  );
-
-  // Combined error state
-  const error = computed(
-    () =>
-      consumerGroupsError.value ||
-      createConsumerGroupError.value ||
-      deleteConsumerGroupError.value,
-  );
-
-  // Computed getters
-  const hasConsumerGroups = computed(() => {
-    return (
-      queuePropertiesStore.isPubSubQueue &&
-      !!consumerGroups.value?.data &&
-      Array.isArray(consumerGroups.value.data) &&
-      consumerGroups.value.data.length > 0
-    );
-  });
-
-  const sortedConsumerGroups = computed(() => {
-    if (!consumerGroups.value?.data) return [];
-    return [...consumerGroups.value.data].sort((a, b) => a.localeCompare(b));
-  });
-
-  // Consumer group operations
-  async function createConsumerGroup(consumerGroupId: string): Promise<void> {
-    if (!selectedQueue.value) {
-      throw new Error('No queue selected');
-    }
-
-    const payload: PostApiNamespacesNsQueuesNameConsumerGroupsBody = {
-      consumerGroupId,
-    };
-
-    await createConsumerGroupMutation.mutateAsync({
-      ns: selectedQueue.value.ns,
-      name: selectedQueue.value.name,
-      data: payload,
+  async function createGroup(id: string): Promise<void> {
+    const q = params.value;
+    if (!q) throw new Error('Queue is required');
+    await saveMutation.mutateAsync({
+      ns: q.ns,
+      name: q.name,
+      data: { consumerGroupId: id },
     });
   }
 
-  async function deleteConsumerGroup(consumerGroupId: string): Promise<void> {
-    if (!selectedQueue.value) {
-      throw new Error('No queue selected');
-    }
-
-    await deleteConsumerGroupMutation.mutateAsync({
-      ns: selectedQueue.value.ns,
-      name: selectedQueue.value.name,
-      consumerGroupId,
+  async function removeGroup(id: string): Promise<void> {
+    const q = params.value;
+    if (!q) throw new Error('Queue is required');
+    await deleteMutation.mutateAsync({
+      ns: q.ns,
+      name: q.name,
+      consumerGroupId: id,
     });
-  }
-
-  // Utility functions
-  async function refreshConsumerGroups(): Promise<void> {
-    await consumerGroupsQuery.refetch();
-  }
-
-  function refetchConsumerGroupsData(): Promise<unknown> {
-    if (!selectedQueue.value || !queuePropertiesStore.isPubSubQueue) {
-      return Promise.resolve();
-    }
-    return consumerGroupsQuery.refetch();
-  }
-
-  // Reset mutations (useful for clearing error states)
-  function resetCreateConsumerGroupMutation(): void {
-    createConsumerGroupMutation.reset();
-  }
-
-  function resetDeleteConsumerGroupMutation(): void {
-    deleteConsumerGroupMutation.reset();
-  }
-
-  function resetAllMutations(): void {
-    createConsumerGroupMutation.reset();
-    deleteConsumerGroupMutation.reset();
-  }
-
-  // Validation helpers
-  function isValidConsumerGroupId(id: string): boolean {
-    const validPattern = /^[a-zA-Z0-9_-]+$/;
-    return validPattern.test(id) && id.length >= 1 && id.length <= 50;
-  }
-
-  function consumerGroupExists(consumerGroupId: string): boolean {
-    if (!consumerGroups.value?.data) return false;
-    return consumerGroups.value.data.includes(consumerGroupId);
   }
 
   return {
-    // Query objects (for direct access)
-    consumerGroupsQuery,
-
-    // Mutation objects (for direct access to mutate, mutateAsync, etc.)
-    createConsumerGroupMutation,
-    deleteConsumerGroupMutation,
-
-    // Data computed properties
-    consumerGroups,
-
-    // Loading states
-    isLoading,
-    isLoadingConsumerGroups,
-    isCreatingConsumerGroup,
-    isDeletingConsumerGroup,
-
-    // Error states
-    error,
-    consumerGroupsError,
-    createConsumerGroupError,
-    deleteConsumerGroupError,
-
-    // Computed getters
-    hasConsumerGroups,
-    sortedConsumerGroups,
-
-    // Actions
-    createConsumerGroup,
-    deleteConsumerGroup,
-    refreshConsumerGroups,
-    refetchConsumerGroupsData,
-
-    // Mutation reset methods
-    resetCreateConsumerGroupMutation,
-    resetDeleteConsumerGroupMutation,
-    resetAllMutations,
-
-    // Helper methods
-    isValidConsumerGroupId,
-    consumerGroupExists,
+    query,
+    groups,
+    isLoading: computed(() => query.isLoading.value),
+    error: computed(() => getErrorMessage(query.error.value) || null),
+    refetch: query.refetch,
+    createGroup,
+    removeGroup,
+    isCreating: computed(() => saveMutation.isPending.value),
+    isDeleting: computed(() => deleteMutation.isPending.value),
+    createError: computed(
+      () => getErrorMessage(saveMutation.error.value) || null,
+    ),
+    deleteError: computed(
+      () => getErrorMessage(deleteMutation.error.value) || null,
+    ),
+    resetCreate: saveMutation.reset,
+    resetDelete: deleteMutation.reset,
   };
 }

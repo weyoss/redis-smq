@@ -6,51 +6,27 @@
  * This source code is licensed under the MIT license found in the LICENSE file
  * in the root directory of this source tree.
  */
-
-import { useGetApiQueues } from '@/api/generated/queues/queues.ts';
 import { computed } from 'vue';
+import { useGetAllQueues } from '@/api/generated/queues/queues';
+import { getErrorMessage } from '@/lib/error';
 
-/**
- * @returns an object with methods and state for listing and managing queues.
- */
 export function useListQueues() {
-  const queuesQuery = useGetApiQueues();
+  const query = useGetAllQueues();
 
-  const queues = computed(() => queuesQuery.data.value);
-  const isLoadingQueues = computed(() => queuesQuery.isLoading.value);
-  const queuesError = computed(() => queuesQuery.error.value);
+  const queues = computed(() => query.data.value?.data ?? []);
 
-  const sortedQueues = computed(() => {
-    if (!queues.value?.data.length) return [];
-    return [...queues.value.data].sort((a, b) => a.name.localeCompare(b.name));
-  });
-
-  const getNamespaceQueueCount = computed(() => {
-    return (ns: string) => {
-      if (!queues.value?.data) return 0;
-      return queues.value.data.filter((queue) => queue.ns === ns).length;
-    };
-  });
-
-  function getQueuesInNamespace(ns: string) {
-    if (!queues.value?.data) return [];
-    return queues.value.data.filter((queue) => queue.ns === ns);
-  }
-
-  function findQueueInNamespace(ns: string, queueName: string) {
-    const namespacedQueues = getQueuesInNamespace(ns);
-    return namespacedQueues.find((queue) => queue.name === queueName);
-  }
+  const sortedQueues = computed(() =>
+    [...queues.value].sort(
+      (a, b) => a.ns.localeCompare(b.ns) || a.name.localeCompare(b.name),
+    ),
+  );
 
   return {
-    queuesQuery,
+    query,
     queues,
-    isLoadingQueues,
-    queuesError,
     sortedQueues,
-    getNamespaceQueueCount,
-    getQueuesInNamespace,
-    findQueueInNamespace,
-    refetchQueues: queuesQuery.refetch,
+    isLoading: computed(() => query.isLoading.value),
+    error: computed(() => getErrorMessage(query.error.value) || null),
+    refetch: query.refetch,
   };
 }

@@ -14,7 +14,8 @@ set -euxo pipefail
 # clean up
 rm -rf dist
 
-pnpm generate-openapi-client
+# generate openapi client
+pnpm generate-api
 
 # vue app
 vue-tsc --build

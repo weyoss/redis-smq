@@ -55,52 +55,39 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "dev": "run-p run-dev-server run-api-server",
-    "run-dev-server": "vite",
-    "preview": "vite preview",
-    "test:unit": "vitest",
-    "test:e2e": "playwright test",
+    "dev": "node scripts/dev.js",
+    "dev:only": "vite",
+    "dev:api": "node scripts/run-api-server.js",
     "build": "scripts/build.sh",
-    "generate-openapi-client": "./scripts/generate_openapi_client.sh",
-    "run-api-server": "./scripts/run_api_server.js",
-    "consume-queue": "scripts/consume_queue.js",
-    "produce-message": "scripts/produce_message.js",
-    "dead-letter-message": "scripts/consume_queue.js --dead-letter"
+    "preview": "vite preview",
+    "generate-api": "orval",
+    "test:unit": "vitest",
+    "test:unit:run": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "vue-tsc --build --force"
   },
   "peerDependencies": {
     "redis-smq-common": "workspace:^"
   },
   "dependencies": {
-    "@vee-validate/zod": "4.15.1",
+    "@tanstack/vue-query": "5.104.0",
+    "axios": "1.20.0",
     "bootstrap": "5.3.8",
     "bootstrap-icons": "1.13.1",
-    "date-fns": "4.4.0",
-    "pinia": "4.0.3",
-    "vee-validate": "4.15.1",
     "vue": "3.5.43",
-    "vue-router": "5.3.1",
-    "zod": "3.24.4"
+    "vue-router": "5.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
-    "@tanstack/vue-query": "5.104.0",
-    "@tsconfig/node20": "20.1.10",
-    "@types/jsdom": "27.0.0",
+    "@playwright/test": "1.56.0",
+    "@tsconfig/node22": "22.0.6",
     "@vitejs/plugin-vue": "6.0.9",
     "@vue/test-utils": "2.5.1",
     "@vue/tsconfig": "0.9.1",
-    "axios": "1.20.0",
-    "commander": "15.0.0",
-    "dotenv": "18.0.4",
-    "jsdom": "30.1.1",
+    "happy-dom": "21.0.3",
     "orval": "8.9.1",
-    "redis-smq": "workspace:^",
     "redis-smq-common": "workspace:^",
     "redis-smq-rest-api": "workspace:^",
     "vite": "8.3.1",
-    "vite-plugin-dts": "5.1.1",
-    "vite-plugin-node-polyfills": "0.28.0",
-    "vite-plugin-vue-devtools": "8.2.1",
     "vue-tsc": "3.3.11"
   }
 }

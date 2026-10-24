@@ -7,59 +7,49 @@
  * in the root directory of this source tree.
  */
 
-import { formatDistanceToNow, parseISO } from 'date-fns';
+const COMPACT = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  compactDisplay: 'short',
+  maximumFractionDigits: 1,
+});
 
-/**
- * Formats a number into a compact, human-readable string.
- * - Uses 'K' for thousands, 'M' for millions, etc.
- * - Handles non-number inputs gracefully.
- *
- * @param {number | undefined | null} num - The number to format.
- * @returns {string} The formatted number string, or '0' if the input is invalid.
- */
-export function formatNumber(num: number | undefined | null): string {
-  if (typeof num !== 'number' || isNaN(num)) {
-    return '0';
-  }
+const FULL = new Intl.NumberFormat('en-US');
 
-  // Use the Intl.NumberFormat API for modern, locale-aware formatting.
-  // The 'compact' notation is ideal for dashboard stats.
-  return new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-    maximumFractionDigits: 1,
-  }).format(num);
+export function formatCompact(n: number | null | undefined): string {
+  if (n == null || Number.isNaN(n)) return '0';
+  return COMPACT.format(n);
 }
 
-export function formatDateSince(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 0) {
-    return `${days} day${days > 1 ? 's' : ''}`;
-  } else if (hours > 0) {
-    return `${hours} hour${hours > 1 ? 's' : ''}`;
-  } else if (minutes > 0) {
-    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-  } else {
-    return `${seconds} second${seconds > 1 ? 's' : ''}`;
-  }
+export function formatNumber(n: number | null | undefined): string {
+  if (n == null || Number.isNaN(n)) return '0';
+  return FULL.format(n);
 }
 
-export function formatDate(dateStringOrMillis?: string | number | null) {
-  if (!dateStringOrMillis) return 'N/A';
-  try {
-    const date =
-      typeof dateStringOrMillis === 'string'
-        ? parseISO(dateStringOrMillis)
-        : new Date(dateStringOrMillis);
-    return `${date.toLocaleString()} (${formatDistanceToNow(date, { addSuffix: true })})`;
-  } catch {
-    return 'Invalid Date';
-  }
+export function formatDate(ts: number | string | null | undefined): string {
+  if (ts == null) return '—';
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString();
+}
+
+export function formatSince(ts: number | null | undefined): string {
+  if (ts == null) return '—';
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+export function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
 }

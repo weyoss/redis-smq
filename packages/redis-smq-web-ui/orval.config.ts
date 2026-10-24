@@ -28,15 +28,8 @@ export default {
           useQuery: true,
           useMutation: true,
         },
-        queryOptions: {
-          staleTime: 10000,
-        },
-        mutationOptions: {
-          retry: 1,
-        },
-        operations: {
-          // You can override specific operations if needed
-        },
+        queryOptions: { staleTime: 10000 },
+        mutationOptions: { retry: 1 },
       },
     },
     hooks: {

@@ -8,23 +8,12 @@
  */
 
 import { createRouter, createWebHistory } from 'vue-router';
-import { routes } from '@/router/routes.ts';
-import { usePageContentStore } from '@/stores/pageContent.ts';
-import { getConfig } from '@/config';
+import { BASE_PATH } from '@/config';
+import { routes } from './routes';
 
 const router = createRouter({
-  history: createWebHistory(getConfig('BASE_PATH')),
-  routes: [...routes],
-});
-
-// Auto-reset page content on route changes
-router.beforeEach((to, from, next) => {
-  // Only reset if actually changing routes (not just query params)
-  if (to.path !== from.path) {
-    const pageContentStore = usePageContentStore();
-    pageContentStore.resetPageContent();
-  }
-  next();
+  history: createWebHistory(BASE_PATH),
+  routes,
 });
 
 export default router;

@@ -8,14 +8,8 @@
  */
 
 export function validateRedisKey(key: string | null | undefined): boolean {
-  if (!key || !key.length) {
-    return false;
-  }
-  const lowerCase = key.toLowerCase();
-  // Regex matches valid key patterns, then we check if anything remains
-  const filtered = lowerCase.replace(
-    /(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/g,
-    '',
-  );
-  return !filtered.length;
+  if (!key || !key.length) return false;
+  const lower = key.toLowerCase();
+  const filtered = lower.replace(/(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/g, '');
+  return filtered.length === 0;
 }

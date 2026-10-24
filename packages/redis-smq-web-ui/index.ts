@@ -8,4 +8,3 @@
  */
 
 export * from './node-utils/dist-path.js';
-export * from './src/config/types/index.js';
