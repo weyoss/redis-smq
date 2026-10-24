@@ -18,6 +18,8 @@ import {
 import { cleanupExchange, cleanupQueue } from './cleanup.js';
 import { QueueDetailPage } from './pages.js';
 import { DELIVERY_MODEL, EXCHANGE_TYPE } from '../helpers/constants.js';
+import { publishAndDeadLetter } from '../helpers/publish-and-dead-letter.js';
+import { publishAndAcknowledge } from '../helpers/publish-and-acknowledge.js';
 
 export interface QueueWithMessages extends QueueRef {
   messageIds: { published: string[]; scheduled: string[] };
@@ -27,12 +29,22 @@ export interface PubSubQueueWithGroup extends QueueRef {
   consumerGroupId: string;
 }
 
+export interface QueueWithDeadLettered extends QueueRef {
+  deadLetteredIds: string[];
+}
+
+export interface QueueWithAcknowledged extends QueueRef {
+  acknowledgedIds: string[];
+}
+
 type TestFixtures = {
   api: ReturnType<typeof apiClient>;
   queue: QueueRef;
   pubSubQueue: QueueRef;
   pubSubQueueWithGroup: PubSubQueueWithGroup;
   queueWithMessages: QueueWithMessages;
+  queueWithDeadLettered: QueueWithDeadLettered;
+  queueWithAcknowledged: QueueWithAcknowledged;
   directExchange: ExchangeRef & { routingKey: string };
   fanoutExchange: ExchangeRef;
   topicExchange: ExchangeRef & { routingPattern: string };
@@ -127,6 +139,27 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       scheduled: 2,
     });
     await use({ ...q, messageIds });
+    await cleanupQueue(api, q);
+  },
+
+  // Seeds a queue with one message driven to DEAD_LETTERED via a
+  // throwaway producer + failing consumer. See
+  // helpers/publish-and-dead-letter.ts for the mechanics.
+  queueWithDeadLettered: async ({ api }, use, testInfo) => {
+    const q = await seedQueue(api, { name: uniqueName(testInfo, 'dl') });
+    const deadLetteredIds = await publishAndDeadLetter(q);
+    await use({ ...q, deadLetteredIds });
+    await cleanupQueue(api, q);
+  },
+
+  // Seeds a queue with one message driven to ACKNOWLEDGED via a
+  // throwaway producer + succeeding consumer. Requires the
+  // messageAudit.acknowledgedMessages feature enabled — done by
+  // global-setup.ts.
+  queueWithAcknowledged: async ({ api }, use, testInfo) => {
+    const q = await seedQueue(api, { name: uniqueName(testInfo, 'ack') });
+    const acknowledgedIds = await publishAndAcknowledge(q);
+    await use({ ...q, acknowledgedIds });
     await cleanupQueue(api, q);
   },
 

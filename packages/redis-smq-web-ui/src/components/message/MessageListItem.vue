@@ -8,13 +8,13 @@
   -->
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { IMessageTransferable } from '@/api/model';
 import { EMessagePropertyStatus } from '@/types/messages.ts';
 import { formatDate, formatSince } from '@/lib/format';
 
 const props = defineProps<{
   message: IMessageTransferable;
-  canRequeue?: boolean;
   selected?: boolean;
 }>();
 
@@ -24,6 +24,19 @@ const emit = defineEmits<{
   requeue: [id: string];
   toggle: [id: string];
 }>();
+
+// redis-smq allows requeue from ACKNOWLEDGED or DEAD_LETTERED. Computed
+// per-message (not per-tab) so a DEAD_LETTERED message visible on the
+// Published tab — which shows every message regardless of state —
+// correctly exposes Requeue, and a PENDING message on the same tab
+// correctly does not.
+const canRequeue = computed(() => {
+  const s = props.message.status;
+  return (
+    s === EMessagePropertyStatus.ACKNOWLEDGED ||
+    s === EMessagePropertyStatus.DEAD_LETTERED
+  );
+});
 
 const STATUS_LABELS: Record<EMessagePropertyStatus, string> = {
   [EMessagePropertyStatus.NEW]: 'New',

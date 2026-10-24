@@ -40,7 +40,8 @@ const emit = defineEmits<{
 
 const activeTab = ref<Tab>('overview');
 
-// Modal-local action state
+// Modal-local action state. Declared before the watcher below so the
+// watcher can reset them without hitting a TDZ error.
 const showDelete = ref(false);
 const showRequeue = ref(false);
 const deleteError = ref<string | null>(null);
@@ -56,19 +57,41 @@ const unackHistory = useMessageUnackHistory(
 
 const actions = useMessageActions();
 
-// Reset all per-message UI state when the target message changes. Without
-// this, the requeue flash and any open confirm dialog / error message
-// leak into the next message the user opens.
+// Reset per-message UI state on message change, and refetch the detail
+// query every time the modal becomes visible.
+//
+// The second part matters because `useMessageDetail`'s query observer
+// is not re-registered when `isVisible` toggles — the modal stays
+// mounted (BaseModal hides only its inner DOM via Teleport v-if). A
+// message's state can change between two opens of the same modal: a
+// consumer picks up a requeued message, a scheduled time arrives, a
+// background job transitions the state, another tab requeues via
+// useMessageActions. `staleTime: 5_000` on the query hid all of that;
+// refetching on visibility change is the correct fix. `onConfirmRequeue`
+// still calls message.refetch() explicitly so the counter updates
+// immediately for the user who is watching — this watcher covers the
+// close-then-reopen path.
 watch(
-  () => props.messageId,
-  () => {
-    activeTab.value = 'overview';
-    actionFlash.value = null;
-    showDelete.value = false;
-    showRequeue.value = false;
-    deleteError.value = null;
-    requeueError.value = null;
+  [() => props.messageId, () => props.isVisible],
+  ([id, visible], [prevId]) => {
+    if (!visible) return;
+    if (id && id === prevId) {
+      // Same message, re-shown — refetch for freshness.
+      message.refetch();
+      return;
+    }
+    if (id && id !== prevId) {
+      // Different message — reset UI state and refetch.
+      activeTab.value = 'overview';
+      actionFlash.value = null;
+      showDelete.value = false;
+      showRequeue.value = false;
+      deleteError.value = null;
+      requeueError.value = null;
+      message.refetch();
+    }
   },
+  { immediate: true },
 );
 
 // --- Actions ---
@@ -328,9 +351,15 @@ const DEAD_LETTER_CAUSE_LABELS: Record<EMessageDeadLetterCause, string> = {
 };
 
 // --- Requeue eligibility ---
-const canRequeue = computed(
-  () => msg.value?.status === EMessagePropertyStatus.DEAD_LETTERED,
-);
+// redis-smq allows requeue from ACKNOWLEDGED or DEAD_LETTERED. Any
+// other status returns MessageNotRequeueableError server-side.
+const canRequeue = computed(() => {
+  const s = msg.value?.status;
+  return (
+    s === EMessagePropertyStatus.ACKNOWLEDGED ||
+    s === EMessagePropertyStatus.DEAD_LETTERED
+  );
+});
 
 const TABS: ReadonlyArray<{ id: Tab; label: string; icon: string }> = [
   { id: 'overview', label: 'Overview', icon: 'bi-info-circle' },

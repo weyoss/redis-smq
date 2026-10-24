@@ -553,6 +553,9 @@ importers:
       orval:
         specifier: 8.9.1
         version: 8.9.1(prettier@3.9.9)(supports-color@7.2.0)(typescript@5.8.3)
+      redis-smq:
+        specifier: workspace:^
+        version: link:../redis-smq
       redis-smq-common:
         specifier: workspace:^
         version: link:../redis-smq-common

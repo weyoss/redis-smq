@@ -257,8 +257,6 @@ function onChangeGroup() {
 }
 
 // --- Display ---
-const canRequeue = computed(() => messageType.value !== 'scheduled');
-
 const queueLabel = computed(() =>
   name.value && ns.value ? `${name.value}@${ns.value}` : '',
 );
@@ -414,7 +412,6 @@ const pageActions = computed<PageAction[]>(() => [
           v-for="m in messages.items.value"
           :key="m.id"
           :message="m"
-          :can-requeue="canRequeue"
           :selected="selectedIds.has(m.id)"
           @toggle="toggleOne"
           @view="(id) => (selectedMessageId = id)"
