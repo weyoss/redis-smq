@@ -62,6 +62,7 @@
     "preview": "vite preview",
     "generate-api": "orval",
     "test:unit": "vitest",
+    "pretest:unit:run": "pnpm generate-api",
     "test:unit:run": "vitest run",
     "pretest:e2e": "pnpm generate-api",
     "test:e2e": "playwright test",

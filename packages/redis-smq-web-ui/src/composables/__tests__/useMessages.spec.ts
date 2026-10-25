@@ -14,11 +14,6 @@ import { useMessages } from '../useMessages.js';
 
 import type { Plugin } from 'vue';
 
-vi.mock('@/api/generated/messages/messages', () => ({
-  useDeleteMessageById: vi.fn(),
-  useRequeueMessageById: vi.fn(),
-}));
-
 function withQueryClient() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
