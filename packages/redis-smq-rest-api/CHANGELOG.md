@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-rest-api:** shorten exported type names
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** return purge job ID and expose purge-job endpoints ([ce78046](https://github.com/weyoss/redis-smq/commit/ce780463730dd3497dbbc4a1650e1d4495ddff09))
+- **redis-smq-rest-api:** support routing keys in publish endpoint ([c579071](https://github.com/weyoss/redis-smq/commit/c57907164cba6def039399fbaabfc0ca61ea79cf))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** add POST /api/exchanges endpoint ([7cb6403](https://github.com/weyoss/redis-smq/commit/7cb6403d72d8f15bc378e9261bf9fdc21d7606b3))
+- **redis-smq-rest-api:** extract queue-purge as a top-level feature ([5523c2e](https://github.com/weyoss/redis-smq/commit/5523c2e1ca50b2fa9e5b4b48e0b5f5aa13610b64))
+- **redis-smq-rest-api:** keep controller DTOs out of components.schemas ([b345add](https://github.com/weyoss/redis-smq/commit/b345adde8a344d1668e0a2524982f4f22fbf8606))
+- **redis-smq-rest-api:** promote redis-smq-rest-api-refactor to redis-smq-rest-api ([7d4e9fc](https://github.com/weyoss/redis-smq/commit/7d4e9fc439f7556664673b600fbcf562a53e8f34))
+- **redis-smq-rest-api:** shorten exported type names ([11ad821](https://github.com/weyoss/redis-smq/commit/11ad821c08b10aba5f2197b71f9f66cbb0a5044b))
+
+### ✅ Tests
+
+- **redis-smq-rest-api:** add CLI e2e tests ([5a66134](https://github.com/weyoss/redis-smq/commit/5a661348dcc1860123910a5b4da405044786eb95))
+
 ## [11.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.1...v11.0.0-next.2) (2026-10-12)
 
 **Note:** Version bump only for package redis-smq-rest-api

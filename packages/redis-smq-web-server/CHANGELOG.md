@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-server:** rebuild Web Server on clean architecture ([f3a0351](https://github.com/weyoss/redis-smq/commit/f3a0351830b7f9b91a8258e460fb1fc0dd9e0548))
+
 ## [11.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.1...v11.0.0-next.2) (2026-10-12)
 
 **Note:** Version bump only for package redis-smq-web-server

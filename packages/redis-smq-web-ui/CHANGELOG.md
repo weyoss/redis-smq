@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** bump @playwright/test to 1.64.1 ([0963abf](https://github.com/weyoss/redis-smq/commit/0963abfe86e6fe9c2a1a2d98624bc444eb8666c5))
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** reduce README.md information density ([5a82962](https://github.com/weyoss/redis-smq/commit/5a82962640e8013ae3ce5bec95242a4c3113440f))
+- **redis-smq-web-ui:** restructure user README and trim E2E TODO list ([f1e8b9a](https://github.com/weyoss/redis-smq/commit/f1e8b9a314b0f53ea1a7fbf2251ea34a5428ebe8))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** promote redis-smq-web-ui-refactor to redis-smq-web-ui ([b1a4be6](https://github.com/weyoss/redis-smq/commit/b1a4be6b45ee272d764a5deab76c062ea6d9d344))
+
+### ✅ Tests
+
+- **redis-smq-web-ui:** add browse, publish, action, and purge coverage ([7071e9e](https://github.com/weyoss/redis-smq/commit/7071e9e67378e39f3eca2fd2dcbb4efc11ae36b6))
+- **redis-smq-web-ui:** add combined `test` script for redis-smq-web-ui ([63aa193](https://github.com/weyoss/redis-smq/commit/63aa193e5eff36e3ff9be5aec0aea1869fd2b3a7))
+- **redis-smq-web-ui:** add config view and update-flow coverage ([8bfa362](https://github.com/weyoss/redis-smq/commit/8bfa3625ba90a71954f8d3e7617dfd9dffbea2d6))
+- **redis-smq-web-ui:** add exchange list and detail coverage ([9a50ae9](https://github.com/weyoss/redis-smq/commit/9a50ae9c0538c753ea30dcebfb93221a9ec065fb))
+- **redis-smq-web-ui:** add header, health indicator, and a11y coverage ([74e6a40](https://github.com/weyoss/redis-smq/commit/74e6a404fa1329ef58fac8d22adbc6f529d776c8))
+- **redis-smq-web-ui:** add home view coverage ([42e6bea](https://github.com/weyoss/redis-smq/commit/42e6bea12a028a120b18e6b8553d9bf7ed40734b))
+- **redis-smq-web-ui:** add namespace list and per-namespace queue/exchange coverage ([2b0feb7](https://github.com/weyoss/redis-smq/commit/2b0feb7aee1b84835c12cd948869d856c6a636d2))
+- **redis-smq-web-ui:** add queue list and detail coverage ([cf93868](https://github.com/weyoss/redis-smq/commit/cf93868043afd97d925840e6a55732b0a6a9ab6d))
+- **redis-smq-web-ui:** change `exclude` from 'e2e/**' to 'tests/e2e/**' ([f95979e](https://github.com/weyoss/redis-smq/commit/f95979e3739acb588206446e8557c6839c7d56f7))
+- **redis-smq-web-ui:** cover requeue of ACKNOWLEDGED/DEAD-LETTERED messages ([3872fc2](https://github.com/weyoss/redis-smq/commit/3872fc28ab875bf16be2582c117781dfa5d154f2))
+- **redis-smq-web-ui:** generate Orval client before running test suites ([2d282a8](https://github.com/weyoss/redis-smq/commit/2d282a8fdf8e0d6fc0e92a820f75ce216370ced5))
+- **redis-smq-web-ui:** make useMessages self-contained, avoid Orval dependency ([1881049](https://github.com/weyoss/redis-smq/commit/18810491e3080ebe37b6f53c107a70a7cee71ba4))
+- **redis-smq-web-ui:** update fixtures, helpers, and setup files ([50c643c](https://github.com/weyoss/redis-smq/commit/50c643c146fe9de59de3c50665fc7c19ebbc0087))
+- **redis-smq-web-ui:** wait for query success before pagination assertions ([23ddd03](https://github.com/weyoss/redis-smq/commit/23ddd033d45fe6d61a3eebade40f64d33ef8aec1))
+
 ## [11.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.1...v11.0.0-next.2) (2026-10-12)
 
 **Note:** Version bump only for package redis-smq-web-ui

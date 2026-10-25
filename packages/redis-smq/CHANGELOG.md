@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** canonize exchange params serialization ([c7331f9](https://github.com/weyoss/redis-smq/commit/c7331f9b850ec915731df8aa3046ed90b81bf322))
+
 ## [11.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.1...v11.0.0-next.2) (2026-10-12)
 
 **Note:** Version bump only for package redis-smq

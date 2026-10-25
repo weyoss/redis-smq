@@ -3,6 +3,115 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-rest-api:** shorten exported type names
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** make getRandomPort reliable and race-free ([e14b93e](https://github.com/weyoss/redis-smq/commit/e14b93eadb5163c471be27e172048eb26825ce30))
+- **redis-smq-rest-api:** return purge job ID and expose purge-job endpoints ([ce78046](https://github.com/weyoss/redis-smq/commit/ce780463730dd3497dbbc4a1650e1d4495ddff09))
+- **redis-smq-rest-api:** support routing keys in publish endpoint ([c579071](https://github.com/weyoss/redis-smq/commit/c57907164cba6def039399fbaabfc0ca61ea79cf))
+- **redis-smq-web-ui-refactor:** align purge with new queue-purge module ([c218970](https://github.com/weyoss/redis-smq/commit/c218970ebb17a7a9a83f3236c1dc10cd5707ae4e))
+- **redis-smq-web-ui-refactor:** clamp page when totalPages shrinks ([be30187](https://github.com/weyoss/redis-smq/commit/be3018749e3c4e7539e6dc641578e675ceef4dc8))
+- **redis-smq-web-ui-refactor:** classify 412 by code+message, not substring ([6c4d3c1](https://github.com/weyoss/redis-smq/commit/6c4d3c19849a09a736517bbedde9039d84dc39f9))
+- **redis-smq-web-ui-refactor:** do not fire a request for an empty ID ([cbf1639](https://github.com/weyoss/redis-smq/commit/cbf16394e4a946bed8925b69c3da30f47b2a4e56))
+- **redis-smq-web-ui-refactor:** export getDistPath() for Node.js apps ([7a10637](https://github.com/weyoss/redis-smq/commit/7a10637777bbf40682aab56c5b0a6e7222542325))
+- **redis-smq-web-ui-refactor:** fix query string serialization ([508a558](https://github.com/weyoss/redis-smq/commit/508a5589ad311b49bcfcd1b5bcec5a5fda365349))
+- **redis-smq-web-ui-refactor:** highlight nav section for detail routes ([21ad4c1](https://github.com/weyoss/redis-smq/commit/21ad4c1c74a861dfd3e1d4e9620bf2013a2f8794))
+- **redis-smq-web-ui-refactor:** invalidate state history on success ([18f1ab4](https://github.com/weyoss/redis-smq/commit/18f1ab44976ee2e3dbaf12bf76149e32cb6a3926))
+- **redis-smq-web-ui-refactor:** react react to QueueListItem deletion ([45bbe8f](https://github.com/weyoss/redis-smq/commit/45bbe8f2a21a2a2b466fdb30a00b610f5aff8ff3))
+- **redis-smq-web-ui-refactor:** replace fanout sentinel with typed kind ([8108960](https://github.com/weyoss/redis-smq/commit/81089600427640130b17b538a4c86aa615c7ab10))
+- **redis-smq-web-ui-refactor:** requeue only dead-lettered and acknowledged messages ([f359d73](https://github.com/weyoss/redis-smq/commit/f359d73875e62e151be37e0c712acabd0d8e4382))
+- **redis-smq-web-ui-refactor:** reset action state on messageId change ([0a5e8ea](https://github.com/weyoss/redis-smq/commit/0a5e8ea3bb37bdc6368dbdc0e8a235b482835526))
+- **redis-smq-web-ui-refactor:** show loading state on message tab change ([83846a8](https://github.com/weyoss/redis-smq/commit/83846a8296f16b3d8a7c3b9e3f5154e0d088becd))
+- **redis-smq-web-ui-refactor:** throw ApiError instead of plain envelope object ([c95f8e9](https://github.com/weyoss/redis-smq/commit/c95f8e9698d4116a0f1bf719a4856be2725c4469))
+- **redis-smq-web-ui-refactor:** trap focus when it starts outside the modal ([fa4a66d](https://github.com/weyoss/redis-smq/commit/fa4a66d8fb93fb9200d53d9ec0f1a81ed4ab584f))
+- **redis-smq-web-ui-refactor:** use caught error in mutations ([c5f076e](https://github.com/weyoss/redis-smq/commit/c5f076e1c68e5892caac457ce32dd960c121a2a2))
+- **redis-smq-web-ui:** bump @playwright/test to 1.64.1 ([0963abf](https://github.com/weyoss/redis-smq/commit/0963abfe86e6fe9c2a1a2d98624bc444eb8666c5))
+- **redis-smq:** canonize exchange params serialization ([c7331f9](https://github.com/weyoss/redis-smq/commit/c7331f9b850ec915731df8aa3046ed90b81bf322))
+
+### 📝 Documentation
+
+- add Web UI screenshot to root README ([36883ca](https://github.com/weyoss/redis-smq/commit/36883ca71545bc99b98eaf5d85e3461fe4857102))
+- **redis-smq-rest-api-refactor:** update package and API documentation for refactored internals ([2805af0](https://github.com/weyoss/redis-smq/commit/2805af0ad5c1b7e404e889eceab28a5e615c5e60))
+- **redis-smq-web-ui:** reduce README.md information density ([5a82962](https://github.com/weyoss/redis-smq/commit/5a82962640e8013ae3ce5bec95242a4c3113440f))
+- **redis-smq-web-ui:** restructure user README and trim E2E TODO list ([f1e8b9a](https://github.com/weyoss/redis-smq/commit/f1e8b9a314b0f53ea1a7fbf2251ea34a5428ebe8))
+- refresh header with badges and tagline ([cc299ee](https://github.com/weyoss/redis-smq/commit/cc299ee69d725e02addf0850d0d7eb288af1a1b9))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api-refactor:** derive handler status from response DTO ([daba76f](https://github.com/weyoss/redis-smq/commit/daba76f7e7b8189fb7028ceb4afe5ae367fbf75d))
+- **redis-smq-rest-api-refactor:** migrate consumer-groups endpoints ([db9e5fc](https://github.com/weyoss/redis-smq/commit/db9e5fcfd7f28eda5cc179ad04f7bf7a207f1315))
+- **redis-smq-rest-api-refactor:** migrate exchanges endpoint ([283fa81](https://github.com/weyoss/redis-smq/commit/283fa8166b18b7d9960ac8751b3417727f529ecf))
+- **redis-smq-rest-api-refactor:** migrate namespace-exchanges endpoints ([1cc6800](https://github.com/weyoss/redis-smq/commit/1cc680095a6cfea7cb94f352516a2ff84051d1fa))
+- **redis-smq-rest-api-refactor:** migrate namespace-queues endpoint ([0d836c3](https://github.com/weyoss/redis-smq/commit/0d836c3bd3583b1862089d1c6145c493d7baaeac))
+- **redis-smq-rest-api-refactor:** migrate namespaces endpoints ([c82a666](https://github.com/weyoss/redis-smq/commit/c82a6660b3cb22e908214d9b27b889ba5edc040d))
+- **redis-smq-rest-api-refactor:** migrate queue endpoints ([1d86e4d](https://github.com/weyoss/redis-smq/commit/1d86e4d0eb94f01f54f07f47f5d38149971d79b5))
+- **redis-smq-rest-api-refactor:** migrate queue-consumers endpoint ([5632767](https://github.com/weyoss/redis-smq/commit/5632767de7cde859d10c6b8ce9870126063478d4))
+- **redis-smq-rest-api-refactor:** migrate queue-exchanges endpoint ([0160e85](https://github.com/weyoss/redis-smq/commit/0160e857acdddf4709b74f64da54233de7a936c8))
+- **redis-smq-rest-api-refactor:** migrate queue-messages endpoints ([2d3547d](https://github.com/weyoss/redis-smq/commit/2d3547d9c6f56ff25f7038ecbb172d7bf28bf514))
+- **redis-smq-rest-api-refactor:** migrate queue-state endpoints ([039db70](https://github.com/weyoss/redis-smq/commit/039db7083d6738024437a2bd3d3a6172dd317362))
+- **redis-smq-rest-api-refactor:** migrate queues endpoints ([29a59ec](https://github.com/weyoss/redis-smq/commit/29a59ec2729a95310b0da0697e7dab167bdd264b))
+- **redis-smq-rest-api-refactor:** rebuild REST API on clean architecture ([63197aa](https://github.com/weyoss/redis-smq/commit/63197aa48b6260689c9e08c5dd5a3ba14faa8f14))
+- **redis-smq-rest-api:** add POST /api/exchanges endpoint ([7cb6403](https://github.com/weyoss/redis-smq/commit/7cb6403d72d8f15bc378e9261bf9fdc21d7606b3))
+- **redis-smq-rest-api:** extract queue-purge as a top-level feature ([5523c2e](https://github.com/weyoss/redis-smq/commit/5523c2e1ca50b2fa9e5b4b48e0b5f5aa13610b64))
+- **redis-smq-rest-api:** keep controller DTOs out of components.schemas ([b345add](https://github.com/weyoss/redis-smq/commit/b345adde8a344d1668e0a2524982f4f22fbf8606))
+- **redis-smq-rest-api:** migrate messages endpoints ([1446b5d](https://github.com/weyoss/redis-smq/commit/1446b5d7be8c84ed086dc7ebcf28684275fb1d6e))
+- **redis-smq-rest-api:** promote redis-smq-rest-api-refactor to redis-smq-rest-api ([7d4e9fc](https://github.com/weyoss/redis-smq/commit/7d4e9fc439f7556664673b600fbcf562a53e8f34))
+- **redis-smq-rest-api:** shorten exported type names ([11ad821](https://github.com/weyoss/redis-smq/commit/11ad821c08b10aba5f2197b71f9f66cbb0a5044b))
+- **redis-smq-web-server:** rebuild Web Server on clean architecture ([f3a0351](https://github.com/weyoss/redis-smq/commit/f3a0351830b7f9b91a8258e460fb1fc0dd9e0548))
+- **redis-smq-web-ui-refactor:** add API health indicator ([36900c7](https://github.com/weyoss/redis-smq/commit/36900c796fbd491acf36573102ff16b30c5dc1d6))
+- **redis-smq-web-ui-refactor:** add configuration view ([187d78f](https://github.com/weyoss/redis-smq/commit/187d78f8662eb2315376d50febcc3c0bd790fb5f))
+- **redis-smq-web-ui-refactor:** add data layer + app shell ([f1a09f8](https://github.com/weyoss/redis-smq/commit/f1a09f8fa3133c3eb7e1f4f650458f9b3b95574d))
+- **redis-smq-web-ui-refactor:** add exchanges + namespaces ([db49690](https://github.com/weyoss/redis-smq/commit/db496905564bf209f3a597b25d2d1f8555217810))
+- **redis-smq-web-ui-refactor:** add message detail modal ([14305dd](https://github.com/weyoss/redis-smq/commit/14305ddfd2d7d70c8be28fc76b0f74c5e7d1da38))
+- **redis-smq-web-ui-refactor:** add publish message modal ([2f93235](https://github.com/weyoss/redis-smq/commit/2f932357b55bce38c5dcf4cd0e4128f30f4c7f39))
+- **redis-smq-web-ui-refactor:** add purge queue modal ([de6cfe3](https://github.com/weyoss/redis-smq/commit/de6cfe3e0243ee0d5aa76bfaa1c810095411b58b))
+- **redis-smq-web-ui-refactor:** add queue + message mutations ([a3fe4d4](https://github.com/weyoss/redis-smq/commit/a3fe4d429923b529d71b4cff85d050100d0777f7))
+- **redis-smq-web-ui-refactor:** add queue detail cards ([1c0f177](https://github.com/weyoss/redis-smq/commit/1c0f17711f3e6253cde37cade7fdbd6f231d8c1c))
+- **redis-smq-web-ui-refactor:** add queue exchanges card ([7f02156](https://github.com/weyoss/redis-smq/commit/7f02156f48338eed49cb2b4a38370f342051b016))
+- **redis-smq-web-ui-refactor:** add views + dev server ([b208802](https://github.com/weyoss/redis-smq/commit/b208802597bcb85e1f2040de5dced86b2bd688d3))
+- **redis-smq-web-ui-refactor:** allow to delete a namespace ([b64ba4b](https://github.com/weyoss/redis-smq/commit/b64ba4b5069954a543afc6e57d6ec0587c282b4c))
+- **redis-smq-web-ui-refactor:** complete views, exchange decoupling, shell polish ([348d777](https://github.com/weyoss/redis-smq/commit/348d77738c9e0208444f961d255c726b438c0dd3))
+- **redis-smq-web-ui-refactor:** implement bulk message delete ([38e4dfb](https://github.com/weyoss/redis-smq/commit/38e4dfb371c91061bee327063a2fe81db472a83b))
+- **redis-smq-web-ui-refactor:** implement consumer group pending view ([4540119](https://github.com/weyoss/redis-smq/commit/4540119653f36e1715838616b3fe96b1c9999074))
+- **redis-smq-web-ui-refactor:** implement exchange match preview ([1b7a5ff](https://github.com/weyoss/redis-smq/commit/1b7a5ff926912cc691d9ada0b916147303e79e87))
+- **redis-smq-web-ui-refactor:** replace shallow types with generated ones ([6d9c3be](https://github.com/weyoss/redis-smq/commit/6d9c3becc4a5a059955acb4c91fd06903bb05cf4))
+- **redis-smq-web-ui-refactor:** scaffold primitives package ([17764e2](https://github.com/weyoss/redis-smq/commit/17764e29bc3ada81e20b5361f31a7831ab0ad346))
+- **redis-smq-web-ui:** promote redis-smq-web-ui-refactor to redis-smq-web-ui ([b1a4be6](https://github.com/weyoss/redis-smq/commit/b1a4be6b45ee272d764a5deab76c062ea6d9d344))
+- **redis-sqm-rest-api-refactor:** migrate queue-rate-limit endpoints ([f2b2b10](https://github.com/weyoss/redis-smq/commit/f2b2b1012fe93351dc54c46523e04e3f9d8b2bc1))
+
+### ✅ Tests
+
+- **redis-smq-rest-api-refactor:** add OpenAPI spec and Swagger UI tests ([da62746](https://github.com/weyoss/redis-smq/commit/da62746d54c82f75db746f3d6c7fb22872cb4dfd))
+- **redis-smq-rest-api-refactor:** restart API per test ([ff51b94](https://github.com/weyoss/redis-smq/commit/ff51b9413a4252973488f6d57b1e51564c0ffd8c))
+- **redis-smq-rest-api:** add CLI e2e tests ([5a66134](https://github.com/weyoss/redis-smq/commit/5a661348dcc1860123910a5b4da405044786eb95))
+- **redis-smq-web-ui:** add browse, publish, action, and purge coverage ([7071e9e](https://github.com/weyoss/redis-smq/commit/7071e9e67378e39f3eca2fd2dcbb4efc11ae36b6))
+- **redis-smq-web-ui:** add combined `test` script for redis-smq-web-ui ([63aa193](https://github.com/weyoss/redis-smq/commit/63aa193e5eff36e3ff9be5aec0aea1869fd2b3a7))
+- **redis-smq-web-ui:** add config view and update-flow coverage ([8bfa362](https://github.com/weyoss/redis-smq/commit/8bfa3625ba90a71954f8d3e7617dfd9dffbea2d6))
+- **redis-smq-web-ui:** add exchange list and detail coverage ([9a50ae9](https://github.com/weyoss/redis-smq/commit/9a50ae9c0538c753ea30dcebfb93221a9ec065fb))
+- **redis-smq-web-ui:** add header, health indicator, and a11y coverage ([74e6a40](https://github.com/weyoss/redis-smq/commit/74e6a404fa1329ef58fac8d22adbc6f529d776c8))
+- **redis-smq-web-ui:** add home view coverage ([42e6bea](https://github.com/weyoss/redis-smq/commit/42e6bea12a028a120b18e6b8553d9bf7ed40734b))
+- **redis-smq-web-ui:** add namespace list and per-namespace queue/exchange coverage ([2b0feb7](https://github.com/weyoss/redis-smq/commit/2b0feb7aee1b84835c12cd948869d856c6a636d2))
+- **redis-smq-web-ui:** add queue list and detail coverage ([cf93868](https://github.com/weyoss/redis-smq/commit/cf93868043afd97d925840e6a55732b0a6a9ab6d))
+- **redis-smq-web-ui:** change `exclude` from 'e2e/**' to 'tests/e2e/**' ([f95979e](https://github.com/weyoss/redis-smq/commit/f95979e3739acb588206446e8557c6839c7d56f7))
+- **redis-smq-web-ui:** cover requeue of ACKNOWLEDGED/DEAD-LETTERED messages ([3872fc2](https://github.com/weyoss/redis-smq/commit/3872fc28ab875bf16be2582c117781dfa5d154f2))
+- **redis-smq-web-ui:** generate Orval client before running test suites ([2d282a8](https://github.com/weyoss/redis-smq/commit/2d282a8fdf8e0d6fc0e92a820f75ce216370ced5))
+- **redis-smq-web-ui:** make useMessages self-contained, avoid Orval dependency ([1881049](https://github.com/weyoss/redis-smq/commit/18810491e3080ebe37b6f53c107a70a7cee71ba4))
+- **redis-smq-web-ui:** set up e2e Playwright tests ([8ef514b](https://github.com/weyoss/redis-smq/commit/8ef514b1a194a6b0457746abc7f76715f361d0ca))
+- **redis-smq-web-ui:** update fixtures, helpers, and setup files ([50c643c](https://github.com/weyoss/redis-smq/commit/50c643c146fe9de59de3c50665fc7c19ebbc0087))
+- **redis-smq-web-ui:** wait for query success before pagination assertions ([23ddd03](https://github.com/weyoss/redis-smq/commit/23ddd033d45fe6d61a3eebade40f64d33ef8aec1))
+
+### 👷 Continuous Integration
+
+- extend BUILD.md with a per-package code coverage table ([9620d66](https://github.com/weyoss/redis-smq/commit/9620d66411ba4a241ab83d0a5953d4de07844408))
+- install Playwright Chromium in the test matrix ([484b721](https://github.com/weyoss/redis-smq/commit/484b7212aa1a175a12b660a4346dd8fb30df28b8))
+- skip build in CI, keep it for local runs ([2560893](https://github.com/weyoss/redis-smq/commit/2560893b29a96238d551bbc8d2f91e078a4b7c86))
+- support [skip release] marker to skip pre-releases ([835e5b5](https://github.com/weyoss/redis-smq/commit/835e5b5b1ac919b2b9157c3939f9c550f8779cdd))
+
 ## [11.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.1...v11.0.0-next.2) (2026-10-12)
 
 ### 👷 Continuous Integration
