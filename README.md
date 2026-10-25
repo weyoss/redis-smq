@@ -203,6 +203,10 @@ Learn more about [dual callback & promise support](packages/redis-smq/docs/dual-
 
 ## 🛠️ Administration & Monitoring
 
+<p>
+    <img alt="RedisSMQ Web UI" src="packages/redis-smq-web-ui/screenshot.png" />
+</p>
+
 The included **REST API** and **Web UI** can manage queues created by any RedisSMQ implementation (including Go).  
 See the respective package READMEs for setup:
 
