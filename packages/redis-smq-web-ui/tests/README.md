@@ -7,8 +7,6 @@
   cross-browser coverage becomes a requirement.
 - The API has no auth; if that changes, every test needs a
   login fixture.
-- Full-stack coverage (queues, messages, exchanges, configuration
-  interactions).
 
 ## Prerequisites
 
