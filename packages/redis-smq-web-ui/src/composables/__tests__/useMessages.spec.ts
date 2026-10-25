@@ -43,7 +43,23 @@ describe('useMessages', () => {
     });
 
     mount(Host, withQueryClient());
-    await nextTick();
+
+    // Wait for the initial fetch to actually succeed. TanStack Query v5
+    // batches state notifications through `notifyManager`, which uses
+    // `setTimeout(0)` by default — so `flushPromises()` (a single
+    // setTimeout(0)) resolves *before* TanStack's own batch fires.
+    // The `query.data.value` ref is still undefined at that point, so
+    // `totalCount` is 0 and `paginationInfo.totalPages` is 1; then
+    // `goToPage(3)` short-circuits on `page > max`.
+    //
+    // `vi.waitFor` polls until the query succeeds, which is the actual
+    // precondition `goToPage` needs. The `queryFn` call assertion
+    // catches the other failure mode (query never started at all —
+    // config.enabled mis-evaluated, missing plugin, etc.).
+    await vi.waitFor(() => {
+      expect(queryFn).toHaveBeenCalled();
+      expect(composable.query.isSuccess.value).toBe(true);
+    });
 
     composable.goToPage(3);
     await nextTick();
@@ -74,7 +90,13 @@ describe('useMessages', () => {
     });
 
     mount(Host, withQueryClient());
-    await nextTick();
+
+    // Same as above — wait for the query to succeed so totalPages > 1
+    // before calling goToPage(2).
+    await vi.waitFor(() => {
+      expect(queryFn).toHaveBeenCalled();
+      expect(composable.query.isSuccess.value).toBe(true);
+    });
 
     composable.goToPage(2);
     await nextTick();
