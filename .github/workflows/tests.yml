@@ -98,6 +98,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Only redis-smq-web-ui uses Playwright. Gate both the cache and
+      # the install on this package so the other matrix legs don't pay
+      # the ~150 MB download cost.
+      #
+      # Cache key on the pnpm lockfile hash: a @playwright/test bump
+      # changes the lockfile and invalidates the cache, so the matching
+      # browser binary downloads. Between bumps the step is a ~5s hit.
+      # `restore-keys` gives partial benefit when a non-Playwright
+      # dependency changes the lockfile.
+      - name: Cache Playwright browsers
+        if: matrix.package == 'redis-smq-web-ui'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      # --with-deps installs the OS packages Chromium needs (libnss3,
+      # libgbm1, fonts, …) that bare ubuntu-latest doesn't ship.
+      # `chromium` (not all three browsers) matches playwright.config.ts's
+      # single project entry.
+      - name: Install Playwright Chromium
+        if: matrix.package == 'redis-smq-web-ui'
+        run: pnpm -F ${{ matrix.package }} exec playwright install --with-deps chromium
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
