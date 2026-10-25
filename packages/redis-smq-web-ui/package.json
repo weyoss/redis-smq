@@ -63,6 +63,7 @@
     "generate-api": "orval",
     "test:unit": "vitest",
     "test:unit:run": "vitest run",
+    "pretest:e2e": "pnpm generate-api",
     "test:e2e": "playwright test",
     "test": "pnpm test:unit:run && pnpm test:e2e",
     "typecheck": "vue-tsc --build --force"

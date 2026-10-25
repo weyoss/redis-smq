@@ -14,6 +14,11 @@ import { useMessages } from '../useMessages.js';
 
 import type { Plugin } from 'vue';
 
+vi.mock('@/api/generated/messages/messages', () => ({
+  useDeleteMessageById: vi.fn(),
+  useRequeueMessageById: vi.fn(),
+}));
+
 function withQueryClient() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -44,18 +49,13 @@ describe('useMessages', () => {
 
     mount(Host, withQueryClient());
 
-    // Wait for the initial fetch to actually succeed. TanStack Query v5
-    // batches state notifications through `notifyManager`, which uses
-    // `setTimeout(0)` by default — so `flushPromises()` (a single
-    // setTimeout(0)) resolves *before* TanStack's own batch fires.
-    // The `query.data.value` ref is still undefined at that point, so
-    // `totalCount` is 0 and `paginationInfo.totalPages` is 1; then
-    // `goToPage(3)` short-circuits on `page > max`.
-    //
-    // `vi.waitFor` polls until the query succeeds, which is the actual
-    // precondition `goToPage` needs. The `queryFn` call assertion
-    // catches the other failure mode (query never started at all —
-    // config.enabled mis-evaluated, missing plugin, etc.).
+    // Wait for the initial fetch to actually succeed. `flushPromises()`
+    // resolves after a single setTimeout(0), but TanStack Query v5's
+    // notifyManager batches state updates through its own setTimeout(0)
+    // that fires *after* flushPromises' callback. So `query.data.value`
+    // is still undefined at that point, `totalCount` is 0,
+    // `paginationInfo.totalPages` is 1, and `goToPage(3)` short-circuits
+    // on `page > max`.
     await vi.waitFor(() => {
       expect(queryFn).toHaveBeenCalled();
       expect(composable.query.isSuccess.value).toBe(true);
