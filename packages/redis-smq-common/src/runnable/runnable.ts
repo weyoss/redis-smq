@@ -12,7 +12,7 @@ import { async } from '../async/index.js';
 import { ICallback } from '../async/index.js';
 import { OperationAbortedError } from '../errors/index.js';
 import { EventEmitter, TEventEmitterEvent } from '../event/index.js';
-import { PowerSwitch } from '../power-switch/index.js';
+import { Lifecycle } from '../lifecycle/index.js';
 import { ILogger } from '../logger/index.js';
 import { withOptionalCallback } from '../async/with-optional-callback.js';
 
@@ -32,7 +32,7 @@ export abstract class Runnable<
   Event extends TEventEmitterEvent = TEventEmitterEvent,
 > extends EventEmitter<Event> {
   protected readonly id: string;
-  protected readonly powerSwitch: PowerSwitch;
+  protected readonly lifecycle: Lifecycle;
   protected readonly forceShutdownOnError: boolean;
 
   protected abstract readonly logger: ILogger;
@@ -45,7 +45,7 @@ export abstract class Runnable<
   protected constructor(forceShutdownOnError = true) {
     super();
     this.id = uuid();
-    this.powerSwitch = new PowerSwitch();
+    this.lifecycle = new Lifecycle();
     this.forceShutdownOnError = forceShutdownOnError;
   }
 
@@ -83,7 +83,7 @@ export abstract class Runnable<
    * Marks the Runnable instance as up
    */
   protected finalizeUp(): void {
-    if (!this.powerSwitch.commit()) {
+    if (!this.lifecycle.commit()) {
       const err = new Error('Failed to commit "up" state');
       this.flushWaitingForUp(err);
       return;
@@ -96,7 +96,7 @@ export abstract class Runnable<
    * Marks the Runnable instance as down.
    */
   protected finalizeDown(): void {
-    this.powerSwitch.commit(); // safe / idempotent
+    this.lifecycle.commit(); // safe / idempotent
     this.flushWaitingForUp(new Error('Runnable has been shut down'));
     this.flushWaitingForDown();
     this.logger.debug(`Completely shut down`);
@@ -176,7 +176,7 @@ export abstract class Runnable<
       }
 
       if (err) {
-        this.powerSwitch.rollback();
+        this.lifecycle.rollback();
         this.flushWaitingForUp(err);
         if (this.forceShutdownOnError) this.executeGoingDownTasks();
         return;
@@ -215,7 +215,7 @@ export abstract class Runnable<
    * @returns {boolean} - Returns `true` if the Runnable instance is fully up and running.
    */
   isRunning(): boolean {
-    return this.powerSwitch.isRunning();
+    return this.lifecycle.isRunning();
   }
 
   /**
@@ -224,7 +224,7 @@ export abstract class Runnable<
    * @returns {boolean} - Returns `true` if the Runnable instance is going up, `false` otherwise.
    */
   isGoingUp(): boolean {
-    return this.powerSwitch.isGoingUp();
+    return this.lifecycle.isGoingUp();
   }
 
   /**
@@ -233,7 +233,7 @@ export abstract class Runnable<
    * @returns {boolean} - Returns `true` if the Runnable instance is going down, `false` otherwise.
    */
   isGoingDown(): boolean {
-    return this.powerSwitch.isGoingDown();
+    return this.lifecycle.isGoingDown();
   }
 
   /**
@@ -242,7 +242,7 @@ export abstract class Runnable<
    * @returns {boolean} - Returns `true` if the Runnable instance is up, `false` otherwise.
    */
   isUp(): boolean {
-    return this.powerSwitch.isUp();
+    return this.lifecycle.isUp();
   }
 
   /**
@@ -251,7 +251,7 @@ export abstract class Runnable<
    * @returns {boolean} - Returns `true` if the Runnable instance is down, `false` otherwise.
    */
   isDown(): boolean {
-    return this.powerSwitch.isDown();
+    return this.lifecycle.isDown();
   }
 
   /**
@@ -307,7 +307,7 @@ export abstract class Runnable<
       if (this.isGoingDown())
         return callback(new Error('Cannot run: shutdown is in progress'));
 
-      if (!this.powerSwitch.goingUp()) {
+      if (!this.lifecycle.goingUp()) {
         return callback(
           new Error('Cannot initiate startup – invalid state transition'),
         );
@@ -395,7 +395,7 @@ export abstract class Runnable<
       }
 
       if (this.isGoingUp()) {
-        this.powerSwitch.rollback();
+        this.lifecycle.rollback();
         this.flushWaitingForUp(
           new OperationAbortedError({ message: 'Startup aborted by shutdown' }),
         );
@@ -404,7 +404,7 @@ export abstract class Runnable<
       }
 
       // Fully running
-      if (!this.powerSwitch.goingDown()) {
+      if (!this.lifecycle.goingDown()) {
         this.flushWaitingForDown(
           new Error('Cannot initiate shutdown – invalid state transition'),
         );

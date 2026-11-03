@@ -432,7 +432,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    * @returns {boolean} - Returns `true` if the lock is held, `false` otherwise.
    */
   isLocked(): boolean {
-    const locked = this.powerSwitch.isRunning();
+    const locked = this.lifecycle.isRunning();
     this.logger.debug(
       `Lock status check for key ${this.lockKey}: ${locked ? 'locked' : 'not locked'}`,
     );
@@ -445,7 +445,7 @@ export class RedisLock extends Runnable<TLockerEvent> {
    * @returns {boolean} - Returns `true` if the lock is released, `false` otherwise.
    */
   isReleased(): boolean {
-    const released = this.powerSwitch.isDown();
+    const released = this.lifecycle.isDown();
     this.logger.debug(
       `Lock release status check for key ${this.lockKey}: ${released ? 'released' : 'not released'}`,
     );

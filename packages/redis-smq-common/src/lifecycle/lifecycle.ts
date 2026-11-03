@@ -8,7 +8,7 @@
  */
 
 /**
- * The four states `PowerSwitch` can occupy.
+ * The four states `Lifecycle` can occupy.
  *
  *   DOWN        — committed off; no transition in progress
  *   GOING_UP    — transition to on pending (committable or rollback-able)
@@ -22,26 +22,20 @@
  * Note that `GOING_UP` is cancellable but `GOING_DOWN` is not: see
  * `rollback()`.
  */
-export type TPowerSwitchState = 'DOWN' | 'GOING_UP' | 'UP' | 'GOING_DOWN';
+export type TLifecycleState = 'DOWN' | 'GOING_UP' | 'UP' | 'GOING_DOWN';
 
 /**
- * Small state machine for tracking power on/off transitions.
+ * The two stable states a transition can target.
  *
- * ## States and transitions
- *
- *   ┌────────┐ goingUp() ┌──────────┐  commit()  ┌────────┐
- *   │  DOWN  │ ────────► │ GOING_UP │ ─────────► │   UP   │
- *   └────────┘           └──────────┘            └────────┘
- *        ▲                    │                       │
- *        │              rollback()                    │ goingDown()
- *        │                    │                       ▼
- *        │                    ▼                ┌────────────┐
- *        └──────────────  DOWN                 │ GOING_DOWN │
- *                                              └────────────┘
- *                                                    │
- *                                    commit()        │
- *                                                    ▼
- *                                                  DOWN
+ * `'UP'` corresponds to the `DOWN → GOING_UP → UP` path; `'DOWN'` to the
+ * `UP → GOING_DOWN → DOWN` path. Used by the protected `switchTo()` method
+ * that subclass overrides may call.
+ */
+export type TLifecycleTarget = 'UP' | 'DOWN';
+
+/**
+ * Small state machine for tracking lifecycle transitions (init / shutdown,
+ * start / stop, up / down).
  *
  * ## Two-phase transitions
  *
@@ -55,7 +49,7 @@ export type TPowerSwitchState = 'DOWN' | 'GOING_UP' | 'UP' | 'GOING_DOWN';
  * return `false` — the machine enforces a single in-flight transition so
  * that `commit()` / `rollback()` always refer to a well-defined target.
  *
- * ## Why rollback is asymmetric
+ * ## Rollback
  *
  * `rollback()` is only permitted from `GOING_UP`. Startup is retryable —
  * if initialization fails, aborting the attempt and returning to `DOWN`
@@ -76,44 +70,66 @@ export type TPowerSwitchState = 'DOWN' | 'GOING_UP' | 'UP' | 'GOING_DOWN';
  *
  * These are **not** synonyms:
  *
- *   - `isUp()`      → true in `UP` and `GOING_DOWN` (committed on, or
- *                     transitioning from on)
- *   - `isRunning()` → true only in `UP` (committed on, nothing pending)
+ *   - `isUp()`      → true in `UP` and `GOING_DOWN` (committed up, or
+ *                     transitioning from up)
+ *   - `isRunning()` → true only in `UP` (committed up, nothing pending)
  *
  * During `goingDown()`, `isUp()` is still `true` (commit hasn't happened)
  * but `isRunning()` is `false` — signalling "shutdown requested, stop
  * accepting new work." Consumers doing operational work should gate on
  * `isRunning()`, not `isUp()`.
  */
-export class PowerSwitch {
+export class Lifecycle {
   /**
    * The current state. Single source of truth — every query method below
    * is a discriminated comparison against this field.
    */
-  protected state: TPowerSwitchState = 'DOWN';
+  protected state: TLifecycleState = 'DOWN';
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // State inspection
+  // ═══════════════════════════════════════════════════════════════════════
 
   /**
-   * Attempt to begin a transition to state `s`.
+   * Return the current state as a discriminated value.
    *
-   * Returns `false` — and leaves `state` untouched — unless the switch is
-   * in the stable state opposite to `s`:
+   * Complements the `is*()` predicates: they answer one question each
+   * ("am I up?", "am I running?"), while `getState()` returns the whole
+   * answer at once, suitable for logging, snapshot tests, or an
+   * exhaustive `switch` in a consumer.
    *
-   *   - `switch(true)`  succeeds only from `DOWN`  (→ `GOING_UP`)
-   *   - `switch(false)` succeeds only from `UP`    (→ `GOING_DOWN`)
+   * Note: consuming the returned union couples the caller to
+   * `TLifecycleState`. If future versions add a fifth state, exhaustive
+   * `switch` statements in the caller will fail to compile — which is
+   * the intended signal for "re-examine your state handling."
+   */
+  getState(): TLifecycleState {
+    return this.state;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Transition admission (subclass extension point)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Attempt to begin a transition to `target`.
+   *
+   * Returns `false` — and leaves `state` untouched — unless the lifecycle
+   * is in the stable state opposite to `target`:
+   *
+   *   - `switchTo('UP')`   succeeds only from `DOWN` (→ `GOING_UP`)
+   *   - `switchTo('DOWN')` succeeds only from `UP`   (→ `GOING_DOWN`)
    *
    * On success, `state` becomes the corresponding `GOING_*` state and the
    * method returns `true`. The transition is **not** applied here; the
-   * caller must `commit()` (or, for `GOING_UP` only, `rollback()`).
+   * caller must `commit()` (or, for `'UP'` only, `rollback()`).
    *
    * Subclasses may override this to add custom admissibility rules
    * (rate-limiting, capability checks, etc.). `goingUp()` / `goingDown()`
    * delegate here, so an override affects both.
-   *
-   * Note: `switch` is a reserved word in JavaScript, but it is allowed
-   * as a method name.
    */
-  protected switch(s: boolean): boolean {
-    if (s === true) {
+  protected switchTo(target: TLifecycleTarget): boolean {
+    if (target === 'UP') {
       if (this.state !== 'DOWN') return false;
       this.state = 'GOING_UP';
       return true;
@@ -128,20 +144,23 @@ export class PowerSwitch {
   // ═══════════════════════════════════════════════════════════════════════
 
   /**
-   * True if the switch is in, or transitioning from, the UP state.
+   * True if the lifecycle is committed to the UP state.
    *
-   * Both `UP` and `GOING_DOWN` return true — the switch has not yet
-   * committed to down. For "up and stable, ready to accept work," use
-   * `isRunning()` instead.
+   * Includes `UP` (fully up) and `GOING_DOWN` (still committed to up,
+   * transitioning out). Excludes `DOWN` and `GOING_UP`.
+   *
+   * For "up and stable, ready to accept work," use `isRunning()`
+   * instead.
    */
   isUp(): boolean {
     return this.state === 'UP' || this.state === 'GOING_DOWN';
   }
 
   /**
-   * True if the switch is in, or transitioning from, the DOWN state.
+   * True if the lifecycle is committed to the DOWN state.
    *
-   * Both `DOWN` and `GOING_UP` return true.
+   * Includes `DOWN` (fully down) and `GOING_UP` (still committed to down,
+   * transitioning up). Excludes `UP` and `GOING_DOWN`.
    */
   isDown(): boolean {
     return this.state === 'DOWN' || this.state === 'GOING_UP';
@@ -158,11 +177,11 @@ export class PowerSwitch {
   }
 
   /**
-   * True if the switch is in the `UP` state **and** no transition is
+   * True if the lifecycle is in the `UP` state **and** no transition is
    * pending.
    *
    * Distinct from `isUp()`: during `goingDown()`, `isUp()` is still
-   * `true` (the switch hasn't committed to down yet) but `isRunning()`
+   * `true` (the lifecycle hasn't committed to down yet) but `isRunning()`
    * is `false`. Consumers performing operational work should gate on
    * `isRunning()`, not `isUp()` — the former becomes `false` as soon as
    * shutdown starts, which is the correct time to stop accepting new
@@ -181,21 +200,21 @@ export class PowerSwitch {
    * Begin a transition to UP.
    *
    * Returns `false` if:
-   *   - the switch is already up or going up (`isUp()` is true), or
+   *   - the lifecycle is already up or going up (`isUp()` is true), or
    *   - a transition to down is pending.
    *
    * On success, `isGoingUp()` is `true`. Call `commit()` to apply,
    * `rollback()` to discard and return to `DOWN`.
    */
   goingUp(): boolean {
-    return this.switch(true);
+    return this.switchTo('UP');
   }
 
   /**
    * Begin a transition to DOWN.
    *
    * Returns `false` if:
-   *   - the switch is already down or going down (`isDown()` is true), or
+   *   - the lifecycle is already down or going down (`isDown()` is true), or
    *   - a transition to up is pending.
    *
    * On success, `isGoingDown()` is `true`. Call `commit()` to apply.
@@ -204,7 +223,7 @@ export class PowerSwitch {
    * (force down); do not attempt to cancel the transition.
    */
   goingDown(): boolean {
-    return this.switch(false);
+    return this.switchTo('DOWN');
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -245,14 +264,14 @@ export class PowerSwitch {
    *
    *   - `UP` / `DOWN`      — nothing to roll back.
    *   - `GOING_DOWN`       — shutdown is one-way; cancelling a
-   *                          transition to down would allow the switch
-   *                          to accept work again after consumers have
-   *                          been told to stop. If a shutdown step
-   *                          fails, call `commit()` anyway to force
-   *                          the switch down.
+   *                          transition to down would allow the
+   *                          lifecycle to accept work again after
+   *                          consumers have been told to stop. If a
+   *                          shutdown step fails, call `commit()`
+   *                          anyway to force the lifecycle down.
    *
    * Use this when the operation that justified the startup transition
-   * failed: the switch remains in `DOWN` and can retry.
+   * failed: the lifecycle remains in `DOWN` and can retry.
    */
   rollback(): boolean {
     if (this.state === 'GOING_UP') {

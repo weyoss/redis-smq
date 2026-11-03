@@ -7,4 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './power-switch.js';
+export * from './lifecycle.js';

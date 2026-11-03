@@ -14,7 +14,7 @@ export * from './src/event/index.js';
 export * from './src/event-bus/index.js';
 export * from './src/redis-lock/index.js';
 export * from './src/logger/index.js';
-export * from './src/power-switch/index.js';
+export * from './src/lifecycle/index.js';
 export * from './src/redis-client/index.js';
 export * from './src/runnable/index.js';
 export * from './src/timer/index.js';

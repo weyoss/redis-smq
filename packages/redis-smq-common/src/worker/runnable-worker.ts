@@ -9,7 +9,7 @@
 
 import { ICallback } from '../async/index.js';
 import { ILogger } from '../logger/index.js';
-import { PowerSwitch } from '../power-switch/index.js';
+import { Lifecycle } from '../lifecycle/index.js';
 import {
   WorkerAlreadyDownError,
   WorkerAlreadyRunningError,
@@ -27,7 +27,7 @@ export class RunnableWorker<InitialPayload>
   implements IRunnableWorker
 {
   protected readonly type: EWorkerType = EWorkerType.RUNNABLE;
-  protected readonly powerSwitch;
+  protected readonly lifecycle;
 
   constructor(
     workerFilename: string,
@@ -35,7 +35,7 @@ export class RunnableWorker<InitialPayload>
     logger: ILogger,
   ) {
     super(workerFilename, initialPayload, logger);
-    this.powerSwitch = new PowerSwitch();
+    this.lifecycle = new Lifecycle();
     this.logger.debug(`RunnableWorker instance created for ${workerFilename}`);
   }
 
@@ -46,7 +46,7 @@ export class RunnableWorker<InitialPayload>
   run(cb: ICallback) {
     this.logger.debug(`Attempting to run worker ${this.id}`);
 
-    const r = this.powerSwitch.goingUp();
+    const r = this.lifecycle.goingUp();
     if (r) {
       this.logger.debug('Power switch state changed to going up');
 
@@ -62,7 +62,7 @@ export class RunnableWorker<InitialPayload>
         this.postMessage(message);
 
         // Success - worker is running in background
-        this.powerSwitch.commit();
+        this.lifecycle.commit();
         this.logger.debug(
           `Worker ${this.id} started successfully (fire-and-forget)`,
         );
@@ -73,7 +73,7 @@ export class RunnableWorker<InitialPayload>
           error: error.message,
           stack: error.stack,
         });
-        this.powerSwitch.rollback();
+        this.lifecycle.rollback();
         cb(error);
       }
     } else {
@@ -85,7 +85,7 @@ export class RunnableWorker<InitialPayload>
   override shutdown(cb: ICallback) {
     this.logger.debug(`Attempting to shut down worker ${this.id}`);
 
-    const r = this.powerSwitch.goingDown();
+    const r = this.lifecycle.goingDown();
     if (r) {
       this.logger.debug('Power switch state changed to going down');
 
@@ -102,7 +102,7 @@ export class RunnableWorker<InitialPayload>
           // Still commit since we're shutting down regardless of errors
         }
         this.logger.debug('Committing power switch state change');
-        this.powerSwitch.commit();
+        this.lifecycle.commit();
         this.logger.debug(`Worker ${this.id} shut down successfully`);
         cb(null); // Always call with null for success
       });

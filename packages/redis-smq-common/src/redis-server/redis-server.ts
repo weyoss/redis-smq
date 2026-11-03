@@ -12,7 +12,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { env } from '../env/index.js';
 import { net } from '../net/index.js';
-import { PowerSwitch } from '../power-switch/index.js';
+import { Lifecycle } from '../lifecycle/index.js';
 import { constants } from './constants.js';
 import {
   RedisServerBinaryNotFoundError,
@@ -25,7 +25,7 @@ const execAsync = promisify(exec);
 export class RedisServer {
   private process: ChildProcess | null = null;
   private port: number | null = null;
-  private powerSwitch = new PowerSwitch();
+  private lifecycle = new Lifecycle();
 
   constructor() {
     this.bindExitHandler();
@@ -139,7 +139,7 @@ export class RedisServer {
   }
 
   async start(requestedPort?: number): Promise<number> {
-    if (!this.powerSwitch.goingUp()) {
+    if (!this.lifecycle.goingUp()) {
       throw new Error('Already started or going up');
     }
 
@@ -162,12 +162,12 @@ export class RedisServer {
       return this.port;
     }
 
-    this.powerSwitch.commit();
+    this.lifecycle.commit();
     return this.port;
   }
 
   async shutdown(): Promise<void> {
-    if (!this.powerSwitch.goingDown()) return;
+    if (!this.lifecycle.goingDown()) return;
 
     try {
       if (this.process) {
@@ -176,7 +176,7 @@ export class RedisServer {
     } finally {
       this.process = null;
       this.port = null;
-      this.powerSwitch.commit();
+      this.lifecycle.commit();
     }
   }
 }
