@@ -60,6 +60,17 @@ export class IoredisClientMulti implements IRedisTransaction {
     return this;
   }
 
+  /**
+   * SET with EX|PX and/or NX|XX in the MULTI queue.
+   *
+   * Same reasoning as `IoredisClient.set`: ioredis's `ChainableCommander.set`
+   * uses the same overload set as `Redis.set` and requires literal
+   * `'EX' | 'PX'` / `'NX' | 'XX'`. Dispatching on the literal value is the
+   * only cast-free way to preserve strong typing.
+   *
+   * Argument order matches the original implementation
+   * (`EX|PX` before `NX|XX`) to preserve wire bytes.
+   */
   set(
     key: string,
     value: string | number,
@@ -67,30 +78,27 @@ export class IoredisClientMulti implements IRedisTransaction {
       expire?: { mode: 'EX' | 'PX'; value: number };
       exists?: 'NX' | 'XX';
     },
-  ): void {
-    if (options.exists && options.expire) {
-      this.multi.set(
-        key,
-        value,
-        // @ts-expect-error any
-        options.expire.mode,
-        options.expire.value,
-        options.exists,
-      );
-    } else if (options.expire) {
-      this.multi.set(
-        key,
-        value,
-        // @ts-expect-error any
-        options.expire.mode,
-        options.expire.value,
-      );
-    } else if (options.exists) {
-      // @ts-expect-error any
-      this.multi.set(key, value, options.exists);
+  ): this {
+    const { expire, exists } = options;
+    if (expire && expire.mode === 'EX') {
+      if (exists === 'NX') this.multi.set(key, value, 'EX', expire.value, 'NX');
+      else if (exists === 'XX')
+        this.multi.set(key, value, 'EX', expire.value, 'XX');
+      else this.multi.set(key, value, 'EX', expire.value);
+    } else if (expire) {
+      // expire.mode is 'PX' here
+      if (exists === 'NX') this.multi.set(key, value, 'PX', expire.value, 'NX');
+      else if (exists === 'XX')
+        this.multi.set(key, value, 'PX', expire.value, 'XX');
+      else this.multi.set(key, value, 'PX', expire.value);
+    } else if (exists === 'NX') {
+      this.multi.set(key, value, 'NX');
+    } else if (exists === 'XX') {
+      this.multi.set(key, value, 'XX');
     } else {
       this.multi.set(key, value);
     }
+    return this;
   }
 
   incr(key: string): this {

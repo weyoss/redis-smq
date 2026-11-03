@@ -21,13 +21,108 @@ import { CommandNotSupportedError } from '../../errors/index.js';
 export class IoredisClient extends RedisClientAbstract {
   protected client: Redis;
 
+  /**
+   * True while a `halt()` / `shutdown()` / `end()` is in flight. Used to
+   * queue concurrent callers instead of racing them — a second `halt()`
+   * while the first is closing must not double-register an `'end'`
+   * listener (which would leave one caller's callback permanently
+   * unresolved).
+   */
+  private closing = false;
+
+  /**
+   * Callbacks waiting for the in-flight close to complete. Drained in
+   * `finishClose()`, where each is invoked exactly once.
+   */
+  private pendingCloseCallbacks: ICallback<void>[] = [];
+
   constructor(config: RedisOptions = {}) {
     super();
     this.client = new Redis(config);
-
-    // Wire the raw client's lifecycle (error/ready/end) to this wrapper.
     this.attachRawClient(this.client);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Connection lifecycle
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Forceful close — closes the socket immediately without sending QUIT
+   * and without waiting for server acknowledgement. Faster than
+   * `shutdown()`, but in-flight commands are abandoned.
+   *
+   * Safe under concurrent calls: the first call starts the close, all
+   * subsequent calls queue and fire when the shared close completes.
+   */
+  halt(cb: ICallback<void>): void {
+    this.closeInternal(cb, true);
+  }
+
+  /**
+   * Graceful close — sends QUIT and waits for the server to acknowledge
+   * before closing the socket. In-flight commands complete; new commands
+   * are rejected by the server-side close.
+   *
+   * Safe under concurrent calls: same queueing behavior as `halt()`.
+   */
+  shutdown(cb: ICallback<void> = () => void 0): void {
+    this.closeInternal(cb, false);
+  }
+
+  /**
+   * Fire-and-forget forceful close. `flush` is preserved for API
+   * compatibility with `IRedisClient`; ioredis always uses `disconnect(false)`
+   * here (no flush), matching the original `end()` semantics.
+   */
+  // eslint-disable-next-line
+  end(_flush?: boolean): void {
+    this.closeInternal(() => void 0, true);
+  }
+
+  private closeInternal(cb: ICallback<void>, force: boolean): void {
+    if (this.connectionClosed) return cb();
+    if (this.closing) {
+      this.pendingCloseCallbacks.push(cb);
+      return;
+    }
+
+    this.closing = true;
+    this.pendingCloseCallbacks.push(cb);
+
+    const finish = (err: Error | null): void => {
+      this.closing = false;
+      this.connectionClosed = true;
+      const callbacks = this.pendingCloseCallbacks.splice(0);
+      for (const callback of callbacks) {
+        try {
+          callback(err);
+        } catch {
+          // A caller's callback throwing must not block other callers.
+        }
+      }
+    };
+
+    try {
+      if (force) {
+        this.client.once('end', () => finish(null));
+        this.client.disconnect(false);
+      } else {
+        this.client.quit().then(
+          () => finish(null),
+          (reason) =>
+            finish(
+              reason instanceof Error ? reason : new Error(String(reason)),
+            ),
+        );
+      }
+    } catch (reason) {
+      finish(reason instanceof Error ? reason : new Error(String(reason)));
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Commands
+  // ═══════════════════════════════════════════════════════════════════════
 
   ping(cb: ICallback<string>): void {
     this.client.ping(cb);
@@ -111,6 +206,19 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.zscore(key, member, cb);
   }
 
+  /**
+   * SET with EX|PX and/or NX|XX.
+   *
+   * ioredis's `set` overloads require **literal** `'EX' | 'PX'` and
+   * **literal** `'NX' | 'XX'` at each argument position. A union type
+   * (`'EX' | 'PX'`) doesn't satisfy any single overload, so dispatching on
+   * the literal value is the only way to preserve strong typing without
+   * a cast.
+   *
+   * Argument order matches the original implementation
+   * (`EX|PX` before `NX|XX`) so the wire bytes are identical to the
+   * pre-refactor version.
+   */
   set(
     key: string,
     value: string,
@@ -120,28 +228,24 @@ export class IoredisClient extends RedisClientAbstract {
     },
     cb: ICallback<string | null>,
   ): void {
-    if (options.exists && options.expire) {
-      this.client.set(
-        key,
-        value,
-        // @ts-expect-error any
-        options.expire.mode,
-        options.expire.value,
-        options.exists,
-        cb,
-      );
-    } else if (options.expire) {
-      this.client.set(
-        key,
-        value,
-        // @ts-expect-error any
-        options.expire.mode,
-        options.expire.value,
-        cb,
-      );
-    } else if (options.exists) {
-      // @ts-expect-error any
-      this.client.set(key, value, options.exists, cb);
+    const { expire, exists } = options;
+    if (expire && expire.mode === 'EX') {
+      if (exists === 'NX')
+        this.client.set(key, value, 'EX', expire.value, 'NX', cb);
+      else if (exists === 'XX')
+        this.client.set(key, value, 'EX', expire.value, 'XX', cb);
+      else this.client.set(key, value, 'EX', expire.value, cb);
+    } else if (expire) {
+      // expire.mode is 'PX' here
+      if (exists === 'NX')
+        this.client.set(key, value, 'PX', expire.value, 'NX', cb);
+      else if (exists === 'XX')
+        this.client.set(key, value, 'PX', expire.value, 'XX', cb);
+      else this.client.set(key, value, 'PX', expire.value, cb);
+    } else if (exists === 'NX') {
+      this.client.set(key, value, 'NX', cb);
+    } else if (exists === 'XX') {
+      this.client.set(key, value, 'XX', cb);
     } else {
       this.client.set(key, value, cb);
     }
@@ -183,9 +287,9 @@ export class IoredisClient extends RedisClientAbstract {
     if (options.COUNT) args.push('COUNT', String(options.COUNT));
     this.client.sscan(...args, (err, reply) => {
       if (err) return cb(err);
-      const [cursor, items] = reply ?? [];
-      if (!cursor || !items) return cb(new CallbackEmptyReplyError());
-      cb(null, { cursor, items });
+      const [resultCursor, items] = reply ?? [];
+      if (!resultCursor || !items) return cb(new CallbackEmptyReplyError());
+      cb(null, { cursor: resultCursor, items });
     });
   }
 
@@ -207,19 +311,18 @@ export class IoredisClient extends RedisClientAbstract {
     if (options.MATCH) args.push('MATCH', options.MATCH);
     if (options.COUNT) args.push('COUNT', String(options.COUNT));
     this.client.zscan(...args, (err, reply) => {
-      if (err) cb(err);
-      else if (!reply) cb(new CallbackEmptyReplyError());
-      else {
-        const result = new Set<string>();
-        const [cursor, items] = reply;
-        while (items.length) {
-          const item = String(items.shift());
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const score = String(items.shift());
-          result.add(item);
-        }
-        cb(null, { cursor, items: [...result] });
+      if (err) return cb(err);
+      if (!reply) return cb(new CallbackEmptyReplyError());
+      // Reply shape: [member1, score1, member2, score2, ...]
+      // Indexed access — the original mutated the SDK reply via shift().
+      const [resultCursor, items] = reply;
+      const result = new Set<string>();
+      for (let i = 0; i < items.length; i += 2) {
+        const item = items[i];
+        if (item === undefined) continue;
+        result.add(String(item));
       }
+      cb(null, { cursor: resultCursor, items: [...result] });
     });
   }
 
@@ -296,14 +399,18 @@ export class IoredisClient extends RedisClientAbstract {
     if (options.COUNT) args.push('COUNT', String(options.COUNT));
     this.client.hscan(...args, (err, reply) => {
       if (err) return cb(err);
-      const [cursor, items] = reply ?? [];
-      if (!cursor || !items) return cb(new CallbackEmptyReplyError());
+      const [resultCursor, items] = reply ?? [];
+      if (!resultCursor || !items) return cb(new CallbackEmptyReplyError());
+      // Reply shape: [field1, value1, field2, value2, ...]
+      // Indexed access — the original mutated via shift().
       const result: Record<string, string> = {};
-      while (items.length) {
-        const key = String(items.shift());
-        result[key] = String(items.shift());
+      for (let i = 0; i < items.length; i += 2) {
+        const field = items[i];
+        const value = items[i + 1];
+        if (field === undefined || value === undefined) continue;
+        result[field] = value;
       }
-      cb(null, { cursor, result });
+      cb(null, { cursor: resultCursor, result });
     });
   }
 
@@ -321,7 +428,6 @@ export class IoredisClient extends RedisClientAbstract {
   }
 
   hdel(key: string, fields: string | string[], cb: ICallback<number>): void {
-    // Normalize key to always be an array of strings
     const f = Array.isArray(fields) ? fields : [fields];
     this.client.hdel(key, ...f, cb);
   }
@@ -360,27 +466,33 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.rpoplpush(source, destination, cb);
   }
 
+  /**
+   * ZRANGEBYSCORE ... WITHSCORES → Record<score, member>.
+   *
+   * `min` / `max` widened to `number | string` to match `IRedisClient`.
+   *
+   * Indexed access instead of `splice(0, 2)` — the original mutated the
+   * SDK reply array, which breaks any future caller that needs the raw
+   * reply (logging, snapshot tests).
+   */
   zrangebyscorewithscores(
     source: string,
-    min: number,
-    max: number,
+    min: number | string,
+    max: number | string,
     cb: ICallback<Record<string, string>>,
   ): void {
     this.client.zrangebyscore(source, min, max, 'WITHSCORES', (err, reply) => {
-      if (err) cb(err);
-      else {
-        const replyRange = reply ?? [];
-        const range: Record<string, string> = {};
-        for (
-          let slice = replyRange.splice(0, 2);
-          slice.length > 0;
-          slice = replyRange.splice(0, 2)
-        ) {
-          const [member, score] = slice;
-          range[score] = member;
-        }
-        cb(null, range);
+      if (err) return cb(err);
+      // Reply shape: [member1, score1, member2, score2, ...]
+      const replyRange = reply ?? [];
+      const range: Record<string, string> = {};
+      for (let i = 0; i < replyRange.length; i += 2) {
+        const member = replyRange[i];
+        const score = replyRange[i + 1];
+        if (member === undefined || score === undefined) continue;
+        range[score] = member;
       }
+      cb(null, range);
     });
   }
 
@@ -431,7 +543,6 @@ export class IoredisClient extends RedisClientAbstract {
   }
 
   del(key: string | string[], cb: ICallback<number>): void {
-    // Normalize key to always be an array of strings
     const keys = Array.isArray(key) ? key : [key];
     this.client.del(...keys, cb);
   }
@@ -482,46 +593,7 @@ export class IoredisClient extends RedisClientAbstract {
     this.client.hmget(source, ...keys, cb);
   }
 
-  halt(cb: ICallback<void>): void {
-    if (!this.connectionClosed) {
-      this.client.once('end', cb);
-      this.end();
-    } else cb();
-  }
-
-  end(): void {
-    if (!this.connectionClosed) {
-      this.client.disconnect(false);
-    }
-  }
-
-  shutdown(cb: ICallback<void> = () => void 0): void {
-    if (!this.connectionClosed) {
-      this.client.once('end', cb);
-      this.client.quit();
-    } else cb();
-  }
-
   getInfo(cb: ICallback<string>): void {
     this.client.info(cb);
-  }
-
-  /**
-   * Forward listener registration to the raw ioredis client.
-   *
-   * Rationale: the raw client is what emits pub/sub events ('message',
-   * 'pmessage', 'messageBuffer', 'pmessageBuffer'), so consumers that call
-   * `wrapper.on('message', handler)` after `wrapper.subscribe(...)` need
-   * their listener attached to the raw client, not the wrapper.
-   *
-   * Note on asymmetry: `once()` and `removeListener()` are NOT overridden
-   * and continue to operate on the wrapper's own emitter. This is what the
-   * factory relies on for lifecycle detection — it uses `once('ready')` and
-   * `once('error')` to observe the wrapper's own `init()` outcome, which is
-   * decoupled from the raw client's `'ready'`/`'error'`.
-   */
-  override on(event: string, listener: (...args: unknown[]) => unknown): this {
-    this.client.on(event, listener);
-    return this;
   }
 }
