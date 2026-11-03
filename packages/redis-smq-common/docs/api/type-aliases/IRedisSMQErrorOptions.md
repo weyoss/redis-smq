@@ -2,7 +2,7 @@
 
 # Type Alias: IRedisSMQErrorOptions\<Metadata\>
 
-> **IRedisSMQErrorOptions**\<`Metadata`\> = [`IBaseErrorOptions`](../interfaces/IBaseErrorOptions.md) & \[`Metadata`\] _extends_ \[`never`\] ? `object` : `object`
+> **IRedisSMQErrorOptions**\<`Metadata`\> = [`IBaseErrorOptions`](../interfaces/IBaseErrorOptions.md) & (\[`Metadata`\] _extends_ \[`never`\] ? `object` : `object`)
 
 Options accepted by every RedisSMQError.
 

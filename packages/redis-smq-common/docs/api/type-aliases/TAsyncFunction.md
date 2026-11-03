@@ -2,7 +2,7 @@
 
 # Type Alias: TAsyncFunction\<TArgs, TResult\>
 
-> **TAsyncFunction**\<`TArgs`, `TResult`\> = \[`TArgs`, [`ICallback`](../interfaces/ICallback.md)\<`TResult`\>\]
+> **TAsyncFunction**\<`TArgs`, `TResult`\> = \[`args`: `TArgs`, `callback`: [`ICallback`](../interfaces/ICallback.md)\<`TResult`\>\]
 
 Represents a tuple where the last element is a callback function
 
@@ -10,7 +10,7 @@ Represents a tuple where the last element is a callback function
 
 ### TArgs
 
-`TArgs` *extends* `any`[] = \[\]
+`TArgs` _extends_ `any`[] = \[\]
 
 The types of the arguments in the tuple (excluding the callback)
 

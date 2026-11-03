@@ -49,7 +49,7 @@ Configuration options for the logger behavior and formatting
 
 ##### namespaces?
 
-`string` \| `string`[]
+`string` \| `string`[] = `[]`
 
 Single namespace string or array of namespace strings for message categorization
 

@@ -2,7 +2,7 @@
 
 # Type Alias: TRunnableWorkerClass
 
-> **TRunnableWorkerClass** = (`initialPayload`) => [`IRunnableWorker`](../interfaces/IRunnableWorker.md)
+> **TRunnableWorkerClass** = new (`initialPayload`) => [`IRunnableWorker`](../interfaces/IRunnableWorker.md)
 
 ## Parameters
 

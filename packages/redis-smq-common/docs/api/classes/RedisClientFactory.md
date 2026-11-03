@@ -62,15 +62,37 @@
 
 > **getInstance**(): [`IRedisClient`](../interfaces/IRedisClient.md)
 
+Returns the connected client.
+
 #### Returns
 
 [`IRedisClient`](../interfaces/IRedisClient.md)
+
+#### Throws
+
+if `init()` has not yet succeeded. This is a
+programming error — a caller who needs the client should call
+`init()` first, or use `getSetInstance()` (which initializes on
+demand). Calling `getInstance()` before init is a lifecycle bug,
+not a recoverable state.
 
 ---
 
 ### getSetInstance()
 
 > **getSetInstance**(`cb`): `void`
+
+Returns the client instance, initializing it first if necessary.
+
+Concurrent calls: the first caller locks the factory, creates the
+client, and unlocks when done. Subsequent callers during the locked
+window receive `InstanceLockError` — this is fail-fast, not queueing.
+Callers that expect concurrency should either serialize their init
+calls or handle `InstanceLockError` and retry.
+
+For a non-initializing accessor, use `getInstance()` instead — it
+returns the already-initialized client and throws `PanicError` if
+`init()` has not yet succeeded.
 
 #### Parameters
 

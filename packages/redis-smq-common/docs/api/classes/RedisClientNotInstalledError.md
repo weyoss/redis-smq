@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<\{ `clientId`: `string`; \}\>\]
+...\[`options`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<\{ `clientId`: `string`; \}\>\]
 
 #### Returns
 

@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<\{ `error`: `string`; \}\>\]
+...\[`options`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<\{ `error`: `string`; \}\>\]
 
 #### Returns
 

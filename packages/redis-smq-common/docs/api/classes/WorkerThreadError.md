@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<[`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md)\>\]
+...\[`options`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<[`TWorkerThreadChildMessage`](../type-aliases/TWorkerThreadChildMessage.md)\>\]
 
 #### Returns
 

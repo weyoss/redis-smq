@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
+...\[`options?`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 

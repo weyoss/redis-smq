@@ -18,7 +18,7 @@ Namespaces must only contain alphanumeric characters, underscores, and hyphens.
 
 ##### args
 
-...\[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
+...\[`options?`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`never`\>\]
 
 #### Returns
 

@@ -56,7 +56,7 @@
 
 ##### args
 
-...\[`Metadata`\] _extends_ \[`never`\] ? \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\] : \[[`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\]
+...\[`Metadata`\] _extends_ \[`never`\] ? \[`options?`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\] : \[`options`: [`IRedisSMQErrorOptions`](../type-aliases/IRedisSMQErrorOptions.md)\<`Metadata`\>\]
 
 #### Returns
 
