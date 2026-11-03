@@ -7,16 +7,16 @@
 --- in the root directory of this source tree.
 ---
 
-local keySortedSet = KEYS[1]
-local keyList = KEYS[2]
-
-if redis.call("EXISTS", keySortedSet) == 1 then
-    local result = redis.call("ZRANGE", keySortedSet, 0, 0)
-    if #(result) then
-        local messageId = result[1]
-        redis.call("ZREM", keySortedSet, messageId)
-        redis.call("RPUSH", keyList, messageId)
-        return messageId
-    end
+--- KEYS[1] source sorted-set key
+--- KEYS[2] destination list key
+---
+--- Atomically pop the lowest-score member of `source` and push it to the
+--- tail of `destination`.
+local members = redis.call("ZRANGE", KEYS[1], 0, 0)
+local messageId = members[1]
+if messageId then
+    redis.call("ZREM", KEYS[1], messageId)
+    redis.call("RPUSH", KEYS[2], messageId)
+    return messageId
 end
 return nil
