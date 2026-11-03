@@ -40,23 +40,32 @@ const luaScriptMap = {
 const minimalSupportedVersion: [number, number, number] = [4, 0, 0];
 
 /**
- * The subset of raw-client events `attachRawClient` wires up.
- * Event name → listener argument tuple.
+ * Events a raw Redis client can emit that this wrapper forwards to its own
+ * emitter.
  *
- * Keep this in sync with attachRawClient(). Adding a new event here without
- * a corresponding listener in attachRawClient() is a silent no-op; adding a
- * listener in attachRawClient() for an event not listed here is a compile
- * error, which is the intent.
+ * `'ready'` is deliberately NOT forwarded: the wrapper emits its own
+ * `'ready'` only after `init()` (version check + script load) succeeds.
+ * Forwarding the raw `'ready'` would resolve the factory's `once('ready')`
+ * at socket-connect time, before init validation — breaking lifecycle
+ * detection.
+ *
+ * `'message'` / `'pmessage'` ARE forwarded. Without this, `wrapper.once()`
+ * and `wrapper.removeListener()` (which stay on the wrapper) never fire
+ * because nothing emits those events on the wrapper's own emitter. The
+ * original `on()` override in IoredisClient / NodeRedisClient only routed
+ * `on` to the raw client — leaving `once` / `removeListener` dead.
  */
 type RawRedisClientEvents = {
   error: [err: Error];
   ready: [];
   end: [];
+  message: [channel: string, message: string];
+  pmessage: [pattern: string, channel: string, message: string];
 };
 
 /**
- * Minimal structural interface for the raw Redis client a subclass wraps.
- * Only the events listed in RawRedisClientEvents are addressable.
+ * Structural interface for the raw Redis client a subclass wraps.
+ * Only the events listed in `RawRedisClientEvents` are addressable.
  */
 type RawRedisClient = {
   on<E extends keyof RawRedisClientEvents>(
@@ -73,8 +82,24 @@ export abstract class RedisClientAbstract
   extends EventEmitter<TRedisClientEvent>
   implements IRedisClient
 {
-  protected static scripts: Record<string, string> = {};
-  protected static redisServerVersion: number[] | null = null;
+  /**
+   * Instance-scoped script cache. NOT static — two client instances may
+   * point at different Redis servers, and script SHAs are server-local.
+   * A static cache would cause `NOSCRIPT` errors when instance B connects
+   * to a different server than instance A.
+   *
+   * Not thread-safe within a single instance (JS is single-threaded, so
+   * this only matters across `await` boundaries — not a real concern).
+   */
+  protected scripts: Record<string, string> = {};
+
+  /**
+   * Instance-scoped server version. NOT static — a client connected to
+   * Redis 3.x must not poison the version cache for another client
+   * connected to Redis 7.x in the same process.
+   */
+  protected redisServerVersion: number[] | null = null;
+
   protected connectionClosed = true;
 
   /**
@@ -100,19 +125,12 @@ export abstract class RedisClientAbstract
   }
 
   /**
-   * Wire a raw Redis client's lifecycle events to this wrapper.
+   * Wire a raw Redis client's lifecycle and pub/sub events to this wrapper.
    *
    * Subclasses MUST call this exactly once, immediately after creating the
-   * raw client in their constructor. It centralizes:
-   *
-   *  - Forwarding raw 'error' events to the wrapper (guarded so unhandled
-   *    retry errors don't crash the process).
-   *  - Tracking the connection's open/closed state across reconnects.
-   *  - Firing init() on the first 'ready' (version check + script load).
-   *    The wrapper emits its own 'ready' only after init() succeeds —
-   *    not on the raw 'ready' — so consumers can treat 'ready' as
-   *    "wrapper fully initialized".
-   *  - Emitting 'end' on the wrapper whenever the raw connection drops.
+   * raw client in their constructor. Consumers then use `on` / `once` /
+   * `removeListener` uniformly on the wrapper — no per-driver `on()`
+   * override is needed.
    */
   protected attachRawClient(rawClient: RawRedisClient): void {
     // Forward every raw error. safeEmit handles the "no listener" case.
@@ -127,10 +145,10 @@ export abstract class RedisClientAbstract
       this.connectionClosed = false;
     });
 
-    // Run the wrapper's init() exactly once, on the first ready. Subsequent
-    // ready events (reconnects) do not re-run init: server version and
-    // script SHAs are cached in static state on this class and remain valid
-    // for the lifetime of the process.
+    // Run the wrapper's init() exactly once, on the first ready.
+    // Subsequent ready events (reconnects) do not re-run init: server
+    // version and script SHAs are cached on the instance and remain valid
+    // for the lifetime of this client.
     rawClient.once('ready', () => {
       this.init();
     });
@@ -141,6 +159,20 @@ export abstract class RedisClientAbstract
       this.connectionClosed = true;
       this.emit('end');
     });
+
+    // Forward pub/sub events. Without this, `wrapper.once('message', …)`
+    // and `wrapper.removeListener('message', …)` never work: they operate
+    // on the wrapper's emitter, and nothing emits 'message' there. Fixes
+    // the original asymmetry where only `on()` was overridden.
+    rawClient.on('message', (channel: string, message: string) => {
+      this.emit('message', channel, message);
+    });
+    rawClient.on(
+      'pmessage',
+      (pattern: string, channel: string, message: string) => {
+        this.emit('pmessage', pattern, channel, message);
+      },
+    );
   }
 
   protected init(): void {
@@ -156,33 +188,44 @@ export abstract class RedisClientAbstract
     );
   }
 
+  /**
+   * Returns true if the connected Redis server satisfies the given version
+   * requirement. Compares major/minor/patch lexicographically (one
+   * component at a time), matching `semver`-style rules.
+   *
+   * The original implementation ANDed `minor >= feature && patch >= minor`
+   * at the same comparison level, which incorrectly rejected e.g.
+   * `[6,3,0]` against `(6, 2, 10)` (minor is higher but patch is lower).
+   */
   validateRedisVersion(major: number, feature = 0, minor = 0): boolean {
-    if (!RedisClientAbstract.redisServerVersion) {
+    const v = this.redisServerVersion;
+    if (!v) {
       this.safeEmit('error', new UnknownRedisServerVersionError());
       return false;
     }
-    return (
-      RedisClientAbstract.redisServerVersion[0] > major ||
-      (RedisClientAbstract.redisServerVersion[0] === major &&
-        RedisClientAbstract.redisServerVersion[1] >= feature &&
-        RedisClientAbstract.redisServerVersion[2] >= minor)
-    );
+    if (v[0] !== major) return v[0] > major;
+    if (v[1] !== feature) return v[1] > feature;
+    return v[2] >= minor;
   }
 
   validateRedisServerSupport(cb: ICallback): void {
-    const validate = (cb: ICallback) => {
+    const validate = (innerCb: ICallback) => {
       const [major, feature, minor] = minimalSupportedVersion;
       if (!this.validateRedisVersion(major, feature, minor))
-        cb(new UnsupportedRedisServerVersionError());
-      else cb();
+        innerCb(new UnsupportedRedisServerVersionError());
+      else innerCb();
     };
-    if (!RedisClientAbstract.redisServerVersion) {
+    if (!this.redisServerVersion) {
       this.updateServerVersion((err) => {
         if (err) cb(err);
         else validate(cb);
       });
     } else validate(cb);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Abstract command declarations
+  // ═══════════════════════════════════════════════════════════════════════
 
   abstract exists(key: string, cb: ICallback<boolean>): void;
 
@@ -470,10 +513,16 @@ export abstract class RedisClientAbstract
     }
   }
 
+  /**
+   * `zrangebyscorewithscores` — `min`/`max` widened to `number | string`
+   * to match `IRedisClient`. The original abstract signature was
+   * `number`-only, which was narrower than the interface and rejected
+   * `'-inf'` / `'+inf'` at the class-type level.
+   */
   abstract zrangebyscorewithscores(
     source: string,
-    min: number,
-    max: number,
+    min: number | string,
+    max: number | string,
     cb: ICallback<Record<string, string>>,
   ): void;
 
@@ -539,21 +588,52 @@ export abstract class RedisClientAbstract
 
   abstract getInfo(cb: ICallback<string>): void;
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // Shared implementation — server version + script management
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Parse the Redis INFO response for `redis_version:x.y.z`.
+   *
+   * The original implementation split on `'\r\n'` and took line 2. Both
+   * assumptions are wrong: line order is not guaranteed (INFO sections can
+   * be reordered by proxies), and some Redis-compatible servers (Dragonfly,
+   * KeyDB) emit `\n`-only. Failures parsed as `[NaN, NaN, NaN]` and were
+   * then silently treated as "version unsupported" by validateRedisVersion.
+   *
+   * This version finds the `redis_version:` line by content and returns
+   * `UnknownRedisServerVersionError` on parse failure, so the caller can
+   * distinguish "server too old" from "server INFO is unparseable".
+   */
   updateServerVersion(cb: ICallback): void {
-    if (!RedisClientAbstract.redisServerVersion) {
-      this.getInfo((err, res) => {
-        if (err) cb(err);
-        else if (!res) cb(new CallbackEmptyReplyError());
-        else {
-          RedisClientAbstract.redisServerVersion = res
-            .split('\r\n')[1]
-            .split(':')[1]
-            .split('.')
-            .map((i) => Number(i));
-          cb();
-        }
-      });
-    } else cb();
+    if (this.redisServerVersion) return cb();
+    this.getInfo((err, res) => {
+      if (err) return cb(err);
+      if (!res) return cb(new CallbackEmptyReplyError());
+
+      const line = res
+        .split(/\r?\n/)
+        .find((l) => l.startsWith('redis_version:'));
+      if (!line) return cb(new UnknownRedisServerVersionError());
+
+      const parts = line.slice('redis_version:'.length).split('.').map(Number);
+      if (parts.length < 3) return cb(new UnknownRedisServerVersionError());
+
+      const [major, minor, patch] = parts;
+      if (
+        major === undefined ||
+        minor === undefined ||
+        patch === undefined ||
+        Number.isNaN(major) ||
+        Number.isNaN(minor) ||
+        Number.isNaN(patch)
+      ) {
+        return cb(new UnknownRedisServerVersionError());
+      }
+
+      this.redisServerVersion = [major, minor, patch];
+      cb();
+    });
   }
 
   loadBuiltInScriptFiles(cb: ICallback): void {
@@ -567,9 +647,9 @@ export abstract class RedisClientAbstract
     const scriptsToLoad: Record<string, string | string[]> = {};
     const loadedScripts: Record<string, string> = {};
 
-    // Step 1: Segregate already loaded scripts from those that need loading.
+    // Step 1: Segregate already-loaded scripts from those that need loading.
     for (const name in scriptMap) {
-      const sha = RedisClientAbstract.scripts[name];
+      const sha = this.scripts[name];
       if (sha) {
         loadedScripts[name] = sha;
       } else {
@@ -595,7 +675,13 @@ export abstract class RedisClientAbstract
           10,
           (err, contents) => {
             if (err) return taskCallback(err);
-            if (!contents) return cb(new CallbackEmptyReplyError());
+            if (!contents) {
+              // Was `cb(...)` in the original — that leaked a second
+              // invocation of the caller's callback in addition to the
+              // final `eachIn` callback. Must be `taskCallback` so only
+              // one terminal callback fires.
+              return taskCallback(new CallbackEmptyReplyError());
+            }
             const scriptContent = contents.join('\n');
 
             // Step 2b: Load the combined script content into Redis.
@@ -603,16 +689,25 @@ export abstract class RedisClientAbstract
               if (err) return taskCallback(err);
               if (!sha) return taskCallback(new CallbackEmptyReplyError());
 
-              // Step 2c: Cache the loaded script SHA.
+              // Step 2c: Cache the loaded script SHA per-instance.
+              //
+              // Partial success note: if a later script in this batch
+              // fails, the scripts loaded up to this point are already
+              // cached on THIS instance. That is safe and intentional —
+              // the cache is per-instance (not static), so a retry on
+              // the same instance skips the already-loaded scripts and
+              // only retries the failures; a different instance starts
+              // with a fresh cache regardless.
               loadedScripts[name] = sha;
-              RedisClientAbstract.scripts[name] = sha;
+              this.scripts[name] = sha;
               taskCallback();
             });
           },
         );
       },
       (err) => {
-        // Step 3: Final callback after all scripts are loaded (or an error occurred).
+        // Step 3: Final callback after all scripts are loaded (or an
+        // error occurred).
         if (err) return cb(err);
         cb(null, loadedScripts);
       },
@@ -620,7 +715,7 @@ export abstract class RedisClientAbstract
   }
 
   getScriptId(name: string): string | PanicError {
-    const id = RedisClientAbstract.scripts[name];
+    const id = this.scripts[name];
     if (!id) {
       return new PanicError({
         message: `ID of script [${name}] is missing`,
