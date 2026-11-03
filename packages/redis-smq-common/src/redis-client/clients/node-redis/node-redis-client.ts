@@ -9,6 +9,7 @@
 
 import { createClient, RedisClientOptions } from '@redis/client';
 import { ICallback } from '../../../async/index.js';
+import { InvalidArgumentsError } from '../../../errors/index.js';
 import { RedisClientAbstract } from '../redis-client-abstract.js';
 import { NodeRedisClientMulti } from './node-redis-client-multi.js';
 import { CommandNotSupportedError } from '../../errors/index.js';
@@ -16,20 +17,111 @@ import { CommandNotSupportedError } from '../../errors/index.js';
 export class NodeRedisClient extends RedisClientAbstract {
   protected client;
 
+  /**
+   * True while a halt/shutdown/end is in flight. Used to queue concurrent
+   * callers instead of racing them — a second `halt()` during a close must
+   * not double-register with the raw client (which would leave one
+   * caller's callback permanently unresolved).
+   */
+  private closing = false;
+
+  /**
+   * Callbacks waiting for the in-flight close to complete. Drained in
+   * `finishClose()`, where each is invoked exactly once.
+   */
+  private pendingCloseCallbacks: ICallback<void>[] = [];
+
   constructor(config: RedisClientOptions = {}) {
     super();
     this.client = createClient(config);
 
     // Wire the raw client's lifecycle (error/ready/end) to this wrapper.
+    // Pub/sub is deliberately NOT forwarded here: node-redis delivers
+    // messages via per-channel subscription callbacks, not client events.
+    // `subscribe()` / `psubscribe()` below bridge those callbacks directly
+    // to `this.emit('message', …)` / `this.emit('pmessage', …)`, which
+    // makes `on` / `once` / `removeListener` all behave uniformly on the
+    // wrapper's own emitter — the fix for the original `on()` override
+    // asymmetry.
     this.attachRawClient(this.client);
 
-    // node-redis is lazy: createClient() builds the object but does not open
-    // the socket. connect() starts the connection attempt. It returns a
-    // Promise that rejects if the reconnect strategy gives up — the 'error'
-    // event (forwarded by attachRawClient) is the authoritative failure
-    // signal, so we swallow the rejection to avoid an unhandled promise.
+    // node-redis is lazy: createClient() builds the object but does not
+    // open the socket. connect() starts the connection attempt. It returns
+    // a Promise that rejects if the reconnect strategy gives up — the
+    // 'error' event (forwarded by attachRawClient) is the authoritative
+    // failure signal, so we swallow the rejection to avoid an unhandled
+    // promise.
     this.client.connect().catch(() => void 0);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Connection lifecycle
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Forceful close — closes the socket immediately without sending QUIT
+   * and without waiting for server acknowledgement.
+   */
+  halt(cb: ICallback<void>): void {
+    this.closeInternal(cb, true);
+  }
+
+  /**
+   * Graceful close — sends QUIT and waits for the server to acknowledge
+   * before closing the socket.
+   */
+  shutdown(cb: ICallback<void> = () => void 0): void {
+    this.closeInternal(cb, false);
+  }
+
+  /**
+   * Fire-and-forget forceful close. `flush` is preserved for API
+   * compatibility with `IRedisClient`; node-redis always uses
+   * `disconnect()` here (no flush), matching the original `end()` semantics.
+   */
+  // eslint-disable-next-line
+  end(_flush?: boolean): void {
+    this.closeInternal(() => void 0, true);
+  }
+
+  private closeInternal(cb: ICallback<void>, force: boolean): void {
+    if (this.connectionClosed) return cb();
+    if (this.closing) {
+      this.pendingCloseCallbacks.push(cb);
+      return;
+    }
+
+    this.closing = true;
+    this.pendingCloseCallbacks.push(cb);
+
+    const finish = (err: Error | null): void => {
+      this.closing = false;
+      this.connectionClosed = true;
+      const callbacks = this.pendingCloseCallbacks.splice(0);
+      for (const callback of callbacks) {
+        try {
+          callback(err);
+        } catch {
+          // A caller's callback throwing must not block other callers.
+        }
+      }
+    };
+
+    try {
+      const promise = force ? this.client.disconnect() : this.client.quit();
+      promise.then(
+        () => finish(null),
+        (reason) =>
+          finish(reason instanceof Error ? reason : new Error(String(reason))),
+      );
+    } catch (reason) {
+      finish(reason instanceof Error ? reason : new Error(String(reason)));
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Commands
+  // ═══════════════════════════════════════════════════════════════════════
 
   exists(key: string, cb: ICallback<boolean>) {
     this.client
@@ -38,6 +130,15 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
+  /**
+   * SET with EX|PX and/or NX|XX.
+   *
+   * Node-redis uses an options object (not variadic args), so we build a
+   * typed `{ EX?, PX?, NX?, XX? }` and let the SDK handle each field.
+   * The explicit `if` branches are required because assigning a dynamic
+   * key (`opts[options.expire.mode] = …`) loses type safety on the
+   * NX/XX `true` literal.
+   */
   set(
     key: string,
     value: string,
@@ -47,13 +148,21 @@ export class NodeRedisClient extends RedisClientAbstract {
     },
     cb: ICallback<string | null>,
   ): void {
+    const setOptions: {
+      EX?: number;
+      PX?: number;
+      NX?: true;
+      XX?: true;
+    } = {};
+    if (options.expire) {
+      if (options.expire.mode === 'EX') setOptions.EX = options.expire.value;
+      else setOptions.PX = options.expire.value;
+    }
+    if (options.exists === 'NX') setOptions.NX = true;
+    else if (options.exists === 'XX') setOptions.XX = true;
+
     this.client
-      .set(key, value, {
-        ...(options.expire
-          ? { [options.expire.mode]: options.expire.value }
-          : {}),
-        ...(options.exists ? { [options.exists]: true } : {}),
-      })
+      .set(key, value, setOptions)
       .then((reply) => cb(null, reply))
       .catch(cb);
   }
@@ -128,24 +237,35 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
-  psubscribe(pattern: string): void {
-    this.client.pSubscribe(pattern, (message, channel) => {
-      this.client.emit('pmessage', pattern, channel, message);
-    });
-  }
-
-  punsubscribe(channel?: string): void {
-    this.client.pUnsubscribe(channel).catch(() => void 0);
-  }
-
+  /**
+   * node-redis's `subscribe` accepts a per-channel callback. Bridge it
+   * directly to the wrapper's own emitter so `on` / `once` /
+   * `removeListener` all fire uniformly. This replaces the original
+   * `this.client.emit('message', …)` workaround, which only worked in
+   * combination with the (now-removed) `on()` override.
+   */
   subscribe(channel: string): void {
-    this.client.subscribe(channel, (message, channel) => {
-      this.client.emit('message', channel, message);
-    });
+    this.client
+      .subscribe(channel, (message) => {
+        this.emit('message', channel, message);
+      })
+      .catch(() => void 0);
   }
 
   unsubscribe(channel?: string): void {
     this.client.unsubscribe(channel).catch(() => void 0);
+  }
+
+  psubscribe(pattern: string): void {
+    this.client
+      .pSubscribe(pattern, (message, channel) => {
+        this.emit('pmessage', pattern, channel, message);
+      })
+      .catch(() => void 0);
+  }
+
+  punsubscribe(channel?: string): void {
+    this.client.pUnsubscribe(channel).catch(() => void 0);
   }
 
   zrangebyscore(
@@ -182,8 +302,8 @@ export class NodeRedisClient extends RedisClientAbstract {
   ): void {
     this.client
       .sScan(key, cursor, options)
-      .then(({ cursor, members }) => {
-        cb(null, { cursor, items: members });
+      .then(({ cursor: resultCursor, members }) => {
+        cb(null, { cursor: resultCursor, items: members });
       })
       .catch(cb);
   }
@@ -196,12 +316,13 @@ export class NodeRedisClient extends RedisClientAbstract {
   ): void {
     this.client
       .zScan(key, cursor, options)
-      .then(({ cursor, members }) => {
+      .then(({ cursor: resultCursor, members }) => {
+        // Iterate without mutating the SDK reply.
         const result = new Set<string>();
-        for (const i of members) {
-          result.add(i.value);
+        for (const entry of members) {
+          result.add(entry.value);
         }
-        cb(null, { cursor, items: [...result] });
+        cb(null, { cursor: resultCursor, items: [...result] });
       })
       .catch(cb);
   }
@@ -242,12 +363,13 @@ export class NodeRedisClient extends RedisClientAbstract {
   ): void {
     this.client
       .hScan(key, cursor, options)
-      .then(({ cursor, entries }) => {
+      .then(({ cursor: resultCursor, entries }) => {
+        // Iterate without mutating the SDK reply.
         const result: Record<string, string> = {};
-        for (const item of entries) {
-          result[item.field] = item.value;
+        for (const entry of entries) {
+          result[entry.field] = entry.value;
         }
-        cb(null, { cursor, result });
+        cb(null, { cursor: resultCursor, result });
       })
       .catch(cb);
   }
@@ -327,18 +449,26 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
+  /**
+   * ZRANGEBYSCORE ... WITHSCORES → Record<score, member>.
+   *
+   * `min` / `max` widened to `number | string` to match `IRedisClient`
+   * (the original signature was narrower than the interface, which
+   * rejected `'-inf'` / `'+inf'` at the class-type level). The SDK reply
+   * is iterated, not mutated.
+   */
   zrangebyscorewithscores(
     source: string,
-    min: number,
-    max: number,
+    min: number | string,
+    max: number | string,
     cb: ICallback<Record<string, string>>,
   ): void {
     this.client
       .zRangeByScoreWithScores(source, min, max)
       .then((reply) => {
         const range: Record<string, string> = {};
-        for (const { score, value } of reply) {
-          range[score] = value;
+        for (const entry of reply) {
+          range[entry.score] = entry.value;
         }
         cb(null, range);
       })
@@ -439,6 +569,12 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
+  /**
+   * LMOVE with the same validation as `IoredisClient`:
+   *   - Version gate → `CommandNotSupportedError` below 6.2.
+   *   - Direction gate → `InvalidArgumentsError` for LEFT→LEFT /
+   *     RIGHT→RIGHT.
+   */
   lmove(
     source: string,
     destination: string,
@@ -454,12 +590,24 @@ export class NodeRedisClient extends RedisClientAbstract {
           },
         }),
       );
-    } else {
-      this.client
-        .lMove(source, destination, from, to)
-        .then((reply) => cb(null, reply))
-        .catch(cb);
+      return;
     }
+    if (!(
+      (from === 'LEFT' && to === 'RIGHT') ||
+      (from === 'RIGHT' && to === 'LEFT')
+    )) {
+      cb(
+        new InvalidArgumentsError({
+          message:
+            'Invalid move direction. Use LEFT -> RIGHT or RIGHT -> LEFT.',
+        }),
+      );
+      return;
+    }
+    this.client
+      .lMove(source, destination, from, to)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
   }
 
   zremrangebyscore(
@@ -485,36 +633,11 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
-  halt(cb: ICallback<void>): void {
-    if (!this.connectionClosed) {
-      this.client.once('end', cb);
-      this.end();
-    } else cb();
-  }
-
-  end(): void {
-    if (!this.connectionClosed) {
-      this.client.disconnect().catch(() => void 0);
-    }
-  }
-
-  shutdown(cb: ICallback<void> = () => void 0): void {
-    if (!this.connectionClosed) {
-      this.client.once('end', cb);
-      this.client.quit().catch(() => void 0);
-    } else cb();
-  }
-
   getInfo(cb: ICallback<string>): void {
     this.client
       .info()
       .then((reply) => cb(null, reply))
       .catch(cb);
-  }
-
-  override on(event: string, listener: (...args: unknown[]) => unknown): this {
-    this.client.on(event, listener);
-    return this;
   }
 
   // -- start new methods
