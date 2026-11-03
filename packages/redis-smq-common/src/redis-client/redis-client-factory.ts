@@ -1,5 +1,10 @@
 /*
- * packages/redis-smq-common/src/redis-client/redis-client-factory.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import { ICallback } from '../async/index.js';
@@ -46,7 +51,24 @@ export class RedisClientFactory extends EventEmitter<
     this.createRedisClient(config, (err, client) => {
       if (err) return cb(err);
       if (!client) return cb(new CallbackEmptyReplyError());
-      this.setupClient(client, cb);
+
+      // On setupClient failure the client is already connected — no one
+      // will hold a reference to it, and without halting here its socket
+      // leaks for the lifetime of the process. Halt first, then propagate
+      // the setup error (which is what the caller actually needs to see).
+      try {
+        this.setupClient(client, (setupErr, setupClient) => {
+          if (setupErr) {
+            client.halt(() => cb(setupErr));
+            return;
+          }
+          cb(null, setupClient);
+        });
+      } catch (syncErr) {
+        const e =
+          syncErr instanceof Error ? syncErr : new Error(String(syncErr));
+        client.halt(() => cb(e));
+      }
     });
   }
 
@@ -58,20 +80,37 @@ export class RedisClientFactory extends EventEmitter<
     this.getSetInstance((err) => cb(err));
   };
 
+  /**
+   * Attach an `'error'` listener ONLY if at least one is registered on the
+   * factory.
+   *
+   * Node's `EventEmitter` throws when `'error'` is emitted with no listener
+   * attached. Raw Redis clients retry indefinitely and emit `'error'` on
+   * every failed attempt. When the factory has no consumer listening — e.g.
+   * between construction and the first `factory.on('error', ...)`, or
+   * during a raw-client retry window before `init()` resolves — an
+   * unguarded emit crashes the process for a condition the framework has
+   * already decided is recoverable. The guard prevents that.
+   */
   protected onClientError = (err: Error): void => {
-    // Match ioredis's own behavior: an unhandled 'error' is informational,
-    // not fatal. The client is already being torn down or has been
-    // orphaned; there is no listener to handle the error and no one to
-    // report it to. Throwing here terminates the process for a condition
-    // the framework has already decided is recoverable.
-    // const count = this.instance?.listenerCount('error') ?? 0;
-    // if (count > 0) {
-    //   this.emit('error', err);
-    // }
-
-    this.emit('error', err);
+    if (this.listenerCount('error') > 0) {
+      this.emit('error', err);
+    }
   };
 
+  /**
+   * Returns the client instance, initializing it first if necessary.
+   *
+   * Concurrent calls: the first caller locks the factory, creates the
+   * client, and unlocks when done. Subsequent callers during the locked
+   * window receive `InstanceLockError` — this is fail-fast, not queueing.
+   * Callers that expect concurrency should either serialize their init
+   * calls or handle `InstanceLockError` and retry.
+   *
+   * For a non-initializing accessor, use `getInstance()` instead — it
+   * returns the already-initialized client and throws `PanicError` if
+   * `init()` has not yet succeeded.
+   */
   getSetInstance = (cb: ICallback<IRedisClient>): void => {
     if (!this.locked) {
       if (!this.instance) {
@@ -98,6 +137,15 @@ export class RedisClientFactory extends EventEmitter<
     } else cb();
   };
 
+  /**
+   * Returns the connected client.
+   *
+   * @throws {PanicError} if `init()` has not yet succeeded. This is a
+   *   programming error — a caller who needs the client should call
+   *   `init()` first, or use `getSetInstance()` (which initializes on
+   *   demand). Calling `getInstance()` before init is a lifecycle bug,
+   *   not a recoverable state.
+   */
   getInstance(): IRedisClient {
     if (!this.instance)
       throw new PanicError({
@@ -155,6 +203,15 @@ export class RedisClientFactory extends EventEmitter<
     cb(new UnsupportedClientError());
   }
 
+  /**
+   * Create the raw client, then wait for its `'ready'` event (i.e. `init()`
+   * succeeded — version validated, built-in scripts loaded) before
+   * resolving. Any error before ready rejects the callback.
+   *
+   * Note: the wrapper emits `'ready'` only AFTER `init()` completes, not
+   * on raw socket-connect. This guarantees the caller receives a fully
+   * operational client, not just a connected socket.
+   */
   protected createRedisClient(
     config: IRedisConfig,
     cb: ICallback<IRedisClient>,
