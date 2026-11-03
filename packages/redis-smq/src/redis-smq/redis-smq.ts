@@ -8,7 +8,6 @@
  */
 
 import { ICallback, PanicError } from 'redis-smq-common';
-import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
 import { LifecycleManager } from './lifecycle-manager.js';
 
@@ -86,7 +85,7 @@ import { QueueOperationValidator } from '../core/queue-operation-validator/index
  *   on the failure path.
  */
 function build<T extends object>(factory: () => T): T {
-  if (!StateManager.isRunning()) {
+  if (!LifecycleManager.isRunning()) {
     throw new PanicError({
       message: 'RedisSMQ is not initialized. Call RedisSMQ.initialize() first.',
     });

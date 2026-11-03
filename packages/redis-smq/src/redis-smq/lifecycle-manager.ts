@@ -7,12 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, IRedisConfig, PanicError } from 'redis-smq-common';
+import {
+  async,
+  ICallback,
+  IRedisConfig,
+  Lifecycle,
+  PanicError,
+} from 'redis-smq-common';
 import { Configuration } from '../core/config-manager/configuration.js';
 import { Pool } from '../core/common/redis/connection-pool/pool.js';
 import { InternalEventBus } from '../core/event-bus/internal-event-bus.js';
 import { Cluster } from '../core/common/background-jobs/cluster.js';
-import { StateManager } from './state-manager.js';
 import { ComponentRegistry } from './component-registry.js';
 import { EventBus } from '../core/event-bus/index.js';
 import { EventMultiplexer } from '../core/event-bus/event-multiplexer.js';
@@ -25,7 +30,8 @@ import { Config } from '../core/common/redis/config.js';
  * Handles resource initialization, connection pooling, event bus setup,
  * and graceful shutdown of all components.
  *
- * Lifecycle contract:
+ * ## Lifecycle contract
+ *
  * - `initialize()` is transactional. On any failure (synchronous or
  *   asynchronous), every resource created during the attempt is torn down
  *   in reverse order, and the state machine is returned to DOWN, so a
@@ -34,8 +40,33 @@ import { Config } from '../core/common/redis/config.js';
  *   routed through the same failure path as asynchronous errors.
  * - Waiters queued behind an in-flight transition are drained and isolated,
  *   so a single throwing callback cannot block the others.
+ *
+ * ## State machine
+ *
+ * The four states — DOWN / GOING_UP / UP / GOING_DOWN — are provided by
+ * `Lifecycle` from `redis-smq-common`. This class owns the single
+ * `Lifecycle` instance that represents the library's lifecycle. See
+ * `Lifecycle`'s documentation for transition rules, return-value contract,
+ * and the rollback asymmetry (startup is retryable via `rollback()`;
+ * shutdown is one-way — only `commit()`).
+ *
+ * The `lifecycle` field is not exposed. External callers use
+ * `LifecycleManager.isRunning()` (or `RedisSMQ.isRunning()`), which
+ * delegate here.
  */
 export class LifecycleManager {
+  /**
+   * The library's lifecycle state machine. One instance, shared by every
+   * `LifecycleManager` static — matches the "one library, one lifecycle"
+   * model.
+   *
+   * Replaces the previous `StateManager` class, which was a thin static
+   * wrapper around the same `Lifecycle` instance with no additional logic.
+   * Inlining it here removes an indirection layer and makes the state
+   * transitions explicit at the call sites that manage them.
+   */
+  private static readonly lifecycle = new Lifecycle();
+
   /** @internal */
   private static shutdownWaiters: ICallback[] = [];
 
@@ -45,10 +76,15 @@ export class LifecycleManager {
   /**
    * Checks if RedisSMQ is currently running.
    *
-   * @returns true if initialized and running
+   * Returns `true` only in the `UP` state — fully initialized, no
+   * transition in flight. Distinct from `Lifecycle.isUp()`, which also
+   * returns `true` during `GOING_DOWN` — "running" here means "up and
+   * stable," not "committed to up."
+   *
+   * @returns true if fully initialized and running
    */
   static isRunning = (): boolean => {
-    return StateManager.isRunning();
+    return LifecycleManager.lifecycle.isRunning();
   };
 
   /**
@@ -79,29 +115,40 @@ export class LifecycleManager {
     }
 
     return async.withOptionalCallback(cb, (callback) => {
-      if (StateManager.isUp()) {
+      // ── State guards ────────────────────────────────────────────────
+      // Order matters: `isRunning()` (UP only) is checked first, so a
+      // call during `GOING_DOWN` falls through to the `isGoingDown()`
+      // check below and returns PanicError — correct semantics for
+      // "cannot initialize during shutdown."
+      //
+      // Using `isUp()` here would be a bug: `isUp()` returns `true` for
+      // both `UP` and `GOING_DOWN`, so the `isGoingDown()` branch would
+      // be unreachable, and initialize-during-shutdown would return
+      // success while resources are being torn down.
+      if (LifecycleManager.lifecycle.isRunning()) {
         return callback();
       }
 
-      if (StateManager.isGoingUp()) {
+      if (LifecycleManager.lifecycle.isGoingUp()) {
         LifecycleManager.initWaiters.push(callback);
         return;
       }
 
-      if (StateManager.isGoingDown()) {
+      if (LifecycleManager.lifecycle.isGoingDown()) {
         return callback(
           new PanicError({ message: 'RedisSMQ is shutting down' }),
         );
       }
 
-      StateManager.goingUp();
+      // State is DOWN. The transition to GOING_UP cannot fail from here.
+      LifecycleManager.lifecycle.goingUp();
 
-      // ── Synchronous bootstrap ─────────────────────────────────────────
+      // ── Synchronous bootstrap ───────────────────────────────────────
       // Config.initialize() throws synchronously if the singleton is
       // already set (retry after a failed attempt). This throw must not
       // escape without rolling back the state machine, otherwise the
-      // process becomes permanently bricked: subsequent initialize() calls
-      // would queue forever and shutdown() would be rejected.
+      // process becomes permanently bricked: subsequent initialize()
+      // calls would queue forever and shutdown() would be rejected.
       try {
         Config.initialize(redisConfig);
       } catch (err) {
@@ -111,15 +158,15 @@ export class LifecycleManager {
         );
       }
 
-      // ── Asynchronous bootstrap ────────────────────────────────────────
+      // ── Asynchronous bootstrap ──────────────────────────────────────
       // The series is expected to short-circuit on the first error. Any
       // resources created by earlier steps are cleaned up by
       // failInitialize() -> rollbackResources().
       async.series(
         [
-          (cb) => {
-            // Guarded because Pool.initialize() throws
-            // synchronously if the singleton is already set.
+          (cb: ICallback) => {
+            // Guarded because Pool.initialize() throws synchronously if
+            // the singleton is already set.
             try {
               const config = Config.getConfig();
               Pool.initialize(config, {}, (err) => cb(err));
@@ -127,16 +174,16 @@ export class LifecycleManager {
               cb(err instanceof Error ? err : new Error(String(err)));
             }
           },
-          (cb) => {
+          (cb: ICallback) => {
             Configuration.initialize(cb);
           },
-          (cb) => {
+          (cb: ICallback) => {
             InternalEventBus.getInstance().run(cb);
           },
-          (cb) => {
+          (cb: ICallback) => {
             ConfigSync.initialize(cb);
           },
-          (cb) => {
+          (cb: ICallback) => {
             Cluster.run(cb);
           },
         ],
@@ -144,7 +191,7 @@ export class LifecycleManager {
           if (err) {
             return LifecycleManager.failInitialize(err, callback);
           }
-          StateManager.commit();
+          LifecycleManager.lifecycle.commit();
           LifecycleManager.settleSuccess(callback);
         },
       );
@@ -161,22 +208,26 @@ export class LifecycleManager {
   static shutdown(cb: ICallback): void;
   static shutdown(cb?: ICallback): Promise<void> | void {
     return async.withOptionalCallback(cb, (callback) => {
-      if (StateManager.isGoingDown()) {
+      // ── State guards ────────────────────────────────────────────────
+      // A second shutdown during GOING_DOWN queues behind the first.
+      if (LifecycleManager.lifecycle.isGoingDown()) {
         LifecycleManager.shutdownWaiters.push(callback);
         return;
       }
 
-      if (StateManager.isGoingUp()) {
+      if (LifecycleManager.lifecycle.isGoingUp()) {
         return callback(
           new PanicError({ message: 'Cannot shutdown while initializing' }),
         );
       }
 
-      if (StateManager.isDown() && ComponentRegistry.size === 0) {
+      if (LifecycleManager.lifecycle.isDown() && ComponentRegistry.size === 0) {
         return callback();
       }
 
-      StateManager.goingDown();
+      // State is UP (or DOWN with leftover components). Transition to
+      // GOING_DOWN; the transition cannot fail from either state.
+      LifecycleManager.lifecycle.goingDown();
       const errors: Error[] = [];
 
       // Every step is wrapped to push its error and call cb() with no
@@ -184,49 +235,49 @@ export class LifecycleManager {
       // single failing teardown cannot leave later resources un-shutdown.
       async.series(
         [
-          (cb) =>
+          (cb: ICallback) =>
             Cluster.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             ComponentRegistry.shutdownComponents((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             ConfigSync.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             Configuration.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             EventBus.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             InternalEventBus.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             EventMultiplexer.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
-          (cb) =>
+          (cb: ICallback) =>
             Pool.shutdown((err) => {
               if (err) errors.push(err);
               cb();
             }),
         ],
         () => {
-          StateManager.commit();
+          LifecycleManager.lifecycle.commit();
           ComponentRegistry.clear();
           Config.reset();
 
@@ -269,7 +320,7 @@ export class LifecycleManager {
         // console.error('rollback after failed initialize:', rollbackErr);
       }
 
-      StateManager.rollback();
+      LifecycleManager.lifecycle.rollback();
       ComponentRegistry.clear();
 
       const waiters = LifecycleManager.initWaiters.splice(0);
@@ -299,32 +350,32 @@ export class LifecycleManager {
     const errors: Error[] = [];
     async.series(
       [
-        (d) =>
+        (d: ICallback) =>
           Cluster.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
-        (d) =>
+        (d: ICallback) =>
           ConfigSync.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
-        (d) =>
+        (d: ICallback) =>
           InternalEventBus.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
-        (d) =>
+        (d: ICallback) =>
           Configuration.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
-        (d) =>
+        (d: ICallback) =>
           Pool.shutdown((err) => {
             if (err) errors.push(err);
             d();
           }),
-        (d) => {
+        (d: ICallback) => {
           Config.reset();
           d();
         },
