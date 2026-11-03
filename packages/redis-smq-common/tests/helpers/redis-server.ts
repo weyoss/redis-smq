@@ -1,23 +1,26 @@
 /*
- * packages/redis-smq-common/tests/helpers/redis-server.ts
+ * Copyright (c)
+ * Weyoss <weyoss@outlook.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
  */
 
 import { RedisServer } from '../../src/redis-server/index.js';
-import { redisConfig } from './config.js';
+import { setRedisPort } from './config.js';
 
-let redisServer: RedisServer | null = null;
+let server: RedisServer | null = null;
 
-export async function initializeRedis() {
-  if (!redisServer) {
-    redisServer = new RedisServer();
-    const redisPort = await redisServer.start();
-    redisConfig.options = {
-      ...redisConfig,
-      port: redisPort,
-    };
-  }
+export async function initializeRedis(): Promise<void> {
+  if (server) return;
+  server = new RedisServer();
+  const port = await server.start();
+  setRedisPort(port);
 }
 
-export async function shutDownRedisServer() {
-  if (redisServer) await redisServer.shutdown();
+export async function shutDownRedisServer(): Promise<void> {
+  if (!server) return;
+  await server.shutdown();
+  server = null;
 }

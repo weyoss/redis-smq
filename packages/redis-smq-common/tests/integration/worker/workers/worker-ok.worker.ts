@@ -10,5 +10,7 @@
 import { ICallback } from '../../../../src/async/index.js';
 
 export default function myCallableWorker(args: string, cb: ICallback<string>) {
-  setTimeout(() => cb(null, args), 5000);
+  // Was 5000ms — reduced so tests finish in ~100ms instead of ~5s. The
+  // assertion is on the reply, not on timing.
+  setTimeout(() => cb(null, args), 100);
 }

@@ -10,6 +10,11 @@
 import { ICallback } from '../../../../src/async/index.js';
 import { Backoff } from '../../../../src/backoff/backoff.js';
 
+/**
+ * Subclass that exposes the protected methods of `Backoff` for testing.
+ * `attempts` is reset explicitly so tests can rely on a known starting
+ * value regardless of what the parent class does.
+ */
 export class TestBackoff extends Backoff {
   override attempts = 0;
 
@@ -26,5 +31,10 @@ export class TestBackoff extends Backoff {
     callback: ICallback<T>,
   ): void {
     super.scheduleRetry(task, callback);
+  }
+
+  /** Test-only: set `attempts` directly without running a retry cycle. */
+  setAttempts(n: number): void {
+    this.attempts = n;
   }
 }
