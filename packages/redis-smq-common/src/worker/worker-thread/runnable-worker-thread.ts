@@ -19,10 +19,13 @@ import {
 } from '../types/index.js';
 import { exit } from './worker-thread-message.js';
 
+/**
+ * Distinguish a class constructor from a factory function.
+ */
 function isWorkerClass(
-  Worker: TRunnableWorkerFactory | TRunnableWorkerClass,
-): Worker is TRunnableWorkerClass {
-  return Worker.prototype && typeof Worker.prototype.constructor === 'function';
+  W: TRunnableWorkerFactory | TRunnableWorkerClass,
+): W is TRunnableWorkerClass {
+  return W.toString().startsWith('class');
 }
 
 export function handleRunnableWorker(
@@ -31,12 +34,15 @@ export function handleRunnableWorker(
   initialPayload: unknown,
 ) {
   let instance: IRunnableWorker | null = null;
+
   try {
     if (isWorkerClass(Worker)) instance = new Worker(initialPayload);
     else instance = Worker(initialPayload);
   } catch (err: unknown) {
     exit(EWorkerThreadChildExitCode.INVALID_WORKER_TYPE, err);
+    return;
   }
+
   if (
     !instance ||
     typeof instance !== 'object' ||
@@ -44,23 +50,27 @@ export function handleRunnableWorker(
     !instance.shutdown
   ) {
     exit(EWorkerThreadChildExitCode.INVALID_WORKER_TYPE);
-  } else {
-    const run = () => {
-      try {
-        instance.run((err?: unknown | null) => {
-          if (err) exit(EWorkerThreadChildExecutionCode.PROCESSING_ERROR, err);
-        });
-      } catch (err: unknown) {
-        exit(EWorkerThreadChildExecutionCode.PROCESSING_CAUGHT_ERROR, err);
-      }
-    };
-    const shutdown = () => {
-      instance.shutdown(() => void 0);
-    };
-    const onMessage = (message: TWorkerThreadParentMessage) => {
-      if (message.type === EWorkerThreadParentMessage.RUN) run();
-      if (message.type === EWorkerThreadParentMessage.SHUTDOWN) shutdown();
-    };
-    messagePort.on('message', onMessage);
+    return;
   }
+
+  const run = () => {
+    try {
+      instance.run((err?: unknown | null) => {
+        if (err) exit(EWorkerThreadChildExecutionCode.PROCESSING_ERROR, err);
+      });
+    } catch (err: unknown) {
+      exit(EWorkerThreadChildExecutionCode.PROCESSING_CAUGHT_ERROR, err);
+    }
+  };
+
+  const shutdown = () => {
+    instance.shutdown(() => void 0);
+  };
+
+  const onMessage = (message: TWorkerThreadParentMessage) => {
+    if (message.type === EWorkerThreadParentMessage.RUN) run();
+    if (message.type === EWorkerThreadParentMessage.SHUTDOWN) shutdown();
+  };
+
+  messagePort.on('message', onMessage);
 }
