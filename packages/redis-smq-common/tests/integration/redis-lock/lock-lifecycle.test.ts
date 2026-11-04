@@ -115,4 +115,34 @@ describe('RedisLock: lifecycle', () => {
       await lock.releaseLockAsync();
     });
   });
+
+  describe('cleanup', () => {
+    it('removes its redis error listener on shutdown', async () => {
+      // Regression: the constructor registers `redisClient.on('error',
+      // this.handleError)` but the original `goingDown` never removed it.
+      // Every created-and-released `RedisLock` accumulated one permanent
+      // listener on the shared client. In processes that cycle locks
+      // (WorkerCluster creates them dynamically per group), listener
+      // count grows without bound — Node warns at 10, throws at ~100.
+      const client = await getRedisInstance();
+      const before = client.listenerCount('error');
+
+      const lock = bluebird.promisifyAll(
+        new RedisLock(client, getDummyLogger(), 'leak-check', 5000, false),
+      );
+
+      // Constructor must have registered exactly one error listener
+      // (assuming no other code path added one for this instance).
+      expect(client.listenerCount('error')).toBe(before + 1);
+
+      await lock.acquireLockAsync();
+      // Listener survives acquisition.
+      expect(client.listenerCount('error')).toBe(before + 1);
+
+      await lock.releaseLockAsync();
+      // Listener is removed during `goingDown`, so the client is back
+      // to its pre-construction count.
+      expect(client.listenerCount('error')).toBe(before);
+    });
+  });
 });
