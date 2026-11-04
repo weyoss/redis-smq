@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.3...v11.0.0-next.4) (2026-11-04)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** clean up RedisLock listeners and timer on shutdown ([be853c0](https://github.com/weyoss/redis-smq/commit/be853c0cc16472cce108930fc8a4dbd731cd2caa))
+- **redis-smq-common:** correct pub/sub, lmove validation, and close semantics in NodeRedisClient ([0f46e39](https://github.com/weyoss/redis-smq/commit/0f46e39ac8110030c6f2c844b25db69e0392b3eb))
+- **redis-smq-common:** correct runnable worker class detection and exit flow ([f18deeb](https://github.com/weyoss/redis-smq/commit/f18deeb8380e8e4133b1987f63169680eb9309f1))
+- **redis-smq-common:** correct state scoping and error handling in RedisClientAbstract ([b0de127](https://github.com/weyoss/redis-smq/commit/b0de12717b47c78c309ba87f05cb173ae0e0e61c))
+- **redis-smq-common:** fix Lua script crash on empty collections ([bc56570](https://github.com/weyoss/redis-smq/commit/bc56570982f7447a3ca7331abf7d368c4a8dcb3a))
+- **redis-smq-common:** fix pub/sub, close, and types in ioredis clients ([e78d3fe](https://github.com/weyoss/redis-smq/commit/e78d3fee3054762b3aaab5140ee1150671d10154))
+- **redis-smq-common:** prevent crash and socket leak in RedisClientFactory error paths ([1bb0b17](https://github.com/weyoss/redis-smq/commit/1bb0b1783169f12899ad423c238745318aec95d7))
+- **redis-smq-common:** prevent duplicate replies in callable worker thread ([33c44c3](https://github.com/weyoss/redis-smq/commit/33c44c3d1cb65e11fd533278dbd82287d4fe18ec))
+
+### 📝 Documentation
+
+- **redis-smq-common:** sync API reference with recent source changes ([99c8021](https://github.com/weyoss/redis-smq/commit/99c80217ddbf1aac83dfa59cabc37a50d8034965))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** clean up RunnableWorker lifecycle usage ([7538baf](https://github.com/weyoss/redis-smq/commit/7538baf697d944654d10f05d6802dae3bf95577d))
+- **redis-smq-common:** rename PowerSwitch to Lifecycle ([65e2051](https://github.com/weyoss/redis-smq/commit/65e20516576dd6169acb505e55d83d3bb05e3ea3))
+- **redis-smq-common:** rewrite PowerSwitch as a state union and restrict rollback to startup ([b97771e](https://github.com/weyoss/redis-smq/commit/b97771e1daf9a8a1351f0049c3cf687f90b12f07))
+
+### ✅ Tests
+
+- **redis-smq-common:** rewrite test suite for clarity and speed ([2e8f907](https://github.com/weyoss/redis-smq/commit/2e8f90775d709837e0ac80d30e308f114c11373d))
+
 ## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
 
 ### 🐛 Bug Fixes

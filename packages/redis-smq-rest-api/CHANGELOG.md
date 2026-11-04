@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.3...v11.0.0-next.4) (2026-11-04)
+
+**Note:** Version bump only for package redis-smq-rest-api
+
 ## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
 
 ### ⚠ BREAKING CHANGES

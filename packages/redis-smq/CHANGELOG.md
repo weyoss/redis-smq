@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.3...v11.0.0-next.4) (2026-11-04)
+
+### 📝 Documentation
+
+- **redis-smq:** sync API reference with recent source changes ([2747635](https://github.com/weyoss/redis-smq/commit/274763502d4a5f7faf10d258f08f5ff352fc9ddc))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** inline StateManager into LifecycleManager ([4247561](https://github.com/weyoss/redis-smq/commit/4247561b5bba9fb76e865c97ff749f321c693a96))
+- **redis-smq:** update Configuration to use renamed Lifecycle ([2a3d500](https://github.com/weyoss/redis-smq/commit/2a3d500f22c62b696c8724eb26808aace5761145))
+
 ## [11.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.2...v11.0.0-next.3) (2026-10-25)
 
 ### 🐛 Bug Fixes
