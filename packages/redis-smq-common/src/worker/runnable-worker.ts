@@ -27,7 +27,7 @@ export class RunnableWorker<InitialPayload>
   implements IRunnableWorker
 {
   protected readonly type: EWorkerType = EWorkerType.RUNNABLE;
-  protected readonly lifecycle;
+  protected readonly lifecycle: Lifecycle;
 
   constructor(
     workerFilename: string,
@@ -40,75 +40,74 @@ export class RunnableWorker<InitialPayload>
   }
 
   /**
-   * Run the worker in fire-and-forget mode
-   * No response expected from worker thread
+   * Run the worker in fire-and-forget mode.
+   * No response expected from the worker thread.
    */
   run(cb: ICallback) {
     this.logger.debug(`Attempting to run worker ${this.id}`);
 
-    const r = this.lifecycle.goingUp();
-    if (r) {
-      this.logger.debug('Power switch state changed to going up');
-
-      const message: TWorkerThreadParentMessage = {
-        type: EWorkerThreadParentMessage.RUN,
-      };
-
-      this.logger.debug(
-        'Posting RUN message to worker thread (fire-and-forget)',
-      );
-
-      try {
-        this.postMessage(message);
-
-        // Success - worker is running in background
-        this.lifecycle.commit();
-        this.logger.debug(
-          `Worker ${this.id} started successfully (fire-and-forget)`,
-        );
-        cb(null);
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown error');
-        this.logger.error(`Worker failed to start: ${error.message}`, {
-          error: error.message,
-          stack: error.stack,
-        });
-        this.lifecycle.rollback();
-        cb(error);
-      }
-    } else {
+    if (!this.lifecycle.goingUp()) {
       this.logger.warn(`Cannot start worker ${this.id}: already running`);
       cb(new WorkerAlreadyRunningError());
+      return;
+    }
+
+    this.logger.debug('Lifecycle state changed to going up');
+
+    const message: TWorkerThreadParentMessage = {
+      type: EWorkerThreadParentMessage.RUN,
+    };
+
+    this.logger.debug('Posting RUN message to worker thread (fire-and-forget)');
+
+    try {
+      this.postMessage(message);
+
+      // Success - worker is running in background
+      this.lifecycle.commit();
+      this.logger.debug(
+        `Worker ${this.id} started successfully (fire-and-forget)`,
+      );
+      cb(null);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      this.logger.error(`Worker failed to start: ${error.message}`, {
+        error: error.message,
+        stack: error.stack,
+      });
+      this.lifecycle.rollback();
+      cb(error);
     }
   }
 
   override shutdown(cb: ICallback) {
     this.logger.debug(`Attempting to shut down worker ${this.id}`);
 
-    const r = this.lifecycle.goingDown();
-    if (r) {
-      this.logger.debug('Power switch state changed to going down');
-
-      this.logger.debug('Calling parent shutdown method');
-      super.shutdown((err) => {
-        if (err) {
-          this.logger.warn(
-            `Error during worker ${this.id} shutdown: ${err.message}`,
-            {
-              error: err.message,
-              stack: err.stack,
-            },
-          );
-          // Still commit since we're shutting down regardless of errors
-        }
-        this.logger.debug('Committing power switch state change');
-        this.lifecycle.commit();
-        this.logger.debug(`Worker ${this.id} shut down successfully`);
-        cb(null); // Always call with null for success
-      });
-    } else {
+    if (!this.lifecycle.goingDown()) {
       this.logger.warn(`Cannot shut down worker ${this.id}: already down`);
       cb(new WorkerAlreadyDownError());
+      return;
     }
+
+    this.logger.debug('Lifecycle state changed to going down');
+    this.logger.debug('Calling parent shutdown method');
+
+    super.shutdown((err) => {
+      if (err) {
+        this.logger.warn(
+          `Error during worker ${this.id} shutdown: ${err.message}`,
+          {
+            error: err.message,
+            stack: err.stack,
+          },
+        );
+        // Still commit — the shutdown is best-effort and we're tearing
+        // the worker down regardless of the underlying error.
+      }
+      this.logger.debug('Committing lifecycle state change');
+      this.lifecycle.commit();
+      this.logger.debug(`Worker ${this.id} shut down successfully`);
+      cb(null);
+    });
   }
 }
