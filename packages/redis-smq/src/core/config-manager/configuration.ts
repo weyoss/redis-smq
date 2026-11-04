@@ -12,7 +12,7 @@ import {
   ICallback,
   OperationNotAllowedError,
   PanicError,
-  PowerSwitch,
+  Lifecycle,
 } from 'redis-smq-common';
 import { ConfigurationNotFoundError } from '../errors/configuration/configuration-not-found.error.js';
 import { keys } from '../common/redis/keys/keys.js';
@@ -41,7 +41,7 @@ interface IRedisSMQParsedConfigWithVersion {
 
 export class Configuration extends EventEmitter<TConfigurationEvent> {
   private static instance: Configuration | null = null;
-  private static state = new PowerSwitch();
+  private static state = new Lifecycle();
   private static initQueue: Array<ICallback> = [];
 
   private operationLock = false;
