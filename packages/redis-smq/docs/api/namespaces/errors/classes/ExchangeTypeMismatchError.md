@@ -19,7 +19,7 @@ exchange type does not match the existing exchange's type.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `actual`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: [`EExchangeType`](../../../enumerations/EExchangeType.md); \}\>\]
 
 #### Returns
 

@@ -18,7 +18,7 @@ Indicates that a provided CRON expression is invalid and could not be parsed.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `expression`: `string`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `expression`: `string`; \}\>\]
 
 #### Returns
 

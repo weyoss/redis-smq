@@ -19,7 +19,7 @@ exchange was set on the message (e.g., setting a routing key).
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<`never`\>\]
+...\[`options?`: `IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 

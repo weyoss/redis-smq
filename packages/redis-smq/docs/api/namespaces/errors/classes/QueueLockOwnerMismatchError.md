@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `actualOwner`: `unknown`; `expectedOwner`: `string`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 

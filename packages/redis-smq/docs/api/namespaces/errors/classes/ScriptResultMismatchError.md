@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actual`: `number`; `expected`: `number`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `actual`: `number`; `expected`: `number`; \}\>\]
 
 #### Returns
 

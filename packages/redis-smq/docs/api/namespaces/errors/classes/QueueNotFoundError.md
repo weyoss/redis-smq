@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 

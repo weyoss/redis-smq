@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `jobId`: `string`; `reason`: `string`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `jobId`: `string`; `reason`: `string`; \}\>\]
 
 #### Returns
 

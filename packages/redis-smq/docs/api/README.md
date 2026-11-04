@@ -27,10 +27,7 @@
 
 ## Classes
 
-- [ComponentRegistry](classes/ComponentRegistry.md)
-- [LifecycleManager](classes/LifecycleManager.md)
 - [RedisSMQ](classes/RedisSMQ.md)
-- [StateManager](classes/StateManager.md)
 
 ## Interfaces
 

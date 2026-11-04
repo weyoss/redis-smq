@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `exchange`: [`IExchangeParams`](../../../interfaces/IExchangeParams.md); `routingKey`: `string`; \}\>\]
 
 #### Returns
 

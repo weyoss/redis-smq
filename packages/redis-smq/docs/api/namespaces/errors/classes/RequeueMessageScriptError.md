@@ -19,7 +19,7 @@ signaling a failure within the script itself.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `scriptReply`: `string`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `scriptReply`: `string`; \}\>\]
 
 #### Returns
 

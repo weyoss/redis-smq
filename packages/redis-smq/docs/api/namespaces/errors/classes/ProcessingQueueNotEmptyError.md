@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `consumerId`: `string`; `groupId`: `string` \| `null`; `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 

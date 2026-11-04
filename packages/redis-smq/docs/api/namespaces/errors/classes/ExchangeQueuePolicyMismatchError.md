@@ -19,7 +19,7 @@ type is incompatible with the exchange's queue policy.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../enumerations/EExchangeQueuePolicy.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `actual`: `string`; `exchangeType`: [`EExchangeType`](../../../enumerations/EExchangeType.md); `expected`: `string`; `queuePolicy`: [`EExchangeQueuePolicy`](../../../enumerations/EExchangeQueuePolicy.md); \}\>\]
 
 #### Returns
 

@@ -19,7 +19,7 @@ of a configuration step callback.
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<`never`\>\]
+...\[`options?`: `IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 

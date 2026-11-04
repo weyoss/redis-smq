@@ -215,11 +215,16 @@ and after shutdown.
 
 Checks if RedisSMQ is currently running.
 
+Returns `true` only in the `UP` state — fully initialized, no
+transition in flight. Distinct from `Lifecycle.isUp()`, which also
+returns `true` during `GOING_DOWN` — "running" here means "up and
+stable," not "committed to up."
+
 #### Returns
 
 `boolean`
 
-true if initialized and running
+true if fully initialized and running
 
 ---
 

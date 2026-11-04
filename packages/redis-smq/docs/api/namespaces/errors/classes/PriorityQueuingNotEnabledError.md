@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<`never`\>\]
+...\[`options?`: `IRedisSMQErrorOptions`\<`never`\>\]
 
 #### Returns
 

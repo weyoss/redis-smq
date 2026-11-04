@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `operation`: [`EQueueOperation`](../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `operation`: [`EQueueOperation`](../../../enumerations/EQueueOperation.md); `queue`: [`IQueueParams`](../../../interfaces/IQueueParams.md); \}\>\]
 
 #### Returns
 

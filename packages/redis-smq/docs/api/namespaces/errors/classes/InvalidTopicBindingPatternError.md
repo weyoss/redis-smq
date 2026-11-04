@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `pattern`: `string`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `pattern`: `string`; \}\>\]
 
 #### Returns
 

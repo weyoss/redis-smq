@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `target`: `unknown`; \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `target`: `unknown`; \}\>\]
 
 #### Returns
 

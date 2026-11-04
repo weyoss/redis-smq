@@ -16,7 +16,7 @@
 
 ##### args
 
-...\[`IRedisSMQErrorOptions`\<\{ `from`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); \}\>\]
+...\[`options`: `IRedisSMQErrorOptions`\<\{ `from`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); `to`: [`EQueueOperationalState`](../../../enumerations/EQueueOperationalState.md); \}\>\]
 
 #### Returns
 
