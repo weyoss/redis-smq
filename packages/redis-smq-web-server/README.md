@@ -34,7 +34,7 @@ npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui redis
 ```
 
 > ℹ️ The `@next` tag pulls the latest development version from the `next` branch.
-> For the stable release, use `@latest` (or omit the tag). Always check the [version compatibility guide](packages/redis-smq/docs/version-compatibility.md) and the [language‑agnostic compatibility matrix](https://github.com/weyoss/redis-smq-docs#compatibility-matrix) to ensure packages and implementations are aligned.
+> For the stable release, use `@latest` (or omit the tag). Always check the [version compatibility guide](../redis-smq/docs/version-compatibility.md) and the [language‑agnostic compatibility matrix](https://github.com/weyoss/redis-smq-docs#compatibility-matrix) to ensure packages and implementations are aligned.
 
 Don't forget to install a Redis client:
 
