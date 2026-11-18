@@ -28,6 +28,7 @@ enum ELuaScript {
   FAIL_JOB = 'FAIL_JOB',
   START_JOB = 'START_JOB',
   RECOVER_STUCK_JOB = 'RECOVER_STUCK_JOB',
+  SAVE_JOB_PROGRESS = 'SAVE_JOB_PROGRESS',
 }
 
 const curDir = env.getCurrentDir();
@@ -40,6 +41,10 @@ const luaScriptMap = {
   [ELuaScript.RECOVER_STUCK_JOB]: resolve(
     curDir,
     './scripts/recover-stuck-job.lua',
+  ),
+  [ELuaScript.SAVE_JOB_PROGRESS]: resolve(
+    curDir,
+    './scripts/save-job-progress.lua',
   ),
 };
 
@@ -84,7 +89,39 @@ export abstract class ManagerAbstract<
     return result;
   }
 
-  // Update job
+  /**
+   * Apply a partial update to a background job, atomically guarded by
+   * the job's PROCESSING status.
+   *
+   * Three phases:
+   *
+   *   1. Read the current job state — source for `applyPartialUpdate`'s
+   *      merge, plus a fast-path `BackgroundJobNotFoundError`.
+   *   2. Build the fully-merged update payload.
+   *   3. Write through `save-job-progress.lua`, which atomically checks
+   *      the job is still PROCESSING before applying.
+   *
+   * Phase 3's guard is what prevents a `cancel` / `complete` / `fail`
+   * that landed between the read and the write from being clobbered —
+   * without it, `HSET` would revert the status to whatever the read
+   * saw and silently lose the terminal transition.
+   *
+   * Outcomes:
+   *
+   *   - Reply `1` — write applied while the job was PROCESSING.
+   *   - Reply `0` — job deleted between our read and the script's HGET.
+   *     Surfaced as `BackgroundJobNotFoundError`.
+   *   - Reply `-1` — a concurrent cancel / complete / fail superseded
+   *     us. The update is skipped; the callback receives no error
+   *     (the terminal transition is the meaningful event, not this
+   *     update). A debug line records the skip.
+   *
+   * Intended for *non-status* updates; `meta.purged` is the current
+   * caller (`PurgeQueueJobManager.updateProgress`). Status transitions
+   * go through their dedicated scripts (`START_JOB`, `COMPLETE_JOB`,
+   * `FAIL_JOB`, `CANCEL_JOB`, `RECOVER_STUCK_JOB`), each of which
+   * performs its own state check.
+   */
   protected update(
     jobId: string,
     updates: Partial<IBackgroundJob<Payload, Meta>>,
@@ -100,11 +137,42 @@ export abstract class ManagerAbstract<
         updatedAt: Date.now(),
       });
 
-      this.redisClient.hset(
-        this.config.keyBackgroundJobs,
-        jobId,
-        JSON.stringify(updatedJob),
-        (setErr) => cb(setErr),
+      this.redisClient.runScript(
+        ELuaScript.SAVE_JOB_PROGRESS,
+        [this.config.keyBackgroundJobs],
+        [
+          jobId,
+          JSON.stringify(updatedJob),
+          EBackgroundJobStatus.PROCESSING.toString(),
+        ],
+        (scriptErr, reply) => {
+          if (scriptErr) return cb(scriptErr);
+
+          switch (reply) {
+            case 1:
+              // Write landed while the job was still PROCESSING.
+              return cb();
+            case 0:
+              // Job vanished between our read and the script's HGET.
+              return cb(
+                new BackgroundJobNotFoundError({ metadata: { jobId } }),
+              );
+            case -1:
+              // Job moved out of PROCESSING (cancelled, completed, or
+              // failed) between our read and this write. The earlier
+              // transition wins; the update is a no-op. Not an error —
+              // the caller's next check (or its cancellation listener)
+              // will observe the terminal state and stop.
+              this.logger.debug(
+                `Update for job ${jobId} skipped: no longer in PROCESSING`,
+              );
+              return cb();
+            default:
+              return cb(
+                new UnexpectedScriptReplyError({ metadata: { reply } }),
+              );
+          }
+        },
       );
     });
   }

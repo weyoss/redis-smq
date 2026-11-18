@@ -155,6 +155,55 @@ async function pollUntilComplete(
   );
 }
 
+/**
+ * Poll a purge job until it reaches `target`, with a bounded deadline.
+ * Returns the final snapshot.
+ *
+ * Companion to `pollUntilComplete` for the cancel-race test, whose
+ * terminal status is CANCELED, not COMPLETED. Throws if the job reaches
+ * a *different* terminal status first (COMPLETED or FAILED) — that
+ * would mean the job ran to a different conclusion than the test is
+ * exercising, which is a setup failure rather than a code failure.
+ */
+async function pollUntilStatus(
+  queue: IQueueParams,
+  jobId: string,
+  target: EBackgroundJobStatus,
+  deadline: number,
+): Promise<IPurgeQueueJob> {
+  const queueMessages = RedisSMQ.createQueuePublishedMessages();
+  let last: IPurgeQueueJob | undefined;
+
+  while (Date.now() < deadline) {
+    last = await queueMessages.getPurgeJob(queue, jobId);
+    if (last.status === target) return last;
+
+    // A job that reaches a *different* terminal state before `target`
+    // means the race resolved in an unexpected direction. Fail with a
+    // message naming both, rather than continuing to poll for a state
+    // that will never arrive.
+    if (
+      last.status === EBackgroundJobStatus.COMPLETED ||
+      last.status === EBackgroundJobStatus.FAILED
+    ) {
+      throw new Error(
+        `purge job ${jobId} reached ${EBackgroundJobStatus[last.status]} ` +
+          `before reaching target ${EBackgroundJobStatus[target]}. ` +
+          `purged=${last.meta?.purged ?? 'unknown'}.`,
+      );
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+
+  throw new Error(
+    `purge job ${jobId} did not reach ` +
+      `${EBackgroundJobStatus[target]} within the deadline. ` +
+      `Last observed status=${EBackgroundJobStatus[last?.status ?? -1]}, ` +
+      `purged=${last?.meta?.purged ?? 'unknown'}.`,
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -244,5 +293,69 @@ describe('PurgeQueueWorker', () => {
       deadLettered: 0,
       scheduled: 0,
     });
+  });
+
+  it('does not un-cancel a job when a progress update races a cancellation', async () => {
+    // The invariant this test exists for: once a caller has cancelled
+    // a purge job, the job's status must remain CANCELED even though
+    // the worker may still be mid-batch and its next `updateProgress`
+    // call may be in flight. Without `save-job-progress.lua`'s status
+    // guard, `ManagerAbstract.update`'s read-modify-write would
+    // clobber the CANCELED transition with the PROCESSING snapshot it
+    // read.
+    //
+    // The race window is short, so this test exercises the *shape* of
+    // the race (updates land after cancel) rather than timing the
+    // exact read-then-write window. Without the guard, this test is
+    // flaky-but-generally-failing; with the guard, it is
+    // deterministic.
+    const queue = uniqueQueue('purge-worker-cancel-race');
+    await createQueue(queue, EQueueType.FIFO_QUEUE);
+
+    // Enough messages to span several batches. A smaller set would
+    // let the worker finish before the cancel could land, leaving no
+    // post-cancel updates to race the guard. At 3007 messages with
+    // 1000-message batches, several `updateProgress` calls happen
+    // after the cancel.
+    await produceMany(queue, TOTAL_MESSAGES, PRODUCE_CHUNK_SIZE);
+
+    const queueMessages = RedisSMQ.createQueuePublishedMessages();
+    const jobId = await queueMessages.purge(queue);
+
+    // Wait until the worker has started the job. `start-job.lua`
+    // transitions PENDING → PROCESSING before the first batch runs,
+    // so seeing PROCESSING confirms the worker has begun and its
+    // `updateProgress` calls will follow.
+    await pollUntilStatus(
+      queue,
+      jobId,
+      EBackgroundJobStatus.PROCESSING,
+      Date.now() + JOB_COMPLETION_TIMEOUT_MS,
+    );
+
+    // Cancel. `cancel-job.lua` transitions PROCESSING → CANCELED
+    // atomically. Once this resolves, the CANCELED status is
+    // committed in Redis.
+    await queueMessages.cancelPurge(queue, jobId);
+
+    // Give the worker generous time to complete its in-flight batch.
+    // Each batch calls `updateProgress` on the way out, and if the
+    // guard were absent, one of those calls would `HSET` the job back
+    // to PROCESSING with a stale snapshot — losing the cancel.
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    // The status must still be CANCELED. Any subsequent update from
+    // the worker was rejected by the atomic guard, leaving the
+    // committed CANCELED status intact.
+    const finalJob = await queueMessages.getPurgeJob(queue, jobId);
+    expect(finalJob.status).toBe(EBackgroundJobStatus.CANCELED);
+
+    // The `meta.purged` value reflects whatever the worker purged up
+    // to the last accepted update. The exact number is
+    // non-deterministic (depends on cancel timing), but the range is
+    // bounded — it must not have exceeded the total, and it must not
+    // have been reset by the racing update path.
+    expect(finalJob.meta.purged).toBeGreaterThanOrEqual(0);
+    expect(finalJob.meta.purged).toBeLessThanOrEqual(TOTAL_MESSAGES);
   });
 });
