@@ -31,11 +31,17 @@
 --   7. historyRecord (JSON string)
 --
 -- Returns:
---   The number of messages that were successfully unacknowledged.
---   'QUEUE_NOT_FOUND': Queue does not exist.
---   'QUEUE_STOPPED': Queue is in STOPPED state.
---   'QUEUE_LOCKED': Queue is in LOCKED state.
---   'QUEUE_INVALID_STATE': Queue is in an unknown state.
+--   - A per-message results array. Each element is 1 (message was in the
+--     processing queue and processed successfully) or 0 (message was not
+--     found in the processing queue — already handled elsewhere, e.g. by
+--     a peer's ReapConsumers cycle; skip the message).
+--     The caller uses this to suppress event publishing for skipped
+--     messages, preventing phantom unack events.
+--   - 'QUEUE_NOT_FOUND': Queue does not exist.
+--   - 'QUEUE_STOPPED': Queue is in STOPPED state.
+--   - 'QUEUE_LOCKED': Queue is in LOCKED state.
+--   - 'QUEUE_INVALID_STATE': Queue is in an unknown state.
+--   - 'INVALID_ARGS_ERROR': Mismatched KEYS/ARGV counts.
 
 -- Static Keys
 local keyQueueRequeued = KEYS[1]
@@ -106,7 +112,7 @@ local dynamicArgsCount = #ARGV - INITIAL_ARGV_OFFSET
 
 -- If there are no dynamic keys or args, nothing to process
 if dynamicKeysCount == 0 and dynamicArgsCount == 0 then
-    return 0
+    return {}
 end
 
 -- Check that dynamic keys count is a multiple of KEYS_PER_MESSAGE
@@ -129,6 +135,7 @@ if expectedMessagesFromKeys ~= expectedMessagesFromArgs then
 end
 
 local keyIndex = INITIAL_KEY_OFFSET + 1
+local results = {}
 local processedCount = 0
 local deadLetteredCount = 0
 local requeuedCount = 0
@@ -152,7 +159,8 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     -- Process message only if it exists and can be claimed
     if messageId ~= '' then
         -- Atomically remove the message from the processing queue.
-        -- If LREM returns 0, the message was not found (already processed or moved).
+        -- If LREM returns 0, the message was already removed (peer recovery,
+        -- concurrent batch, etc.) — skip it and record 0 in results.
         if redis.call("LREM", keyQueueProcessing, 1, messageId) == 1 then
             local status
             if (retryAction == ERetryActionRequeue) or (retryAction == ERetryActionDelay) then
@@ -188,6 +196,9 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 if expireStoredMessages ~= '0' then
                     redis.call("PEXPIRE", keyMessageHistory, expireStoredMessages)
                 end
+
+                -- Increment unacknowledged count on the message
+                redis.call("HINCRBY", keyMessage, "unacknowledgedCount", 1)
             end
 
             -- Update message properties
@@ -200,7 +211,16 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                     EMessagePropertyExpired, messageExpired
             )
             processedCount = processedCount + 1
+            results[#results + 1] = 1
+        else
+            -- Message not in processing queue — already handled elsewhere.
+            -- Record 0 so the caller suppresses phantom event publishes.
+            results[#results + 1] = 0
         end
+    else
+        -- Empty message ID (shouldn't happen with well-formed input, but
+        -- keep indices aligned for defensive purposes).
+        results[#results + 1] = 0
     end
 end
 
@@ -215,4 +235,5 @@ if requeuedCount > 0 then
     redis.call("HINCRBY", keyQueueProperties, EQueuePropertyRequeuedMessagesCount, requeuedCount)
 end
 
-return processedCount
+-- Return the per-message results array (1 = processed, 0 = skipped).
+return results

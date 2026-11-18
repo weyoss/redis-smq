@@ -88,6 +88,9 @@ export function _executeUnacknowledgementScript(
     const dynamicKeys: string[] = [];
     const dynamicArgs: (string | number)[] = [];
     const actions = new Map<string, TUnacknowledgementResolution>();
+    // Parallel array: same order as `messages`, so `results[i]`
+    // corresponds to `orderedMessageIds[i]`.
+    const orderedMessageIds: string[] = [];
 
     for (const msg of messages) {
       const messageId = msg.message.getId();
@@ -145,6 +148,7 @@ export function _executeUnacknowledgementScript(
       );
 
       actions.set(messageId, msg.resolution);
+      orderedMessageIds.push(messageId);
     }
 
     logger.debug(
@@ -221,26 +225,74 @@ export function _executeUnacknowledgementScript(
           );
         }
 
-        const count = Number(reply);
-        if (isNaN(count)) {
+        // Success path: the script now returns a per-message results
+        // array — one element per input message, in input order, where
+        // 1 means "message was in the processing queue and was
+        // processed" and 0 means "message was not in the processing
+        // queue — already handled elsewhere, skip it".
+        //
+        // ioredis may hand back `null` for an empty Lua table; normalize.
+        const results: unknown = reply ?? [];
+
+        if (!Array.isArray(results)) {
           return done(
             new UnexpectedScriptReplyError({
-              metadata: { reply },
+              metadata: { reply: results },
             }),
           );
         }
 
-        if (count !== messages.length) {
+        if (results.length !== messages.length) {
+          return done(
+            new UnexpectedScriptReplyError({
+              message:
+                `UNACKNOWLEDGE_MESSAGE result length (${results.length}) ` +
+                `does not match message count (${messages.length})`,
+              metadata: {
+                reply: results,
+              },
+            }),
+          );
+        }
+
+        // Filter the `actions` map to only the messages the script
+        // actually processed. Entries with result 0 were already
+        // removed from the processing queue by a peer (e.g. a
+        // ReapConsumers cycle) — including them here would produce
+        // phantom unack events downstream, since
+        // `AcknowledgementPipeline.emitUnacknowledgementEvents`
+        // iterates the returned map and emits one event per entry.
+        const successfulActions: TUnacknowledgementResult = {};
+        let processedCount = 0;
+        let skippedCount = 0;
+
+        for (let i = 0; i < results.length; i += 1) {
+          if (results[i] === 1) {
+            const messageId = orderedMessageIds[i];
+            const resolution = actions.get(messageId);
+            if (resolution) {
+              successfulActions[messageId] = resolution;
+              processedCount += 1;
+            }
+          } else {
+            skippedCount += 1;
+          }
+        }
+
+        if (skippedCount > 0) {
           logger.warn(
-            `Script processed ${count}/${messages.length} messages for queue ${queueParams.ns}:${queueParams.name}`,
+            `Script processed ${processedCount}/${messages.length} messages ` +
+              `for queue ${queueParams.ns}:${queueParams.name} — ` +
+              `${skippedCount} were already removed by a peer (skipped)`,
           );
         }
 
         logger.debug(
-          `Successfully processed ${count} messages for queue ${queueParams.ns}:${queueParams.name}`,
+          `Successfully processed ${processedCount} messages ` +
+            `for queue ${queueParams.ns}:${queueParams.name}`,
         );
 
-        done(null, Object.fromEntries(actions));
+        done(null, successfulActions);
       },
     );
   }, cb);
