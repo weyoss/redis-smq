@@ -11,8 +11,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### 🐛 Bug Fixes
 
-- **consumer:** fire producer.messagePublished for scheduled deliveries ([a13bc25](https://github.com/weyoss/redis-smq/commit/a13bc25e4cdf0233742bcb89755228db1d1c0c34))
-- **consumer:** suppress phantom unack events for Lua-skipped messages ([0d0eb07](https://github.com/weyoss/redis-smq/commit/0d0eb07aee11add26338e8b500ee857bc717c2bc))
+- **redis-smq:** fire producer.messagePublished for scheduled deliveries ([4963c9e](https://github.com/weyoss/redis-smq/commit/4963c9eab08ee131ec178ff9e56fb4683f560fd2))
+- **redis-smq:** suppress phantom unack events for Lua-skipped messages ([e458bcf](https://github.com/weyoss/redis-smq/commit/e458bcf3a37a7b5f0d119b1597ef545b0530f16b))
 - **redis-smq:** guard progress updates against concurrent termination ([093b144](https://github.com/weyoss/redis-smq/commit/093b1442209937fb16691133954955b69e17490a))
 
 ## [11.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.3...v11.0.0-next.4) (2026-11-04)
