@@ -48,8 +48,20 @@
 --   14. messageDeadLetteredAt
 --
 -- Returns:
---   - The number of successfully processed messages.
---   - A detailed error string if publishing a new message fails.
+--   - On success, a two-element array: { published_ids, dead_lettered_ids }
+--     where each is a flat array of message IDs. published_ids contains
+--     the IDs of messages that were successfully moved to a pending queue
+--     (the scheduled message's own ID for simple messages, the clone's ID
+--     for repeating messages). dead_lettered_ids contains the IDs of
+--     messages that were dead-lettered instead because their target
+--     consumer group had been deleted.
+--
+--   - A string starting with 'PUBLISH_ERROR:' if an error occurred while
+--     publishing a repeating-message clone. The format is
+--     'PUBLISH_ERROR:<failed-message-id>:<error-code>' where error-code is
+--     whatever publish_message returned (QUEUE_STOPPED, QUEUE_LOCKED,
+--     MESSAGE_PRIORITY_REQUIRED, etc.). On this error, no partial results
+--     are returned; the caller must not fire any events.
 
 -- Static Keys
 local keyQueueProperties = KEYS[1]
@@ -82,7 +94,7 @@ local EMessagePropertyStatusPending = ARGV[15]
 local EMessagePropertyStatusScheduled = ARGV[16]
 local EMessagePropertyStatusDeadLettered = ARGV[17]
 
--- Message Property Constants (ARGV[18-41]) - Updated to include LastProcessedAt
+-- Message Property Constants (ARGV[18-41])
 local EMessagePropertyId = ARGV[18]
 local EMessagePropertyStatus = ARGV[19]
 local EMessagePropertyMessage = ARGV[20]
@@ -116,32 +128,29 @@ local queueProps = redis.call("HMGET", keyQueueProperties,
 local queueType = queueProps[1]
 local operationalState = queueProps[2]
 
--- Early exit if the queue does not exist. This check is now done only once per batch.
+-- Early exit if the queue does not exist.
 if queueType == false then
-    return 0
+    return {}, {}
 end
 
 if operationalState == false then
-    -- Default to ACTIVE if operational state is not set
     operationalState = EQueueOperationalStateActive
 end
 
--- Validate queue state for scheduled message processing
+-- Validate queue state for scheduled message processing. On any
+-- non-active/non-paused state, return empty results — the caller fires
+-- no events. The messages stay in the scheduled set for a future tick
+-- when the queue becomes operational again.
 if operationalState == EQueueOperationalStateStopped then
-    -- Queue is completely stopped, no processing allowed
-    return 0
+    return {}, {}
 elseif operationalState == EQueueOperationalStateLocked then
-    -- Queue is locked, scheduled messages cannot be processed
-    return 0
+    return {}, {}
 elseif operationalState == EQueueOperationalStatePaused then
-    -- Queue is paused, scheduled messages can be moved to pending but won't be consumed
-    -- This is allowed, so continue
+    -- Allowed — messages move to pending but won't be consumed until resume
 elseif operationalState == EQueueOperationalStateActive then
-    -- Queue is active, scheduled messages can be processed
-    -- This is allowed, so continue
+    -- Allowed
 else
-    -- Unknown state, skip processing as a safety measure
-    return 0
+    return {}, {}
 end
 
 -- Loop constants
@@ -150,7 +159,11 @@ local INITIAL_KEY_OFFSET = 7
 local PARAMS_PER_MESSAGE = 14
 local KEYS_PER_MESSAGE = 2
 local keyIndex = INITIAL_KEY_OFFSET + 1
-local processed_count = 0
+
+-- Per-message outcome tracking. Populated below based on which branch
+-- the message took.
+local published_ids = {}
+local dead_lettered_ids = {}
 
 for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     -- Extract message parameters for the current message
@@ -208,6 +221,8 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                         EMessagePropertyScheduledRepeatCount, scheduledMessageRepeatCount,
                         EMessagePropertyEffectiveScheduledDelay, scheduledMessageEffectiveScheduledDelay
                 )
+
+                published_ids[#published_ids + 1] = scheduledMessageId
             else
                 -- Group does not exist, dead-letter the message
                 redis.call("RPUSH", keyQueueDeadLettered, scheduledMessageId)
@@ -217,8 +232,9 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                         EMessagePropertyStatus, EMessagePropertyStatusDeadLettered,
                         EMessagePropertyDeadLetteredAt, messageDeadLetteredAt
                 )
+
+                dead_lettered_ids[#dead_lettered_ids + 1] = scheduledMessageId
             end
-            processed_count = processed_count + 1
         end
     else
         -- Case 2: A repeating message is due.
@@ -332,6 +348,8 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
             if result ~= 'OK' then
                 return 'PUBLISH_ERROR:' .. newMessageId .. ':' .. result
             end
+
+            published_ids[#published_ids + 1] = newMessageId
         else
             -- Group does not exist. Dead-letter the original repeating message to stop its cycle.
             -- The new message for this firing is simply discarded.
@@ -344,10 +362,11 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
                 )
                 redis.call("HINCRBY", keyQueueProperties, EQueuePropertyScheduledMessagesCount, -1)
                 redis.call("HINCRBY", keyQueueProperties, EQueuePropertyDeadLetteredMessagesCount, 1)
+
+                dead_lettered_ids[#dead_lettered_ids + 1] = scheduledMessageId
             end
         end
-        processed_count = processed_count + 1
     end
 end
 
-return processed_count
+return { published_ids, dead_lettered_ids }

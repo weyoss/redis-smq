@@ -23,6 +23,7 @@ import {
 import { EMessagePropertyStatus } from '../../../contracts/index.js';
 import { EQueueProperty } from '../../queue-manager/types/queue-property.js';
 import { EMessageProperty } from '../../message/message-property.js';
+import { EventMultiplexer } from '../../event-bus/event-multiplexer.js';
 
 export class PublishScheduledWorker extends ConsumerWorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
@@ -263,7 +264,11 @@ export class PublishScheduledWorker extends ConsumerWorkerAbstract {
                 return cb(err);
               }
 
-              // Handle specific error responses from the script
+              // ── Script-level error string ─────────────────────────────
+              // The script returns 'PUBLISH_ERROR:<failed-id>:<code>' when
+              // `publish_message` fails for a repeating-message clone. No
+              // partial results are returned in that case; the caller must
+              // not fire any events.
               if (typeof reply === 'string') {
                 if (reply.startsWith('PUBLISH_ERROR:')) {
                   const [, failedMessageId, errorCode] = reply.split(':');
@@ -287,22 +292,69 @@ export class PublishScheduledWorker extends ConsumerWorkerAbstract {
                 );
               }
 
-              if (typeof reply === 'number') {
-                if (reply !== messages.length) {
-                  this.logger.warn(
-                    `Script reported processing ${reply} messages, but expected ${messages.length}.`,
-                  );
-                }
-                this.logger.info(
-                  `Successfully published ${reply} scheduled messages.`,
+              // Reply shape: { published_ids, dead_lettered_ids }
+              // Both are flat arrays of message IDs. ioredis may collapse an
+              // empty Lua table to `null` or `[]`; normalize both slots
+              // defensively so a script that returns `{}, {}` (queue is
+              // STOPPED / LOCKED) is treated as "zero published, zero
+              // dead-lettered" rather than as an error.
+              if (!Array.isArray(reply) || reply.length !== 2) {
+                this.logger.error(
+                  `Script execution returned unexpected response: ${String(reply)}`,
                 );
-                return cb();
+                return cb(
+                  new UnexpectedScriptReplyError({ metadata: { reply } }),
+                );
               }
 
-              this.logger.error(
-                `Script execution returned unexpected response: ${reply}`,
-              );
-              cb(new UnexpectedScriptReplyError({ metadata: { reply } }));
+              const [rawPublished, rawDeadLettered]: unknown[] = reply;
+              const publishedIds: string[] = Array.isArray(rawPublished)
+                ? rawPublished
+                : [];
+              const deadLetteredIds: string[] = Array.isArray(rawDeadLettered)
+                ? rawDeadLettered
+                : [];
+
+              // ── Accounting ─────────────────────────────────────────────
+              // Each input message takes exactly one of the two branches
+              // (published or dead-lettered). A shortfall means the script
+              // observed a message that was no longer in `keyQueueScheduled`
+              // — most likely a concurrent delete between `fetchMessages`
+              // and the script running. That is expected under race, so it
+              // is warned but not failed.
+              const accounted = publishedIds.length + deadLetteredIds.length;
+              if (accounted !== messages.length) {
+                this.logger.warn(
+                  `Script processed ${accounted}/${messages.length} scheduled messages ` +
+                    `(published=${publishedIds.length}, deadLettered=${deadLetteredIds.length}). ` +
+                    `Some messages may have been deleted concurrently.`,
+                );
+              }
+
+              if (deadLetteredIds.length > 0) {
+                this.logger.warn(
+                  `Dead-lettered ${deadLetteredIds.length} scheduled message(s) ` +
+                    `because their target consumer group no longer exists.`,
+                );
+              }
+
+              if (publishedIds.length > 0) {
+                this.logger.info(
+                  `Successfully published ${publishedIds.length} scheduled message(s).`,
+                );
+              }
+
+              // ── Per-message events ─────────────────────────────────────
+              for (const id of publishedIds) {
+                EventMultiplexer.publish(
+                  'producer.messagePublished',
+                  id,
+                  this.queueParsedParams,
+                  this.id,
+                );
+              }
+
+              cb();
             },
           );
         },
