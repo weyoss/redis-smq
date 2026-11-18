@@ -15,7 +15,7 @@
 !dist/esm/index.d.ts.map
 !dist/esm/index.js
 !dist/esm/index.js.map
-!dist/schema.json
+!dist/assets/**
 !LICENSE
 !CHANGELOG.md
 !package.json
