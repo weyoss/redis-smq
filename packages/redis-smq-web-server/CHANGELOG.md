@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.4...v11.0.0-next.5) (2026-11-18)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-server:** correct package entry point paths ([d06e4f6](https://github.com/weyoss/redis-smq/commit/d06e4f6b1e822a2df9b36727113aa9088c1376c8))
+
+### 📝 Documentation
+
+- **redis-smq-web-server:** fix relative path to version compatibility guide ([fb57ea9](https://github.com/weyoss/redis-smq/commit/fb57ea9f71aadc63d06ec5d9c4d49a6010fcf886))
+
 ## [11.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.3...v11.0.0-next.4) (2026-11-04)
 
 **Note:** Version bump only for package redis-smq-web-server

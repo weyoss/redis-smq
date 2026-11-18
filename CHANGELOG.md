@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.4...v11.0.0-next.5) (2026-11-18)
+
+### 🐛 Bug Fixes
+
+- **consumer:** fire producer.messagePublished for scheduled deliveries ([a13bc25](https://github.com/weyoss/redis-smq/commit/a13bc25e4cdf0233742bcb89755228db1d1c0c34))
+- **consumer:** suppress phantom unack events for Lua-skipped messages ([0d0eb07](https://github.com/weyoss/redis-smq/commit/0d0eb07aee11add26338e8b500ee857bc717c2bc))
+- **redis-smq-web-server:** correct package entry point paths ([d06e4f6](https://github.com/weyoss/redis-smq/commit/d06e4f6b1e822a2df9b36727113aa9088c1376c8))
+- **redis-smq:** guard progress updates against concurrent termination ([093b144](https://github.com/weyoss/redis-smq/commit/093b1442209937fb16691133954955b69e17490a))
+
+### 🚀 Chore
+
+- update pnpm-lock.yaml ([f87fc00](https://github.com/weyoss/redis-smq/commit/f87fc008ac838485a0cc2b4937f97adf2692d1b4))
+
+### 📝 Documentation
+
+- **redis-smq-web-server:** fix relative path to version compatibility guide ([fb57ea9](https://github.com/weyoss/redis-smq/commit/fb57ea9f71aadc63d06ec5d9c4d49a6010fcf886))
+
 ## [11.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.3...v11.0.0-next.4) (2026-11-04)
 
 ### 🐛 Bug Fixes
