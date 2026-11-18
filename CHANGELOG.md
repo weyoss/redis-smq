@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.6](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.5...v11.0.0-next.6) (2026-11-18)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** ensure assets/ directory is published ([270888f](https://github.com/weyoss/redis-smq/commit/270888ffd14b723141b3f051ec272527bc8f2e8b))
+
+### 👷 Continuous Integration
+
+- allow to run manually codeql.yml workflow ([ff3b8f4](https://github.com/weyoss/redis-smq/commit/ff3b8f4534c537df73fe42cea6ca46042098dffe))
+
 ## [11.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.4...v11.0.0-next.5) (2026-11-18)
 
 ### 🐛 Bug Fixes

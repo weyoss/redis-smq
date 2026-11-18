@@ -451,7 +451,7 @@ importers:
     devDependencies:
       '@scalar/openapi-types':
         specifier: ^0.9.7
-        version: 0.9.9
+        version: 0.9.10
       '@types/json-schema':
         specifier: 7.0.15
         version: 7.0.15
@@ -2713,10 +2713,10 @@ packages:
       }
     engines: { node: '>=22' }
 
-  '@scalar/openapi-types@0.9.9':
+  '@scalar/openapi-types@0.9.10':
     resolution:
       {
-        integrity: sha512-Z2NfKMNhtWJaEiYVU1pzVS+BT53ygotVA6y9reCx0jTcwqml9WPrNPumgjlgoZnBdP9pZU3+u86RNwwVAyArvA==,
+        integrity: sha512-rQVlvSLXvP3ljCY7BqKeJ07EjqtzJyaj1OTMVRVRBftmNmxupmmx1xNTnuLnaJIfGnrNEFLW7kyJofzH43wUPg==,
       }
     engines: { node: '>=22' }
 
@@ -7259,10 +7259,10 @@ packages:
     engines: { node: ^22.22.2 || ^24.15.0 || >=26.0.0 }
     hasBin: true
 
-  node-releases@2.0.64:
+  node-releases@2.0.65:
     resolution:
       {
-        integrity: sha512-zAPCKqMcnqs2nGy6nlkm7JduFseiBJy3EXHGLh+8pFR+TxGCBxxiEN21+UROU5CKwX/f4TlUcYjiM+vs/tsyxw==,
+        integrity: sha512-PfvofsGQ+MiOQIPkX9fU8ELUWmy5zL74CdQaph/ismKszfFkfwXaw0cGiwbwym2hT9k5+mdyl8O5WQ1MD8EHmA==,
       }
     engines: { node: '>=18' }
 
@@ -8079,10 +8079,10 @@ packages:
       }
     engines: { node: '>= 0.4' }
 
-  remeda@2.61.0:
+  remeda@2.62.0:
     resolution:
       {
-        integrity: sha512-x8v7/slXeMnUy4izdZecOVlorISUQC5sHbc2GIdaf2pNYQUKt30NREbGa68Ag/3bjkaK64e9qDu1X4S47bUZAQ==,
+        integrity: sha512-Ss0wQVit+PcoNejP4gEwbUV3Qsy8n1Lhf62Hi8Txjf5YLkO3Pj0bhr8vj+BwbWS4hEfPjnveMHQEOY2EgBcQQQ==,
       }
     engines: { node: '>=18.0.0' }
 
@@ -10735,7 +10735,7 @@ snapshots:
       fs-extra: 11.4.1
       globby: 16.1.0
       jiti: 2.7.0
-      remeda: 2.61.0
+      remeda: 2.62.0
       typedoc: 0.28.20(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
@@ -10755,7 +10755,7 @@ snapshots:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
       '@orval/zod': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
       fs-extra: 11.4.1
-      remeda: 2.61.0
+      remeda: 2.62.0
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -10774,7 +10774,7 @@ snapshots:
   '@orval/mock@8.9.1(supports-color@7.2.0)(typescript@5.8.3)':
     dependencies:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
-      remeda: 2.61.0
+      remeda: 2.62.0
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -10784,7 +10784,7 @@ snapshots:
     dependencies:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
       '@orval/fetch': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
-      remeda: 2.61.0
+      remeda: 2.62.0
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -10811,7 +10811,7 @@ snapshots:
   '@orval/zod@8.9.1(supports-color@7.2.0)(typescript@5.8.3)':
     dependencies:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
-      remeda: 2.61.0
+      remeda: 2.62.0
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -11001,7 +11001,7 @@ snapshots:
 
   '@scalar/openapi-types@0.8.0': {}
 
-  '@scalar/openapi-types@0.9.9': {}
+  '@scalar/openapi-types@0.9.10': {}
 
   '@scalar/openapi-upgrader@0.2.6':
     dependencies:
@@ -11945,7 +11945,7 @@ snapshots:
       baseline-browser-mapping: 2.11.38
       caniuse-lite: 1.0.30001826
       electron-to-chromium: 1.5.487
-      node-releases: 2.0.64
+      node-releases: 2.0.65
       update-browserslist-db: 1.4.0(browserslist@4.29.6)
 
   buffer-image-size@0.6.4:
@@ -14028,7 +14028,7 @@ snapshots:
       undici: 8.12.4
       which: 7.0.0
 
-  node-releases@2.0.64: {}
+  node-releases@2.0.65: {}
 
   node-source-walk@7.0.2:
     dependencies:
@@ -14307,7 +14307,7 @@ snapshots:
       fs-extra: 11.4.1
       jiti: 2.7.0
       js-yaml: 4.1.1
-      remeda: 2.61.0
+      remeda: 2.62.0
       string-argv: 0.3.2
       tsconfck: 3.1.6(typescript@5.8.3)
       typedoc: 0.28.20(typescript@5.8.3)
@@ -14668,7 +14668,7 @@ snapshots:
       gopd: 1.2.0
       set-function-name: 2.0.2
 
-  remeda@2.61.0: {}
+  remeda@2.62.0: {}
 
   remove-accents@0.5.0: {}
 
