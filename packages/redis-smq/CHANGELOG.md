@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.7](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.6...v11.0.0-next.7) (2026-11-18)
+
+### 📝 Documentation
+
+- fix incorrect scope in changelog ([25e758d](https://github.com/weyoss/redis-smq/commit/25e758d73d4e20f46c3ea410511fbf3e9a7cacf2))
+
 ## [11.0.0-next.6](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.5...v11.0.0-next.6) (2026-11-18)
 
 **Note:** Version bump only for package redis-smq

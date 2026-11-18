@@ -4867,10 +4867,10 @@ packages:
     engines: { node: '>=0.12.18' }
     hasBin: true
 
-  electron-to-chromium@1.5.487:
+  electron-to-chromium@1.5.488:
     resolution:
       {
-        integrity: sha512-qWotOhQYeYEj+DK4+Y+cfPj44qiC6ETIiWtJLfmDJydED2BJJ7loPA4SfBbbrMI6X/X3tryJgxnY9nxsO545Zw==,
+        integrity: sha512-Uox8y5IeRGB/uXNMNSPfWaiI5/8d/2XG125oc+f2C5JniHcoMxsbCXcVFRZnIsdrgPwZQ6/k5SbSxhBirqQPuA==,
       }
 
   emoji-regex@10.6.0:
@@ -8079,10 +8079,10 @@ packages:
       }
     engines: { node: '>= 0.4' }
 
-  remeda@2.62.0:
+  remeda@2.62.1:
     resolution:
       {
-        integrity: sha512-Ss0wQVit+PcoNejP4gEwbUV3Qsy8n1Lhf62Hi8Txjf5YLkO3Pj0bhr8vj+BwbWS4hEfPjnveMHQEOY2EgBcQQQ==,
+        integrity: sha512-CrkXE9Q0FtKRYB6bE3vkuNuahuyvAAuu0BsWiKfKVamxZPZljoqzAAs5xTZ0Zk038A3K9MwxN2ZIRiNYhgAojA==,
       }
     engines: { node: '>=18.0.0' }
 
@@ -10735,7 +10735,7 @@ snapshots:
       fs-extra: 11.4.1
       globby: 16.1.0
       jiti: 2.7.0
-      remeda: 2.62.0
+      remeda: 2.62.1
       typedoc: 0.28.20(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
@@ -10755,7 +10755,7 @@ snapshots:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
       '@orval/zod': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
       fs-extra: 11.4.1
-      remeda: 2.62.0
+      remeda: 2.62.1
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -10774,7 +10774,7 @@ snapshots:
   '@orval/mock@8.9.1(supports-color@7.2.0)(typescript@5.8.3)':
     dependencies:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
-      remeda: 2.62.0
+      remeda: 2.62.1
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -10784,7 +10784,7 @@ snapshots:
     dependencies:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
       '@orval/fetch': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
-      remeda: 2.62.0
+      remeda: 2.62.1
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -10811,7 +10811,7 @@ snapshots:
   '@orval/zod@8.9.1(supports-color@7.2.0)(typescript@5.8.3)':
     dependencies:
       '@orval/core': 8.9.1(supports-color@7.2.0)(typescript@5.8.3)
-      remeda: 2.62.0
+      remeda: 2.62.1
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
@@ -11944,7 +11944,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.11.38
       caniuse-lite: 1.0.30001826
-      electron-to-chromium: 1.5.487
+      electron-to-chromium: 1.5.488
       node-releases: 2.0.65
       update-browserslist-db: 1.4.0(browserslist@4.29.6)
 
@@ -12408,7 +12408,7 @@ snapshots:
 
   ejs@5.0.1: {}
 
-  electron-to-chromium@1.5.487: {}
+  electron-to-chromium@1.5.488: {}
 
   emoji-regex@10.6.0: {}
 
@@ -14307,7 +14307,7 @@ snapshots:
       fs-extra: 11.4.1
       jiti: 2.7.0
       js-yaml: 4.1.1
-      remeda: 2.62.0
+      remeda: 2.62.1
       string-argv: 0.3.2
       tsconfck: 3.1.6(typescript@5.8.3)
       typedoc: 0.28.20(typescript@5.8.3)
@@ -14668,7 +14668,7 @@ snapshots:
       gopd: 1.2.0
       set-function-name: 2.0.2
 
-  remeda@2.62.0: {}
+  remeda@2.62.1: {}
 
   remove-accents@0.5.0: {}
 
