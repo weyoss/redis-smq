@@ -239,18 +239,34 @@ export class Producer extends Runnable<TProducerEvent> implements IProducer {
         );
         return cb(err);
       }
+
       const action = isSchedulable ? 'scheduled' : 'published';
       this.logger.info(
         `Message [${messageId}] has been ${action} to queue [${queueName}].`,
       );
-      if (!isSchedulable) {
+
+      if (isSchedulable) {
+        this.emit(
+          'producer.messageScheduled',
+          messageId,
+          {
+            queueParams: queue,
+            groupId: message.getConsumerGroupId(),
+          },
+          this.id,
+        );
+      } else {
         this.emit(
           'producer.messagePublished',
           messageId,
-          { queueParams: queue, groupId: message.getConsumerGroupId() },
+          {
+            queueParams: queue,
+            groupId: message.getConsumerGroupId(),
+          },
           this.id,
         );
       }
+
       cb(null, messageId);
     });
   }

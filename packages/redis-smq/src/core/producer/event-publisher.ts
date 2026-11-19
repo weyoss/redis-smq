@@ -26,4 +26,7 @@ export function eventPublisher(producer: IProducer): void {
   producer.on('producer.messagePublished', (...args) =>
     EventMultiplexer.publish('producer.messagePublished', ...args),
   );
+  producer.on('producer.messageScheduled', (...args) =>
+    EventMultiplexer.publish('producer.messageScheduled', ...args),
+  );
 }

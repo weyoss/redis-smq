@@ -253,6 +253,50 @@ export type TProducerEvent = {
     queue: IQueueParsedParams,
     producerId: string,
   ) => void;
+
+  /**
+   * A scheduled message was submitted for future delivery.
+   *
+   * Fires once per destination queue, and once per consumer group for
+   * PUB/SUB destinations, at the moment the message lands in the
+   * scheduled set — i.e. at produce time, not at fire time. A message
+   * published with `.setScheduledDelay(...)`, `.setScheduledCRON(...)`,
+   * or `.setScheduledRepeat(...)` fires this event; a message produced
+   * without scheduling parameters fires `producer.messagePublished`
+   * instead.
+   *
+   * The event fires exactly once per envelope. When the schedule later
+   * fires and the message reaches a pending queue, the background
+   * scheduler worker emits `scheduler.messagePublished` — that is a
+   * separate event on a separate timeline, and the two should not be
+   * conflated:
+   *
+   *   - `producer.messageScheduled` — "the application asked for this
+   *     to be delivered later." Fires from the `Producer` instance
+   *     that produced the message, in the process that called
+   *     `producer.produce()`.
+   *
+   *   - `scheduler.messagePublished` — "the library delivered this
+   *     as scheduled." Fires from the background worker at a time
+   *     unrelated to the produce call.
+   *
+   * @param messageId - The message's ID as it was enqueued into the
+   *   scheduled set. For a repeating scheduled message, this is the ID
+   *   of the *original*, not of any clone. Clones are created later,
+   *   at fire time, and each clone carries the original's ID as its
+   *   `scheduledMessageParentId`.
+   * @param queue - The destination queue, including the effective
+   *   consumer group ID for PUB/SUB destinations.
+   * @param producerId - The ID of the `Producer` instance that
+   *   submitted the message. Same value as the `producerId` carried by
+   *   `producer.messagePublished` for an equivalent non-scheduled
+   *   produce.
+   */
+  'producer.messageScheduled': (
+    messageId: string,
+    queue: IQueueParsedParams,
+    producerId: string,
+  ) => void;
 };
 
 /**
