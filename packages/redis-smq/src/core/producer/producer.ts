@@ -213,8 +213,15 @@ export class Producer extends Runnable<TProducerEvent> implements IProducer {
     const messageId = message.getId();
     const queueName = `${queue.name}@${queue.ns}`;
 
+    // Capture BEFORE _publishMessage runs. That call invokes
+    // getNextScheduledTimestamp(), which consumes effectiveScheduledDelay
+    // as a side effect — so a second isSchedulable() call in the
+    // post-publish callback would return false for a genuinely
+    // scheduled message, incorrectly firing producer.messagePublished.
+    const isSchedulable = message.isSchedulable();
+
     const ts = Date.now();
-    if (message.isSchedulable()) {
+    if (isSchedulable) {
       message
         .getMessageState()
         .setScheduledAt(ts)
@@ -230,25 +237,21 @@ export class Producer extends Runnable<TProducerEvent> implements IProducer {
           `Failed to dispatch message [${messageId}] to queue [${queueName}].`,
           err,
         );
-        cb(err);
-      } else {
-        const action = message.isSchedulable() ? 'scheduled' : 'published';
-        this.logger.info(
-          `Message [${messageId}] has been ${action} to queue [${queueName}].`,
-        );
-        if (!message.isSchedulable()) {
-          this.emit(
-            'producer.messagePublished',
-            messageId,
-            {
-              queueParams: queue,
-              groupId: message.getConsumerGroupId(),
-            },
-            this.id,
-          );
-        }
-        cb(null, messageId);
+        return cb(err);
       }
+      const action = isSchedulable ? 'scheduled' : 'published';
+      this.logger.info(
+        `Message [${messageId}] has been ${action} to queue [${queueName}].`,
+      );
+      if (!isSchedulable) {
+        this.emit(
+          'producer.messagePublished',
+          messageId,
+          { queueParams: queue, groupId: message.getConsumerGroupId() },
+          this.id,
+        );
+      }
+      cb(null, messageId);
     });
   }
 
