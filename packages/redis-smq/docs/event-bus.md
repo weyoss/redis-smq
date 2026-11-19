@@ -48,7 +48,7 @@ eventBus.on('queue.consumerGroupDeleted', (queue, groupId) => { ... });
 
 ### Producer Events
 
-Payload shape: `queue` on `producer.messagePublished` is `IQueueParsedParams` (name, namespace, and the effective consumer group ID).
+Payload shape: `queue` on both message events is `IQueueParsedParams` (name, namespace, and the effective consumer group ID).
 
 ```javascript
 eventBus.on('producer.up', (producerId) => { ... });
@@ -56,17 +56,30 @@ eventBus.on('producer.goingUp', (producerId) => { ... });
 eventBus.on('producer.goingDown', (producerId) => { ... });
 eventBus.on('producer.down', (producerId) => { ... });
 eventBus.on('producer.messagePublished', (messageId, queue, producerId) => { ... });
+eventBus.on('producer.messageScheduled', (messageId, queue, producerId) => { ... });
 ```
+
+The two message events partition the produce-time outcomes. For a given message (and per destination queue, multiplied by consumer group for Pub/Sub destinations), exactly one fires:
+
+- `producer.messagePublished` — the message was enqueued for immediate delivery. It landed in the pending list (or, for Pub/Sub, in each consumer group's pending list) and is eligible to be dequeued by a consumer.
+- `producer.messageScheduled` — the message was enqueued for delayed delivery. It landed in the scheduled set with a `nextScheduleTimestamp`, and will be moved to a pending queue by the background scheduled-message worker when the timestamp arrives (see [Scheduler Events](#scheduler-events)).
+
+A scheduled message that is cancelled (deleted) before it fires produces `producer.messageScheduled` and then nothing else. One that fires successfully produces `producer.messageScheduled` at produce time and `scheduler.messagePublished` later. One that dead-letters at fire time produces `producer.messageScheduled` and then `scheduler.messageDeadLettered`.
 
 ### Scheduler Events
 
-Payload shape: `queue` is `IQueueParsedParams` on `scheduler.messagePublished` — it carries the effective consumer group ID.
+Payload shape: `queue` on both message events is `IQueueParsedParams` (name, namespace, and — for `scheduler.messagePublished` on a Pub/Sub queue — the effective consumer group ID).
 
 ```javascript
 eventBus.on('scheduler.messagePublished', (messageId, queue) => { ... });
+eventBus.on('scheduler.messageDeadLettered', (messageId, queue) => { ... });
 ```
 
-`scheduler.messagePublished` fires when the background scheduled-message worker moves a due message from the scheduled set into a pending queue. It does **not** fire for producer-driven publishes (those emit `producer.messagePublished`), and it does **not** fire for scheduled messages that were dead-lettered because their target consumer group had been deleted.
+Scheduler events fire when the background scheduled-message worker processes a due scheduled message. They are the fire-time counterpart to the produce-time `producer.messageScheduled` event: a scheduled message produces `producer.messageScheduled` when it is submitted, and then exactly one of the two scheduler events when it fires (or neither, if it is cancelled before firing).
+
+- `scheduler.messagePublished` — the fired message was moved from the scheduled set into a pending queue. For a simple delayed message this is the original message, moved; its ID matches the ID returned by the produce call. For a repeating or CRON message the original is rescheduled to the next occurrence, and the fired message is a fresh clone whose `scheduledMessageParentId` points at the original.
+
+- `scheduler.messageDeadLettered` — the fired message could not be delivered and was moved to the dead-letter list instead. The current reason is that the message's target consumer group was deleted between produce time and fire time.
 
 ### Consumer Events
 
@@ -87,6 +100,8 @@ eventBus.on('consumer.messageDeadLettered', (messageId, queue, consumerId, cause
 eventBus.on('consumer.messageRequeued', (messageId, queue, consumerId) => { ... });
 eventBus.on('consumer.messageDelayed', (messageId, queue, consumerId) => { ... });
 ```
+
+The `consumer.messageDeadLettered` event and the scheduler's `scheduler.messageDeadLettered` event both report a message entering the dead-letter list, but they are triggered by different components and carry different payloads. A consumer-side dead-letter is a handler failure (or an unacknowledgement resolution) and carries a `consumerId` and a `deadLetterCause`; a scheduler-side dead-letter is a delivery failure at fire time and carries a `schedulerId`. Subscribe to both if you need a complete view of the queue's dead-letter list — a message can be dead-lettered by either path.
 
 ### Configuration Events
 
@@ -131,9 +146,11 @@ await RedisSMQ.shutdown();
 - **Keep handlers fast** — handlers run synchronously on the bus's event loop; a slow handler blocks delivery to every other subscriber.
 - **Unsubscribe when done** — remove listeners you no longer need to prevent unbounded handler accumulation.
 - **Distributed by default** — events are delivered across every process connected to the same Redis instance, not just the local one. A subscriber in process B sees events emitted by process A.
+- **Wait for arrival, not for return** — `eventBus` delivery is asynchronous: an emit call on the producer returns before the event reaches subscribers, because the event round-trips through Redis pub/sub. A test or handler that asserts on a subscriber's captured events immediately after `producer.produce()` resolves will race the round-trip. Use a poll (`waitFor` in this repo's tests) or a timer, not a synchronous assertion.
 
 ## Related
 
 - [Event Bus Concepts](https://github.com/weyoss/redis-smq-docs) — How the event bus works
 - [TRedisSMQEvent](api/type-aliases/TRedisSMQEvent.md) — The complete event type map
 - [Queue State Management](queue-state-management.md) — Subscribing to `queue.stateChanged`
+- [Scheduling Messages](scheduling-messages.md) — Scheduled-message lifecycle and the events it emits

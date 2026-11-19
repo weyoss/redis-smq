@@ -52,20 +52,6 @@ async function setupCapture<K extends keyof TRedisSMQEvent>(
   };
 }
 
-/**
- * Settle window for a standalone negative assertion.
- *
- * Long enough for a spurious event to arrive if one were going to —
- * the bus round-trip is well under 100 ms on a healthy connection, and
- * 500 ms gives a 5× margin for a loaded CI. Short enough that it does
- * not meaningfully extend the test.
- */
-const NEGATIVE_SETTLE_MS = 500;
-
-function settleNegative(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, NEGATIVE_SETTLE_MS));
-}
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -229,7 +215,7 @@ describe('scheduled message firing events', () => {
   // Dead-letter at fire time
   // -------------------------------------------------------------------------
 
-  it('does not emit scheduler.messagePublished when a scheduled message dead-letters at fire time', async () => {
+  it('emits scheduler.messageDeadLettered (and not scheduler.messagePublished) when a scheduled message dead-letters at fire time', async () => {
     const queue = uniqueQueue('sched-events-dl');
     await createQueue(
       queue,
@@ -237,14 +223,14 @@ describe('scheduled message firing events', () => {
       EQueueDeliveryModel.PUB_SUB,
     );
 
-    // Create the group the message will target at produce time. The
-    // scheduler later checks `SISMEMBER` against this set; deleting
-    // the group before fire turns the firing into a dead-letter.
     await RedisSMQ.createConsumerGroupsManager().saveConsumerGroup(queue, 'g1');
 
     const producerPublished = await setupCapture('producer.messagePublished');
     const producerScheduled = await setupCapture('producer.messageScheduled');
     const schedulerPublished = await setupCapture('scheduler.messagePublished');
+    const schedulerDeadLettered = await setupCapture(
+      'scheduler.messageDeadLettered',
+    );
 
     try {
       const producer = await startProducer();
@@ -255,17 +241,15 @@ describe('scheduled message firing events', () => {
           .setScheduledDelay(1500),
       );
 
-      // ── Produce-time pre-state ──────────────────────────────────────
+      // ── Produce-time pre-state ───────────────────────────────────
+      // waitFor instead of synchronous assertion (fixes the race).
       await waitFor(() => producerScheduled.captured.length >= 1, {
         timeoutMs: 5000,
-        description: `producer.messageScheduled fired for scheduled message ${id}`,
+        description: `producer.messageScheduled fired for ${id}`,
       });
 
-      expect(producerScheduled.captured).toHaveLength(1);
       expect(producerPublished.captured).toHaveLength(0);
-
-      // Payload carries the group. This is what the scheduler will
-      // read back at fire time to decide publish-vs-dead-letter.
+      expect(producerScheduled.captured).toHaveLength(1);
       expect(producerScheduled.captured[0][1]).toEqual({
         queueParams: queue,
         groupId: 'g1',
@@ -273,38 +257,45 @@ describe('scheduled message firing events', () => {
 
       await producer.shutdown();
 
-      // Delete the group *before* the schedule fires. The scheduler
-      // will find it missing and dead-letter the message.
+      // Delete the group before fire, so the firing dead-letters.
       await RedisSMQ.createConsumerGroupsManager().deleteConsumerGroup(
         queue,
         'g1',
       );
 
-      // ── Fire-time: dead-letter, not publish ────────────────────────
+      // ── Fire-time: dead-letter, not publish ─────────────────────
       await startScheduleWorker(queue);
       await waitForMessageStatus(id, EMessagePropertyStatus.DEAD_LETTERED, {
         timeoutMs: 15_000,
-        description:
-          `scheduled message ${id} dead-lettered after its ` +
-          `consumer group was deleted`,
+        description: `scheduled message ${id} dead-lettered`,
       });
 
-      // Settle window — no positive event to wait on here, so give
-      // any spurious `scheduler.messagePublished` a chance to arrive.
-      await settleNegative();
+      // Positive waitFor on the new event — replaces settleNegative().
+      // Once this resolves, the fire-time emit tick has demonstrably
+      // passed, so the absence assertions below are race-free.
+      await waitFor(() => schedulerDeadLettered.captured.length >= 1, {
+        timeoutMs: 5000,
+        description: `scheduler.messageDeadLettered fired for ${id}`,
+      });
 
-      expect(
-        schedulerPublished.captured,
-        'scheduler.messagePublished must not fire for a dead-lettered scheduled message',
-      ).toHaveLength(0);
+      // Exactly one dead-letter event, zero published events.
+      expect(schedulerDeadLettered.captured).toHaveLength(1);
+      expect(schedulerPublished.captured).toHaveLength(0);
 
-      // Producer events are unchanged from the produce-time state.
+      // Payload shape. Note `groupId: null` — the scheduler worker is
+      // queue-scoped, not consumer-group-scoped.
+      const [dlId, dlQueue] = schedulerDeadLettered.captured[0];
+      expect(dlId).toBe(id);
+      expect(dlQueue).toEqual({ queueParams: queue, groupId: null });
+
+      // Producer events unchanged from produce-time.
       expect(producerPublished.captured).toHaveLength(0);
       expect(producerScheduled.captured).toHaveLength(1);
     } finally {
       producerPublished.cleanup();
       producerScheduled.cleanup();
       schedulerPublished.cleanup();
+      schedulerDeadLettered.cleanup();
     }
   });
 });

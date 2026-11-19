@@ -417,6 +417,41 @@ export type TSchedulerEvent = {
     messageId: string,
     queue: IQueueParsedParams,
   ) => void;
+
+  /**
+   * A scheduled message was dead-lettered instead of delivered.
+   *
+   * Fires when the background scheduled-message worker decides not to
+   * move a due scheduled message into a pending queue. Today the only
+   * reason is that the message's target consumer group had been
+   * deleted between produce time and fire time. The message is moved
+   * to the dead-letter list instead of being delivered.
+   *
+   * The cause is not currently included in the payload — the
+   * scheduler path does not write a `deadLetterCause` to the message
+   * hash, so there is nothing to carry. A `deadLetterCause` parameter
+   * will be added when the scheduler gains additional dead-letter
+   * reasons and the cause is persisted on the message. Until then, a
+   * subscriber can distinguish scheduler-driven dead-letters from
+   * consumer-driven ones by which event fires: this one has a
+   * `schedulerId`, `consumer.messageDeadLettered` has a `consumerId`,
+   * and the two are never the same string.
+   *
+   * @param messageId - The dead-lettered message's ID. For a repeating
+   *   scheduled message, this is the ID of the still-scheduled
+   *   original, not the ID of a clone. A clone is only created for a
+   *   successful firing, and there is no successful firing here.
+   * @param queue - The destination queue. `groupId` is `null` —
+   *   the scheduler worker is queue-scoped, not consumer-group-scoped,
+   *   and for a PUB/SUB queue the original group has already been
+   *   deleted by the time this event fires. Callers that need the
+   *   original group can read it from the message's
+   *   `consumerGroupId` field, which remains on the message hash.
+   */
+  'scheduler.messageDeadLettered': (
+    messageId: string,
+    queue: IQueueParsedParams,
+  ) => void;
 };
 
 /**

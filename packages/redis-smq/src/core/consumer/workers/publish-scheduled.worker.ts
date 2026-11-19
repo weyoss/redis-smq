@@ -352,6 +352,13 @@ export class PublishScheduledWorker extends ConsumerWorkerAbstract {
                   this.queueParsedParams,
                 );
               }
+              for (const id of deadLetteredIds) {
+                EventMultiplexer.publish(
+                  'scheduler.messageDeadLettered',
+                  id,
+                  this.queueParsedParams,
+                );
+              }
 
               cb();
             },
