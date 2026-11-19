@@ -347,10 +347,9 @@ export class PublishScheduledWorker extends ConsumerWorkerAbstract {
               // ── Per-message events ─────────────────────────────────────
               for (const id of publishedIds) {
                 EventMultiplexer.publish(
-                  'producer.messagePublished',
+                  'scheduler.messagePublished',
                   id,
                   this.queueParsedParams,
-                  this.id,
                 );
               }
 

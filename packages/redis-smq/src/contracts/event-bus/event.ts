@@ -335,6 +335,47 @@ export type TQueueEvent = {
 };
 
 /**
+ * Scheduler events.
+ *
+ * Emitted by the background scheduler worker (`PublishScheduledWorker`)
+ * that fires due scheduled messages. A scheduled message that is
+ * delivered to a pending queue is a *scheduled-message firing*, not a
+ * producer-driven publish, and subscribers that need to distinguish the
+ * two read this event instead of `producer.messagePublished`.
+ *
+ * The scheduler is not a `Producer` — it runs inside the background-job
+ * cluster, not in a caller-created `Producer` instance. Its identity
+ * (`schedulerId`) is the worker's `Runnable` ID, which is stable for
+ * the worker's lifetime.
+ */
+export type TSchedulerEvent = {
+  /**
+   * A scheduled message was delivered to a pending queue.
+   *
+   * Fires once per message that the scheduled-message worker moved
+   * from the scheduled set into a pending queue. Unlike
+   * `producer.messagePublished`, this event fires only for
+   * scheduled-message firings — a message published through a
+   * `Producer` instance never produces a `scheduler.messagePublished`
+   * event, and a scheduled-message firing never produces a
+   * `producer.messagePublished` event.
+   *
+   * @param messageId - The fired message's ID. For a repeating
+   *   scheduled message, this is the ID of the *clone* the worker just
+   *   created, not the ID of the still-scheduled original. The clone's
+   *   `scheduledMessageParentId` points back at the original.
+   * @param queue - The destination queue the message was delivered
+   *   to, including the effective consumer group ID (a PUB/SUB queue
+   *   with multiple groups produces one event per group, each with its
+   *   own `messageId`).
+   */
+  'scheduler.messagePublished': (
+    messageId: string,
+    queue: IQueueParsedParams,
+  ) => void;
+};
+
+/**
  * The union of every event the library can emit on the public event bus.
  *
  * Subscribers use this type to constrain their event name and payload:
@@ -355,4 +396,5 @@ export type TQueueEvent = {
 export type TRedisSMQEvent = TConfigurationEvent &
   TConsumerEvent &
   TProducerEvent &
-  TQueueEvent;
+  TQueueEvent &
+  TSchedulerEvent;

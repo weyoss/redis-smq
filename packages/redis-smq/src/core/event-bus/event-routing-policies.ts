@@ -33,4 +33,8 @@ export const eventRoutingPolicies: TEventRoutingPolicy = {
   'queue.consumerGroupDeleted': EEventTarget.BOTH,
   'queue.stateChanged': EEventTarget.BOTH,
   'configuration.updated': EEventTarget.SYSTEM,
+  // Scheduler events are user-facing (subscribers want to observe
+  // scheduled-message firings), not coordination signals between
+  // library components.
+  'scheduler.messagePublished': EEventTarget.USER,
 };

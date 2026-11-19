@@ -23,8 +23,6 @@ eventBus.on('consumer.messageAcknowledged', (messageId, queue, consumerId) => {
 });
 ```
 
-````
-
 ## Before You Subscribe
 
 The event bus is created lazily but is **not started automatically**. Two consequences matter:
@@ -59,6 +57,16 @@ eventBus.on('producer.goingDown', (producerId) => { ... });
 eventBus.on('producer.down', (producerId) => { ... });
 eventBus.on('producer.messagePublished', (messageId, queue, producerId) => { ... });
 ```
+
+### Scheduler Events
+
+Payload shape: `queue` is `IQueueParsedParams` on `scheduler.messagePublished` — it carries the effective consumer group ID.
+
+```javascript
+eventBus.on('scheduler.messagePublished', (messageId, queue) => { ... });
+```
+
+`scheduler.messagePublished` fires when the background scheduled-message worker moves a due message from the scheduled set into a pending queue. It does **not** fire for producer-driven publishes (those emit `producer.messagePublished`), and it does **not** fire for scheduled messages that were dead-lettered because their target consumer group had been deleted.
 
 ### Consumer Events
 
@@ -129,4 +137,3 @@ await RedisSMQ.shutdown();
 - [Event Bus Concepts](https://github.com/weyoss/redis-smq-docs) — How the event bus works
 - [TRedisSMQEvent](api/type-aliases/TRedisSMQEvent.md) — The complete event type map
 - [Queue State Management](queue-state-management.md) — Subscribing to `queue.stateChanged`
-````
