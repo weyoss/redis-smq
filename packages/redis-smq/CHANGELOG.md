@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [11.0.0-next.8](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.7...v11.0.0-next.8) (2026-11-19)
+
+### ✨ Features
+
+- **redis-smq:** add producer.messageScheduled event ([c4f90f2](https://github.com/weyoss/redis-smq/commit/c4f90f25e8d13dff6d6ffed0e464122d1e14b72b))
+- **redis-smq:** add scheduler.messageDeadLettered event ([7b00d6f](https://github.com/weyoss/redis-smq/commit/7b00d6ff5f524162faf1b9f6b7283c705c1ddc4b))
+- **redis-smq:** add scheduler.messagePublished event ([5bc6462](https://github.com/weyoss/redis-smq/commit/5bc6462ebc124cfc1ef81c642bd8535c46031917))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** do not emit producer.messagePublished for scheduled messages ([594ab26](https://github.com/weyoss/redis-smq/commit/594ab2686ca4c0d33b4e9f5c753f5b6de526b17e))
+
 ## [11.0.0-next.7](https://github.com/weyoss/redis-smq/compare/v11.0.0-next.6...v11.0.0-next.7) (2026-11-18)
 
 ### 📝 Documentation
